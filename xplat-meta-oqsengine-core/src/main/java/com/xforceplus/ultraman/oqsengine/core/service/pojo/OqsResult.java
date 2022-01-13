@@ -39,6 +39,10 @@ public class OqsResult<V> implements Serializable {
         return new OqsResult(ResultStatus.SUCCESS, entity, null);
     }
 
+    public static OqsResult<Long> success(long value) {
+        return new OqsResult<>(ResultStatus.SUCCESS, value, null);
+    }
+
     public static OqsResult<Collection<IEntity>> success(Collection<IEntity> entities) {
         return new OqsResult<Collection<IEntity>>(ResultStatus.SUCCESS, entities, null);
     }
@@ -153,6 +157,10 @@ public class OqsResult<V> implements Serializable {
         this.resultStatus = resultStatus;
         this.message = message;
         this.value = value;
+    }
+
+    public OqsResult copy(Object value) {
+        return new OqsResult(this.resultStatus, value, this.message);
     }
 
     /**

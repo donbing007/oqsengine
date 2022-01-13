@@ -44,6 +44,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
@@ -162,10 +163,21 @@ public class CalculationTest extends AbstractContainerExtends {
      */
     @AfterEach
     public void after() throws Exception {
-        while (commitIdStatusService.size() > 0) {
-            logger.info("Wait for CDC synchronization to complete.");
-            TimeUnit.MILLISECONDS.sleep(10);
+        boolean clear = false;
+        long[] commitIds = new long[0];
+        for (int i = 0; i < 1000; i++) {
+            commitIds = commitIdStatusService.getAll();
+            if (commitIds.length > 0) {
+                logger.info("Wait for CDC synchronization to complete.[{}]", Arrays.toString(commitIds));
+                TimeUnit.MILLISECONDS.sleep(500);
+            } else {
+                clear = true;
+                break;
+            }
         }
+        Assertions.assertTrue(clear,
+            String.format("Failed to process unsynchronized commit numbers as expected, leaving %s.",
+                Arrays.toString(commitIds)));
 
         try (Connection conn = masterDataSource.getConnection()) {
             try (Statement stat = conn.createStatement()) {

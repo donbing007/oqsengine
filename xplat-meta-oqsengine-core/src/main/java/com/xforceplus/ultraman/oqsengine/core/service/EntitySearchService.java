@@ -89,6 +89,17 @@ public interface EntitySearchService {
         throws SQLException;
 
     /**
+     * 条件统计总数.
+     *
+     * @param conditions 指定的条件.
+     * @param entityClassRef 查询目标entity元信息.
+     * @param config 查询配置.
+     * @return 数量.
+     */
+    OqsResult<Long> countByConditions(Conditions conditions, EntityClassRef entityClassRef, ServiceSelectConfig config)
+        throws SQLException;
+
+    /**
      * 搜索实例.
      *
      * @param config 搜索配置.

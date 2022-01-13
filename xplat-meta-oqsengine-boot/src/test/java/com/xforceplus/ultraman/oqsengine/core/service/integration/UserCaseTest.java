@@ -133,10 +133,21 @@ public class UserCaseTest {
      */
     @AfterEach
     public void after() throws Exception {
-        while (commitIdStatusService.size() > 0) {
-            logger.info("Wait for CDC synchronization to complete.");
-            TimeUnit.MILLISECONDS.sleep(100);
+        boolean clear = false;
+        long[] commitIds = new long[0];
+        for (int i = 0; i < 1000; i++) {
+            commitIds = commitIdStatusService.getAll();
+            if (commitIds.length > 0) {
+                logger.info("Wait for CDC synchronization to complete.[{}]", Arrays.toString(commitIds));
+                TimeUnit.MILLISECONDS.sleep(500);
+            } else {
+                clear = true;
+                break;
+            }
         }
+        Assertions.assertTrue(clear,
+            String.format("Failed to process unsynchronized commit numbers as expected, leaving %s.",
+                Arrays.toString(commitIds)));
 
         try (Connection conn = masterDataSource.getConnection()) {
             try (Statement stat = conn.createStatement()) {
@@ -154,7 +165,7 @@ public class UserCaseTest {
     }
 
     @Test
-    public void testCountEmptyPage() throws Exception {
+    public void testCount() throws Exception {
         Transaction tx = transactionManager.create(5000);
         transactionManager.bind(tx.id());
 
@@ -171,9 +182,8 @@ public class UserCaseTest {
         entityManagementService.build(targetEntities);
 
         // 事务内统计.
-        Page page = Page.emptyPage();
         transactionManager.bind(tx.id());
-        OqsResult<Collection<IEntity>> entities = entitySearchService.selectByConditions(
+        OqsResult<Long> count = entitySearchService.countByConditions(
             Conditions.buildEmtpyConditions()
                 .addAnd(
                     new Condition(
@@ -183,18 +193,17 @@ public class UserCaseTest {
                     )
                 ),
             MockEntityClassDefine.L2_ENTITY_CLASS.ref(),
-            ServiceSelectConfig.Builder.anSearchConfig().withPage(page).build()
+            ServiceSelectConfig.Builder.anSearchConfig().withPage(new Page(1, 10)).build()
         );
-        Assertions.assertEquals(0, entities.getValue().get().size());
-        Assertions.assertEquals(targetEntities.length, page.getTotalCount());
+        Assertions.assertEquals(ResultStatus.SUCCESS, count.getResultStatus());
+        Assertions.assertEquals(targetEntities.length, count.getValue().get());
 
         transactionManager.bind(tx.id());
         tx.commit();
         transactionManager.finish();
 
         // 事务外统计.
-        page = Page.emptyPage();
-        entitySearchService.selectByConditions(
+        count = entitySearchService.countByConditions(
             Conditions.buildEmtpyConditions()
                 .addAnd(
                     new Condition(
@@ -204,8 +213,11 @@ public class UserCaseTest {
                     )
                 ),
             MockEntityClassDefine.L2_ENTITY_CLASS.ref(),
-            ServiceSelectConfig.Builder.anSearchConfig().withPage(page).build()
+            ServiceSelectConfig.Builder.anSearchConfig().withPage(new Page(1, 10)).build()
         );
+
+        Assertions.assertEquals(ResultStatus.SUCCESS, count.getResultStatus());
+        Assertions.assertEquals(targetEntities.length, count.getValue().get());
     }
 
     @Test
@@ -371,8 +383,7 @@ public class UserCaseTest {
             );
             Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.replace(entity).getResultStatus());
 
-            Page page = Page.emptyPage();
-            entitySearchService.selectByConditions(
+            OqsResult<Long> result = entitySearchService.countByConditions(
                 Conditions.buildEmtpyConditions().addAnd(
                     new Condition(
                         MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(),
@@ -385,10 +396,11 @@ public class UserCaseTest {
                     new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 99L)
                 )),
                 MockEntityClassDefine.L2_ENTITY_CLASS.ref(),
-                page
+                ServiceSelectConfig.Builder.anSearchConfig().build()
             );
 
-            Assertions.assertEquals(1, page.getTotalCount());
+            Assertions.assertEquals(ResultStatus.SUCCESS, result.getResultStatus());
+            Assertions.assertEquals(1, result.getValue().get());
         }
 
         TimeUnit.SECONDS.sleep(1);
@@ -420,17 +432,12 @@ public class UserCaseTest {
             Assertions.assertEquals(i, selectEntity.entityValue().getValue("l0-long").get().valueToLong());
             Assertions.assertEquals("0", selectEntity.entityValue().getValue("l2-string").get().valueToString());
         }
-
-        TimeUnit.SECONDS.sleep(1);
-
-        Assertions.assertEquals(0, commitIdStatusService.size());
     }
 
     @Test
     public void testBuildAfterDelete() throws Exception {
-        IEntity entity;
         for (int i = 0; i < TEST_LOOPS; i++) {
-            entity = Entity.Builder.anEntity()
+            IEntity entity = Entity.Builder.anEntity()
                 .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
                 .withValues(Arrays.asList(
                         new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 99L),
@@ -780,22 +787,21 @@ public class UserCaseTest {
         }
     }
 
+    /**
+     * 删除后统计.
+     */
     @Test
     public void testDeleteAfterCount() throws Exception {
-        IEntity entity = Entity.Builder.anEntity()
-            .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
-            .withValues(Arrays.asList(
-                    new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 99L),
-                    new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "0")
-                )
-            ).build();
-
-
         for (int i = 0; i < TEST_LOOPS; i++) {
-            entity.resetId(0);
+            IEntity entity = Entity.Builder.anEntity()
+                .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
+                .withValues(Arrays.asList(
+                        new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 99L),
+                        new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "0")
+                    )
+                ).build();
             Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
-
-            entityManagementService.deleteForce(entity);
+            Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.deleteForce(entity).getResultStatus());
 
             Page page = Page.emptyPage();
             entitySearchService.selectByConditions(

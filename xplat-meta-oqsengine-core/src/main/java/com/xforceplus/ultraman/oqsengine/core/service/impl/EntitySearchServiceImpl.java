@@ -481,6 +481,29 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         }
     }
 
+    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "count"})
+    @Override
+    public OqsResult<Long> countByConditions(Conditions conditions, EntityClassRef entityClassRef,
+                                             ServiceSelectConfig config) throws SQLException {
+
+        Page page = Page.emptyPage();
+        ServiceSelectConfig.Builder builder = ServiceSelectConfig.Builder.anSearchConfig()
+            .withPage(page)
+            .withSort(Sort.buildOutOfSort());
+        if (config.getFilter().isPresent()) {
+            builder.withFilter(config.getFilter().get());
+        }
+
+        ServiceSelectConfig countConfig = builder.build();
+
+        OqsResult<Collection<IEntity>> result = this.selectByConditions(conditions, entityClassRef, countConfig);
+        if (result.isSuccess()) {
+            return OqsResult.success(page.getTotalCount());
+        } else {
+            return result.copy(0);
+        }
+    }
+
     @Override
     public OqsResult<Collection<IEntity>> search(ServiceSearchConfig config) throws SQLException {
         SearchConfig searchConfig = SearchConfig.Builder.anSearchConfig()
@@ -563,11 +586,11 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         // 结果查询表.
         Map<Long, IEntity> entityTable;
         if (entityClass == null) {
-            entityTable = masterStorage.selectMultiple(ids).stream()
-                .collect(Collectors.toMap(ref -> ref.id(), ref -> ref, (r0, r1) -> r0));
+            Collection<IEntity> entities = masterStorage.selectMultiple(ids);
+            entityTable = entities.stream().collect(Collectors.toMap(ref -> ref.id(), ref -> ref, (r0, r1) -> r0));
         } else {
-            entityTable = masterStorage.selectMultiple(ids, entityClass).stream()
-                .collect(Collectors.toMap(ref -> ref.id(), ref -> ref, (r0, r1) -> r0));
+            Collection<IEntity> entities = masterStorage.selectMultiple(ids, entityClass);
+            entityTable = entities.stream().collect(Collectors.toMap(ref -> ref.id(), ref -> ref, (r0, r1) -> r0));
         }
 
         List<IEntity> results = new ArrayList<>(ids.length);

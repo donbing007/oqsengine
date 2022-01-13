@@ -422,6 +422,14 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     public OqsResult build(IEntity entity) throws SQLException {
         checkReady();
 
+        if (!entity.isDirty()) {
+            return OqsResult.success();
+        }
+
+        if (entity.isDeleted()) {
+            return OqsResult.conflict("It has been deleted.");
+        }
+
         Optional<IEntityClass> entityClassOp = metaManager.load(entity.entityClassRef());
         IEntityClass entityClass;
         if (!entityClassOp.isPresent()) {
@@ -539,7 +547,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
                 calculationContext.focusTx(tx);
 
-                long[] targetIds = Arrays.stream(entities).mapToLong(e -> e.id()).toArray();
+                long[] targetIds = Arrays.stream(entities).filter(e -> e.isDirty()).mapToLong(e -> e.id()).toArray();
                 // 当前需要更新的目标实例列表.
                 List<IEntity> targetEntities = new ArrayList(masterStorage.selectMultiple(targetIds));
 
@@ -616,13 +624,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                             return OqsResult.conflict();
                         }
 
-                        // 当原始值是脏的,当前变干净了才需要增加累加器.
-                        replaceEntity = replaceEntityTable.get(targetEntity.id());
-                        if (replaceEntity.isDirty()) {
-                            if (!tx.getAccumulator().accumulateReplace(replaceEntity)) {
-                                hint.setRollback(true);
-                                return OqsResult.unAccumulate();
-                            }
+                        if (!tx.getAccumulator().accumulateReplace(targetEntity)) {
+                            hint.setRollback(true);
+                            return OqsResult.unAccumulate();
                         }
                     }
 
@@ -722,6 +726,11 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     // 新的字段值加入当前实例.
                     for (IValue newValue : entity.entityValue().values()) {
                         newEntity.entityValue().addValue(newValue);
+                    }
+
+                    // 没有任何更新.
+                    if (!newEntity.isDirty()) {
+                        return OqsResult.success();
                     }
 
                     calculationContext.focusTx(tx);
@@ -824,14 +833,12 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
         CalculationContext calculationContext = buildCalculationContext(CalculationScenarios.DELETE);
 
-        Map<Long, IEntity> deletedEntitiesTable =
-            Arrays.stream(entities).collect(Collectors.toMap(e -> e.id(), e -> e));
-
         OqsResult oqsResult;
         try {
             oqsResult = (OqsResult) transactionExecutor.execute((tx, resource, hint) -> {
 
-                long[] targetIds = deletedEntitiesTable.keySet().stream().mapToLong(i -> i.longValue()).toArray();
+                // 过滤已经被标示删除实例.
+                long[] targetIds = Arrays.stream(entities).filter(e -> !e.isDeleted()).mapToLong(e -> e.id()).toArray();
 
                 List<IEntity> targetEntities = new ArrayList(masterStorage.selectMultiple(targetIds));
 
@@ -876,11 +883,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                             return OqsResult.conflict();
                         }
 
-                        if (!deletedEntitiesTable.get(targetEntity.id()).isDeleted()) {
-                            if (!tx.getAccumulator().accumulateBuild(targetEntity)) {
-                                hint.setRollback(true);
-                                return OqsResult.unAccumulate();
-                            }
+                        if (!tx.getAccumulator().accumulateBuild(targetEntity)) {
+                            hint.setRollback(true);
+                            return OqsResult.unAccumulate();
                         }
                     }
 
@@ -888,6 +893,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         hint.setRollback(true);
                         return OqsResult.conflict("Conflict maintenance.");
                     }
+
                 } finally {
                     resourceLocker.unlocks(lockResource);
                 }
@@ -910,6 +916,10 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             }
 
             deleteCountTotal.increment(entities.length);
+        }
+
+        for (IEntity entity : entities) {
+            entity.delete();
         }
 
         return oqsResult;
@@ -977,6 +987,10 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         hint.setRollback(true);
                         return OqsResult.conflict("Conflict maintenance.");
                     }
+
+                    targetEntity.delete();
+                    entity.delete();
+
                 } finally {
                     resourceLocker.unlock(lockResource);
                 }
