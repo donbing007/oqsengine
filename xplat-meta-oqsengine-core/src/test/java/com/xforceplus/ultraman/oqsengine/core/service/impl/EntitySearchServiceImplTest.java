@@ -7,7 +7,7 @@ import static org.mockito.Mockito.when;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.core.service.impl.mock.EntityClassDefine;
-import com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult;
+import com.xforceplus.ultraman.oqsengine.core.service.pojo.OqsResult;
 import com.xforceplus.ultraman.oqsengine.core.service.pojo.ServiceSelectConfig;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
@@ -128,7 +128,7 @@ public class EntitySearchServiceImplTest {
         });
 
         Page page = Page.emptyPage();
-        OperationResult<Collection<IEntity>> entities = impl.selectByConditions(
+        OqsResult<Collection<IEntity>> entities = impl.selectByConditions(
             Conditions.buildEmtpyConditions(),
             EntityClassRef.Builder.anEntityClassRef()
                 .withEntityClassId(EntityClassDefine.l1EntityClass.id())
@@ -196,7 +196,7 @@ public class EntitySearchServiceImplTest {
 
 
         Page page = Page.newSinglePage(100);
-        OperationResult<Collection<IEntity>> entities = impl.selectByConditions(
+        OqsResult<Collection<IEntity>> entities = impl.selectByConditions(
             Conditions.buildEmtpyConditions(),
             EntityClassDefine.l2EntityClass.ref(),
             ServiceSelectConfig.Builder.anSearchConfig().withPage(page).build()
@@ -212,7 +212,7 @@ public class EntitySearchServiceImplTest {
         when(masterStorage.selectOne(1, EntityClassDefine.l0EntityClass)).thenReturn(
             Optional.of(Entity.Builder.anEntity().withId(1).build())
         );
-        OperationResult<IEntity> entityOp = impl.selectOne(1, EntityClassDefine.l0EntityClass.ref());
+        OqsResult<IEntity> entityOp = impl.selectOne(1, EntityClassDefine.l0EntityClass.ref());
 
         Assertions.assertTrue(entityOp.getValue().isPresent());
         Assertions.assertEquals(1, entityOp.getValue().get().id());
@@ -231,7 +231,7 @@ public class EntitySearchServiceImplTest {
             )
         );
 
-        OperationResult<Collection<IEntity>> entities = impl.selectMultiple(ids, EntityClassDefine.l2EntityClass.ref());
+        OqsResult<Collection<IEntity>> entities = impl.selectMultiple(ids, EntityClassDefine.l2EntityClass.ref());
 
         Assertions.assertEquals(ids.length, entities.getValue().get().size());
         List<IEntity> entityList = new ArrayList(entities.getValue().get());
@@ -251,7 +251,7 @@ public class EntitySearchServiceImplTest {
             Entity.Builder.anEntity().withId(100L).build()
         ));
 
-        OperationResult<Collection<IEntity>> entities = impl.selectByConditions(conditions,
+        OqsResult<Collection<IEntity>> entities = impl.selectByConditions(conditions,
             EntityClassDefine.l2EntityClass.ref(),
             ServiceSelectConfig.Builder.anSearchConfig().withPage(Page.newSinglePage(1000)).build()
         );

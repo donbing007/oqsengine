@@ -10,7 +10,7 @@ import static org.mockito.Mockito.when;
 import com.xforceplus.ultraman.oqsengine.common.version.VersionHelp;
 import com.xforceplus.ultraman.oqsengine.core.service.impl.help.TestInitTools;
 import com.xforceplus.ultraman.oqsengine.core.service.impl.mock.EntityClassDefine;
-import com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult;
+import com.xforceplus.ultraman.oqsengine.core.service.pojo.OqsResult;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
@@ -68,8 +68,8 @@ public class EntityManagementServiceImplTest {
             .withEntityClassRef(ref)
             .build();
 
-        OperationResult result = impl.build(targetEntity);
-        Assertions.assertEquals(OperationResult.notExistMeta(ref), result);
+        OqsResult result = impl.build(targetEntity);
+        Assertions.assertEquals(OqsResult.notExistMeta(ref), result);
     }
 
     @Test

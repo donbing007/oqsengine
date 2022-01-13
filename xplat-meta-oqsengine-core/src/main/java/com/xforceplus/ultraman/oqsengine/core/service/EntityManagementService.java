@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.core.service;
 
-import com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult;
+import com.xforceplus.ultraman.oqsengine.core.service.pojo.OqsResult;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import java.sql.SQLException;
@@ -20,7 +20,7 @@ public interface EntityManagementService {
      * @param entity 目标 entity 数据.
      * @return 新对象的标识.
      */
-    OperationResult build(IEntity entity) throws SQLException;
+    OqsResult build(IEntity entity) throws SQLException;
 
     /**
      * 创建多个实体.
@@ -28,8 +28,8 @@ public interface EntityManagementService {
      * @param entities 目标实体列表.
      * @return 创建结果.
      */
-    default OperationResult build(IEntity[] entities) throws SQLException {
-        OperationResult result = OperationResult.success();
+    default OqsResult build(IEntity[] entities) throws SQLException {
+        OqsResult result = OqsResult.success();
         for (IEntity entity : entities) {
             result = build(entity);
 
@@ -48,7 +48,7 @@ public interface EntityManagementService {
      *
      * @param entity 目标 entity.
      */
-    OperationResult replace(IEntity entity) throws SQLException;
+    OqsResult replace(IEntity entity) throws SQLException;
 
     /**
      * 批量更新.
@@ -56,8 +56,8 @@ public interface EntityManagementService {
      * @param entities 目标实体列表.
      * @return 创建结果.
      */
-    default OperationResult replace(IEntity[] entities) throws SQLException {
-        OperationResult result = OperationResult.success();
+    default OqsResult replace(IEntity[] entities) throws SQLException {
+        OqsResult result = OqsResult.success();
         for (IEntity entity : entities) {
             result = replace(entity);
 
@@ -75,7 +75,7 @@ public interface EntityManagementService {
      *
      * @param entity 目标 entity.
      */
-    OperationResult delete(IEntity entity) throws SQLException;
+    OqsResult delete(IEntity entity) throws SQLException;
 
     /**
      * 删除多个已经存在的entity.
@@ -83,8 +83,8 @@ public interface EntityManagementService {
      * @param entities 目标 entity 列表.
      * @return 结果.
      */
-    default OperationResult delete(IEntity[] entities) throws SQLException {
-        OperationResult result = OperationResult.success();
+    default OqsResult delete(IEntity[] entities) throws SQLException {
+        OqsResult result = OqsResult.success();
         for (IEntity entity : entities) {
             result = delete(entity);
 
@@ -106,7 +106,7 @@ public interface EntityManagementService {
      * @return 操作结果.
      * @throws SQLException 操作异常.
      */
-    OperationResult deleteForce(IEntity entity) throws SQLException;
+    OqsResult deleteForce(IEntity entity) throws SQLException;
 
     /**
      * 删除多个已经存在的 entity,和delete不同的是这个优先级最高.
@@ -114,8 +114,8 @@ public interface EntityManagementService {
      * @param entities 目标列表.
      * @return 操作结果.
      */
-    default OperationResult deleteForce(IEntity[] entities) throws SQLException {
-        OperationResult result = OperationResult.success();
+    default OqsResult deleteForce(IEntity[] entities) throws SQLException {
+        OqsResult result = OqsResult.success();
         for (IEntity entity : entities) {
             result = deleteForce(entity);
 
