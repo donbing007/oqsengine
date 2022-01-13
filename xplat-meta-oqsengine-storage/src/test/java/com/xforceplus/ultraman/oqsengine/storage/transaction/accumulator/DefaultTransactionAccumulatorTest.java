@@ -31,8 +31,7 @@ public class DefaultTransactionAccumulatorTest {
         accumulator.accumulateDelete(Entity.Builder.anEntity().withId(5).build());
         Assertions.assertEquals(2, accumulator.getDeleteNumbers());
 
-        accumulator.accumulateReplace(Entity.Builder.anEntity().withId(6).build(),
-            Entity.Builder.anEntity().withId(6).build());
+        accumulator.accumulateReplace(Entity.Builder.anEntity().withId(6).build());
         Assertions.assertEquals(1, accumulator.getReplaceNumbers());
     }
 
@@ -42,11 +41,9 @@ public class DefaultTransactionAccumulatorTest {
     @Test
     public void testRepeat() throws Exception {
         DefaultTransactionAccumulator acc = new DefaultTransactionAccumulator(1);
-        acc.accumulateReplace(Entity.Builder.anEntity().withId(10).build(),
-            Entity.Builder.anEntity().withId(10).build());
+        acc.accumulateReplace(Entity.Builder.anEntity().withId(10).build());
         acc.accumulateDelete(Entity.Builder.anEntity().withId(10).build());
-        acc.accumulateReplace(Entity.Builder.anEntity().withId(10).build(),
-            Entity.Builder.anEntity().withId(10).build());
+        acc.accumulateReplace(Entity.Builder.anEntity().withId(10).build());
 
         Assertions.assertEquals(2, acc.getReplaceNumbers());
         Assertions.assertEquals(1, acc.getUpdateIds().size());
@@ -66,11 +63,9 @@ public class DefaultTransactionAccumulatorTest {
     public void testReset() throws Exception {
         DefaultTransactionAccumulator acc = new DefaultTransactionAccumulator(1);
         acc.reset();
-        acc.accumulateReplace(Entity.Builder.anEntity().withId(10).build(),
-            Entity.Builder.anEntity().withId(10).build());
+        acc.accumulateReplace(Entity.Builder.anEntity().withId(10).build());
         acc.accumulateDelete(Entity.Builder.anEntity().withId(20).build());
-        acc.accumulateReplace(Entity.Builder.anEntity().withId(30).build(),
-            Entity.Builder.anEntity().withId(30).build());
+        acc.accumulateReplace(Entity.Builder.anEntity().withId(30).build());
 
         Assertions.assertEquals(2, acc.getReplaceNumbers());
         Assertions.assertEquals(1, acc.getDeleteNumbers());

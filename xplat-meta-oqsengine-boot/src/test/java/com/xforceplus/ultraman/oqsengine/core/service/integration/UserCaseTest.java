@@ -135,7 +135,7 @@ public class UserCaseTest {
     public void after() throws Exception {
         while (commitIdStatusService.size() > 0) {
             logger.info("Wait for CDC synchronization to complete.");
-            TimeUnit.MILLISECONDS.sleep(10);
+            TimeUnit.MILLISECONDS.sleep(100);
         }
 
         try (Connection conn = masterDataSource.getConnection()) {
@@ -791,7 +791,6 @@ public class UserCaseTest {
             ).build();
 
 
-        long actual = -1;
         for (int i = 0; i < TEST_LOOPS; i++) {
             entity.resetId(0);
             Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
@@ -810,13 +809,9 @@ public class UserCaseTest {
                 page
             );
 
-            actual = page.getTotalCount();
-            if (actual == 0) {
-                break;
-            }
+            Assertions.assertEquals(0, page.getTotalCount());
         }
 
-        Assertions.assertEquals(0, actual);
     }
 
     /**

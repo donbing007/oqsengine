@@ -14,7 +14,6 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.accumulator.Default
 import com.xforceplus.ultraman.oqsengine.storage.transaction.accumulator.TransactionAccumulator;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper;
 import io.micrometer.core.instrument.Metrics;
-import io.micrometer.core.instrument.Timer;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -431,50 +430,33 @@ public class MultiLocalTransaction implements Transaction {
 
     // 等待提交号被同步成功或者超时.
     private long awitCommitSync(long commitId) {
-
-        Timer.Sample sample = Timer.start(Metrics.globalRegistry);
-
-        try {
-            if (maxWaitCommitIdSyncMs <= 0) {
-                return 0;
-            }
-
-            int maxLoop = 1;
-            if (maxWaitCommitIdSyncMs > checkCommitIdSyncMs) {
-                maxLoop = (int) (maxWaitCommitIdSyncMs / checkCommitIdSyncMs);
-            }
-
-            for (int i = 0; i < maxLoop; i++) {
-
-                if (commitIdStatusService.isObsolete(commitId)) {
-
-                    return i * checkCommitIdSyncMs;
-
-                } else {
-
-                    if (logger.isDebugEnabled()) {
-                        logger.debug("The commit number {} has not been phased out, wait {} milliseconds.",
-                            commitId, checkCommitIdSyncMs);
-                    }
-
-                    LockSupport.parkNanos(this, TimeUnit.MILLISECONDS.toNanos(checkCommitIdSyncMs));
-                }
-            }
-
-            return maxWaitCommitIdSyncMs;
-        } finally {
-
-            sample.stop(Timer.builder(MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS)
-                .tags(
-                    "initiator", "transaction",
-                    "action", "wait",
-                    "exception", "none"
-                )
-                .publishPercentileHistogram(false)
-                .publishPercentiles(null)
-                .register(Metrics.globalRegistry));
+        if (maxWaitCommitIdSyncMs <= 0) {
+            return 0;
         }
 
+        int maxLoop = 1;
+        if (maxWaitCommitIdSyncMs > checkCommitIdSyncMs) {
+            maxLoop = (int) (maxWaitCommitIdSyncMs / checkCommitIdSyncMs);
+        }
+
+        for (int i = 0; i < maxLoop; i++) {
+
+            if (commitIdStatusService.isObsolete(commitId)) {
+
+                return i * checkCommitIdSyncMs;
+
+            } else {
+
+                if (logger.isDebugEnabled()) {
+                    logger.debug("The commit number {} has not been phased out, wait {} milliseconds.",
+                        commitId, checkCommitIdSyncMs);
+                }
+
+                LockSupport.parkNanos(this, TimeUnit.MILLISECONDS.toNanos(checkCommitIdSyncMs));
+            }
+        }
+
+        return maxWaitCommitIdSyncMs;
     }
 
     private void throwSQLExceptionIfNecessary(List<SQLException> exHolder) throws SQLException {

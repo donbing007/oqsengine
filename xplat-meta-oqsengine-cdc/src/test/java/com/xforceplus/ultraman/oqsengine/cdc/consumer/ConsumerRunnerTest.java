@@ -243,7 +243,7 @@ public class ConsumerRunnerTest extends AbstractCDCTestHelper {
             } else if (replacement) {
                 entity.resetVersion(0);
                 MasterDBInitialization.getInstance().getMasterStorage().replace(entity, getEntityClass(entity.entityClassRef().getId()));
-                tx.getAccumulator().accumulateReplace(entity, entity);
+                tx.getAccumulator().accumulateReplace(entity);
             } else {
                 MasterDBInitialization.getInstance().getMasterStorage().build(entity, getEntityClass(entity.entityClassRef().getId()));
                 tx.getAccumulator().accumulateBuild(entity);

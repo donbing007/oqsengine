@@ -42,6 +42,7 @@ import org.slf4j.LoggerFactory;
 public class DefaultCalculationInitLogic implements CalculationInitLogic {
     private final Logger logger = LoggerFactory.getLogger(DefaultCalculationInitLogic.class);
 
+    @Resource(name = "taskThreadPool")
     private ExecutorService worker;
 
     @Resource
