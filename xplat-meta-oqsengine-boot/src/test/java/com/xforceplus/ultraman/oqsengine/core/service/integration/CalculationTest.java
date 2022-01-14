@@ -739,6 +739,37 @@ public class CalculationTest extends AbstractContainerExtends {
         );
     }
 
+    /**
+     * 测试批量创建的时候计算字段.
+     * 测试目标结构如下.
+     * <br>
+     * 用户(用户编号, 订单总数count, 总消费金额sum, 平均消费金额avg, 最大消费金额max, 最小消费金额min)
+     * ..|---订单 (订单号, 下单时间, 订单项总数count, 总金额sum, 用户编号lookup,订单项平均价格formula, 订单用户关联)
+     * .......|---订单项 (单号lookup, 物品名称, 金额, 订单项订单关联) <br>
+     * <br>
+     */
+    @Test
+    public void testBathBuildCalculation() throws Exception {
+        IEntity user = buildUserEntity();
+        Assertions.assertTrue(user.isDirty());
+        Assertions.assertEquals(OqsResult.success(), entityManagementService.build(user));
+        Assertions.assertFalse(user.isDirty());
+        user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).getValue().get();
+
+        IEntity[] orders = new IEntity[10];
+        for (int i = 0; i < orders.length; i++) {
+            orders[i] = buildOrderEntity(user);
+        }
+        Assertions.assertEquals(orders.length, Arrays.stream(orders).filter(o -> o.isDirty()).count());
+        Assertions.assertEquals(OqsResult.success(), entityManagementService.build(orders));
+        // 预期全部订单实例状态都为干净.
+        Assertions.assertEquals(0, Arrays.stream(orders).filter(o -> o.isDirty()).count());
+
+        user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).getValue().get();
+        Assertions.assertEquals(
+            orders.length,
+            user.entityValue().getValue("订单总数count").get().valueToLong());
+    }
 
     @Test
     public void testInitCalculation() throws Exception {
