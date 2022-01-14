@@ -78,8 +78,12 @@ public class ManticoreContainer extends AbstractContainerExtension {
 
         System.setProperty("MANTICORE_JDBC",
             String.format(
-                "jdbc:mysql://%s:%s/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&"
-                    + "useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=Asia/Shanghai", address,
+                "jdbc:mysql://%s:%s/oqsengine?"
+                    + "characterEncoding=utf8"
+                    + "&useHostsInPrivileges=false"
+                    + "&useLocalSessionState=true"
+                    + "&serverTimezone=Asia/Shanghai",
+                address,
                 port)
         );
 

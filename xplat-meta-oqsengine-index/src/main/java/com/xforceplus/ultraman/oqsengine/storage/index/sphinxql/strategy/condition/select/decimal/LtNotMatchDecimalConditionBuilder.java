@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.select.decimal;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
-import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 
 /**
  * 小于.
@@ -12,8 +11,8 @@ import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyF
  */
 public class LtNotMatchDecimalConditionBuilder extends AbstractNotMatchDecimalConditionBuilder {
 
-    public LtNotMatchDecimalConditionBuilder(StorageStrategyFactory storageStrategyFactory) {
-        super(storageStrategyFactory, ConditionOperator.LESS_THAN);
+    public LtNotMatchDecimalConditionBuilder() {
+        super(ConditionOperator.LESS_THAN);
     }
 
     @Override

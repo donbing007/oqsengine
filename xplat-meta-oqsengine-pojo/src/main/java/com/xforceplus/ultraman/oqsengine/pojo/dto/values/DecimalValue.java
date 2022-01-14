@@ -2,7 +2,6 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.values;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import java.math.BigDecimal;
-import java.util.Objects;
 
 /**
  * 表示一个浮点数字段的值.
@@ -14,7 +13,11 @@ import java.util.Objects;
 public class DecimalValue extends AbstractValue<BigDecimal> {
 
     public DecimalValue(IEntityField field, BigDecimal value) {
-        super(field, buildWellBigDecimal(field, value));
+        this(field, value, null);
+    }
+
+    public DecimalValue(IEntityField field, BigDecimal value, String attachment) {
+        super(field, buildWellBigDecimal(field, value), attachment);
     }
 
     @Override
@@ -31,34 +34,13 @@ public class DecimalValue extends AbstractValue<BigDecimal> {
     }
 
     @Override
+    protected IValue<BigDecimal> doCopy(IEntityField newField, String attachment) {
+        return new DecimalValue(newField, getValue(), attachment);
+    }
+
+    @Override
     public String valueToString() {
         return getValue().toPlainString();
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(getField(), getValue());
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof DecimalValue)) {
-            return false;
-        }
-
-        DecimalValue that = (DecimalValue) o;
-
-        return Objects.equals(getField(), that.getField()) && Objects.equals(this.getValue(), that.getValue());
-    }
-
-    @Override
-    public IValue<BigDecimal> copy(IEntityField newField) {
-        checkType(newField);
-
-        return new DecimalValue(newField, getValue());
     }
 
     // 保证至少有一位数度.

@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.task;
 
+import java.io.Serializable;
+
 /**
  * 任务实体.
  *
@@ -7,7 +9,7 @@ package com.xforceplus.ultraman.oqsengine.task;
  * @version 0.1 2021/08/05 15:27
  * @since 1.8
  */
-public interface Task {
+public interface Task extends Serializable {
 
     /**
      * 任务唯一标识.

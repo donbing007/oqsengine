@@ -10,6 +10,7 @@ import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.AnyEntityClass;
@@ -374,44 +375,49 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
 
     // 转换成JSON类型属性.
     private String toAttribute(OriginalEntity originalEntity) {
-        int attrSize = originalEntity.getAttributes().length / 2;
+        Map<String, Object> attributeMap = new HashMap(
+            MapUtils.calculateInitSize(originalEntity.attributeSize(), 0.75F));
 
+        for (Map.Entry<String, Object> attr : originalEntity.getAttributes().entrySet()) {
 
-        Map<String, Object> attributeMap = new HashMap(MapUtils.calculateInitSize(attrSize, 0.75F));
-        for (Map.Entry<String, Object> attr : originalEntity.listAttributes()) {
+            if (AnyStorageValue.isStorageValueName(attr.getKey())) {
 
-            IEntityClass entityClass = originalEntity.getEntityClass();
-            StorageValue anyStorageValue = AnyStorageValue.getInstance(attr.getKey());
-            Optional<IEntityField> fieldOp = entityClass.field(Long.parseLong(anyStorageValue.logicName()));
+                IEntityClass entityClass = originalEntity.getEntityClass();
+                StorageValue anyStorageValue = AnyStorageValue.getInstance(attr.getKey());
+                Optional<IEntityField> fieldOp = entityClass.field(Long.parseLong(anyStorageValue.logicName()));
 
-            if (!needField(fieldOp, true)) {
-                continue;
-            }
-
-
-            IEntityField field = fieldOp.get();
-            StorageValue storageValue =
-                storageStrategyFactory.getStrategy(field.type())
-                    .convertIndexStorageValue(AnyStorageValue.compatibleStorageName(attr.getKey()), attr.getValue());
-
-            while (storageValue != null) {
-
-                ShortStorageName shortStorageName = storageValue.shortStorageName();
-                /*
-                 * 字符串需要处理特殊字符.
-                 */
-                if (StorageType.STRING == storageValue.type()) {
-
-                    attributeMap.put(shortStorageName.toString(),
-                        SphinxQLHelper.encodeJsonCharset(storageValue.value().toString()));
-
-                } else {
-
-                    attributeMap.put(shortStorageName.toString(), storageValue.value());
-
+                if (!needField(fieldOp, true)) {
+                    continue;
                 }
 
-                storageValue = storageValue.next();
+
+                IEntityField field = fieldOp.get();
+                StorageValue storageValue =
+                    storageStrategyFactory.getStrategy(field.type())
+                        .convertIndexStorageValue(
+                            AnyStorageValue.compatibleStorageName(attr.getKey()),
+                            attr.getValue(),
+                            false);
+
+                while (storageValue != null) {
+
+                    ShortStorageName shortStorageName = storageValue.shortStorageName();
+                    /*
+                     * 字符串需要处理特殊字符.
+                     */
+                    if (StorageType.STRING == storageValue.type()) {
+
+                        attributeMap.put(shortStorageName.toString(),
+                            SphinxQLHelper.encodeJsonCharset(storageValue.value().toString()));
+
+                    } else {
+
+                        attributeMap.put(shortStorageName.toString(), storageValue.value());
+
+                    }
+
+                    storageValue = storageValue.next();
+                }
             }
 
         }
@@ -427,32 +433,46 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
     private String toAttributesF(OriginalEntity source) throws SQLException {
 
         StringBuilder buff = new StringBuilder();
-        for (Map.Entry<String, Object> attr : source.listAttributes()) {
-            IEntityClass entityClass = source.getEntityClass();
+        IEntityClass entityClass = source.getEntityClass();
+        IEntityField field;
+        for (Map.Entry<String, Object> attr : source.getAttributes().entrySet()) {
             StorageValue anyStorageValue = AnyStorageValue.getInstance(attr.getKey());
             Optional<IEntityField> fieldOp = entityClass.field(Long.parseLong(anyStorageValue.logicName()));
             if (!needField(fieldOp, false)) {
                 continue;
             }
-            IEntityField field = fieldOp.get();
-            StorageValue storageValue =
-                storageStrategyFactory.getStrategy(field.type())
-                    .convertIndexStorageValue(AnyStorageValue.compatibleStorageName(attr.getKey()), attr.getValue());
+            field = fieldOp.get();
 
-            if (StorageType.UNKNOWN == anyStorageValue.type()) {
-                if (fieldOp.isPresent()) {
-                    throw new SQLException(
-                        String.format("Unknown physical storage type.[id=%s, name=%s]",
-                            anyStorageValue.logicName(),
-                            fieldOp.get().name()));
-                } else {
-                    throw new SQLException(
-                        String.format("Unknown physical storage type.[id=%s]",
-                            anyStorageValue.logicName()));
+            // 普通属性.
+            if (AnyStorageValue.isStorageValueName(attr.getKey())) {
+                StorageValue storageValue =
+                    storageStrategyFactory.getStrategy(field.type())
+                        .convertIndexStorageValue(
+                            AnyStorageValue.compatibleStorageName(attr.getKey()), attr.getValue(), false);
+
+                if (StorageType.UNKNOWN == anyStorageValue.type()) {
+                    if (fieldOp.isPresent()) {
+                        throw new SQLException(
+                            String.format("Unknown physical storage type.[id=%s, name=%s]",
+                                anyStorageValue.logicName(),
+                                fieldOp.get().name()));
+                    } else {
+                        throw new SQLException(
+                            String.format("Unknown physical storage type.[id=%s]",
+                                anyStorageValue.logicName()));
+                    }
                 }
-            }
 
-            buff.append(wrapperAttributeF(field, storageValue)).append(' ');
+                buff.append(wrapperAttributeF(field, storageValue, false)).append(' ');
+
+            } else if (AnyStorageValue.isAttachemntStorageName(attr.getKey())) {
+                // 附件
+                StorageValue storageValue = storageStrategyFactory.getStrategy(FieldType.STRING)
+                    .convertIndexStorageValue(
+                        AnyStorageValue.compatibleStorageName(attr.getKey()), attr.getValue(), true);
+
+                buff.append(wrapperAttributeF(field, storageValue, true)).append(' ');
+            }
         }
 
         return buff.toString();
@@ -480,99 +500,121 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
      * <P>搜索字段属性全名用相似的格式,只是做如下改变.
      * {字段code}{内容}{字段code}
      */
-    private String wrapperAttributeF(IEntityField field, StorageValue storageValue) {
+    private String wrapperAttributeF(IEntityField field, StorageValue storageValue, boolean attachment) {
 
         StringBuilder buff = new StringBuilder();
-        StorageValue current = storageValue;
-        List<Map.Entry<String, String>> crossAttributes = new LinkedList<>();
-        while (current != null) {
+        if (!attachment) {
+            StorageValue current = storageValue;
+            List<Map.Entry<String, String>> crossAttributes = null;
+            while (current != null) {
 
-            ShortStorageName shortStorageName = current.shortStorageName();
-            /*
-             * 字符串需要处理特殊字符.
-             * fuzzyType只有字符串才会处理.
-             */
-            if (StorageType.STRING == current.type()) {
-                String strValue = SphinxQLHelper.filterSymbols(current.value().toString());
+                ShortStorageName shortStorageName = current.shortStorageName();
+                /*
+                 * 字符串需要处理特殊字符.
+                 * fuzzyType只有字符串才会处理.
+                 */
+                if (StorageType.STRING == current.type()) {
+                    String strValue = SphinxQLHelper.filterSymbols(current.value().toString());
 
-                if (FieldConfig.FuzzyType.SEGMENTATION == field.config().getFuzzyType()
-                    || FieldConfig.FuzzyType.WILDCARD == field.config().getFuzzyType()) {
-                    /*
-                     * 硬编码字符串长度超过30的将只分词前30个字符.
-                     */
-                    String limitLenStrValue = strValue.length() > 30 ? strValue.substring(0, 31) : strValue;
+                    if (FieldConfig.FuzzyType.SEGMENTATION == field.config().getFuzzyType()
+                        || FieldConfig.FuzzyType.WILDCARD == field.config().getFuzzyType()) {
+                        /*
+                         * 硬编码字符串长度超过30的将只分词前30个字符.
+                         */
+                        String limitLenStrValue = strValue.length() > 30 ? strValue.substring(0, 31) : strValue;
 
-                    Tokenizer tokenizer = tokenizerFactory.getTokenizer(field);
-                    Iterator<String> words = tokenizer.tokenize(limitLenStrValue, Tokenizer.TokenizerMode.STORAGE);
-                    /*
-                     * 处理当前字段分词结果.
-                     */
-                    String word;
-                    while (words.hasNext()) {
+                        Tokenizer tokenizer = tokenizerFactory.getTokenizer(field);
+                        Iterator<String> words = tokenizer.tokenize(limitLenStrValue, Tokenizer.TokenizerMode.STORAGE);
+                        /*
+                         * 处理当前字段分词结果.
+                         */
+                        String word;
+                        while (words.hasNext()) {
+                            if (buff.length() > 0) {
+                                buff.append(' ');
+                            }
+                            word = words.next();
+                            buff.append(SphinxQLHelper.encodeFuzzyWord(shortStorageName, word));
+
+                            if (field.config().isCrossSearch()) {
+                                if (crossAttributes == null) {
+                                    crossAttributes = new ArrayList<>();
+                                }
+                                crossAttributes.add(new AbstractMap.SimpleEntry<>(field.name(), word));
+                            }
+                        }
                         if (buff.length() > 0) {
                             buff.append(' ');
                         }
-                        word = words.next();
-                        buff.append(SphinxQLHelper.encodeFuzzyWord(shortStorageName, word));
-
-                        if (field.config().isCrossSearch()) {
-                            crossAttributes.add(new AbstractMap.SimpleEntry<>(field.name(), word));
-                        }
                     }
+
+                    /*
+                     * 如果是多值,这里会忽略掉字段定位序号.
+                     * 1y2p0ijsilver32e8e5S0 1y2p0ijlavender32e8e5S1
+                     * 最终在储存时将会去除尾部的定位序号,变成如下.
+                     * 1y2p0ijsilver32e8e5S 1y2p0ijlavender32e8e5S
+                     */
                     if (buff.length() > 0) {
                         buff.append(' ');
                     }
+
+                    buff.append(shortStorageName.getPrefix())
+                        .append(strValue)
+                        .append(shortStorageName.getNoLocationSuffix());
+
+                    if (field.config().isCrossSearch()) {
+                        if (crossAttributes == null) {
+                            crossAttributes = new ArrayList<>();
+                        }
+                        crossAttributes.add(new AbstractMap.SimpleEntry<>(field.name(), strValue));
+                    }
+                } else {
+
+                    if (buff.length() > 0) {
+                        buff.append(' ');
+                    }
+
+                    String strValue = current.value().toString();
+                    strValue = SphinxQLHelper.filterSymbols(strValue);
+
+                    buff.append(shortStorageName.getPrefix())
+                        .append(strValue)
+                        .append(shortStorageName.getSuffix());
+
+                    if (field.config().isCrossSearch()) {
+                        if (crossAttributes == null) {
+                            crossAttributes = new ArrayList<>();
+                        }
+                        crossAttributes.add(new AbstractMap.SimpleEntry<>(field.name(), strValue));
+                    }
                 }
 
-                /*
-                 * 如果是多值,这里会忽略掉字段定位序号.
-                 * 1y2p0ijsilver32e8e5S0 1y2p0ijlavender32e8e5S1
-                 * 最终在储存时将会去除尾部的定位序号,变成如下.
-                 * 1y2p0ijsilver32e8e5S 1y2p0ijlavender32e8e5S
-                 */
-                if (buff.length() > 0) {
-                    buff.append(' ');
-                }
-
-                buff.append(shortStorageName.getPrefix())
-                    .append(strValue)
-                    .append(shortStorageName.getNoLocationSuffix());
-
-                if (field.config().isCrossSearch()) {
-                    crossAttributes.add(new AbstractMap.SimpleEntry<>(field.name(), strValue));
-                }
-            } else {
-
-                if (buff.length() > 0) {
-                    buff.append(' ');
-                }
-
-                String strValue = current.value().toString();
-                strValue = SphinxQLHelper.filterSymbols(strValue);
-
-                buff.append(shortStorageName.getPrefix())
-                    .append(strValue)
-                    .append(shortStorageName.getSuffix());
-
-                if (field.config().isCrossSearch()) {
-                    crossAttributes.add(new AbstractMap.SimpleEntry<>(field.name(), strValue));
-                }
+                current = current.next();
             }
 
-            current = current.next();
-        }
+            // 如果有需要跨元信息.
+            if (crossAttributes != null && !crossAttributes.isEmpty()) {
+                for (Map.Entry<String, String> attr : crossAttributes) {
+                    if (buff.length() > 0) {
+                        buff.append(' ');
+                    }
 
-        // 如果有需要跨元信息.
-        if (!crossAttributes.isEmpty()) {
-            for (Map.Entry<String, String> attr : crossAttributes) {
-                if (buff.length() > 0) {
-                    buff.append(' ');
+                    buff.append(attr.getKey())
+                        .append(attr.getValue())
+                        .append(attr.getKey());
                 }
-
-                buff.append(attr.getKey())
-                    .append(attr.getValue())
-                    .append(attr.getKey());
             }
+        } else {
+
+            // 元信息一定是字符串,同时没有分词等问题.
+            ShortStorageName shortStorageName = storageValue.shortStorageName();
+            if (storageValue.type() != StorageType.STRING) {
+                throw new IllegalArgumentException(
+                    String.format(
+                        "Fatal error: Wrong attachment physical storage type (%d - %s).", field.id(), field.name()));
+            }
+            buff.append(SphinxQLHelper.encodeAttachmentWord(shortStorageName, (String) storageValue.value()));
+
         }
 
         return buff.toString();

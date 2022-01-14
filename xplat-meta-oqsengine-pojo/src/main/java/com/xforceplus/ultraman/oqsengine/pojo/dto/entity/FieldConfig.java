@@ -26,14 +26,41 @@ public class FieldConfig implements Serializable {
          * 普通属性.
          */
         NORMAL(1),
+        /**
+         * 租户标识.
+         */
         TENANT_ID(2),
+        /**
+         * 租户编码.
+         */
         TENANT_CODE(3),
+        /**
+         * 创建时间.
+         */
         CREATE_TIME(4),
+        /**
+         * 更新时间.
+         */
         UPDATE_TIME(5),
+        /**
+         * 创建用户ID.
+         */
         CREATE_USER_ID(6),
+        /**
+         * 更新用户ID.
+         */
         UPDATE_USER_ID(7),
+        /**
+         * 创建用户名称.
+         */
         CREATE_USER_NAME(8),
+        /**
+         * 更新用户名称.
+         */
         UPDATE_USER_NAME(9),
+        /**
+         * 删除标识.
+         */
         DELETE_FLAG(10);
 
         private final int symbol;

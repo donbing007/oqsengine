@@ -1,8 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql;
 
-import com.alibaba.fastjson.JSONArray;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.xforceplus.ultraman.oqsengine.common.map.MapUtils;
 import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
+import com.xforceplus.ultraman.oqsengine.common.serializable.utils.JacksonDefaultMapper;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.AttachmentCondition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
@@ -53,6 +56,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 @ExtendWith({RedisContainer.class, ManticoreContainer.class})
 public class SphinxQLManticoreIndexStorageSelectTest {
 
+    private Collection<OriginalEntity> expectedDatas;
+
     /*
     使用的字段名和其id.
     l2-string 9223372036854775802
@@ -61,6 +66,7 @@ public class SphinxQLManticoreIndexStorageSelectTest {
     l2-dec 9223372036854775799
     l1-long 9223372036854775804
     l1-string 9223372036854775803
+    l1-dec 9223372036854775798
     l0-long 9223372036854775807
     l0-string 9223372036854775806
     l0-strings 9223372036854775805
@@ -105,12 +111,18 @@ public class SphinxQLManticoreIndexStorageSelectTest {
             .withSearchable(true)
             .withFuzzyType(FieldConfig.FuzzyType.WILDCARD)
             .withWildcardMinWidth(3).withWildcardMaxWidth(7).build()).build();
+    private IEntityField l1DecField = EntityField.Builder.anEntityField()
+        .withId(Long.MAX_VALUE - 9)
+        .withFieldType(FieldType.DECIMAL)
+        .withName("l1-dec")
+        .withConfig(FieldConfig.build().searchable(true)).build();
     private IEntityClass l1EntityClass = EntityClass.Builder.anEntityClass()
         .withId(Long.MAX_VALUE - 1)
         .withLevel(1)
         .withCode("l1")
         .withField(l1LongField)
         .withField(l1StringField)
+        .withField(l1DecField)
         .withFather(l0EntityClass)
         .build();
 
@@ -169,7 +181,7 @@ public class SphinxQLManticoreIndexStorageSelectTest {
      */
     @Test
     public void testSort() throws Exception {
-        // 预期的结果.
+        // 多个单值字段.
         List<EntityRef> expectRefs = Arrays.asList(
             EntityRef.Builder.anEntityRef()
                 .withId(9223372036854775807L).withOrderValue("100").withSecondOrderValue("-2388650104").build(),
@@ -214,7 +226,7 @@ public class SphinxQLManticoreIndexStorageSelectTest {
             Assertions.assertEquals(expectedRef.getSecondOrderValue(), ref.getSecondOrderValue());
         }
 
-
+        // 一个单值字段.
         expectRefs = Arrays.asList(
             EntityRef.Builder.anEntityRef()
                 .withId(9223372036854775807L).withOrderValue("100").build(),
@@ -297,6 +309,12 @@ public class SphinxQLManticoreIndexStorageSelectTest {
             Assertions.assertEquals(expectedRef.getId(), ref.getId());
             Assertions.assertEquals(expectedRef.getOrderValue(), ref.getOrderValue());
         }
+
+        // 多个多值字段.
+        config = SelectConfig.Builder.anSelectConfig()
+            .withSort(Sort.buildAscSort(l1DecField))
+            .withSecondarySort(Sort.buildAscSort(l2DecField))
+            .withPage(Page.newSinglePage(100)).build();
     }
 
     /**
@@ -327,7 +345,7 @@ public class SphinxQLManticoreIndexStorageSelectTest {
             .withDeleted(false)
             .withOp(OperationType.CREATE.getValue())
             .withAttributes(
-                Arrays.asList(
+                MapUtils.asMap(
                     l2TimeField.id() + "L",
                     LocalDateTime.of(1970, 1, 1, 0, 0, 0)
                         .atZone(ZoneId.of("Asia/Shanghai")).toInstant().toEpochMilli()
@@ -376,7 +394,7 @@ public class SphinxQLManticoreIndexStorageSelectTest {
                 .withDeleted(false)
                 .withOp(OperationType.CREATE.getValue())
                 .withAttributes(
-                    Arrays.asList(
+                    MapUtils.asMap(
                         l1StringField.id() + "S", "scan" + i
                     )
                 ).build());
@@ -390,7 +408,7 @@ public class SphinxQLManticoreIndexStorageSelectTest {
             .withDeleted(false)
             .withOp(OperationType.CREATE.getValue())
             .withAttributes(
-                Arrays.asList(
+                MapUtils.asMap(
                     l1StringField.id() + "S", "scan"
                 )
             ).build();
@@ -452,7 +470,7 @@ public class SphinxQLManticoreIndexStorageSelectTest {
             try {
                 refs = storage.select(c.conditions, c.entityClass, c.selectConfig);
             } catch (Exception ex) {
-                String msg = String.format("%s faild, message is %s.", c.description, ex.getMessage());
+                String msg = String.format("\"%s\" faild, message is %s.", c.description, ex.getMessage());
                 throw new Exception(msg, ex);
             }
 
@@ -462,17 +480,17 @@ public class SphinxQLManticoreIndexStorageSelectTest {
             }
             Arrays.sort(expectedIds);
             Assertions.assertEquals(
-                expectedIds.length, refs.size(), String.format("%s check length failed.", c.description));
+                expectedIds.length, refs.size(), String.format("\"%s\" check length failed.", c.description));
             for (EntityRef ref : refs) {
                 Assertions
                     .assertTrue(Arrays.binarySearch(expectedIds, ref.getId()) >= 0,
-                        String.format("%s validation failed to find expected %d.", c.description, ref.getId()));
+                        String.format("\"%s\" validation failed to find expected %d.", c.description, ref.getId()));
             }
 
             if (c.otherCheck != null) {
                 String r = (String) c.otherCheck.apply(new SelectResult(refs, c.selectConfig.getPage()));
                 if (r != null && r.length() > 0) {
-                    Assertions.fail(String.format("%s validation failed due to %s.", c.description, r));
+                    Assertions.fail(String.format("\"%s\" validation failed due to \"%s\".", c.description, r));
                 }
             }
         }
@@ -480,6 +498,101 @@ public class SphinxQLManticoreIndexStorageSelectTest {
 
     private Collection<Case> buildSelectCases() {
         return Arrays.asList(
+            new Case(
+                "eq dec or eq dec",
+                Conditions.buildEmtpyConditions()
+                    .addAnd(
+                        new Condition(
+                            l2EntityClass.field("l2-dec").get(),
+                            ConditionOperator.EQUALS,
+                            new DecimalValue(
+                                l2EntityClass.field("l2-dec").get(),
+                                new BigDecimal("16507.1689237975")
+                            )
+                        )
+                    ).addOr(
+                        new Condition(
+                            l2EntityClass.field("l2-dec").get(),
+                            ConditionOperator.EQUALS,
+                            new DecimalValue(
+                                l2EntityClass.field("l2-dec").get(),
+                                new BigDecimal("37574.3322308913")
+                            )
+                        )
+                    ),
+                l2EntityClass,
+                SelectConfig.Builder.anSelectConfig()
+                    .withPage(Page.newSinglePage(100)).build(),
+                new long[] {
+                    9223372036854775806L, 9223372036854775807L
+                }
+            ),
+            new Case(
+                ">= dec or =< dec",
+                Conditions.buildEmtpyConditions()
+                    .addAnd(
+                        new Condition(
+                            l2EntityClass.field("l1-dec").get(),
+                            ConditionOperator.GREATER_THAN_EQUALS,
+                            new DecimalValue(
+                                l2EntityClass.field("l1-dec").get(),
+                                new BigDecimal("847042.336188")
+                            )
+                        )
+                    ).addOr(
+                        new Condition(
+                            l2EntityClass.field("l2-dec").get(),
+                            ConditionOperator.LESS_THAN_EQUALS,
+                            new DecimalValue(
+                                l2EntityClass.field("l2-dec").get(),
+                                new BigDecimal("13354.0992034462")
+                            )
+                        )
+                    ),
+                l2EntityClass,
+                SelectConfig.Builder.anSelectConfig()
+                    .withPage(Page.newSinglePage(100)).build(),
+                new long[] {
+                    9223372036854775805L,
+                    9223372036854775804L,
+                    9223372036854775801L,
+                    9223372036854775798L,
+                }
+            ),
+            new Case(
+                "attahcment - (l1-long) 100",
+                Conditions.buildEmtpyConditions()
+                    .addAnd(
+                        new AttachmentCondition(
+                            l2EntityClass.field("l1-long").get(),
+                            true,
+                            "100"
+                        )
+                    ),
+                l2EntityClass,
+                SelectConfig.Builder.anSelectConfig()
+                    .withPage(Page.newSinglePage(100)).build(),
+                new long[] {
+                    9223372036854775807L
+                }
+            ),
+            new Case(
+                "attahcment - (l0-string) 方致远",
+                Conditions.buildEmtpyConditions()
+                    .addAnd(
+                        new AttachmentCondition(
+                            l2EntityClass.field("l0-string").get(),
+                            true,
+                            "方致远"
+                        )
+                    ),
+                l2EntityClass,
+                SelectConfig.Builder.anSelectConfig()
+                    .withPage(Page.newSinglePage(100)).build(),
+                new long[] {
+                    9223372036854775798L
+                }
+            ),
             new Case(
                 "all",
                 Conditions.buildEmtpyConditions(),
@@ -1236,7 +1349,9 @@ public class SphinxQLManticoreIndexStorageSelectTest {
     private void initData() throws Exception {
         Path path = Paths.get(ClassLoader.getSystemResource("OriginalEntityTestData.json").toURI());
         String value = new String(Files.readAllBytes(path), "utf8");
-        Collection<OriginalEntity> datas = JSONArray.parseArray(value, OriginalEntity.class);
+
+        Collection<OriginalEntity> datas = JacksonDefaultMapper.OBJECT_MAPPER.readValue(value,
+            new TypeReference<List<OriginalEntity>>() {});
         datas.stream().forEach(o -> {
             o.setEntityClass(l2EntityClass);
         });
@@ -1245,6 +1360,4 @@ public class SphinxQLManticoreIndexStorageSelectTest {
 
         this.expectedDatas = datas;
     }
-
-    private Collection<OriginalEntity> expectedDatas;
 }

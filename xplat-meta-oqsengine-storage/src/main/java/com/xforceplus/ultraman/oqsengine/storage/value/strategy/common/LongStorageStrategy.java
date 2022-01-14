@@ -29,8 +29,8 @@ public class LongStorageStrategy implements StorageStrategy {
     }
 
     @Override
-    public IValue toLogicValue(IEntityField field, StorageValue storageValue) {
-        return new LongValue(field, (Long) storageValue.value());
+    public IValue toLogicValue(IEntityField field, StorageValue storageValue, String attachemnt) {
+        return new LongValue(field, (Long) storageValue.value(), attachemnt);
     }
 
     @Override

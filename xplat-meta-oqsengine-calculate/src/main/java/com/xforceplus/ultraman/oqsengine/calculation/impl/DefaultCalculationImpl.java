@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.calculation.impl;
 import com.xforceplus.ultraman.oqsengine.calculation.Calculation;
 import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationContext;
 import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationScenarios;
+import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculationHint;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationException;
 import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFactory;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.CalculationLogic;
@@ -32,6 +33,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
@@ -55,16 +57,20 @@ import org.slf4j.LoggerFactory;
  */
 public class DefaultCalculationImpl implements Calculation {
 
-    /**
-     * 如果出现冲突,最大重试的次数.
+    /*
+    维护尝试上限.
      */
-    private static int MAX_REPLAY_NUMBER = 100;
-    /**
+    private static final int MAINTAINING_MAX_TRY_NUMBER = 10000;
+    /*
+    维护冲突后等待重试的毫秒.
+     */
+    private static final int MAINTAINING_TRY_WAIT_MS = 300;
+    /*
      * 每一个字段修改维护构造影响树的最大迭代次数.
      */
     private static int MAX_BUILD_INFUENCE_NUMBER = 1000;
 
-    final Logger logger = LoggerFactory.getLogger(DefaultCalculationImpl.class);
+    private final Logger logger = LoggerFactory.getLogger(DefaultCalculationImpl.class);
 
     @Timed(
         value = MetricsDefine.CALCULATION_LOGIC_DELAY_LATENCY_SECONDS,
@@ -112,6 +118,9 @@ public class DefaultCalculationImpl implements Calculation {
                 }
             } else {
 
+                // 计算没有结果,清理字段.
+                targetEntity.entityValue().remove(context.getFocusField());
+
                 if (logger.isDebugEnabled()) {
                     logger.debug("Instance {} field {} evaluates to {}.",
                         targetEntity.id(), field.name(), "NULL");
@@ -129,6 +138,44 @@ public class DefaultCalculationImpl implements Calculation {
     )
     @Override
     public void maintain(CalculationContext context) throws CalculationException {
+
+        /*
+        乐观的方式运行,达到最大尝试次数后将以事务失败收场.
+         */
+        CalculationContext userContext;
+        for (int i = 0; i < MAINTAINING_MAX_TRY_NUMBER; i++) {
+            try {
+                userContext = (CalculationContext) context.clone();
+            } catch (CloneNotSupportedException ex) {
+                throw new CalculationException(ex.getMessage(), ex);
+            }
+            if (doMaintain(userContext)) {
+
+                // 复制提示信息.
+                for (CalculationHint h : userContext.getHints()) {
+                    context.hint(h.getField(), h.getHint());
+                }
+
+                return;
+            } else {
+                if (logger.isWarnEnabled()) {
+                    logger.warn("Maintenance segments conflict, wait {} milliseconds and try again.",
+                        MAINTAINING_TRY_WAIT_MS);
+                }
+
+                LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(MAINTAINING_TRY_WAIT_MS));
+            }
+        }
+
+        throw new CalculationException("Conflicts are calculated and the attempt limit is reached. To give up!");
+    }
+
+    /**
+     * 维护.
+     *
+     * @param context 上下文.
+     */
+    private boolean doMaintain(CalculationContext context) throws CalculationException {
         // 保留当前引起维护的目标实例标识.
         long targetEntityId = context.getFocusEntity().id();
 
@@ -175,11 +222,13 @@ public class DefaultCalculationImpl implements Calculation {
 
                 long[] affectedEntityIds = null;
                 try {
-                    affectedEntityIds = logic.getMaintainTarget(context, participant,
-                        parentParticipant.get().getAffectedEntities());
+
+                    affectedEntityIds = logic.getMaintainTarget(
+                        context, participant, parentParticipant.get().getAffectedEntities());
+
                 } catch (CalculationException ex) {
                     processTimer(
-                        logic, sample, MetricsDefine.CALCULATION_LOGIC_DELAY_LATENCY_SECONDS, "getTarget", false);
+                        logic, sample, MetricsDefine.CALCULATION_LOGIC_DELAY_LATENCY_SECONDS, "getTarget", true);
                     throw ex;
                 }
 
@@ -218,10 +267,11 @@ public class DefaultCalculationImpl implements Calculation {
                                 affectedEntitiy.id(), participant.getField().name(), newValueOp.get().getValue());
                         }
 
-                        if (!oldValue.equals(newValue)) {
+                        if (!valueEquals(oldValue, newValue)) {
                             context.addValueChange(ValueChange.build(affectedEntitiy.id(), oldValue, newValue));
 
                             affectedEntitiy.entityValue().addValue(newValueOp.get());
+                            affectedEntitiy.dirty();
                         } else {
 
                             if (logger.isDebugEnabled()) {
@@ -246,15 +296,24 @@ public class DefaultCalculationImpl implements Calculation {
 
                 return InfuenceConsumer.Action.CONTINUE;
             });
-
-            persist(context, targetEntityId);
         }
+
+        return persist(context, targetEntityId);
+    }
+
+    private String buildKey(long id) {
+        return String.format("calcultion.affected.%d", id);
+    }
+
+    // 比较值是否相等.
+    private boolean valueEquals(IValue oldValue, IValue newValue) {
+        return Objects.equals(oldValue.getValue(), newValue.getValue());
     }
 
     /**
      * 持久化当前上下文缓存的实例. 持久化会造成和更新失败,失败策略如下. 1. 数据被删除,放弃. 2. 数据版本冲突,重试直到成功.(有上限)
      */
-    private void persist(CalculationContext context, long targetEntityId) throws CalculationException {
+    private boolean persist(CalculationContext context, long targetEntityId) throws CalculationException {
 
         Timer.Sample sample = Timer.start(Metrics.globalRegistry);
         try {
@@ -262,128 +321,75 @@ public class DefaultCalculationImpl implements Calculation {
             List<IEntity> entities = context.getEntitiesFormCache().stream().filter(e ->
                 // 过滤掉当前操作的实例.
                 e.id() != targetEntityId
-
-            ).collect(Collectors.toList());
+            ).filter(e -> e.isDirty()).collect(Collectors.toList());
 
             if (entities.isEmpty()) {
-                return;
+                return true;
             }
-
-            final int batchSize = 1000;
 
             MetaManager metaManager = context.getResourceWithEx(() -> context.getMetaManager());
 
-            EntityPackage entityPackage = new EntityPackage();
-            boolean persistResult;
+            EntityPackage entityPackage = null;
+            IEntity[] unsuccessfulEntities;
             for (int i = 0; i < entities.size(); i++) {
-                if (entityPackage.size() == batchSize) {
 
+                if (entityPackage == null) {
+                    entityPackage = new EntityPackage();
+                }
 
+                Optional<IEntityClass> entityClassOp = metaManager.load(entities.get(i).entityClassRef());
+                if (!entityClassOp.isPresent()) {
+                    throw new CalculationException(
+                        String.format("Not found entityClass.[%s]", entities.get(i).entityClassRef().getId()));
+                }
+                entityPackage.put(entities.get(i), entityClassOp.get());
+
+                if (entityPackage.isFull()) {
                     try {
-                        persistResult = doPersist(context, entityPackage);
+                        unsuccessfulEntities = doPersist(context, entityPackage);
                     } catch (SQLException ex) {
                         throw new CalculationException(ex.getMessage(), ex);
                     }
 
-                    if (!persistResult) {
-                        throw new CalculationException(
-                            "An error occurred during maintenance and the number of conflicts reached the upper limit. Procedure");
+                    // 没有成功,产生了冲突.有其他事务更新了目标.
+                    if (unsuccessfulEntities.length > 0) {
+                        return false;
                     }
-
-                    entityPackage = null;
-
-                } else {
-
-                    if (entityPackage == null) {
-                        entityPackage = new EntityPackage();
-                    }
-
-                    Optional<IEntityClass> entityClassOp = metaManager.load(entities.get(i).entityClassRef());
-                    if (!entityClassOp.isPresent()) {
-                        throw new CalculationException(
-                            String.format("Not found entityClass.[%s]", entities.get(i).entityClassRef().getId()));
-                    }
-                    entityPackage.put(entities.get(i), entityClassOp.get());
-
                 }
             }
 
+            // 剩余的.
             if (entityPackage != null && !entityPackage.isEmpty()) {
                 try {
-                    doPersist(context, entityPackage);
+                    unsuccessfulEntities = doPersist(context, entityPackage);
                 } catch (SQLException ex) {
                     throw new CalculationException(ex.getMessage(), ex);
                 }
+
+                if (unsuccessfulEntities.length > 0) {
+                    return false;
+                }
             }
+
         } finally {
             processTimer(
                 null, sample, MetricsDefine.CALCULATION_LOGIC_DELAY_LATENCY_SECONDS, "persist", false);
         }
+
+        return true;
     }
 
-    private boolean doPersist(CalculationContext context, EntityPackage entityPackage) throws SQLException {
+    /**
+     * TODO: 没有处理事务累加器,被动修改的对象现在不会出现在事务累加器中. by dongbin 2021/11/18
+     * 返回未成功的实例.
+     */
+    private IEntity[] doPersist(CalculationContext context, EntityPackage entityPackage) throws SQLException {
         MasterStorage masterStorage = context.getResourceWithEx(() -> context.getMasterStorage());
-        MetaManager metaManager = context.getResourceWithEx(() -> context.getMetaManager());
 
-        EntityPackage replayPackage = entityPackage;
-        for (int p = 0; p < MAX_REPLAY_NUMBER; p++) {
-
-            int[] results = masterStorage.replace(replayPackage);
-            EntityPackage finalReplayPackage = replayPackage;
-            long[] errEntityIds = IntStream.range(0, results.length)
-                .filter(i -> results[i] == 0)
-                .mapToLong(i -> finalReplayPackage.get(i).get().getKey().id()).toArray();
-
-            if (errEntityIds.length > 0) {
-
-                Collection<IEntity> replyEntityes = masterStorage.selectMultiple(errEntityIds);
-
-                if (replyEntityes.isEmpty()) {
-                    // 目标数据已经不存在,被其他事务删除,放弃操作.
-                    return true;
-                }
-
-                replyEntityes.forEach(e -> {
-                    IEntityClass entityClass = metaManager.load(e.entityClassRef()).get();
-                    for (IEntityField field : entityClass.fields()) {
-                        Optional<ValueChange> vcOp = context.getValueChange(e, field);
-
-                        if (!vcOp.isPresent()) {
-                            continue;
-                        } else {
-                            ValueChange vc = vcOp.get();
-                            Optional<IValue> valueOp = vc.getNewValue();
-                            if (!valueOp.isPresent()) {
-                                continue;
-                            }
-                            IValue newValue = valueOp.get();
-                            if (EmptyTypedValue.class.isInstance(newValue)) {
-                                e.entityValue().remove(field);
-                            } else {
-                                e.entityValue().addValue(newValue);
-                            }
-                        }
-                    }
-                });
-
-                if (logger.isDebugEnabled()) {
-                    logger.debug("Maintenance update instance conflict, wait 30 ms and try again.[{}/{}]",
-                        p + 1, MAX_REPLAY_NUMBER);
-                }
-
-                LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(30L));
-
-                replayPackage = new EntityPackage();
-                for (IEntity replyEntity : replyEntityes) {
-                    replayPackage.put(replyEntity, metaManager.load(replyEntity.entityClassRef()).get());
-                }
-
-            } else {
-                return true;
-            }
-        }
-
-        return false;
+        int[] results = masterStorage.replace(entityPackage);
+        return IntStream.range(0, results.length)
+            .filter(i -> results[i] <= 0)
+            .mapToObj(i -> entityPackage.get(i).get().getKey()).toArray(IEntity[]::new);
     }
 
     // 加载实体,缓存+储存.

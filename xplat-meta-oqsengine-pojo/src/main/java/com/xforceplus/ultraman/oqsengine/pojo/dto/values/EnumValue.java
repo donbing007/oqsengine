@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.values;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import java.util.Objects;
 
 /**
  * 枚举值.
@@ -16,6 +15,10 @@ public class EnumValue extends AbstractValue<String> {
         super(field, value);
     }
 
+    public EnumValue(IEntityField field, String value, String attachment) {
+        super(field, value, attachment);
+    }
+
     @Override
     String fromString(String value) {
         return value;
@@ -27,28 +30,7 @@ public class EnumValue extends AbstractValue<String> {
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hash(getField(), getValue());
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof EnumValue)) {
-            return false;
-        }
-
-        EnumValue that = (EnumValue) o;
-
-        return Objects.equals(getField(), that.getField()) && Objects.equals(this.getValue(), that.getValue());
-    }
-
-    @Override
-    public IValue<String> copy(IEntityField newField) {
-        checkType(newField);
-
-        return new EnumValue(newField, getValue());
+    protected IValue<String> doCopy(IEntityField newField, String attachment) {
+        return new EnumValue(newField, getValue(), attachment);
     }
 }

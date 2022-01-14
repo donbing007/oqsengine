@@ -25,11 +25,15 @@ import java.util.Map;
  * @since 1.8
  */
 public class SphinxQLHelper {
-
     /**
      * 标记这是一个支持模糊搜索的拆分词.
      */
     private static char FUZZY_WORD_FLAG = 'w';
+
+    /**
+     * 标记这是一个附件.
+     */
+    private static char ATTACHMENT_WORD_FLAG = 'a';
 
     /**
      * 半角空格不可过滤,只有全角空格需要过滤.
@@ -124,14 +128,28 @@ public class SphinxQLHelper {
      * @return 编码后的结果.
      */
     public static String encodeFuzzyWord(ShortStorageName shortStorageName, String word) {
-        StringBuilder buff = new StringBuilder();
+        return encodeWord(shortStorageName, word, FUZZY_WORD_FLAG);
+    }
 
-        buff.append(shortStorageName.getPrefix())
-            .append(word)
-            .append(FUZZY_WORD_FLAG)
-            .append(shortStorageName.getSuffix());
+    /**
+     * 编码附件的词.
+     *
+     * @param shortStorageName 字段短名称.
+     * @param word             词.
+     * @return 编码后的结果.
+     */
+    public static String encodeAttachmentWord(ShortStorageName shortStorageName, String word) {
+        return encodeWord(shortStorageName, word, ATTACHMENT_WORD_FLAG);
+    }
 
-        return buff.toString();
+    /**
+     * 构造附件条件查询.
+     *
+     * @param value 目标物理值.
+     * @return 结果.
+     */
+    public static String buildAttachemntQuery(StorageValue value) {
+        return encodeAttachmentWord(value.shortStorageName(), (String) value.value());
     }
 
     /**
@@ -260,5 +278,16 @@ public class SphinxQLHelper {
             }
         }
         return count;
+    }
+
+    private static String encodeWord(ShortStorageName shortStorageName, String word, char flag) {
+        StringBuilder buff = new StringBuilder();
+
+        buff.append(shortStorageName.getPrefix())
+            .append(word)
+            .append(flag)
+            .append(shortStorageName.getSuffix());
+
+        return buff.toString();
     }
 }

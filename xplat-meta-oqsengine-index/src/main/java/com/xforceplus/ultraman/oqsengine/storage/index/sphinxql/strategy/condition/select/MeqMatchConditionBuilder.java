@@ -8,7 +8,6 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLH
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.AbstractSphinxQLConditionBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
-import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 
 /**
  * in 查询的全文方式.
@@ -19,8 +18,8 @@ import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyF
  */
 public class MeqMatchConditionBuilder extends AbstractSphinxQLConditionBuilder {
 
-    public MeqMatchConditionBuilder(StorageStrategyFactory storageStrategyFactory, FieldType fieldType, boolean useGroupName) {
-        super(storageStrategyFactory, fieldType, ConditionOperator.MULTIPLE_EQUALS, true, useGroupName);
+    public MeqMatchConditionBuilder(FieldType fieldType, boolean useGroupName) {
+        super(fieldType, ConditionOperator.MULTIPLE_EQUALS, true, useGroupName);
     }
 
     @Override

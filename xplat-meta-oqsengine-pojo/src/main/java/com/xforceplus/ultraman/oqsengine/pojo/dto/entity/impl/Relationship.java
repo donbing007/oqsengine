@@ -102,8 +102,8 @@ public class Relationship {
     private IEntityField entityField;
 
     /*
-     * true 表示实际关系字段属于"左"对象.
-     * false 表示实际关系字段属于"右"对象.
+     * true 关系字段在当前对象中.
+     * false 关系字段不在当前对象中.
      */
     private boolean belongToOwner;
 

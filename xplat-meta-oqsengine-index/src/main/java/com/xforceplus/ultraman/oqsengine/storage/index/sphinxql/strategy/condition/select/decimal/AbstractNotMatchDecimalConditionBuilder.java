@@ -9,7 +9,6 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.SqlKeywor
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.AbstractSphinxQLConditionBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
-import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 
 /**
  * 非全文方式.
@@ -20,8 +19,8 @@ import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyF
  */
 public abstract class AbstractNotMatchDecimalConditionBuilder extends AbstractSphinxQLConditionBuilder {
 
-    public AbstractNotMatchDecimalConditionBuilder(StorageStrategyFactory storageStrategyFactory, ConditionOperator operator) {
-        super(storageStrategyFactory, FieldType.DECIMAL, operator, false);
+    public AbstractNotMatchDecimalConditionBuilder(ConditionOperator operator) {
+        super(FieldType.DECIMAL, operator, false);
     }
 
     public abstract ConditionOperator intOperator();

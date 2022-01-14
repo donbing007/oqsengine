@@ -98,9 +98,6 @@ public class SearchExecutor
             // 设置manticore的查询超时时间.
             st.setLong(4, getTimeoutMs());
 
-            // 设定本地超时时间.
-            checkTimeout(st);
-
             try (ResultSet rs = st.executeQuery()) {
                 List<EntityRef> refs = new ArrayList((int) page.getPageSize());
                 while (rs.next()) {
