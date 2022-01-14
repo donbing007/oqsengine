@@ -232,14 +232,12 @@ public class OqsResult<V> implements Serializable {
             return false;
         }
         OqsResult<?> result = (OqsResult<?>) o;
-        return getResultStatus() == result.getResultStatus() && Objects.equals(getValue(), result.getValue())
-            && Objects.equals(getHints(), result.getHints()) && Objects.equals(getMessage(),
-            result.getMessage());
+        return getResultStatus() == result.getResultStatus();
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getResultStatus(), getValue(), getHints(), getMessage());
+        return Objects.hash(getResultStatus());
     }
 
     @Override
