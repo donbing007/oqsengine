@@ -257,6 +257,15 @@ public class StorageMetaManager implements MetaManager {
 
     }
 
+    /**
+     * 显示当前oqs中所有正在使用的appId.
+     *
+     * @return appId列表.
+     */
+    public Map<String, String> showApplications() {
+        return cacheExecutor.showAppEnv();
+    }
+
     private void loadFromLocal(String path) {
         if (!path.endsWith(File.separator)) {
             path = path + File.separator;

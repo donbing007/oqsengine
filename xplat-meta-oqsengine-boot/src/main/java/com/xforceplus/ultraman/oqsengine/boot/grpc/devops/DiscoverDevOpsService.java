@@ -679,6 +679,22 @@ public class DiscoverDevOpsService {
         return null;
     }
 
+
+    /**
+     * 获取当前oqs下所有的app->env.
+     *
+     * @return app->env pairs.
+     */
+    @DiscoverAction(describe = "获取当前oqs下所有的app", retClass = Map.class)
+    public Map<String, String> showApplications() {
+        try {
+            return metaManager.showApplications();
+        } catch (Exception e) {
+            exceptionHandle("show applications exception.", e);
+        }
+        return null;
+    }
+
     private void exceptionHandle(String businessMessage, Exception e) {
         String error = String.format("%s, message : %s", businessMessage, e.getMessage());
         logger.warn(error);

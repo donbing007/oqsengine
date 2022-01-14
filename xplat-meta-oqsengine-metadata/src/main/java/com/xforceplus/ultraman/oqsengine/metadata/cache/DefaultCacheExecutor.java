@@ -778,7 +778,10 @@ public class DefaultCacheExecutor implements CacheExecutor {
         entityClassStorageCache.invalidateAll();
     }
 
-
+    @Override
+    public Map<String, String> showAppEnv() {
+        return syncCommands.hgetall(appEnvKeys);
+    }
 
     /**
      * 删除过期版本的EntityClass信息.
