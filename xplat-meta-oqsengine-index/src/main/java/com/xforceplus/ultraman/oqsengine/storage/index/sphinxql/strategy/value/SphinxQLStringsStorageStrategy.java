@@ -19,11 +19,11 @@ public class SphinxQLStringsStorageStrategy extends StringsStorageStrategy {
      *
      * @param storageName  物理储存名称.
      * @param storageValue 物理储存值.
-     * @param longStrFormat 在这个实现类中没有作用.
+     * @param attrF 在这个实现类中没有作用.
      * @return 物理储存实例.
      */
     @Override
-    public StorageValue convertIndexStorageValue(String storageName, Object storageValue, boolean attachment, boolean longStrFormat) {
+    public StorageValue convertIndexStorageValue(String storageName, Object storageValue, boolean attachment, boolean attrF) {
         return SphinxQLHelper.stringsStorageConvert(storageName, (String) storageValue, attachment);
     }
 }

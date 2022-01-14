@@ -103,7 +103,7 @@ public class SphinxQLDecimalStorageStrategy implements StorageStrategy {
      * 预期是一个浮点数的字符串.
      */
     @Override
-    public StorageValue convertIndexStorageValue(String storageName, Object storageValue, boolean attachment, boolean longStrFormat) {
+    public StorageValue convertIndexStorageValue(String storageName, Object storageValue, boolean attachment, boolean attrF) {
         String logicName = AnyStorageValue.getInstance(storageName).logicName();
         if (attachment) {
             return new AttachmentStorageValue(logicName, (String) storageValue, true);

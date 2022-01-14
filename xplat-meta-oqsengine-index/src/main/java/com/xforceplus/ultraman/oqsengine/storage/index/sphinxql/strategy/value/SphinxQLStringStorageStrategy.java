@@ -12,17 +12,27 @@ import com.xforceplus.ultraman.oqsengine.storage.value.strategy.common.StringSto
  */
 public class SphinxQLStringStorageStrategy extends StringStorageStrategy {
 
+    /**
+     * 通过离散的物理储存来构造本地的StorageValue.
+     *
+     * @param storageName  物理储存名称.
+     * @param storageValue 物理储存值.
+     * @param attrF 是否为attrF，默认会对attrF中非attachment、却长度 > MAX_WORLD_SPLIT_LENGTH 字节的String进行切割,比如:
+     *              假如MAX_WORLD_SPLIT_LENGTH长度为5，则AAAAAABBBBBBCCCC将会转为[AAAAA][ABBBB][BBCCC][C].
+     * @return 实例.
+     */
     @Override
-    public StorageValue convertIndexStorageValue(String storageName, Object storageValue, boolean attachment, boolean longStrFormat) {
+    public StorageValue convertIndexStorageValue(String storageName, Object storageValue, boolean attachment, boolean attrF) {
 
-        String sValue = (String) storageValue;
+        String stringValue = (String) storageValue;
 
-        if (!longStrFormat || sValue.length() <= SphinxQLHelper.MAX_WORLD_SPLIT_LENGTH) {
-            return new StringStorageValue(storageName, (String) storageValue, false);
+        if (attrF && stringValue.length() > SphinxQLHelper.MAX_WORLD_SPLIT_LENGTH) {
+            //  处理超出最大可搜索长度的的逻辑、字段将会被当成strings处理.
+            return SphinxQLHelper.stringsStorageConvert(
+                storageName, SphinxQLHelper.stringValueFormat(stringValue), attachment);
         }
 
-        //  处理超出最大可搜索长度的的逻辑、字段将会被当成strings处理.
-        return SphinxQLHelper.stringsStorageConvert(
-            storageName, SphinxQLHelper.stringValueFormat(sValue), attachment);
+        return super.convertIndexStorageValue(storageName, storageValue, attachment, attrF);
+
     }
 }

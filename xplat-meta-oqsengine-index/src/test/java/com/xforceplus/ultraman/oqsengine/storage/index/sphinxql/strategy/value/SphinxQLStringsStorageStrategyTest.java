@@ -18,19 +18,33 @@ public class SphinxQLStringsStorageStrategyTest {
      */
     @Test
     public void testConvert() throws Exception {
+        //  check一个普通字段
+        check("123S", "[teal][fuchsia][cyan]", new String[]{"teal", "fuchsia", "cyan"});
+
+        //  check一个包含超长字段的
+        check("123S",
+            "[aaaabbbbccccddddeeeeffffgggg!AAAABBBBCCCCDDDDEEEEFFFFGGGG!CDMA][fuchsia][cyan]",
+            new String[]{"aaaabbbbccccddddeeeeffffgggg!", "AAAABBBBCCCCDDDDEEEEFFFFGGGG!", "CDMA", "fuchsia", "cyan"});
+    }
+
+    private void check(String storageName, String value, String[] expectedValue) {
         SphinxQLStringsStorageStrategy storageStrategy = new SphinxQLStringsStorageStrategy();
         StorageValue storageValue = storageStrategy.convertIndexStorageValue(
-            "123S", "[teal][fuchsia][cyan]", false, false);
-        StorageValue firstStorageValue = storageValue;
-        StorageValue secondStorageValue = storageValue.next();
-        StorageValue thirdStorageValue = secondStorageValue.next();
+            storageName, value, false, false);
 
-        Assertions.assertEquals("teal", firstStorageValue.value());
-        Assertions.assertEquals("fuchsia", secondStorageValue.value());
-        Assertions.assertEquals("cyan", thirdStorageValue.value());
+        int i = 0;
+        while (true) {
+            Assertions.assertEquals(expectedValue[i], storageValue.value());
+            Assertions.assertEquals(i++, storageValue.location());
 
-        Assertions.assertEquals(0, firstStorageValue.location());
-        Assertions.assertEquals(1, secondStorageValue.location());
-        Assertions.assertEquals(2, thirdStorageValue.location());
+            if (storageValue.haveNext()) {
+                storageValue = storageValue.next();
+            } else {
+                break;
+            }
+        }
+
+        Assertions.assertEquals(i, expectedValue.length);
+
     }
 }

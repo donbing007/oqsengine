@@ -337,7 +337,7 @@ public class SphinxQLHelper {
         }
 
         StringBuilder buff = new StringBuilder();
-        StorageValue head = null;
+        StorageValue<String> head = null;
         int location = 0;
         boolean watch = false;
         for (int i = 0; i < originValue.length(); i++) {
@@ -350,13 +350,17 @@ public class SphinxQLHelper {
             if (END == point) {
                 watch = false;
 
-                StorageValue newStorageValue = new StringStorageValue(logicName, buff.toString(), true);
-                newStorageValue.locate(location++);
+                //  处理string超长时的逻辑，将会被按照最大长度进行切分
+                String[] values = longStringWrap(buff.toString());
+                for (String v : values) {
+                    StorageValue<String> newStorageValue = new StringStorageValue(logicName, v, true);
+                    newStorageValue.locate(location++);
 
-                if (head == null) {
-                    head = newStorageValue;
-                } else {
-                    head.stick(newStorageValue);
+                    if (head == null) {
+                        head = newStorageValue;
+                    } else {
+                        head.stick(newStorageValue);
+                    }
                 }
 
                 buff.delete(0, buff.length());
@@ -379,7 +383,7 @@ public class SphinxQLHelper {
      * @return 转换值, 是否分割为多值.
      */
     public static Tuple2<String, Boolean> stringConditionFormat(String word, ShortStorageName shortStorageName, boolean useGroupName) {
-        String[] values = longStringWrap(word, MAX_WORLD_SPLIT_LENGTH);
+        String[] values = longStringWrap(word);
 
         StringBuilder stringBuilder = new StringBuilder();
         boolean isFirst = true;
@@ -417,7 +421,7 @@ public class SphinxQLHelper {
      * 将超长字段拆分为固定格式, 比如ABC -> [A][B][C].
      */
     public static String stringValueFormat(String word) {
-        String[] values = longStringWrap(word, MAX_WORLD_SPLIT_LENGTH);
+        String[] values = longStringWrap(word);
 
         StringBuilder stringBuilder = new StringBuilder();
         for (String v : values) {
@@ -432,18 +436,17 @@ public class SphinxQLHelper {
      * 切割一个长字符串, 按照传入的长度.
      *
      * @param word 字符串.
-     * @param length 字符串最大允许长度.
      * @return 切割后的字符串数组.
      */
-    private static String[] longStringWrap(String word, int length) {
-        int fullSize = word.length() / length;
-        if (0 != word.length() % length) {
+    private static String[] longStringWrap(String word) {
+        int fullSize = word.length() / MAX_WORLD_SPLIT_LENGTH;
+        if (0 != word.length() % MAX_WORLD_SPLIT_LENGTH) {
             fullSize += 1;
         }
 
         String[] res = new String[fullSize];
         for (int index = 0; index < fullSize; index++) {
-            res[index] = substring(word, index * length, (index + 1) * length);
+            res[index] = substring(word, index * MAX_WORLD_SPLIT_LENGTH, (index + 1) * MAX_WORLD_SPLIT_LENGTH);
         }
 
         return res;
