@@ -99,50 +99,6 @@ public class SphinxQLConditionQueryBuilderFactory implements TokenizerFactoryAbl
             new LtEqNotMatchDecimalConditionBuilder()
         );
 
-        // in meq
-        builders.put(
-            buildNormalKey(FieldType.LONG, ConditionOperator.MULTIPLE_EQUALS, true, false),
-            new MeqMatchConditionBuilder(FieldType.LONG, false)
-        );
-        builders.put(
-            buildNormalKey(FieldType.STRING, ConditionOperator.MULTIPLE_EQUALS, true, false),
-            new MeqMatchConditionBuilder(FieldType.STRING, false)
-        );
-        builders.put(
-            buildNormalKey(FieldType.BOOLEAN, ConditionOperator.MULTIPLE_EQUALS, true, false),
-            new MeqMatchConditionBuilder(FieldType.BOOLEAN, false)
-        );
-        builders.put(
-            buildNormalKey(FieldType.ENUM, ConditionOperator.MULTIPLE_EQUALS, true, false),
-            new MeqMatchConditionBuilder(FieldType.ENUM, false)
-        );
-        builders.put(
-            buildNormalKey(FieldType.ENUM, ConditionOperator.MULTIPLE_EQUALS, true, false),
-            new MeqMatchConditionBuilder(FieldType.DATETIME, false)
-        );
-
-        // in no meq
-        builders.put(
-            buildNormalKey(FieldType.LONG, ConditionOperator.MULTIPLE_EQUALS, false, true),
-            new MeqNotMatchConditionBuilder(FieldType.LONG)
-        );
-        builders.put(
-            buildNormalKey(FieldType.LONG, ConditionOperator.MULTIPLE_EQUALS, false, true),
-            new MeqNotMatchConditionBuilder(FieldType.STRING)
-        );
-        builders.put(
-            buildNormalKey(FieldType.LONG, ConditionOperator.MULTIPLE_EQUALS, false, true),
-            new MeqNotMatchConditionBuilder(FieldType.ENUM)
-        );
-        builders.put(
-            buildNormalKey(FieldType.LONG, ConditionOperator.MULTIPLE_EQUALS, false, true),
-            new MeqNotMatchConditionBuilder(FieldType.BOOLEAN)
-        );
-        builders.put(
-            buildNormalKey(FieldType.LONG, ConditionOperator.MULTIPLE_EQUALS, false, true),
-            new MeqNotMatchConditionBuilder(FieldType.DATETIME)
-        );
-
         // strings
         builders.put(
             buildNormalKey(FieldType.STRINGS, ConditionOperator.EQUALS, true, false),
@@ -243,10 +199,24 @@ public class SphinxQLConditionQueryBuilderFactory implements TokenizerFactoryAbl
             builder = builders.computeIfAbsent(key, k -> {
                 AbstractSphinxQLConditionBuilder b;
                 if (match) {
-                    b = new MatchConditionBuilder(condition.getField().type(), condition.getOperator(), false);
+
+                    if (ConditionOperator.MULTIPLE_EQUALS == condition.getOperator()) {
+
+                        b = new MeqMatchConditionBuilder(condition.getField().type(), false);
+
+                    } else {
+                        b = new MatchConditionBuilder(condition.getField().type(), condition.getOperator(), false);
+                    }
+
                 } else {
 
-                    b = new NotMatchConditionBuilder(condition.getField().type(), condition.getOperator());
+                    if (ConditionOperator.MULTIPLE_EQUALS == condition.getOperator()) {
+
+                        b = new MeqNotMatchConditionBuilder(condition.getField().type());
+
+                    } else {
+                        b = new NotMatchConditionBuilder(condition.getField().type(), condition.getOperator());
+                    }
                 }
 
                 if (TokenizerFactoryAble.class.isInstance(b)) {

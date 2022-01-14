@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.xforceplus.ultraman.oqsengine.common.map.MapUtils;
 import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.common.serializable.utils.JacksonDefaultMapper;
+import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.AttachmentCondition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
@@ -23,7 +24,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
-import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.mock.IndexInitialization;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
@@ -75,17 +75,17 @@ public class SphinxQLManticoreIndexStorageSelectTest {
 
     //-------------level 0--------------------
     private IEntityField l0LongField = EntityField.Builder.anEntityField()
-        .withId(Long.MAX_VALUE)
+        .withId(9223372036854775807L)
         .withFieldType(FieldType.LONG)
         .withName("l0-long")
         .withConfig(FieldConfig.build().searchable(true)).build();
     private IEntityField l0StringField = EntityField.Builder.anEntityField()
-        .withId(Long.MAX_VALUE - 1)
+        .withId(9223372036854775806L)
         .withFieldType(FieldType.STRING)
         .withName("l0-string")
         .withConfig(FieldConfig.build().searchable(true).fuzzyType(FieldConfig.FuzzyType.SEGMENTATION)).build();
     private IEntityField l0StringsField = EntityField.Builder.anEntityField()
-        .withId(Long.MAX_VALUE - 2)
+        .withId(9223372036854775805L)
         .withFieldType(FieldType.STRINGS)
         .withName("l0-strings")
         .withConfig(FieldConfig.build().searchable(true)).build();
@@ -100,12 +100,12 @@ public class SphinxQLManticoreIndexStorageSelectTest {
 
     //-------------level 1--------------------
     private IEntityField l1LongField = EntityField.Builder.anEntityField()
-        .withId(Long.MAX_VALUE - 3)
+        .withId(9223372036854775804L)
         .withFieldType(FieldType.LONG)
         .withName("l1-long")
         .withConfig(FieldConfig.build().searchable(true)).build();
     private IEntityField l1StringField = EntityField.Builder.anEntityField()
-        .withId(Long.MAX_VALUE - 4)
+        .withId(9223372036854775803L)
         .withFieldType(FieldType.STRING)
         .withName("l1-string")
         .withConfig(FieldConfig.Builder.anFieldConfig()
@@ -113,7 +113,7 @@ public class SphinxQLManticoreIndexStorageSelectTest {
             .withFuzzyType(FieldConfig.FuzzyType.WILDCARD)
             .withWildcardMinWidth(3).withWildcardMaxWidth(7).build()).build();
     private IEntityField l1DecField = EntityField.Builder.anEntityField()
-        .withId(Long.MAX_VALUE - 9)
+        .withId(9223372036854775803L)
         .withFieldType(FieldType.DECIMAL)
         .withName("l1-dec")
         .withConfig(FieldConfig.build().searchable(true)).build();
@@ -129,27 +129,27 @@ public class SphinxQLManticoreIndexStorageSelectTest {
 
     //-------------level 2--------------------
     private IEntityField l2StringField = EntityField.Builder.anEntityField()
-        .withId(Long.MAX_VALUE - 5)
+        .withId(9223372036854775802L)
         .withFieldType(FieldType.STRING)
         .withName("l2-string")
         .withConfig(FieldConfig.build().searchable(true)).build();
     private IEntityField l2TimeField = EntityField.Builder.anEntityField()
-        .withId(Long.MAX_VALUE - 6)
+        .withId(9223372036854775801L)
         .withFieldType(FieldType.DATETIME)
         .withName("l2-time")
         .withConfig(FieldConfig.build().searchable(true)).build();
     private IEntityField l2EnumField = EntityField.Builder.anEntityField()
-        .withId(Long.MAX_VALUE - 7)
+        .withId(9223372036854775800L)
         .withFieldType(FieldType.ENUM)
         .withName("l2-enum")
         .withConfig(FieldConfig.build().searchable(true)).build();
     private IEntityField l2DecField = EntityField.Builder.anEntityField()
-        .withId(Long.MAX_VALUE - 8)
+        .withId(9223372036854775799L)
         .withFieldType(FieldType.DECIMAL)
         .withName("l2-dec")
         .withConfig(FieldConfig.build().searchable(true)).build();
     private IEntityField l2NullField = EntityField.Builder.anEntityField()
-        .withId(Long.MAX_VALUE - 9)
+        .withId(9223372036854775797L)
         .withFieldType(FieldType.LONG)
         .withName("l2-null")
         .withConfig(FieldConfig.build().searchable(true)).build();
@@ -506,7 +506,8 @@ public class SphinxQLManticoreIndexStorageSelectTest {
                         new Condition(
                             l2EntityClass.field("l2-string").get(),
                             ConditionOperator.EQUALS,
-                            new StringValue(l2EntityClass.field("l2-string").get(), "ABCDEFGHIJKLMNOPQRSTUVWXYZXXXYYYTTT")
+                            new StringValue(l2EntityClass.field("l2-string").get(),
+                                "ABCDEFGHIJKLMNOPQRSTUVWXYZXXXYYYTTT")
                         )
                     ),
                 l2EntityClass,
@@ -523,7 +524,8 @@ public class SphinxQLManticoreIndexStorageSelectTest {
                         new Condition(
                             l2EntityClass.field("l2-string").get(),
                             ConditionOperator.NOT_EQUALS,
-                            new StringValue(l2EntityClass.field("l2-string").get(), "ABCDEFGHIJKLMNOPQRSTUVWXYZXXXYYYTTT")
+                            new StringValue(l2EntityClass.field("l2-string").get(),
+                                "ABCDEFGHIJKLMNOPQRSTUVWXYZXXXYYYTTT")
                         )
                     ),
                 l2EntityClass,
@@ -541,7 +543,8 @@ public class SphinxQLManticoreIndexStorageSelectTest {
                     .addAnd(new Condition(
                         l2EntityClass.field("l0-strings").get(),
                         ConditionOperator.EQUALS,
-                        new StringsValue(l2EntityClass.field("l0-strings").get(), "blueSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS")
+                        new StringsValue(l2EntityClass.field("l0-strings").get(),
+                            "blueSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS")
                     )),
                 l2EntityClass,
                 SelectConfig.Builder.anSelectConfig()
@@ -558,7 +561,8 @@ public class SphinxQLManticoreIndexStorageSelectTest {
                     .addAnd(new Condition(
                         l2EntityClass.field("l0-strings").get(),
                         ConditionOperator.MULTIPLE_EQUALS,
-                        new StringsValue(l2EntityClass.field("l0-strings").get(), "blueSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS"),
+                        new StringsValue(l2EntityClass.field("l0-strings").get(),
+                            "blueSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS"),
                         new StringsValue(l2EntityClass.field("l0-strings").get(), "fuchsia")
                     )),
                 l2EntityClass,
@@ -576,7 +580,8 @@ public class SphinxQLManticoreIndexStorageSelectTest {
                     .addAnd(new Condition(
                         l2EntityClass.field("l0-strings").get(),
                         ConditionOperator.NOT_EQUALS,
-                        new StringsValue(l2EntityClass.field("l0-strings").get(), "blueSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS")
+                        new StringsValue(l2EntityClass.field("l0-strings").get(),
+                            "blueSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS")
                     )),
                 l2EntityClass,
                 SelectConfig.Builder.anSelectConfig()
