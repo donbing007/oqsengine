@@ -30,6 +30,7 @@ import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.core.service.TransactionManagementService;
+import com.xforceplus.ultraman.oqsengine.core.service.pojo.OqsResult;
 import com.xforceplus.ultraman.oqsengine.core.service.pojo.ServiceSelectConfig;
 import com.xforceplus.ultraman.oqsengine.event.EventType;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
@@ -402,11 +403,11 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                  */
                 autoFillLookUp(entity, entityClass);
 
-                com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult operationResult =
+                OqsResult oqsResult =
                     entityManagementService.build(entity);
-                long txId = operationResult.getTxId();
-                long version = operationResult.getVersion();
-                ResultStatus createStatus = operationResult.getResultStatus();
+                long txId = 0;
+                long version = 0;
+                ResultStatus createStatus = oqsResult.getResultStatus();
 
                 if (createStatus == null) {
                     result = OperationResult.newBuilder()
@@ -428,7 +429,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                                 .buildPartial();
                             break;
                         case HALF_SUCCESS:
-                            Map<String, String> failedMap = hintsToFails(operationResult.getHints());
+                            Map<String, String> failedMap = hintsToFails(oqsResult.getHints());
                             String failedValues = "";
                             try {
                                 failedValues = mapper.writeValueAsString(failedMap);
@@ -452,7 +453,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                                 .setAffectedRow(0)
                                 .setCode(OperationResult.Code.FAILED)
                                 .setOriginStatus(createStatus.name())
-                                .setMessage(operationResult.getMessage())
+                                .setMessage(oqsResult.getMessage())
                                 .buildPartial();
                             break;
                         default:
@@ -578,8 +579,10 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
             try {
                 List<IEntity> entityList = toEntity(entityClassRef, entityClass, in);
-                com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult[] operationResultList =
-                    entityManagementService.build(entityList.toArray(new IEntity[] {}));
+                OqsResult[] oqsResultList =
+                    new OqsResult[] {
+                        entityManagementService.build(entityList.toArray(new IEntity[] {}))
+                    };
 
                 AtomicInteger successCount = new AtomicInteger(0);
                 AtomicInteger halfSuccessCount = new AtomicInteger(0);
@@ -587,9 +590,9 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 List<Map<String, String>> failedMapList = new ArrayList<>();
                 List<String> failedString = new ArrayList<>();
 
-                Arrays.stream(operationResultList).forEach(operationResult -> {
-                    long txId = operationResult.getTxId();
-                    long version = operationResult.getVersion();
+                Arrays.stream(oqsResultList).forEach(operationResult -> {
+                    long txId = 0;
+                    long version = 0;
                     ResultStatus createStatus = operationResult.getResultStatus();
 
                     if (createStatus == null) {
@@ -724,11 +727,11 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 }
 
                 //side effect
-                com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult operationResult =
+                OqsResult oqsResult =
                     entityManagementService.replace(entity);
-                long txId = operationResult.getTxId();
-                int version = operationResult.getVersion();
-                ResultStatus replaceStatus = operationResult.getResultStatus();
+                long txId = 0;
+                int version = 0;
+                ResultStatus replaceStatus = oqsResult.getResultStatus();
 
 
                 if (replaceStatus == null) {
@@ -752,7 +755,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                                 .buildPartial();
                             break;
                         case HALF_SUCCESS:
-                            Map<String, String> failedMap = hintsToFails(operationResult.getHints());
+                            Map<String, String> failedMap = hintsToFails(oqsResult.getHints());
                             String failedValues = "";
                             try {
                                 failedValues = mapper.writeValueAsString(failedMap);
@@ -795,7 +798,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                                 .setAffectedRow(0)
                                 .setCode(OperationResult.Code.FAILED)
                                 .setOriginStatus(replaceStatus.name())
-                                .setMessage(operationResult.getMessage())
+                                .setMessage(oqsResult.getMessage())
                                 .buildPartial();
                             break;
                         default:
@@ -898,8 +901,9 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
                     //side effect
                     try {
-                        com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult[] replace =
-                            entityManagementService.replace(entities);
+                        OqsResult[] replace =
+                            new OqsResult[]
+                                {entityManagementService.replace(entities)};
 
                         Arrays.stream(replace).forEach(operationResult -> {
                             ResultStatus replaceStatus = operationResult.getResultStatus();
@@ -1064,7 +1068,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     }
                 }
 
-                Collection<IEntity> entities =
+                OqsResult<Collection<IEntity>> entities =
                     entitySearchService
                         .selectByConditions(consOp.orElseGet(Conditions::buildEmtpyConditions), entityClassRef,
                             serviceSelectConfigBuilder.build());
@@ -1072,9 +1076,9 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 //----------------------------
                 AtomicInteger affected = new AtomicInteger(0);
                 Optional<String> mode = metadata.getText("mode");
-                if (!entities.isEmpty()) {
+                if (!entities.getValue().get().isEmpty()) {
 
-                    entities.forEach(entityResult -> {
+                    entities.getValue().get().forEach(entityResult -> {
 
                         IEntity entity = toEntity(entityClassRef, entityClass, in.getEntity());
                         if (mode.filter("replace"::equals).isPresent()) {
@@ -1163,11 +1167,11 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     Entity.Builder.anEntity().withId(in.getObjId()).withEntityClassRef(entityClassRef).build();
 
                 if (!Boolean.parseBoolean(force)) {
-                    com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult operationResult =
+                    OqsResult oqsResult =
                         entityManagementService.delete(targetEntity);
-                    long txId = operationResult.getTxId();
-                    long version = operationResult.getVersion();
-                    ResultStatus deleteStatus = operationResult.getResultStatus();
+                    long txId = 0;
+                    long version = 0;
+                    ResultStatus deleteStatus = oqsResult.getResultStatus();
                     if (deleteStatus == null) {
                         result = OperationResult.newBuilder()
                             .setAffectedRow(0)
@@ -1217,11 +1221,11 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                         }
                     }
                 } else {
-                    com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult operationResult =
+                    OqsResult oqsResult =
                         entityManagementService.deleteForce(targetEntity);
-                    long txId = operationResult.getTxId();
-                    long version = operationResult.getVersion();
-                    ResultStatus deleteStatus = operationResult.getResultStatus();
+                    long txId = 0;
+                    long version = 0;
+                    ResultStatus deleteStatus = oqsResult.getResultStatus();
                     if (deleteStatus == null) {
                         result = OperationResult.newBuilder()
                             .setAffectedRow(0)
@@ -1338,10 +1342,12 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
             try {
                 if (!Boolean.parseBoolean(force)) {
-                    com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult[] operationResultList =
-                        entityManagementService.delete(entityList);
+                    OqsResult[] oqsResultList =
+                        new OqsResult[] {
+                            entityManagementService.delete(entityList)
+                        };
 
-                    Arrays.stream(operationResultList).forEach(operationResult -> {
+                    Arrays.stream(oqsResultList).forEach(operationResult -> {
                         ResultStatus deleteStatus = operationResult.getResultStatus();
                         if (deleteStatus == null) {
                             failedCount.getAndIncrement();
@@ -1368,10 +1374,10 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     });
                 } else {
 
-                    com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult[] operationResultList =
-                        entityManagementService.deleteForce(entityList);
+                    OqsResult[] oqsResultList =
+                        new OqsResult[] {entityManagementService.deleteForce(entityList)};
 
-                    Arrays.stream(operationResultList).forEach(operationResult -> {
+                    Arrays.stream(oqsResultList).forEach(operationResult -> {
                         ResultStatus deleteStatus = operationResult.getResultStatus();
                         if (deleteStatus == null) {
                             failedCount.getAndIncrement();
@@ -1456,9 +1462,9 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
             try {
 
-                Optional<IEntity> ds = entitySearchService.selectOne(in.getObjId(), entityClassRef);
+                OqsResult<IEntity> ds = entitySearchService.selectOne(in.getObjId(), entityClassRef);
 
-                result = ds.map(entity -> OperationResult
+                result = ds.getValue().map(entity -> OperationResult
                     .newBuilder()
                     .setCode(OperationResult.Code.OK)
                     .addQueryResult(toEntityUp(entity))
@@ -1626,13 +1632,13 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 Optional<Conditions> consOp = toConditions(
                     entityClass, in.getConditions(), in.getIdsList(), metaManager);
 
-                Collection<IEntity> entities = null;
-                entities =
+                OqsResult<Collection<IEntity>> entities =
                     entitySearchService
                         .selectByConditions(consOp.orElseGet(Conditions::buildEmtpyConditions), entityClassRef,
                             serviceSelectConfigBuilder.build());
 
-                Collection<IEntity> retCollections = simplify(metadata, entities, in.getQueryFieldsList());
+                Collection<IEntity> retCollections = simplify(
+                    metadata, entities.getValue().get(), in.getQueryFieldsList());
 
                 result = OperationResult.newBuilder()
                     .setCode(OperationResult.Code.OK)
@@ -1770,7 +1776,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             OperationResult result;
             try {
 
-                Collection<IEntity> entities = null;
+                OqsResult<Collection<IEntity>> entities = null;
 
                 int pageNo = in.getRange().getPageIndex();
                 int pageSize = in.getRange().getPageSize();
@@ -1817,11 +1823,11 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
                 result = OperationResult.newBuilder()
                     .setCode(OperationResult.Code.OK)
-                    .addAllQueryResult(Optional.ofNullable(entities).orElseGet(Collections::emptyList)
+                    .addAllQueryResult(Optional.ofNullable(entities.getValue().get()).orElseGet(Collections::emptyList)
                         .stream().filter(Objects::nonNull)
                         .map(EntityClassHelper::toEntityUp).collect(Collectors.toList()))
                     .setTotalRow(page == null || !page.isReady()
-                        ? Optional.ofNullable(entities).orElseGet(Collections::emptyList).size()
+                        ? Optional.ofNullable(entities.getValue().get()).orElseGet(Collections::emptyList).size()
                         : Long.valueOf(page.getTotalCount()).intValue())
                     .buildPartial();
 
