@@ -157,4 +157,9 @@ public interface CacheExecutor {
      * 查询同步日志.
      */
     Map<String, String> getSyncLog();
+
+    /**
+     * 展示当前Redis中所有AppId-Env.
+     */
+    Map<String, String> showAppEnv();
 }

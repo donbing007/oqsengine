@@ -257,6 +257,11 @@ public class StorageMetaManager implements MetaManager {
 
     }
 
+    @Override
+    public Map<String, String> showApplications() {
+        return cacheExecutor.showAppEnv();
+    }
+
     private void loadFromLocal(String path) {
         if (!path.endsWith(File.separator)) {
             path = path + File.separator;

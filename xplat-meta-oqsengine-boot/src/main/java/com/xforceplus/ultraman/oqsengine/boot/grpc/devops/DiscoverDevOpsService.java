@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.boot.grpc.devops;
 import com.xforceplus.ultraman.devops.service.common.exception.DiscoverClientException;
 import com.xforceplus.ultraman.devops.service.sdk.annotation.DiscoverAction;
 import com.xforceplus.ultraman.devops.service.sdk.annotation.MethodParam;
+import com.xforceplus.ultraman.oqsengine.boot.grpc.utils.PrintErrorHelper;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.condition.CdcErrorQueryCondition;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.dto.ErrorType;
 import com.xforceplus.ultraman.oqsengine.core.service.DevOpsManagementService;
@@ -29,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -420,6 +422,22 @@ public class DiscoverDevOpsService {
             exceptionHandle("get un-ready commits exception", e);
         }
         return ids;
+    }
+
+
+    /**
+     * 获取当前oqs下所有的app->env.
+     *
+     * @return app->env pairs.
+     */
+    @DiscoverAction(describe = "获取当前oqs下所有的app", retClass = Map.class)
+    public Map<String, String> showApplications() {
+        try {
+            return metaManager.showApplications();
+        } catch (Exception e) {
+            exceptionHandle("show applications exception.", e);
+        }
+        return null;
     }
 
 
