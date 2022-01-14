@@ -67,13 +67,22 @@ public interface CalculationContext {
 
     /**
      * 标识开始维护.
+     *
+     * @param triggerEntity 维护的触发者.
      */
-    void startMaintenance();
+    void startMaintenance(IEntity triggerEntity);
 
     /**
      * 标识结束维护.
      */
     void stopMaintenance();
+
+    /**
+     * 获取当前维护的触发实例.
+     *
+     * @return 触发实例.
+     */
+    Optional<IEntity> getMaintenanceTriggerEntity();
 
     /**
      * 设置造成一切源头的实例.

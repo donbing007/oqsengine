@@ -2,11 +2,11 @@ package com.xforceplus.ultraman.oqsengine.calculation.logic.lookup;
 
 import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationContext;
 import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationScenarios;
+import com.xforceplus.ultraman.oqsengine.calculation.dto.AffectedInfo;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationException;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.CalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.task.LookupMaintainingTask;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.utils.LookupEntityRefIterator;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.AbstractParticipant;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.CalculationParticipant;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
@@ -25,9 +25,11 @@ import com.xforceplus.ultraman.oqsengine.task.TaskCoordinator;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -138,13 +140,13 @@ public class LookupCalculationLogic implements CalculationLogic {
      * 所以只会处于影响树的第二层,第一层为触发源.
      */
     @Override
-    public long[] getMaintainTarget(CalculationContext context, Participant abstractParticipant,
-                                    Collection<IEntity> triggerEntities)
+    public Collection<AffectedInfo> getMaintainTarget(
+        CalculationContext context, Participant abstractParticipant, Collection<IEntity> triggerEntities)
         throws CalculationException {
 
         Optional attachmentOp = abstractParticipant.getAttachment();
         if (!attachmentOp.isPresent()) {
-            return new long[0];
+            return Collections.emptyList();
         } else {
 
             // 判断是否为强关系,只有强关系才会在当前事务进行部份更新.
@@ -168,7 +170,7 @@ public class LookupCalculationLogic implements CalculationLogic {
 
                 addAfterCommitTask(context, lookupMaintainingTask);
 
-                return new long[0];
+                return Collections.emptyList();
 
             } else {
 
@@ -187,7 +189,11 @@ public class LookupCalculationLogic implements CalculationLogic {
                 while (refIter.hasNext()) {
                     refs.add(refIter.next());
                 }
-                long[] ids = refs.stream().mapToLong(r -> r.getId()).toArray();
+
+                List<AffectedInfo> affectedInfos =
+                    refs.stream()
+                        .map(r -> new AffectedInfo(context.getFocusEntity(), r.getId()))
+                        .collect(Collectors.toList());
 
                 if (refIter.more()) {
                     LookupMaintainingTask lookupMaintainingTask =
@@ -198,13 +204,14 @@ public class LookupCalculationLogic implements CalculationLogic {
                                 ((Lookup) abstractParticipant.getField().config().getCalculation()).getFieldId())
                             .withLookupClassRef(abstractParticipant.getEntityClass().ref())
                             .withLookupFieldId(abstractParticipant.getField().id())
-                            .withLastStartLookupEntityId(ids[ids.length - 1])
+                            .withLastStartLookupEntityId(
+                                affectedInfos.get(affectedInfos.size() - 1).getAffectedEntityId())
                             .withMaxSize(TASK_LIMIT_NUMBER)
                             .build();
                     addAfterCommitTask(context, lookupMaintainingTask);
                 }
 
-                return ids;
+                return affectedInfos;
             }
         }
     }

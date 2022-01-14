@@ -44,10 +44,9 @@ import java.util.stream.Collectors;
  */
 public class DefaultCalculationContext implements CalculationContext {
 
-    private long lockTimeoutMs;
     private IEntity sourceEntity;
-    private boolean maintenance;
     private IEntity focusEntity;
+    private IEntity maintenanceEntity;
     private IEntityClass focusEntityClass;
     private IEntityField focusField;
     private CalculationScenarios scenarios;
@@ -68,6 +67,8 @@ public class DefaultCalculationContext implements CalculationContext {
     // key为 entityId-fieldId的组合.
     private Map<String, ValueChange> valueChanges;
     private Set<Long> lockedEnittyIds;
+    private boolean maintenance;
+    private long lockTimeoutMs;
 
     @Override
     public CalculationScenarios getScenariso() {
@@ -130,13 +131,22 @@ public class DefaultCalculationContext implements CalculationContext {
     }
 
     @Override
-    public void startMaintenance() {
+    public void startMaintenance(IEntity triggerEntity) {
         this.maintenance = true;
+
+        this.maintenanceEntity = triggerEntity;
     }
 
     @Override
     public void stopMaintenance() {
         this.maintenance = false;
+
+        this.maintenanceEntity = null;
+    }
+
+    @Override
+    public Optional<IEntity> getMaintenanceTriggerEntity() {
+        return Optional.ofNullable(this.maintenanceEntity);
     }
 
     @Override

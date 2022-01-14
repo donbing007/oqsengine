@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.calculation.impl;
 import com.xforceplus.ultraman.oqsengine.calculation.Calculation;
 import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationContext;
 import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationScenarios;
+import com.xforceplus.ultraman.oqsengine.calculation.dto.AffectedInfo;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationException;
 import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFactory;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.CalculationLogic;
@@ -177,10 +178,10 @@ public class DefaultCalculationImpl implements Calculation {
 
                 Timer.Sample sample = Timer.start(Metrics.globalRegistry);
 
-                long[] affectedEntityIds = null;
+                Collection<AffectedInfo> affectedInfos = null;
                 try {
 
-                    affectedEntityIds = logic.getMaintainTarget(
+                    affectedInfos = logic.getMaintainTarget(
                         context, participant, parentParticipant.get().getAffectedEntities());
 
                 } catch (CalculationException ex) {
@@ -193,14 +194,15 @@ public class DefaultCalculationImpl implements Calculation {
                     logic, sample, MetricsDefine.CALCULATION_LOGIC_DELAY_LATENCY_SECONDS, "getTarget", false);
 
                 // 影响实例增加独占锁.
-                if (affectedEntityIds.length > 0) {
+                if (!affectedInfos.isEmpty()) {
+                    long[] affectedEntityIds = affectedInfos.stream().mapToLong(a -> a.getAffectedEntityId()).toArray();
                     if (!context.tryLocksEntity(affectedEntityIds)) {
                         throw new CalculationException(
                             "Conflicts are calculated and the attempt limit is reached. To give up!");
                     }
                 }
 
-                IEntity[] affectedEntities = loadEntities(context, affectedEntityIds);
+                IEntity[] affectedEntities = loadEntities(context, affectedInfos);
 
                 // 重新计算影响的entity.
                 for (IEntity affectedEntitiy : affectedEntities) {
@@ -218,7 +220,20 @@ public class DefaultCalculationImpl implements Calculation {
                             participant.getEntityClass().code());
                     }
 
-                    context.startMaintenance();
+                    AffectedInfo affectedInfo = null;
+                    for (AffectedInfo a : affectedInfos) {
+                        if (a.getAffectedEntityId() == affectedEntitiy.id()) {
+                            affectedInfo = a;
+                            break;
+                        }
+                    }
+
+                    if (affectedInfo == null) {
+                        throw new CalculationException(
+                            "An unexpected error occurred and the expected instance was not found in the calculation.");
+                    }
+
+                    context.startMaintenance(affectedInfo.getTriggerEntity());
                     Optional<IValue> newValueOp = logic.calculate(context);
                     context.stopMaintenance();
 
@@ -275,16 +290,20 @@ public class DefaultCalculationImpl implements Calculation {
     }
 
     // 加载实体,缓存+储存.
-    private IEntity[] loadEntities(CalculationContext context, long[] ids)
+    private IEntity[] loadEntities(CalculationContext context, Collection<AffectedInfo> affectedInfos)
         throws CalculationException {
 
-        if (ids == null || ids.length == 0) {
+        if (affectedInfos.isEmpty()) {
             return new IEntity[0];
         }
 
+        long[] ids = affectedInfos.stream().mapToLong(a -> a.getAffectedEntityId()).toArray();
+
         if (logger.isDebugEnabled()) {
-            logger.debug("Load instance. Identity list [{}]", Arrays.toString(ids));
+            logger.debug("Load instance. Identity list [{}]", ids);
         }
+
+
 
         // 过滤掉缓存中已经存在的.
         long[] notCacheIds = Arrays.stream(ids).filter(id -> !context.getEntityToCache(id).isPresent()).toArray();

@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation;
 import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationContext;
 import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationScenarios;
 import com.xforceplus.ultraman.oqsengine.calculation.context.DefaultCalculationContext;
+import com.xforceplus.ultraman.oqsengine.calculation.dto.AffectedInfo;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationException;
 import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFactory;
 import com.xforceplus.ultraman.oqsengine.calculation.impl.DefaultCalculationImpl;
@@ -48,6 +49,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -404,12 +406,14 @@ public class AggregationCalculationLogicTest {
         );
         aggregationLogic.setScope(scope);
 
-        Map<AbstractParticipant, long[]> entityIds = new HashMap<>();
+        Map<AbstractParticipant, Collection<AffectedInfo>> entityIds = new HashMap<>();
         entityIds.put(
             CalculationParticipant.Builder.anParticipant()
                 .withEntityClass(B_CLASS)
                 .withField(B_SUM).build(),
-            new long[] {entityB.id()}
+            Arrays.asList(
+                new AffectedInfo(entityB, entityB.id())
+            )
         );
 
         entityIds.put(
@@ -625,9 +629,9 @@ public class AggregationCalculationLogicTest {
         });
 
         Participant participant = p.get();
-        long[] ids =
+        Collection<AffectedInfo> affectedInfos =
             aggregationCalculationLogic.getMaintainTarget(context, participant, Arrays.asList(targetEntity));
-        Assertions.assertEquals(1, ids.length);
+        Assertions.assertEquals(1, affectedInfos.size());
     }
 
     static class MockMasterStorage implements MasterStorage {
@@ -717,7 +721,7 @@ public class AggregationCalculationLogicTest {
         // 计算字段 key为请求计算的IValue实例, value为计算结果.
         private Map<IEntityField, IValue> valueChanage;
         // 指定一个参与者的影响实例id列表.
-        private Map<AbstractParticipant, long[]> entityIds;
+        private Map<AbstractParticipant, Collection<AffectedInfo>> entityIds;
         // 需要增加的影响范围,当迭代树碰到和key相等的参与者时需要为其增加value影响.
         private Map<AbstractParticipant, AbstractParticipant> scope;
 
@@ -736,7 +740,7 @@ public class AggregationCalculationLogicTest {
         }
 
         public void setEntityIds(
-            Map<AbstractParticipant, long[]> entityIds) {
+            Map<AbstractParticipant, Collection<AffectedInfo>> entityIds) {
             this.entityIds = entityIds;
         }
 
@@ -765,13 +769,13 @@ public class AggregationCalculationLogicTest {
         }
 
         @Override
-        public long[] getMaintainTarget(CalculationContext context, Participant participant,
+        public Collection<AffectedInfo> getMaintainTarget(CalculationContext context, Participant participant,
                                         Collection<IEntity> triggerEntities) throws CalculationException {
-            long[] ids = entityIds.get(participant);
-            if (ids == null) {
-                return new long[0];
+            Collection<AffectedInfo> affectedInfos = entityIds.get(participant);
+            if (affectedInfos == null) {
+                return Collections.emptyList();
             } else {
-                return ids;
+                return affectedInfos;
             }
         }
 

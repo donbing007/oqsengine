@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.calculation.logic.formula;
 
 import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationContext;
 import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationScenarios;
+import com.xforceplus.ultraman.oqsengine.calculation.dto.AffectedInfo;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationException;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.CalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.formula.helper.FormulaHelper;
@@ -102,10 +103,13 @@ public class FormulaCalculationLogic implements CalculationLogic {
     }
 
     @Override
-    public long[] getMaintainTarget(CalculationContext context, Participant participant, Collection<IEntity> entities)
+    public Collection<AffectedInfo> getMaintainTarget(
+        CalculationContext context, Participant participant, Collection<IEntity> entities)
         throws CalculationException {
 
-        return entities.stream().mapToLong(e -> e.id()).filter(id -> id > 0).toArray();
+        return entities.stream().filter(e -> e.id() > 0)
+            .map(e -> new AffectedInfo(e, e.id()))
+            .collect(Collectors.toList());
     }
 
     @Override

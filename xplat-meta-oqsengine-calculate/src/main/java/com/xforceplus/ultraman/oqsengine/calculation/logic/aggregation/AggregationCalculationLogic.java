@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation;
 
 import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationContext;
 import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationScenarios;
+import com.xforceplus.ultraman.oqsengine.calculation.dto.AffectedInfo;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationException;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.CalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.strategy.FunctionStrategy;
@@ -38,7 +39,9 @@ import com.xforceplus.ultraman.oqsengine.storage.ConditionsSelectStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import java.math.BigDecimal;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -159,34 +162,40 @@ public class AggregationCalculationLogic implements CalculationLogic {
             }
         }
         //拿到数据后开始进行判断数据是否符合条件
-        boolean pass = checkEntityByCondition(byAggEntity, context.getFocusClass(),
-            ((Aggregation) aggField.config().getCalculation()).getConditions());
+        boolean pass = checkEntityByCondition(((Aggregation) aggField.config().getCalculation()).getConditions());
         if (!pass) {
             return aggValue;
         }
 
-        //拿到数据后开始运算
-        agg = aggValue;
-        AggregationType aggregationType = aggregation.getAggregationType();
-        Optional<IValue> targetValue = null;
-        if (aggregationType.equals(AggregationType.AVG)) {
-            FunctionStrategy functionStrategy = new AvgFunctionStrategy();
-            return functionStrategy.excute(agg, o, n, context);
-        } else if (aggregationType.equals(AggregationType.MAX)) {
-            FunctionStrategy functionStrategy = new MaxFunctionStrategy();
-            return functionStrategy.excute(agg, o, n, context);
-        } else if (aggregationType.equals(AggregationType.MIN)) {
-            FunctionStrategy functionStrategy = new MinFunctionStrategy();
-            return functionStrategy.excute(agg, o, n, context);
-        } else if (aggregationType.equals(AggregationType.SUM)) {
-            FunctionStrategy functionStrategy = new SumFunctionStrategy();
-            return functionStrategy.excute(agg, o, n, context);
-        } else if (aggregationType.equals(AggregationType.COUNT)) {
-            FunctionStrategy functionStrategy = new CountFunctionStrategy();
-            return functionStrategy.excute(agg, o, n, context);
+        try {
+            //拿到数据后开始运算
+            agg = aggValue;
+            AggregationType aggregationType = aggregation.getAggregationType();
+            if (aggregationType.equals(AggregationType.AVG)) {
+                FunctionStrategy functionStrategy = new AvgFunctionStrategy();
+                return functionStrategy.excute(agg, o, n, context);
+            } else if (aggregationType.equals(AggregationType.MAX)) {
+                FunctionStrategy functionStrategy = new MaxFunctionStrategy();
+                return functionStrategy.excute(agg, o, n, context);
+            } else if (aggregationType.equals(AggregationType.MIN)) {
+                FunctionStrategy functionStrategy = new MinFunctionStrategy();
+                return functionStrategy.excute(agg, o, n, context);
+            } else if (aggregationType.equals(AggregationType.SUM)) {
+                FunctionStrategy functionStrategy = new SumFunctionStrategy();
+                return functionStrategy.excute(agg, o, n, context);
+            } else if (aggregationType.equals(AggregationType.COUNT)) {
+                FunctionStrategy functionStrategy = new CountFunctionStrategy();
+                return functionStrategy.excute(agg, o, n, context);
+            }
+        } catch (Exception ex) {
+            throw new CalculationException(
+                String.format(
+                    "Aggregation calculation exception. [focus-field :%d-%s, message :%s]",
+                    aggField.id(), aggField.name(), ex.getMessage()),
+                ex);
         }
 
-        return targetValue;
+        return Optional.empty();
     }
 
     @Override
@@ -230,7 +239,7 @@ public class AggregationCalculationLogic implements CalculationLogic {
                             } else {
                                 infuenceInner.impact(
                                     participant,
-                                        CalculationParticipant.Builder.anParticipant()
+                                    CalculationParticipant.Builder.anParticipant()
                                         .withEntityClass(relationshipClass)
                                         .withField(fieldId.ID_ENTITY_FIELD)
                                         .build()
@@ -240,7 +249,7 @@ public class AggregationCalculationLogic implements CalculationLogic {
                             if (!aggregation.getAggregationType().equals(AggregationType.COUNT)) {
                                 infuenceInner.impact(
                                     participant,
-                                        CalculationParticipant.Builder.anParticipant()
+                                    CalculationParticipant.Builder.anParticipant()
                                         .withEntityClass(relationshipClass)
                                         .withField(f)
                                         .build()
@@ -256,22 +265,24 @@ public class AggregationCalculationLogic implements CalculationLogic {
     }
 
     @Override
-    public long[] getMaintainTarget(CalculationContext context, Participant participant, Collection<IEntity> entities)
+    public Collection<AffectedInfo> getMaintainTarget(CalculationContext context, Participant participant,
+                                                      Collection<IEntity> entities)
         throws CalculationException {
         IEntityField entityField = participant.getField();
         Aggregation aggregation = (Aggregation) entityField.config().getCalculation();
         if (entities.isEmpty()) {
-            return new long[ZERO];
+            return Collections.emptyList();
         }
 
-        return entities.stream().mapToLong(e -> {
-            Optional<IValue> aggEntityId = e.entityValue().getValue(aggregation.getRelationId());
+        Collection<AffectedInfo> affectedEntityIds = new ArrayList<>(entities.size());
+        for (IEntity entity : entities) {
+            Optional<IValue> aggEntityId = entity.entityValue().getValue(aggregation.getRelationId());
             if (aggEntityId.isPresent()) {
-                return aggEntityId.get().valueToLong();
-            } else {
-                return 0;
+                affectedEntityIds.add(new AffectedInfo(entity, aggEntityId.get().valueToLong()));
             }
-        }).filter(id -> id > 0).toArray();
+        }
+
+        return affectedEntityIds;
     }
 
     @Override
@@ -282,13 +293,10 @@ public class AggregationCalculationLogic implements CalculationLogic {
     /**
      * 根据条件和id来判断这条数据是否符合聚合范围.
      *
-     * @param entity      被聚合数据.
-     * @param entityClass 被聚合对象.
      * @param conditions  条件信息.
      * @return 是否符合.
      */
-    private boolean checkEntityByCondition(IEntity entity, IEntityClass entityClass,
-                                           Conditions conditions) {
+    private boolean checkEntityByCondition(Conditions conditions) {
         if (conditions == null || conditions.size() == 0) {
             return true;
         }
