@@ -191,12 +191,12 @@ public class DefaultInitCalculationManager implements InitCalculationManager {
     public InitCalculationInfo generateAppInfo(String code) {
 
         // TODO 需要获取redis中元数据配置.
-        List<IEntityClass> entityClasses = new ArrayList<>();
+        /*List<IEntityClass> entityClasses = new ArrayList<>();
         Optional<IEntityClass> load = metaManager.load(Long.MAX_VALUE - 4, null);
         if (load.isPresent()) {
             entityClasses.add(load.get());
-        }
-        entityClasses = (ArrayList) metaManager.appLoad(code);
+        }*/
+        List<IEntityClass> entityClasses = (ArrayList) metaManager.appLoad(code);
         Collection<Participant> all = getParticipant(entityClasses);
         List<Infuence> infuences = generateInfluence(all);
         Set<Participant> need = getNeedInitParticipant(all, infuences);

@@ -1072,6 +1072,8 @@ public class MockEntityClassDefine {
             Mockito.when(metaManager.load(e.id(), null)).thenReturn(Optional.of(e));
             Mockito.when(metaManager.load(e.ref())).thenReturn(Optional.of(e));
         }
+        Mockito.when(metaManager.appLoad(Mockito.anyString())).thenReturn(Stream.of(ORDER_CLASS).collect(Collectors.toList()));
+
     }
 
     /**
