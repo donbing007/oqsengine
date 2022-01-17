@@ -21,7 +21,7 @@ import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactoryAble;
  */
 public class SearchConditionsBuilder implements ConditionsBuilder<SearchConfig, SphinxQLWhere>, TokenizerFactoryAble {
 
-    private TokenizerFactory tokenizerFacotry;
+    private TokenizerFactory tokenizerFactory;
 
     @Override
     public SphinxQLWhere build(SearchConfig config, IEntityClass... entityClasses) {
@@ -50,12 +50,12 @@ public class SearchConditionsBuilder implements ConditionsBuilder<SearchConfig, 
     }
 
     private void doBuildSegmentation(SearchConfig config, SphinxQLWhere where) {
-        Tokenizer tokenizer = this.tokenizerFacotry.getSegmentationTokenizer();
+        Tokenizer tokenizer = this.tokenizerFactory.getSegmentationTokenizer();
         where.addMatch(SphinxQLHelper.buildSearch(config.getValue(), config.getCode(), tokenizer));
     }
 
     @Override
-    public void setTokenizerFacotry(TokenizerFactory tokenizerFacotry) {
-        this.tokenizerFacotry = tokenizerFacotry;
+    public void setTokenizerFacotry(TokenizerFactory tokenizerFactory) {
+        this.tokenizerFactory = tokenizerFactory;
     }
 }

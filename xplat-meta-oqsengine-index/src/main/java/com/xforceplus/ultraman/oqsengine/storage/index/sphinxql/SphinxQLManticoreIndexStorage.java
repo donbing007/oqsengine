@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.xforceplus.ultraman.oqsengine.common.map.MapUtils;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
+import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
@@ -15,7 +16,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.AnyEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
-import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.storage.executor.ResourceTask;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
@@ -397,7 +397,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
                         .convertIndexStorageValue(
                             AnyStorageValue.compatibleStorageName(attr.getKey()),
                             attr.getValue(),
-                            false);
+                            false, false);
 
                 while (storageValue != null) {
 
@@ -448,7 +448,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
                 StorageValue storageValue =
                     storageStrategyFactory.getStrategy(field.type())
                         .convertIndexStorageValue(
-                            AnyStorageValue.compatibleStorageName(attr.getKey()), attr.getValue(), false);
+                            AnyStorageValue.compatibleStorageName(attr.getKey()), attr.getValue(), false, true);
 
                 if (StorageType.UNKNOWN == anyStorageValue.type()) {
                     if (fieldOp.isPresent()) {
@@ -469,7 +469,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
                 // 附件
                 StorageValue storageValue = storageStrategyFactory.getStrategy(FieldType.STRING)
                     .convertIndexStorageValue(
-                        AnyStorageValue.compatibleStorageName(attr.getKey()), attr.getValue(), true);
+                        AnyStorageValue.compatibleStorageName(attr.getKey()), attr.getValue(), true, true);
 
                 buff.append(wrapperAttributeF(field, storageValue, true)).append(' ');
             }

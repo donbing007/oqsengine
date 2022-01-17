@@ -53,10 +53,10 @@ public interface StorageStrategy {
      *
      * @param field        目标字段.
      * @param storageValue 目标物理储存值.
-     * @param attachemnt   附件.
+     * @param attachment   附件.
      * @return 逻辑类型.
      */
-    IValue toLogicValue(IEntityField field, StorageValue storageValue, String attachemnt);
+    IValue toLogicValue(IEntityField field, StorageValue storageValue, String attachment);
 
     /**
      * 将逻辑类型转换成储存类型.
@@ -88,9 +88,11 @@ public interface StorageStrategy {
      *
      * @param storageName  物理储存名称.
      * @param storageValue 物理储存值.
+     * @param attrF 是否为attrF，默认会对attrF中非attachment、却长度 > MAX_WORLD_SPLIT_LENGTH 字节的String进行切割,比如:
+     *              假如MAX_WORLD_SPLIT_LENGTH长度为5，则AAAAAABBBBBBCCCC将会转为[AAAAA][ABBBB][BBCCC][C].
      * @return 实例.
      */
-    default StorageValue convertIndexStorageValue(String storageName, Object storageValue, boolean attachment) {
+    default StorageValue convertIndexStorageValue(String storageName, Object storageValue, boolean attachment, boolean attrF) {
         StorageValue anyStorageValue = AnyStorageValue.getInstance(storageName);
         if (!attachment) {
             switch (anyStorageValue.type()) {

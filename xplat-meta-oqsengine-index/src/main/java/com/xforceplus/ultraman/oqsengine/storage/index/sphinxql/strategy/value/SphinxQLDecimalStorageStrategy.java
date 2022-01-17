@@ -45,7 +45,7 @@ public class SphinxQLDecimalStorageStrategy implements StorageStrategy {
     }
 
     @Override
-    public IValue toLogicValue(IEntityField field, StorageValue storageValue, String attachemnt) {
+    public IValue toLogicValue(IEntityField field, StorageValue storageValue, String attachment) {
         String firstStr = storageValue.value().toString();
         String secondStr = storageValue.next().value().toString();
 
@@ -61,7 +61,7 @@ public class SphinxQLDecimalStorageStrategy implements StorageStrategy {
         String paddingStr = leftPaddingZero(secondStr, FIXED - secondStr.length());
 
         String value = isNeg ? NEG + firstStr + DIVIDE + paddingStr : firstStr + DIVIDE + paddingStr;
-        return new DecimalValue(field, new BigDecimal(value), attachemnt);
+        return new DecimalValue(field, new BigDecimal(value), attachment);
     }
 
     @Override
@@ -98,7 +98,7 @@ public class SphinxQLDecimalStorageStrategy implements StorageStrategy {
      * 预期是一个浮点数的字符串.
      */
     @Override
-    public StorageValue convertIndexStorageValue(String storageName, Object storageValue, boolean attachment) {
+    public StorageValue convertIndexStorageValue(String storageName, Object storageValue, boolean attachment, boolean attrF) {
         String logicName = AnyStorageValue.getInstance(storageName).logicName();
         if (attachment) {
             return new AttachmentStorageValue(logicName, (String) storageValue, true);
