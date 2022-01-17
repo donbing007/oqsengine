@@ -3,7 +3,9 @@ package com.xforceplus.ultraman.oqsengine.calculation.logic.formula;
 import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationContext;
 import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationScenarios;
 import com.xforceplus.ultraman.oqsengine.calculation.context.DefaultCalculationContext;
+import com.xforceplus.ultraman.oqsengine.calculation.dto.AffectedInfo;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationException;
+import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFactory;
 import com.xforceplus.ultraman.oqsengine.calculation.impl.DefaultCalculationImpl;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.CalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
@@ -419,26 +421,32 @@ public class FormulaCalculationLogicTest {
         );
         aggregationLogic.setScope(scope);
 
-        Map<Participant, long[]> entityIds = new HashMap<>();
+        Map<Participant, AffectedInfo[]> entityIds = new HashMap<>();
         entityIds.put(
             CalculationParticipant.Builder.anParticipant()
                 .withEntityClass(B_CLASS)
                 .withField(B_SUM).build(),
-            new long[] {entityB.id()}
+            new AffectedInfo[] {
+                new AffectedInfo(entityB, entityB.id())
+            }
         );
 
         entityIds.put(
             CalculationParticipant.Builder.anParticipant()
                 .withEntityClass(C_CLASS)
                 .withField(C_COUNT).build(),
-            new long[] {entityC.id()}
+            new AffectedInfo[] {
+                new AffectedInfo(entityC, entityC.id())
+            }
         );
 
         entityIds.put(
             CalculationParticipant.Builder.anParticipant()
                 .withEntityClass(D_CLASS)
                 .withField(D_SUM).build(),
-            new long[] {entityD.id()}
+            new AffectedInfo[] {
+                new AffectedInfo(entityD, entityD.id())
+            }
         );
         aggregationLogic.setEntityIds(entityIds);
 
@@ -461,6 +469,7 @@ public class FormulaCalculationLogicTest {
     public void testBuildCalculation() {
         CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()
             .withMetaManager(metaManager)
+            .withCalculationLogicFactory(new CalculationLogicFactory())
             .withScenarios(CalculationScenarios.BUILD).build();
         context.getCalculationLogicFactory().get().register(aggregationLogic);
         context.focusEntity(entityB, B_CLASS);
@@ -479,10 +488,11 @@ public class FormulaCalculationLogicTest {
     public void testReplaceCalculation() {
         CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()
             .withMetaManager(metaManager)
+            .withCalculationLogicFactory(new CalculationLogicFactory())
             .withScenarios(CalculationScenarios.REPLACE).build();
         context.getCalculationLogicFactory().get().register(aggregationLogic);
         context.focusEntity(entityB, B_CLASS);
-        context.focusField(B_SUM);
+        context.focusField(B_FML);
         context.putEntityToCache(entityA);
         context.addValueChange(
             ValueChange.build(entityA.id(), new LongValue(A_LONG, 100L), new LongValue(A_LONG, 200L)));
@@ -497,6 +507,7 @@ public class FormulaCalculationLogicTest {
     public void testRemoveCalculation() {
         CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()
             .withMetaManager(metaManager)
+            .withCalculationLogicFactory(new CalculationLogicFactory())
             .withScenarios(CalculationScenarios.DELETE).build();
         context.getCalculationLogicFactory().get().register(aggregationLogic);
         context.focusEntity(entityB, B_CLASS);
@@ -596,8 +607,9 @@ public class FormulaCalculationLogicTest {
         });
 
         Participant participant = p.get();
-        long[] ids = formulaCalculationLogic.getMaintainTarget(context, participant, Arrays.asList(targetEntity));
-        Assertions.assertEquals(1, ids.length);
+        Collection<AffectedInfo> affectedInfos =
+            formulaCalculationLogic.getMaintainTarget(context, participant, Arrays.asList(targetEntity));
+        Assertions.assertEquals(1, affectedInfos.size());
     }
 
     static class MockMasterStorage implements MasterStorage {
@@ -683,7 +695,7 @@ public class FormulaCalculationLogicTest {
         // 计算字段 key为请求计算的IValue实例, value为计算结果.
         private Map<IEntityField, IValue> valueChanage;
         // 指定一个参与者的影响实例id列表.
-        private Map<Participant, long[]> entityIds;
+        private Map<Participant, AffectedInfo[]> entityIds;
         // 需要增加的影响范围,当迭代树碰到和key相等的参与者时需要为其增加value影响.
         private Map<Participant, Participant> scope;
 
@@ -702,7 +714,7 @@ public class FormulaCalculationLogicTest {
         }
 
         public void setEntityIds(
-            Map<Participant, long[]> entityIds) {
+            Map<Participant, AffectedInfo[]> entityIds) {
             this.entityIds = entityIds;
         }
 
@@ -731,13 +743,14 @@ public class FormulaCalculationLogicTest {
         }
 
         @Override
-        public long[] getMaintainTarget(CalculationContext context, Participant participant,
-                                        Collection<IEntity> triggerEntities) throws CalculationException {
-            long[] ids = entityIds.get(participant);
-            if (ids == null) {
-                return new long[0];
+        public Collection<AffectedInfo> getMaintainTarget(CalculationContext context, Participant participant,
+                                                          Collection<IEntity> triggerEntities)
+            throws CalculationException {
+            AffectedInfo[] infos = entityIds.get(participant);
+            if (infos == null) {
+                return Collections.emptyList();
             } else {
-                return ids;
+                return Arrays.stream(infos).collect(Collectors.toList());
             }
         }
 

@@ -21,6 +21,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.storage.ConditionsSelectStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.EntityPackage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import com.xforceplus.ultraman.oqsengine.task.DefaultTaskCoordinator;
@@ -266,7 +267,7 @@ public class LookupMaintainingTaskRunnerTest {
                 if (lookupEntity.version() == 0) {
                     notUpdate = true;
 
-                    logger.debug("Wait until all tasks are complete.[{}/{}]", okSize, newLookupEntities.size());
+                    logger.info("Wait until all tasks are complete.[{}/{}]", okSize, newLookupEntities.size());
 
                     LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(1000L));
 
@@ -277,7 +278,7 @@ public class LookupMaintainingTaskRunnerTest {
                 }
             }
         }
-        logger.debug("All entity update.[{}/{}]", okSize, newLookupEntities.size());
+        logger.info("All entity update.[{}/{}]", okSize, newLookupEntities.size());
 
         for (IEntity le : newLookupEntities) {
             Assertions.assertEquals(
@@ -345,14 +346,31 @@ public class LookupMaintainingTaskRunnerTest {
 
         @Override
         public boolean replace(IEntity entity, IEntityClass entityClass) throws SQLException {
-            entity.resetVersion(entity.version() + 1);
-            data.put(entity.id(), entity);
-            return true;
+            if (data.containsKey(entity.id())) {
+                entity.resetVersion(entity.version() + 1);
+                data.put(entity.id(), entity);
+                entity.neat();
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        @Override
+        public void replace(EntityPackage entityPackage) throws SQLException {
+            entityPackage.stream().forEach(entry -> {
+                IEntity e = entry.getKey();
+                if (data.containsKey(e.id())) {
+                    e.resetVersion(e.version() + 1);
+                    e.neat();
+                }
+            });
         }
 
         @Override
         public boolean delete(IEntity entity, IEntityClass entityClass) throws SQLException {
             if (data.remove(entity.id()) != null) {
+                entity.delete();
                 return true;
             } else {
                 return false;

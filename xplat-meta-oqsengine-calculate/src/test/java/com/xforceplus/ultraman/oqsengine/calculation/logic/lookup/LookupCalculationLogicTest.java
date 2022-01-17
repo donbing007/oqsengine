@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.calculation.logic.lookup;
 
 import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationContext;
 import com.xforceplus.ultraman.oqsengine.calculation.context.DefaultCalculationContext;
+import com.xforceplus.ultraman.oqsengine.calculation.dto.AffectedInfo;
 import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFactory;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.task.LookupMaintainingTask;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
@@ -352,8 +353,9 @@ public class LookupCalculationLogicTest {
 
 
         Participant participant = p.get();
-        long[] ids = logic.getMaintainTarget(context, participant, Arrays.asList(targetEntity));
-        Assertions.assertEquals(0, ids.length);
+        Collection<AffectedInfo> affectedInfos =
+            logic.getMaintainTarget(context, participant, Arrays.asList(targetEntity));
+        Assertions.assertEquals(0, affectedInfos.size());
 
         tx.commit();
 
@@ -432,8 +434,8 @@ public class LookupCalculationLogicTest {
 
 
         Participant participant = p.get();
-        long[] ids = logic.getMaintainTarget(context, participant, Arrays.asList(targetEntity));
-        Assertions.assertEquals(1000, ids.length);
+        Collection<AffectedInfo> affectedInfos = logic.getMaintainTarget(context, participant, Arrays.asList(targetEntity));
+        Assertions.assertEquals(1000, affectedInfos.size());
 
         tx.commit();
 

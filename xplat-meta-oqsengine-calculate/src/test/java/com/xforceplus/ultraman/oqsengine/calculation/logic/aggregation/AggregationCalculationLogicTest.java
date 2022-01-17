@@ -420,14 +420,18 @@ public class AggregationCalculationLogicTest {
             CalculationParticipant.Builder.anParticipant()
                 .withEntityClass(C_CLASS)
                 .withField(C_COUNT).build(),
-            new long[] {entityC.id()}
+            Arrays.asList(
+                new AffectedInfo(entityC, entityC.id())
+            )
         );
 
         entityIds.put(
             CalculationParticipant.Builder.anParticipant()
                 .withEntityClass(D_CLASS)
                 .withField(D_SUM).build(),
-            new long[] {entityD.id()}
+            Arrays.asList(
+                new AffectedInfo(entityD, entityD.id())
+            )
         );
         aggregationLogic.setEntityIds(entityIds);
 
