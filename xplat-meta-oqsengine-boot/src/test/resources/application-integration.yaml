@@ -20,18 +20,26 @@ logging:
 transaction:
   timeoutMs: 300000
 
+load:
+  enabled: true
+  weight:
+    heap: 0.2
+    cpu: 0.5
+    io: 0.9
+
 threadPool:
   io:
     # 服务响应线程池.
-    worker: 3
+    worker: 0
     queue: 1000
   task:
     # 后端任务,或者IO线程池中放入的任务执行线程池.
-    worker: 32
+    worker: 0
     queue: 1000
+maxVisibleNumber: 10000
 
+ignoreCDCStatusCheck: true
 sync:
-  ignoreCDCStatusCheck: false
   allowMaxLiveTimeMs: 3000
   allowMaxUnSyncCommitIdSize: 100
 
@@ -171,6 +179,8 @@ management:
       enabled: true
     prometheus:
       enabled: true
+    load:
+      enabled: true
 
 cdc:
   connect:
@@ -191,3 +201,14 @@ meta:
     type: mock
   load:
     path: "-"
+
+discover:
+  sdk:
+    enable: false
+
+changelog:
+  enabled: false
+  queue: local
+
+metadata:
+  enhanced: false

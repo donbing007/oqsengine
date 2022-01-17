@@ -4,7 +4,6 @@ import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationContext;
 import com.xforceplus.ultraman.oqsengine.calculation.context.DefaultCalculationContext;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.task.LookupMaintainingTask;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.CalculationParticipant;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
@@ -273,7 +272,7 @@ public class LookupCalculationLogicTest {
             ).build();
         Infuence infuence = new Infuence(
             targetEntity,
-                CalculationParticipant.Builder.anParticipant()
+                Participant.Builder.anParticipant()
                 .withEntityClass(targetEntityClass)
                 .withField(targetLongField)
                 .withAffectedEntities(Arrays.asList(targetEntity)).build(),
@@ -327,7 +326,7 @@ public class LookupCalculationLogicTest {
             ).build();
         Infuence infuence = new Infuence(
             targetEntity,
-                CalculationParticipant.Builder.anParticipant()
+                Participant.Builder.anParticipant()
                 .withEntityClass(targetEntityClass)
                 .withField(targetLongField)
                 .withAffectedEntities(Arrays.asList(targetEntity)).build(),
@@ -414,7 +413,7 @@ public class LookupCalculationLogicTest {
 
         Infuence infuence = new Infuence(
             targetEntity,
-                CalculationParticipant.Builder.anParticipant()
+                Participant.Builder.anParticipant()
                 .withEntityClass(targetEntityClass)
                 .withField(targetStringField)
                 .withAffectedEntities(Arrays.asList(targetEntity)).build(),

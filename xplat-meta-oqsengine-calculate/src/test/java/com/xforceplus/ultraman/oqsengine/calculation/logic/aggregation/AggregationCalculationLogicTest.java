@@ -7,7 +7,6 @@ import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationExcept
 import com.xforceplus.ultraman.oqsengine.calculation.impl.DefaultCalculationImpl;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.CalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.CalculationParticipant;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
@@ -387,26 +386,26 @@ public class AggregationCalculationLogicTest {
         });
         Map<Participant, Participant> scope = new HashMap<>();
         scope.put(
-                CalculationParticipant.Builder.anParticipant()
+                Participant.Builder.anParticipant()
                 .withEntityClass(A_CLASS)
                 .withField(A_LONG).build(),
-                CalculationParticipant.Builder.anParticipant()
+                Participant.Builder.anParticipant()
                 .withEntityClass(B_CLASS)
                 .withField(B_SUM).build()
         );
         scope.put(
-                CalculationParticipant.Builder.anParticipant()
+                Participant.Builder.anParticipant()
                 .withEntityClass(A_CLASS)
                 .withField(A_LONG).build(),
-                CalculationParticipant.Builder.anParticipant()
+                Participant.Builder.anParticipant()
                 .withEntityClass(C_CLASS)
                 .withField(C_COUNT).build()
         );
         scope.put(
-                CalculationParticipant.Builder.anParticipant()
+                Participant.Builder.anParticipant()
                 .withEntityClass(B_CLASS)
                 .withField(B_SUM).build(),
-                CalculationParticipant.Builder.anParticipant()
+                Participant.Builder.anParticipant()
                 .withEntityClass(D_CLASS)
                 .withField(D_SUM).build()
         );
@@ -414,21 +413,21 @@ public class AggregationCalculationLogicTest {
 
         Map<Participant, long[]> entityIds = new HashMap<>();
         entityIds.put(
-                CalculationParticipant.Builder.anParticipant()
+                Participant.Builder.anParticipant()
                 .withEntityClass(B_CLASS)
                 .withField(B_SUM).build(),
             new long[] {entityB.id()}
         );
 
         entityIds.put(
-                CalculationParticipant.Builder.anParticipant()
+                Participant.Builder.anParticipant()
                 .withEntityClass(C_CLASS)
                 .withField(C_COUNT).build(),
             new long[] {entityC.id()}
         );
 
         entityIds.put(
-                CalculationParticipant.Builder.anParticipant()
+                Participant.Builder.anParticipant()
                 .withEntityClass(D_CLASS)
                 .withField(D_SUM).build(),
             new long[] {entityD.id()}
@@ -518,7 +517,7 @@ public class AggregationCalculationLogicTest {
             ).build();
         Infuence infuence = new Infuence(
             targetEntity,
-                CalculationParticipant.Builder.anParticipant()
+                Participant.Builder.anParticipant()
                 .withEntityClass(A_CLASS)
                 .withField(A_LONG)
                 .withAffectedEntities(Arrays.asList(targetEntity)).build(),
@@ -552,7 +551,7 @@ public class AggregationCalculationLogicTest {
 
         Infuence infuenceCount = new Infuence(
                 targetEntity,
-                CalculationParticipant.Builder.anParticipant()
+                Participant.Builder.anParticipant()
                         .withEntityClass(A_CLASS)
                         .withField(EntityField.ID_ENTITY_FIELD)
                         .withAffectedEntities(Arrays.asList(targetEntity)).build(),
@@ -610,7 +609,7 @@ public class AggregationCalculationLogicTest {
 
         Infuence infuence = new Infuence(
             targetEntity,
-                CalculationParticipant.Builder.anParticipant()
+                Participant.Builder.anParticipant()
                 .withEntityClass(A_CLASS)
                 .withField(A_LONG)
                 .withAffectedEntities(Arrays.asList(targetEntity)).build(),

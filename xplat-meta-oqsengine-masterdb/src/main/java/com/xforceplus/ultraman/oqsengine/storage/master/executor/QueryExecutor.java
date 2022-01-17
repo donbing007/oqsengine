@@ -8,7 +8,6 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.Optional;
 
 /**
@@ -83,10 +82,8 @@ public class QueryExecutor extends AbstractJdbcTaskExecutor<Long, Optional<Maste
     @Override
     public Optional<MasterStorageEntity> execute(Long id) throws Exception {
         String sql = buildSQL(id);
-        try (PreparedStatement st = getResource().value().prepareStatement(
-            sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)) {
+        try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
 
-            st.setFetchSize(Integer.MIN_VALUE);
             st.setLong(1, id);
             st.setBoolean(2, false);
 
