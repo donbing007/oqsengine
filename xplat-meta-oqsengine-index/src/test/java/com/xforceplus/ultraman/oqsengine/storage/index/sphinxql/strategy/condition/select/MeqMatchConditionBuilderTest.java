@@ -102,6 +102,23 @@ public class MeqMatchConditionBuilderTest {
                 r -> {
                     Assertions.assertEquals("(1y2p0ijone32e8e7S | 1y2p0ijtwo32e8e7S)", r);
                 }
+            ),
+
+            /**
+             * 这个测试为了测试超长的strings分割后的结果是否正确.
+             */
+            new Case(
+                new Condition(
+                    new EntityField(9223372036854775807L, "test", FieldType.STRINGS),
+                    ConditionOperator.MULTIPLE_EQUALS,
+                    new StringsValue(new EntityField(9223372036854775807L, "test", FieldType.STRINGS), "AAAAAAAAAAAAAAAAAAAAAAAAAAAAABBB"),
+                    new StringsValue(new EntityField(9223372036854775807L, "test", FieldType.STRINGS), "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBCCC"),
+                    new StringsValue(new EntityField(9223372036854775807L, "test", FieldType.STRINGS), "DDD")
+                ),
+                true,
+                r -> {
+                    Assertions.assertEquals("((1y2p0ijAAAAAAAAAAAAAAAAAAAAAAAAAAAAA32e8e7S << 1y2p0ijBBB32e8e7S) | (1y2p0ijBBBBBBBBBBBBBBBBBBBBBBBBBBBBB32e8e7S << 1y2p0ijCCC32e8e7S) | 1y2p0ijDDD32e8e7S)", r);
+                }
             )
         );
     }

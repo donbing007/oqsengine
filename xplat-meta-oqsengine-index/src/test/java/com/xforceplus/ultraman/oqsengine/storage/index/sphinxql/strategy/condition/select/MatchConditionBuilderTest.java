@@ -11,6 +11,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLStringStorageStrategy;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLStringsStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import com.xforceplus.ultraman.oqsengine.tokenizer.DefaultTokenizerFactory;
 import java.io.IOException;
@@ -38,6 +40,8 @@ public class MatchConditionBuilderTest {
     public void before() throws Exception {
         storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
         storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
+        storageStrategyFactory.register(FieldType.STRING, new SphinxQLStringStorageStrategy());
+        storageStrategyFactory.register(FieldType.STRINGS, new SphinxQLStringsStorageStrategy());
     }
 
     @AfterEach
@@ -78,6 +82,20 @@ public class MatchConditionBuilderTest {
                     Assertions.assertEquals("1y2p0ijtest32e8e7S", r);
                 }
             ),
+            /**
+             * 这个测试为了测试超长的string分割后的结果是否正确.
+             */
+            new Case(
+                new Condition(
+                    new EntityField(9223372036854775807L, "test", FieldType.STRING),
+                    ConditionOperator.EQUALS,
+                    new StringValue(new EntityField(9223372036854775807L, "test", FieldType.STRING),
+                        "12345678901234567890123456789abcdefghijk-lmn-opq-rstuvwxyz")
+                ),
+                r -> {
+                    Assertions.assertEquals("(1y2p0ij1234567890123456789012345678932e8e7S << 1y2p0ijabcdefghijkMlmnMopqMrstuvwxyz32e8e7S)", r);
+                }
+            ),
             new Case(
                 new Condition(
                     new EntityField(9223372036854775807L, "test", FieldType.LONG),
@@ -107,6 +125,20 @@ public class MatchConditionBuilderTest {
                 ),
                 r -> {
                     Assertions.assertEquals("-1y2p0ijtest32e8e7S", r);
+                }
+            ),
+            /**
+             * 这个测试为了测试超长的string分割后的结果是否正确.
+             */
+            new Case(
+                new Condition(
+                    new EntityField(9223372036854775807L, "test", FieldType.STRING),
+                    ConditionOperator.NOT_EQUALS,
+                    new StringValue(new EntityField(9223372036854775807L, "test", FieldType.STRING),
+                        "12345678901234567890123456789abcdefghijk-lmn-opq-rstuvwxyz")
+                ),
+                r -> {
+                    Assertions.assertEquals("-(1y2p0ij1234567890123456789012345678932e8e7S << 1y2p0ijabcdefghijkMlmnMopqMrstuvwxyz32e8e7S)", r);
                 }
             ),
             // 没有打开排序,所以退化成精确匹配.
@@ -200,6 +232,4 @@ public class MatchConditionBuilderTest {
             this.check = check;
         }
     }
-
-
 } 

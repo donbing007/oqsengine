@@ -257,11 +257,7 @@ public class StorageMetaManager implements MetaManager {
 
     }
 
-    /**
-     * 显示当前oqs中所有正在使用的appId.
-     *
-     * @return appId列表.
-     */
+    @Override
     public Map<String, String> showApplications() {
         return cacheExecutor.showAppEnv();
     }

@@ -11,6 +11,7 @@ import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.SphinxQLManticoreIndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.SphinxQLConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLStringStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLStringsStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.kv.sql.SqlKeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
@@ -112,6 +113,9 @@ public class StorageConfiguration {
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
         storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
         storageStrategyFactory.register(FieldType.STRINGS, new SphinxQLStringsStorageStrategy());
+
+        //  由于存在超长的字段，单独实现了对于STRING类型的处理策略.
+        storageStrategyFactory.register(FieldType.STRING, new SphinxQLStringStorageStrategy());
         return storageStrategyFactory;
     }
 
