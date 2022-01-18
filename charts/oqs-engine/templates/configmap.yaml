@@ -45,6 +45,8 @@ data:
               enabled: true
             prometheus:
               enabled: true
+            load:
+              enabled: true
         spring:
           application:
             name: "oqsengine"
