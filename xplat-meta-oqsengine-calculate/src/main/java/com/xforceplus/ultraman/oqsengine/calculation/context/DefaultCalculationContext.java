@@ -370,6 +370,10 @@ public class DefaultCalculationContext implements CalculationContext {
         return true;
     }
 
+    /**
+     * 对于指定实例进行加锁.
+     * 已经加锁过的不会再次进行加锁.
+     */
     @Override
     public boolean tryLocksEntity(long... entityIds) {
         if (this.lockedEnittyIds == null) {
@@ -401,6 +405,10 @@ public class DefaultCalculationContext implements CalculationContext {
             return true;
 
         }
+    }
+
+    public Set<Long> getLockedEnittyIds() {
+        return new HashSet<>(lockedEnittyIds);
     }
 
     @Override

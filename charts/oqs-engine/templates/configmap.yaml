@@ -195,6 +195,9 @@ data:
             skipCommitId: {{ .Values.cdc.consumer.skipCommitId | default "-1" | quote }}
         metadata:
           enhanced: {{ .Values.metadata.enhanced | default "false" }}
+        locker:
+          try:
+            timeoutMs: {{ .Values.locker.try.timeoutMs | default "30000" }}
         discover:
           sdk:
             enable: {{ .Values.discover.sdk.enable | default "true" }}

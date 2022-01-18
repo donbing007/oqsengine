@@ -2,18 +2,24 @@ package com.xforceplus.ultraman.oqsengine.core.service.integration;
 
 import com.xforceplus.ultraman.oqsengine.boot.OqsengineBootApplication;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
+import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.core.service.integration.mock.MockEntityClassDefine;
+import com.xforceplus.ultraman.oqsengine.core.service.integration.mock.MockEntityHelper;
 import com.xforceplus.ultraman.oqsengine.core.service.pojo.OqsResult;
 import com.xforceplus.ultraman.oqsengine.core.service.pojo.ServiceSelectConfig;
+import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.SegmentInfo;
+import com.xforceplus.ultraman.oqsengine.idgenerator.storage.SegmentStorage;
+import com.xforceplus.ultraman.oqsengine.lock.ResourceLocker;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntitys;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
@@ -24,10 +30,14 @@ import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.ManticoreC
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.MysqlContainer;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.RedisContainer;
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import javax.annotation.Resource;
@@ -39,6 +49,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.annotation.DirtiesContext;
@@ -65,7 +76,10 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class BatchCaseTest {
 
-    final Logger logger = LoggerFactory.getLogger(UserCaseTest.class);
+    final Logger logger = LoggerFactory.getLogger(BatchCaseTest.class);
+
+    @Resource(name = "longNoContinuousPartialOrderIdGenerator")
+    private LongIdGenerator idGenerator;
 
     @Resource(name = "masterDataSource")
     private DataSource masterDataSource;
@@ -82,8 +96,21 @@ public class BatchCaseTest {
     @Resource
     private EntityManagementService entityManagementService;
 
+    @Resource
+    private ResourceLocker resourceLocker;
+
+    @Resource
+    private SegmentStorage segmentStorage;
+
     @MockBean(name = "metaManager")
     private MetaManager metaManager;
+
+    @Value("${locker.try.timeoutMs}")
+    private long lockerTimeoutMs;
+
+    private MockEntityHelper entityHelper;
+
+    private SegmentInfo segmentInfo = MockEntityClassDefine.getDefaultSegmentInfo();
 
     /**
      * 每个测试的初始化.
@@ -107,7 +134,11 @@ public class BatchCaseTest {
             }
         }
 
+        segmentStorage.build(segmentInfo);
+
         MockEntityClassDefine.initMetaManager(metaManager);
+
+        entityHelper = new MockEntityHelper(idGenerator);
     }
 
     /**
@@ -142,6 +173,106 @@ public class BatchCaseTest {
                 try (Statement stat = conn.createStatement()) {
                     stat.executeUpdate("truncate table oqsindex");
                 }
+            }
+        }
+
+        segmentStorage.delete(segmentInfo);
+    }
+
+    @Test
+    public void testMaintainConflictRestore() throws Exception {
+        IEntity user = entityHelper.buildUserEntity();
+        Assertions.assertEquals(OqsResult.success(), entityManagementService.build(user));
+
+        // 保证进行了同步.
+        while (commitIdStatusService.size() > 0) {
+            logger.info("Wait sync...");
+
+            TimeUnit.MILLISECONDS.sleep(200);
+        }
+
+        /*
+        订单的创建应该失败,因为影响的user一直处于加锁中.
+        注意: 这里不能使用当前线程加锁,否则会触发重入造成加锁成功.
+         */
+        AtomicBoolean ok = new AtomicBoolean(false);
+        CountDownLatch latch = new CountDownLatch(1);
+        CompletableFuture.runAsync(() -> {
+            try {
+                ok.set(resourceLocker.tryLock(30000, IEntitys.resource(user.id())));
+            } catch (InterruptedException e) {
+                logger.error(e.getMessage(), e);
+            } finally {
+                latch.countDown();
+            }
+
+            // 锁定时间为最大尝试时间减少100毫秒后解锁,这里造成之后的写入延时.
+            try {
+                TimeUnit.MILLISECONDS.sleep(lockerTimeoutMs - 100);
+            } catch (InterruptedException e) {
+                // do nothing
+            }
+
+            resourceLocker.unlock(IEntitys.resource(user.id()));
+        });
+        latch.await(3000, TimeUnit.MILLISECONDS);
+
+        Assertions.assertTrue(ok.get());
+        Assertions.assertTrue(resourceLocker.isLocking(IEntitys.resource(user.id())));
+
+        IEntity[] orders = IntStream.range(0, 10)
+            .mapToObj(i -> entityHelper.buildOrderEntity(user)).toArray(IEntity[]::new);
+        Assertions.assertEquals(OqsResult.success(), entityManagementService.build(orders));
+    }
+
+    /**
+     * 测试维护时和更新产生冲突的情况.
+     * 预期最终都会成功,除非加锁等待时间超时.
+     */
+    @Test
+    public void testMaintainConflict() throws Exception {
+        IEntity user = entityHelper.buildUserEntity();
+        Assertions.assertEquals(OqsResult.success(), entityManagementService.build(user));
+
+        // 保证进行了同步.
+        while (commitIdStatusService.size() > 0) {
+            logger.info("Wait sync...");
+
+            TimeUnit.MILLISECONDS.sleep(200);
+        }
+
+        /*
+        订单的创建应该失败,因为影响的user一直处于加锁中.
+        注意: 这里不能使用当前线程加锁,否则会触发重入造成加锁成功.
+         */
+        AtomicBoolean ok = new AtomicBoolean(false);
+        CountDownLatch latch = new CountDownLatch(1);
+        CompletableFuture.runAsync(() -> {
+            try {
+                ok.set(resourceLocker.tryLock(30000, IEntitys.resource(user.id())));
+            } catch (InterruptedException e) {
+                logger.error(e.getMessage(), e);
+            } finally {
+                latch.countDown();
+            }
+        });
+        latch.await(3000, TimeUnit.MILLISECONDS);
+
+        try {
+            Assertions.assertTrue(ok.get());
+            Assertions.assertTrue(resourceLocker.isLocking(IEntitys.resource(user.id())));
+
+            IEntity[] orders = IntStream.range(0, 10)
+                .mapToObj(i -> entityHelper.buildOrderEntity(user)).toArray(IEntity[]::new);
+            try {
+                entityManagementService.build(orders);
+                Assertions.fail("CalculationException was expected to be thrown, but was not.");
+            } catch (SQLException ex) {
+                // ok
+            }
+        } finally {
+            if (ok.get()) {
+                resourceLocker.unlock(IEntitys.resource(user.id()));
             }
         }
     }
@@ -210,6 +341,10 @@ public class BatchCaseTest {
      */
     @Test
     public void testReplace() throws Exception {
+        /*
+        创建测试目标.
+        在同一批中,两个互不相关,之间没有计算字段依赖.
+         */
         IEntity[] targetEntities = Stream.concat(
             IntStream.range(0, 10).mapToObj(i ->
                 Entity.Builder.anEntity()
@@ -238,12 +373,14 @@ public class BatchCaseTest {
         Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(targetEntities).getResultStatus());
         Assertions.assertEquals(0, Arrays.stream(targetEntities).filter(e -> e.isDirty()).count());
 
+        // 修改测试目标字段 l0-long值为100.
         for (int i = 0; i < 5; i++) {
             targetEntities[i].entityValue().addValue(
                 new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 100L)
             );
             Assertions.assertTrue(targetEntities[i].isDirty());
         }
+        // 修改user的用户编号,如果有order应该触发order的lookup.
         for (int i = 10; i < 20; i++) {
             targetEntities[i].entityValue().addValue(
                 new StringValue(

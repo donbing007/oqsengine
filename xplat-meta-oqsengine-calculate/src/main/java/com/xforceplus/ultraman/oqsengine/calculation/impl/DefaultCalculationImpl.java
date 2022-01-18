@@ -195,10 +195,25 @@ public class DefaultCalculationImpl implements Calculation {
 
                 // 影响实例增加独占锁.
                 if (!affectedInfos.isEmpty()) {
-                    long[] affectedEntityIds = affectedInfos.stream().mapToLong(a -> a.getAffectedEntityId()).toArray();
-                    if (!context.tryLocksEntity(affectedEntityIds)) {
-                        throw new CalculationException(
-                            "Conflicts are calculated and the attempt limit is reached. To give up!");
+                    long[] affectedEntityIds = affectedInfos.stream()
+                        .filter(a -> {
+                            /*
+                            一个优化,减少加锁.
+                            如果是创建场景同时影响的对象又和源头触发对象一致,那么跳过无需再加锁.
+                             */
+                            if (CalculationScenarios.BUILD == context.getScenariso()) {
+                                if (a.getAffectedEntityId() == context.getSourceEntity().id()) {
+                                    return false;
+                                }
+                            }
+                            return true;
+                        })
+                        .mapToLong(a -> a.getAffectedEntityId()).toArray();
+                    if (affectedEntityIds.length > 0) {
+                        if (!context.tryLocksEntity(affectedEntityIds)) {
+                            throw new CalculationException(
+                                "Conflicts are calculated and the attempt limit is reached. To give up!");
+                        }
                     }
                 }
 

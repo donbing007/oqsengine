@@ -90,12 +90,22 @@ public abstract class AbstractRetryResourceLockerTest {
 
         String[] failResource = getLocker().unlocks(resources);
         Assertions.assertTrue(failResource.length == 0);
-
         Assertions.assertTrue(getLocker().unlock(resources[0]));
     }
 
+    @Test
+    public void testOneUnlock() throws Exception {
+        String resource = "test.resource";
+        getLocker().lock(resource);
+        Assertions.assertTrue(getLocker().isLocking(resource));
+
+        String[] failResource = getLocker().unlocks(resource);
+        Assertions.assertEquals(0, failResource.length);
+        Assertions.assertFalse(getLocker().isLocking(resource));
+    }
+
     /**
-     * 解锁测试,
+     * 解锁测试.
      */
     @Test
     public void testUnlock() throws Exception {

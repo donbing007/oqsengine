@@ -10,6 +10,7 @@ import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.core.service.integration.mock.MockEntityClassDefine;
+import com.xforceplus.ultraman.oqsengine.core.service.integration.mock.MockEntityHelper;
 import com.xforceplus.ultraman.oqsengine.core.service.pojo.OqsResult;
 import com.xforceplus.ultraman.oqsengine.core.service.pojo.ServiceSelectConfig;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.SegmentInfo;
@@ -131,6 +132,8 @@ public class CalculationTest extends AbstractContainerExtends {
 
     private SegmentInfo segmentInfo = MockEntityClassDefine.getDefaultSegmentInfo();
 
+    private MockEntityHelper entityHelper;
+
     /**
      * 每个测试的初始化.
      */
@@ -156,6 +159,8 @@ public class CalculationTest extends AbstractContainerExtends {
         initSegment(segmentInfo);
 
         MockEntityClassDefine.initMetaManager(metaManager);
+
+        entityHelper = new MockEntityHelper(idGenerator);
     }
 
     /**
@@ -210,12 +215,12 @@ public class CalculationTest extends AbstractContainerExtends {
      */
     @Test
     public void testLookupEmptyValue() throws Exception {
-        IEntity user = buildUserEntity();
+        IEntity user = entityHelper.buildUserEntity();
         user.entityValue().remove(MockEntityClassDefine.USER_CLASS.field("用户编号").get());
         OqsResult oqsResult = entityManagementService.build(user);
         Assertions.assertEquals(ResultStatus.SUCCESS, oqsResult.getResultStatus(), oqsResult.getMessage());
 
-        IEntity order = buildOrderEntity(user);
+        IEntity order = entityHelper.buildOrderEntity(user);
         oqsResult = entityManagementService.build(order);
         // 由于公式计算触发了除0异常,所以这里是半成功.
         Assertions.assertEquals(ResultStatus.HALF_SUCCESS, oqsResult.getResultStatus(),
@@ -231,11 +236,11 @@ public class CalculationTest extends AbstractContainerExtends {
      */
     @Test
     public void testLookupReplace() throws Exception {
-        IEntity user0 = buildUserEntity();
-        IEntity user1 = buildUserEntity();
+        IEntity user0 = entityHelper.buildUserEntity();
+        IEntity user1 = entityHelper.buildUserEntity();
         entityManagementService.build(new IEntity[] {user0, user1});
 
-        IEntity order = buildOrderEntity(user0);
+        IEntity order = entityHelper.buildOrderEntity(user0);
         entityManagementService.build(order);
 
         order = entitySearchService.selectOne(order.id(), MockEntityClassDefine.ORDER_CLASS.ref()).getValue().get();
@@ -277,14 +282,14 @@ public class CalculationTest extends AbstractContainerExtends {
         int transactionLimitNumber = (int) field.get(null);
         int outTransactionNumber = 1000;
 
-        IEntity user = buildUserEntity();
+        IEntity user = entityHelper.buildUserEntity();
         entityManagementService.build(user);
 
         int orderSize = transactionLimitNumber + outTransactionNumber;
         Transaction tx = transactionManager.create(TimeUnit.SECONDS.toMillis(300));
         for (int i = 0; i < orderSize; i++) {
             transactionManager.bind(tx.id());
-            entityManagementService.build(buildOrderEntity(user));
+            entityManagementService.build(entityHelper.buildOrderEntity(user));
             logger.info("Successfully created order.[{}/{}]", i + 1, orderSize);
         }
         transactionManager.bind(tx.id());
@@ -391,7 +396,7 @@ public class CalculationTest extends AbstractContainerExtends {
      */
     @Test
     public void testBuildCalculationConcurrent() throws Exception {
-        IEntity user = buildUserEntity();
+        IEntity user = entityHelper.buildUserEntity();
         entityManagementService.build(user);
 
         int size = 30;
@@ -404,7 +409,7 @@ public class CalculationTest extends AbstractContainerExtends {
                 // 阻塞等待同时开始.
                 try {
                     startLatch.await();
-                    entityManagementService.build(buildOrderEntity(user));
+                    entityManagementService.build(entityHelper.buildOrderEntity(user));
 
                     OqsResult<IEntity> currentUserOp = entitySearchService.selectOne(
                         userId, MockEntityClassDefine.USER_CLASS.ref());
@@ -442,7 +447,7 @@ public class CalculationTest extends AbstractContainerExtends {
         /*
         用户被创建,其订单总数,总消费金额,平均消费金额应该为0.
          */
-        IEntity user = buildUserEntity();
+        IEntity user = entityHelper.buildUserEntity();
         OqsResult oqsResult = entityManagementService.build(user);
 
         Assertions.assertEquals(ResultStatus.SUCCESS, oqsResult.getResultStatus(), oqsResult.getMessage());
@@ -471,7 +476,7 @@ public class CalculationTest extends AbstractContainerExtends {
         订单被创建,订单项总数=0, 总金额=0, 用户编号=用户.
         用户应该被修改, 订单总数=1.
          */
-        IEntity order = buildOrderEntity(user);
+        IEntity order = entityHelper.buildOrderEntity(user);
         oqsResult = entityManagementService.build(order);
         Assertions.assertEquals(ResultStatus.HALF_SUCCESS, oqsResult.getResultStatus(),
             oqsResult.getMessage());
@@ -516,7 +521,7 @@ public class CalculationTest extends AbstractContainerExtends {
         Assertions.assertEquals(1,
             user.entityValue().getValue("订单总数count").get().valueToLong());
 
-        IEntity orderItem = buildOrderItem(order);
+        IEntity orderItem = entityHelper.buildOrderItem(order);
         oqsResult = entityManagementService.build(orderItem);
 
         Assertions.assertEquals(ResultStatus.HALF_SUCCESS, oqsResult.getResultStatus(),
@@ -554,13 +559,13 @@ public class CalculationTest extends AbstractContainerExtends {
             order.entityValue().getValue("最大时间max").get().getValue()
         );
 
-        IEntity order1 = buildOrderEntity(user);
+        IEntity order1 = entityHelper.buildOrderEntity(user);
         oqsResult = entityManagementService.build(order1);
         Assertions.assertEquals(ResultStatus.HALF_SUCCESS, oqsResult.getResultStatus(),
             oqsResult.getMessage());
         order = entitySearchService.selectOne(order1.id(), MockEntityClassDefine.ORDER_CLASS.ref()).getValue().get();
         user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).getValue().get();
-        IEntity orderItem1 = buildOrderItem(order1);
+        IEntity orderItem1 = entityHelper.buildOrderItem(order1);
         oqsResult = entityManagementService.build(orderItem1);
         Assertions.assertEquals(ResultStatus.HALF_SUCCESS, oqsResult.getResultStatus(),
             oqsResult.getMessage());
@@ -591,7 +596,7 @@ public class CalculationTest extends AbstractContainerExtends {
             order1.entityValue().getValue("最大时间max").get().valueToLong()
         );
 
-        IEntity orderItem2 = buildOrderItem(order1);
+        IEntity orderItem2 = entityHelper.buildOrderItem(order1);
         oqsResult = entityManagementService.build(orderItem2);
         order1 = entitySearchService.selectOne(order1.id(), MockEntityClassDefine.ORDER_CLASS.ref()).getValue().get();
         user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).getValue().get();
@@ -631,14 +636,14 @@ public class CalculationTest extends AbstractContainerExtends {
      */
     @Test
     public void testReplaceCalculation() throws Exception {
-        IEntity user = buildUserEntity();
+        IEntity user = entityHelper.buildUserEntity();
         OqsResult oqsResult = entityManagementService.build(user);
         Assertions.assertEquals(ResultStatus.SUCCESS, oqsResult.getResultStatus(), oqsResult.getMessage());
-        IEntity order = buildOrderEntity(user);
+        IEntity order = entityHelper.buildOrderEntity(user);
         oqsResult = entityManagementService.build(order);
         Assertions.assertEquals(ResultStatus.HALF_SUCCESS, oqsResult.getResultStatus(),
             oqsResult.getMessage());
-        IEntity orderItem = buildOrderItem(order);
+        IEntity orderItem = entityHelper.buildOrderItem(order);
         oqsResult = entityManagementService.build(orderItem);
         Assertions.assertEquals(ResultStatus.HALF_SUCCESS, oqsResult.getResultStatus(),
             oqsResult.getMessage());
@@ -703,14 +708,14 @@ public class CalculationTest extends AbstractContainerExtends {
 
     @Test
     public void testDeleteCalculation() throws Exception {
-        IEntity user = buildUserEntity();
+        IEntity user = entityHelper.buildUserEntity();
         OqsResult oqsResult = entityManagementService.build(user);
         Assertions.assertEquals(ResultStatus.SUCCESS, oqsResult.getResultStatus(), oqsResult.getMessage());
-        IEntity order = buildOrderEntity(user);
+        IEntity order = entityHelper.buildOrderEntity(user);
         oqsResult = entityManagementService.build(order);
         Assertions.assertEquals(ResultStatus.HALF_SUCCESS, oqsResult.getResultStatus(),
             oqsResult.getMessage());
-        IEntity orderItem = buildOrderItem(order);
+        IEntity orderItem = entityHelper.buildOrderItem(order);
         oqsResult = entityManagementService.build(orderItem);
         Assertions.assertEquals(ResultStatus.HALF_SUCCESS, oqsResult.getResultStatus(),
             oqsResult.getMessage());
@@ -750,7 +755,7 @@ public class CalculationTest extends AbstractContainerExtends {
      */
     @Test
     public void testBathBuildCalculation() throws Exception {
-        IEntity user = buildUserEntity();
+        IEntity user = entityHelper.buildUserEntity();
         Assertions.assertTrue(user.isDirty());
         Assertions.assertEquals(OqsResult.success(), entityManagementService.build(user));
         Assertions.assertFalse(user.isDirty());
@@ -758,7 +763,7 @@ public class CalculationTest extends AbstractContainerExtends {
 
         IEntity[] orders = new IEntity[10];
         for (int i = 0; i < orders.length; i++) {
-            orders[i] = buildOrderEntity(user);
+            orders[i] = entityHelper.buildOrderEntity(user);
         }
         Assertions.assertEquals(orders.length, Arrays.stream(orders).filter(o -> o.isDirty()).count());
         Assertions.assertEquals(OqsResult.success(), entityManagementService.build(orders));
@@ -849,103 +854,5 @@ public class CalculationTest extends AbstractContainerExtends {
         latch.await();
         Assertions.assertEquals(200,
             entity1.getValue().get().entityValue().getValue("订单项总数count").get().valueToLong());
-    }
-
-    // 构造用户.
-    private IEntity buildUserEntity() {
-        return Entity.Builder.anEntity()
-            .withEntityClassRef(MockEntityClassDefine.USER_CLASS.ref())
-            .withValue(
-                new StringValue(
-                    MockEntityClassDefine.USER_CLASS.field("用户编号").get(),
-                    "U" + idGenerator.next())
-            )
-            .withValue(
-                new StringValue(
-                    MockEntityClassDefine.USER_CLASS.field("用户名称").get(),
-                    faker.name().name())
-            )
-            .build();
-    }
-
-    // 构造指定用户下的订单.
-    private IEntity buildOrderEntity(IEntity user) {
-        return Entity.Builder.anEntity()
-            .withEntityClassRef(MockEntityClassDefine.ORDER_CLASS.ref())
-            .withValue(
-                new StringValue(
-                    MockEntityClassDefine.ORDER_CLASS.field("订单号").get(),
-                    "O" + idGenerator.next()
-                )
-            )
-            .withValue(
-                new DateTimeValue(
-                    MockEntityClassDefine.ORDER_CLASS.field("下单时间").get(),
-                    faker.date().birthday().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
-                )
-            )
-            .withValue(
-                new LookupValue(
-                    MockEntityClassDefine.ORDER_CLASS.field("用户编号lookup").get(),
-                    user.id()
-                )
-            )
-            .withValue(
-                new LongValue(
-                    MockEntityClassDefine.ORDER_CLASS.field("订单用户关联").get(),
-                    user.id()
-                )
-            )
-            .build();
-    }
-
-    // 构造指定订单下的订单项.
-    private IEntity buildOrderItem(IEntity order) {
-        return Entity.Builder.anEntity()
-            .withEntityClassRef(MockEntityClassDefine.ORDER_ITEM_CLASS.ref())
-            .withValue(
-                new StringValue(
-                    MockEntityClassDefine.ORDER_ITEM_CLASS.field("物品名称").get(),
-                    faker.food().fruit()
-                )
-            )
-            .withValue(
-                new DecimalValue(
-                    MockEntityClassDefine.ORDER_ITEM_CLASS.field("金额").get(),
-                    new BigDecimal(faker.number().randomDouble(3, 1, 1000))
-                        .setScale(6, BigDecimal.ROUND_HALF_UP)
-                )
-            )
-            .withValue(
-                new LookupValue(
-                    MockEntityClassDefine.ORDER_ITEM_CLASS.field("单号lookup").get(),
-                    order.id()
-                )
-            )
-            .withValue(
-                new LongValue(
-                    MockEntityClassDefine.ORDER_ITEM_CLASS.field("订单项订单关联").get(),
-                    order.id()
-                )
-            )
-            .withValue(
-                new LongValue(
-                    MockEntityClassDefine.ORDER_ITEM_CLASS.field("数量").get(),
-                    faker.number().randomNumber()
-                )
-            )
-            .withValue(
-                new LongValue(
-                    MockEntityClassDefine.ORDER_ITEM_CLASS.field("订单项订单关联").get(),
-                    order.id()
-                )
-            )
-            .withValue(
-                new DateTimeValue(
-                    MockEntityClassDefine.ORDER_ITEM_CLASS.field("时间").get(),
-                    faker.date().birthday().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
-                )
-            )
-            .build();
     }
 }

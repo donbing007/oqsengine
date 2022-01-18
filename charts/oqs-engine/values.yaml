@@ -176,6 +176,10 @@ storage:
       page:
         size: 1000
 
+locker:
+  try:
+    timeoutMs: 30000
+
 redis:
   # standalone: redis://[password@]host[:port][/databaseNumber][?[timeout=timeout[d|h|m|s|ms|us|ns]]
   # standaloneSSL: rediss://[password@]host[:port][/databaseNumber][?[timeout=timeout[d|h|m|s|ms|us|ns]]
