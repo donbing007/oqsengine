@@ -378,18 +378,6 @@ public class LookupMaintainingTaskRunnerTest {
         }
 
         @Override
-        public DataIterator<OriginalEntity> iterator(IEntityClass entityClass, long startTime, long endTime,
-                                                     long lastId) throws SQLException {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public DataIterator<OriginalEntity> iterator(IEntityClass entityClass, long startTime, long endTime,
-                                                     long lastId, int size) throws SQLException {
-            return null;
-        }
-
-        @Override
         public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, SelectConfig config)
             throws SQLException {
             throw new UnsupportedOperationException();

@@ -47,7 +47,7 @@ public class ConsumerErrorTest extends AbstractCDCTestHelper {
         }
     }
 
-    private ConsumerRunner initConsumerRunner() throws Exception {
+    protected ConsumerRunner initConsumerRunner() throws Exception {
         if (IF_TEST) {
             CDCMetricsService cdcMetricsService = new CDCMetricsService();
             mockRedisCallbackService = new MockRedisCallbackService(StorageInitialization.getInstance()
@@ -55,7 +55,7 @@ public class ConsumerErrorTest extends AbstractCDCTestHelper {
             ReflectionTestUtils.setField(cdcMetricsService, "cdcMetricsCallback", mockRedisCallbackService);
 
             return new ConsumerRunner(CdcInitialization.getInstance().getConsumerService(),
-                cdcMetricsService, CdcInitialization.getInstance().getSingleCDCConnector());
+                cdcMetricsService, CdcInitialization.getInstance().getSingleCDCConnector(), null);
         }
         return null;
     }

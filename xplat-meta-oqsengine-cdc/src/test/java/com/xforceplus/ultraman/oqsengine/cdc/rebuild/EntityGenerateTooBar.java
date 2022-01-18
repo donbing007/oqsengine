@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.devops;
+package com.xforceplus.ultraman.oqsengine.cdc.rebuild;
 
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.SECOND;
 
@@ -9,10 +9,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.BooleanValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;

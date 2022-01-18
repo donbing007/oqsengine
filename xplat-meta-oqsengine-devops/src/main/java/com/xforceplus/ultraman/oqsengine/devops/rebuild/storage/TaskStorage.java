@@ -1,9 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.devops.rebuild.storage;
 
-import com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.BatchStatus;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.DevOpsTaskInfo;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
-import io.vavr.control.Either;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Optional;
@@ -15,23 +13,31 @@ import java.util.Optional;
  * @since 1.8
  */
 public interface TaskStorage {
-    /*
-        任务生成
+
+    /**
+     * 生成buildTask.
+     *
+     * @param taskInfo 任务信息.
+     * @return 写入表是否成功 return value > 0 成功、否则失败.
+     * @throws SQLException
      */
-    Either<SQLException, Integer> build(DevOpsTaskInfo taskInfo);
+    Integer build(DevOpsTaskInfo taskInfo) throws SQLException;
 
     /*
        任务信息更新
      */
-    int update(DevOpsTaskInfo taskInfo, BatchStatus status) throws SQLException;
+    int update(DevOpsTaskInfo taskInfo) throws SQLException;
 
     /*
        任务完成
      */
-    int done(long taskId) throws SQLException;
+    int done(DevOpsTaskInfo taskInfo) throws SQLException;
 
-    /*
-       设置为任务取消
+    /**
+     * 终止一个任务.
+     * @param taskId 任务id.
+     * @return > 0 终止.
+     * @throws SQLException
      */
     int cancel(long taskId) throws SQLException;
 
@@ -39,11 +45,6 @@ public interface TaskStorage {
        设置为任务异常
      */
     int error(DevOpsTaskInfo taskInfo) throws SQLException;
-
-    /*
-        任务失败重试, 从最后一次保存点开始
-     */
-    Either<SQLException, Integer> resumeTask(DevOpsTaskInfo devOpsTaskInfo) throws SQLException;
 
     /*
         当前活动任务

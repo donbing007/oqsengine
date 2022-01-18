@@ -32,6 +32,7 @@ import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.CdcErrorStorage;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.condition.CdcErrorQueryCondition;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.dto.ErrorType;
+import com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.CommonUtils;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.dto.RawEntry;
@@ -39,6 +40,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.CdcErrorTask;
+import com.xforceplus.ultraman.oqsengine.pojo.devops.DevOpsCdcMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.FixedStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
@@ -91,14 +93,17 @@ public class SphinxSyncExecutor implements SyncExecutor {
         long startTime = 0;
         RawEntry start = null;
 
-
         Map<String, IEntityClass> entityClassMap = new HashMap<>();
 
         for (RawEntry rawEntry : rawEntries) {
             if (null == start) {
                 start = rawEntry;
             }
+            Long txId = null;
+            boolean success = false;
             try {
+                txId = getLongFromColumn(rawEntry.getColumns(), TX);
+
                 //  获取记录
                 OriginalEntity entity =
                     prepareForUpdateDelete(
@@ -106,11 +111,18 @@ public class SphinxSyncExecutor implements SyncExecutor {
 
                 //  加入更新列表
                 storageEntityList.add(entity);
+
+                success = true;
             } catch (Exception e) {
                 //  组装数据失败，记录错误日志
                 logger.warn("add to storageEntityList error, message : {}", e.toString());
                 formatErrorHandle(rawEntry.getColumns(), rawEntry.getUniKeyPrefix(), rawEntry.getPos(),
                     cdcMetrics.getBatchId(), e.getMessage());
+            }
+
+            if (null != txId && CommonUtils.isMaintainRecord(rawEntry.getCommitId())) {
+                cdcMetrics.getDevOpsMetrics()
+                    .computeIfAbsent(txId, f -> new DevOpsCdcMetrics()).incrementByStatus(success);
             }
         }
 
@@ -119,6 +131,11 @@ public class SphinxSyncExecutor implements SyncExecutor {
                 //  执行更新
                 sphinxQLIndexStorage.saveOrDeleteOriginalEntities(storageEntityList);
             } catch (Exception e) {
+                //  设置所有的maintain数据都失败了.
+                cdcMetrics.getDevOpsMetrics().forEach((k, v) -> {
+                    v.allFails();
+                });
+
                 OriginalEntity originalEntity = storageEntityList.get(0);
 
                 String uniKey = uniKeyGenerate(start.getUniKeyPrefix(), start.getPos(), DATA_INSERT_ERROR);
@@ -333,7 +350,8 @@ public class SphinxSyncExecutor implements SyncExecutor {
 
         boolean isDelete = getBooleanFromColumn(columns, DELETED);
 
-        return OriginalEntity.Builder.anOriginalEntity()
+        long tx = getLongFromColumn(columns, TX);
+        OriginalEntity.Builder builder = OriginalEntity.Builder.anOriginalEntity()
             .withId(id)
             .withDeleted(isDelete)
             .withOp(isDelete ? OperationType.DELETE.getValue() : OperationType.UPDATE.getValue())
@@ -341,11 +359,17 @@ public class SphinxSyncExecutor implements SyncExecutor {
             .withOqsMajor(getIntegerFromColumn(columns, OQSMAJOR))
             .withCreateTime(getLongFromColumn(columns, CREATETIME))
             .withUpdateTime(getLongFromColumn(columns, UPDATETIME))
-            .withTx(getLongFromColumn(columns, TX))
+            .withTx(tx)
             .withCommitid(commitId)
             .withEntityClass(entityClass)
-            .withAttributes(attributes)
-            .build();
+            .withAttributes(attributes);
+
+        //  由于主库删除了maintainid,所以当commitId标记为维护ID时,使用txid作为maintainid
+        if (CommonUtils.isMaintainRecord(commitId)) {
+            builder.withMaintainid(tx);
+        }
+
+        return builder.build();
     }
 
     private String toClassKeyWithProfile(long id, String profile) {

@@ -33,15 +33,6 @@ public interface DevOpsManagementService {
         throws Exception;
 
     /**
-     * 任务断点继续执行（从失败点checkpoint开始继续往后执行.
-     *
-     * @param entityClass 需要重建的EntityClass
-     * @param taskId      任务ID
-     * @return IDevOpsTaskInfo 当前任务信息
-     */
-    Optional<DevOpsTaskInfo> resumeRebuild(IEntityClass entityClass, String taskId) throws Exception;
-
-    /**
      * 看出当前活动状态下的任务列表.
      *
      * @param page 翻页对象
@@ -89,7 +80,6 @@ public interface DevOpsManagementService {
      * 查询当前Redis中未过期的CommitIds.
      */
     long[] showCommitIds();
-
 
     /**
      * 修复redis中的commitId，当参数commitId为NULL时，取目前数据库中最大CommitId + 1.
