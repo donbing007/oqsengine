@@ -1,6 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.core.service.impl;
 
-import static com.xforceplus.ultraman.oqsengine.devops.rebuild.constant.ConstantDefine.INIT_ID;
 import static com.xforceplus.ultraman.oqsengine.devops.rebuild.constant.ConstantDefine.NULL_UPDATE;
 import static com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.BatchStatus.PENDING;
 import static com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.BatchStatus.RUNNING;
@@ -66,12 +65,7 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
     @Override
     public Optional<DevOpsTaskInfo> rebuildIndex(IEntityClass entityClass, LocalDateTime start, LocalDateTime end)
         throws Exception {
-        return Optional.of(devOpsRebuildIndexExecutor.rebuildIndex(entityClass, start, end).devOpsTaskInfo());
-    }
-
-    @Override
-    public Optional<DevOpsTaskInfo> resumeRebuild(IEntityClass entityClass, String taskId) throws Exception {
-        return Optional.of(devOpsRebuildIndexExecutor.resumeIndex(entityClass, taskId, INIT_ID).devOpsTaskInfo());
+        return Optional.of(devOpsRebuildIndexExecutor.rebuildIndex(entityClass, start, end));
     }
 
     @Override

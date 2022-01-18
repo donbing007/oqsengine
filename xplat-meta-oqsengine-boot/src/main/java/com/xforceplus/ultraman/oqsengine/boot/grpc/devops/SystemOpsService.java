@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -298,32 +299,6 @@ public class SystemOpsService {
         return null;
     }
 
-    /**
-     * 失败的重建索引任务在checkpoint处重试并完成余下任务.
-     *
-     * @param entityClassId 目标entityClass标识.
-     * @param taskId        任务id.
-     * @param profile       替换信息.比如租户.
-     * @return 任务详情.
-     */
-    @DiscoverAction(describe = "失败的重建索引任务在checkpoint处重试并完成余下任务", retClass = DevOpsTaskInfo.class)
-    public DevOpsTaskInfo resumeIndex(
-            @MethodParam(name = "entityClassId", klass = long.class, required = true) long entityClassId,
-            @MethodParam(name = "taskId", klass = String.class, required = true) String taskId,
-            @MethodParam(name = "profile", klass = String.class, required = true) String profile) {
-        try {
-            Optional<IEntityClass> entityClassOp = metaManager.load(entityClassId, profile);
-            if (entityClassOp.isPresent()) {
-                return devOpsManagementService.resumeRebuild(entityClassOp.get(), taskId).orElse(null);
-            }
-            return null;
-        } catch (Exception e) {
-            PrintErrorHelper.exceptionHandle(String.format("resumeIndex exception, [%d-%s-%s]",
-                    entityClassId, profile == null ? "" : profile, taskId), e);
-        }
-
-        return null;
-    }
 
     /**
      * 重建索引任务列表页查询.
@@ -408,4 +383,20 @@ public class SystemOpsService {
         }
         return null;
     }
+
+    /**
+     * 获取当前oqs下所有的app->env.
+     *
+     * @return app->env pairs.
+     */
+    @DiscoverAction(describe = "获取当前oqs下所有的app", retClass = Map.class)
+    public Map<String, String> showApplications() {
+        try {
+            return metaManager.showApplications();
+        } catch (Exception e) {
+            PrintErrorHelper.exceptionHandle("show applications exception.", e);
+        }
+        return null;
+    }
+
 }

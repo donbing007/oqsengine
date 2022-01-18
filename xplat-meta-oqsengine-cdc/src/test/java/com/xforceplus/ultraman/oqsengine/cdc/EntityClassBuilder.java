@@ -29,13 +29,13 @@ public class EntityClassBuilder {
             .build();
 
     public static final IEntityField STRING_FIELD =
-         EntityField.Builder
-                .anEntityField()
-                .withId(2)
-                .withName("string")
-                .withFieldType(FieldType.STRING)
-                .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build())
-                .build();
+        EntityField.Builder
+            .anEntityField()
+            .withId(2)
+            .withName("string")
+            .withFieldType(FieldType.STRING)
+            .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build())
+            .build();
 
     public static final IEntityField BOOL_FIELD =
         EntityField.Builder

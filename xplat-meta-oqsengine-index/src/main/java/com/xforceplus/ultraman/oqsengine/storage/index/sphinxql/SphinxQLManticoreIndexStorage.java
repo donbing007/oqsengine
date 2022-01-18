@@ -181,20 +181,6 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
         });
     }
 
-    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "index", "action", "clean"})
-    @Override
-    public long clean(IEntityClass entityClass, long maintainId, long start, long end) throws SQLException {
-        CleanExecutor executor = CleanExecutor.Builder.anCleanExecutor()
-            .withEntityClass(entityClass)
-            .withStart(start)
-            .withEnd(end)
-            .withIndexNames(indexWriteIndexNameSelector.selects())
-            .withDs(writerDataSourceSelector.selects())
-            .build();
-
-        return executor.execute(maintainId);
-    }
-
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "index", "action", "save"})
     @Override
     public void saveOrDeleteOriginalEntities(Collection<OriginalEntity> originalEntities) throws SQLException {

@@ -1,16 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.devops.rebuild.handler;
 
-import static com.xforceplus.ultraman.oqsengine.devops.rebuild.DevOpsRebuildIndexExecutor.BATCH_STATUS_CACHE;
-import static com.xforceplus.ultraman.oqsengine.devops.rebuild.constant.ConstantDefine.BATCH_STATUS;
 import static com.xforceplus.ultraman.oqsengine.devops.rebuild.constant.ConstantDefine.ONE_HUNDRED_PERCENT;
-import static com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.BatchStatus.CANCEL;
-
-import com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.BatchStatus;
-import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.DefaultDevOpsTaskInfo;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.DevOpsTaskInfo;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.storage.SQLTaskStorage;
-import java.sql.SQLException;
-import java.util.Optional;
 
 
 /**
@@ -36,39 +28,17 @@ public class DefaultDevOpsTaskHandler implements TaskHandler {
     @Override
     public boolean isDone() {
         if (!devOpsTaskInfo.isDone()) {
-            syncTask();
+            flush();
         }
         return devOpsTaskInfo.isDone();
     }
 
     @Override
-    public boolean isCancel() {
-        if (!devOpsTaskInfo.isCancel()) {
-            syncTask();
+    public boolean isError() {
+        if (!devOpsTaskInfo.isDone()) {
+            flush();
         }
-        return devOpsTaskInfo.isCancel();
-    }
-
-    @Override
-    public void cancel() throws SQLException {
-        ((DefaultDevOpsTaskInfo) devOpsTaskInfo).setStatus(CANCEL.getCode());
-        sqlTaskStorage.cancel(devOpsTaskInfo.getMaintainid());
-    }
-
-    @Override
-    public Optional<BatchStatus> batchStatus() {
-        String key = BATCH_STATUS + id();
-        BatchStatus batchStatus = BATCH_STATUS_CACHE.getIfPresent(key);
-        if (null == batchStatus) {
-            if (!devOpsTaskInfo.isDone() && !devOpsTaskInfo.isCancel()) {
-                syncTask();
-            }
-            batchStatus = BatchStatus.toBatchStatus(devOpsTaskInfo.getStatus());
-            if (null != batchStatus) {
-                BATCH_STATUS_CACHE.put(key, batchStatus);
-            }
-        }
-        return Optional.ofNullable(batchStatus);
+        return devOpsTaskInfo.isError();
     }
 
     @Override
@@ -84,23 +54,17 @@ public class DefaultDevOpsTaskHandler implements TaskHandler {
         return devOpsTaskInfo;
     }
 
-    private void syncTask() {
+    private void flush() {
         try {
-            Optional<DevOpsTaskInfo> dev = sqlTaskStorage.selectUnique((devOpsTaskInfo).getMaintainid());
-            dev.ifPresent(
-                devOps -> {
+            sqlTaskStorage.selectUnique((devOpsTaskInfo).getMaintainid()).ifPresent(opsTaskInfo -> {
                     synchronized (DefaultDevOpsTaskHandler.class) {
-                        if (devOps.getFinishSize() > (devOpsTaskInfo).getFinishSize()) {
-                            devOpsTaskInfo.setFinishSize(devOps.getFinishSize());
-                        } else if (devOps.getFinishSize() == devOps.getBatchSize()) {
-                            ((DefaultDevOpsTaskInfo) devOpsTaskInfo).setStatus(devOps.getStatus());
-                        } else if (devOps.getStatus() != devOpsTaskInfo.getStatus()) {
-                            ((DefaultDevOpsTaskInfo) devOpsTaskInfo).setStatus(devOps.getStatus());
-                            devOpsTaskInfo.resetMessage(devOps.message());
-                        }
+                        devOpsTaskInfo.setFinishSize(opsTaskInfo.getFinishSize());
+                        devOpsTaskInfo.setErrorSize(opsTaskInfo.getErrorSize());
+                        devOpsTaskInfo.resetStatus(opsTaskInfo.getStatus());
+                        devOpsTaskInfo.resetMessage(opsTaskInfo.message());
+                        devOpsTaskInfo.resetUpdateTime(opsTaskInfo.updateTime());
                     }
-                }
-            );
+                });
         } catch (Exception e) {
             e.printStackTrace();
             //  ignore

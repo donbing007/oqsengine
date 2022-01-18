@@ -6,6 +6,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -110,4 +112,13 @@ public interface MetaManager {
      * @return true, false.
      */
     boolean remove(String appId);
+
+    /**
+     * 显示当前oqs中所有正在使用的appId.
+     *
+     * @return appId列表.
+     */
+    default Map<String, String> showApplications() {
+        return new HashMap<>();
+    }
 }

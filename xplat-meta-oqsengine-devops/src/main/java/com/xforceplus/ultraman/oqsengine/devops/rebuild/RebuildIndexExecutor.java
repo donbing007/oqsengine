@@ -3,11 +3,14 @@ package com.xforceplus.ultraman.oqsengine.devops.rebuild;
 import com.xforceplus.ultraman.oqsengine.common.lifecycle.Lifecycle;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.exception.DevopsTaskExistException;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.handler.TaskHandler;
+import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.DevOpsTaskInfo;
+import com.xforceplus.ultraman.oqsengine.pojo.devops.DevOpsCdcMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -30,15 +33,25 @@ public interface RebuildIndexExecutor extends Lifecycle {
      * @return 任务表示.
      * @throws DevopsTaskExistException 表示任务已经存在不可能再增加.
      */
-    TaskHandler rebuildIndex(IEntityClass entityClass, LocalDateTime start, LocalDateTime end)
-        throws Exception;
+    DevOpsTaskInfo rebuildIndex(IEntityClass entityClass, LocalDateTime start, LocalDateTime end) throws Exception;
 
     /**
-     * 索引断点继续，当任务处于失败、取消的状态时，可以继续剩下的任务.
-     * 从startId处开始继续任务.
+     * 终止一个任务.
+     *
+     * @param maintainId maintainId.
+     * @return 是否终止.
+     * @throws DevopsTaskExistException 表示任务已经存在不可能再增加.
      */
-    TaskHandler resumeIndex(IEntityClass entityClass, String taskId, int currentRecovers)
-        throws Exception;
+    boolean cancel(long maintainId) throws Exception;
+
+    /**
+     * 获取当前maintainId的handler.
+     *
+     * @param maintainId maintainId.
+     * @return handler.
+     * @throws SQLException
+     */
+    Optional<TaskHandler> taskHandler(Long maintainId) throws SQLException;
 
     /**
      * 列出当前活动的任务.
@@ -64,12 +77,12 @@ public interface RebuildIndexExecutor extends Lifecycle {
      */
     Collection<TaskHandler> listAllTasks(Page page) throws SQLException;
 
-
     /**
-     * 列出任务ID所对应的TaskHandler.
+     * 同步任务状态.
      *
-     * @param taskId 任务ID.
-     * @return 任务列表.
+     * @param devOpsCdcMetrics 维护指标.
+     *
+     * @return 同步状态
      */
-    Optional<TaskHandler> syncTask(String taskId) throws SQLException;
+    void sync(Map<Long, DevOpsCdcMetrics> devOpsCdcMetrics) throws SQLException;
 }

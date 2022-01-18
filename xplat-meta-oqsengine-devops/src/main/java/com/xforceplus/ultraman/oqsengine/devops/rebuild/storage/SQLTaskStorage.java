@@ -7,7 +7,6 @@ import com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.BatchStatus;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.DefaultDevOpsTaskInfo;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.DevOpsTaskInfo;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
-import io.vavr.control.Either;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Optional;
@@ -41,53 +40,35 @@ public class SQLTaskStorage implements TaskStorage {
     }
 
     @Override
-    public Either<SQLException, Integer> build(DevOpsTaskInfo taskInfo) {
-        try {
-            Collection<DevOpsTaskInfo> collection = selectActive(((DefaultDevOpsTaskInfo) taskInfo).getEntity());
-            if (EMPTY_COLLECTION_SIZE == collection.size()) {
-                int result = new TaskStorageCommand(table).build(devOpsDataSource, taskInfo);
-                return Either.right(result);
-            }
-            logger.warn("build result is empty, reIndex has already been begun, ignore...");
-            return Either.right(NULL_UPDATE);
-        } catch (SQLException e) {
-            return Either.left(e);
+    public Integer build(DevOpsTaskInfo taskInfo) throws SQLException {
+        Collection<DevOpsTaskInfo> collection = selectActive(taskInfo.getEntity());
+        if (EMPTY_COLLECTION_SIZE == collection.size()) {
+            return new TaskStorageCommand(table).build(devOpsDataSource, taskInfo);
         }
+        logger.warn("build result is empty, reIndex has already been begun, ignore...");
+        return NULL_UPDATE;
     }
 
     @Override
-    public int update(DevOpsTaskInfo taskInfo, BatchStatus status) throws SQLException {
-        return new TaskStorageCommand(table).update(devOpsDataSource, ((DefaultDevOpsTaskInfo) taskInfo), status);
+    public int update(DevOpsTaskInfo taskInfo) throws SQLException {
+        return new TaskStorageCommand(table).update(devOpsDataSource, ((DefaultDevOpsTaskInfo) taskInfo));
     }
 
     @Override
-    public int done(long taskId) throws SQLException {
-        return new TaskStorageCommand(table).status(devOpsDataSource, taskId, BatchStatus.DONE, "success");
+    public int done(DevOpsTaskInfo taskInfo) throws SQLException {
+        taskInfo.resetStatus(BatchStatus.DONE.getCode());
+        return new TaskStorageCommand(table).update(devOpsDataSource, ((DefaultDevOpsTaskInfo) taskInfo));
+    }
+
+    @Override
+    public int error(DevOpsTaskInfo taskInfo) throws SQLException {
+        taskInfo.resetStatus(BatchStatus.ERROR.getCode());
+        return new TaskStorageCommand(table).update(devOpsDataSource, ((DefaultDevOpsTaskInfo) taskInfo));
     }
 
     @Override
     public int cancel(long taskId) throws SQLException {
         return new TaskStorageCommand(table).status(devOpsDataSource, taskId, BatchStatus.CANCEL, "task canceled");
-    }
-
-    @Override
-    public int error(DevOpsTaskInfo taskInfo) throws SQLException {
-        return new TaskStorageCommand(table).error(devOpsDataSource, ((DefaultDevOpsTaskInfo) taskInfo));
-    }
-
-    @Override
-    public Either<SQLException, Integer> resumeTask(DevOpsTaskInfo devOpsTaskInfo) {
-        try {
-            Optional<DevOpsTaskInfo> unique = selectUnique(devOpsTaskInfo.getMaintainid());
-            if (unique.isPresent()) {
-                int task = new TaskStorageCommand(table).resumeTask(devOpsDataSource, devOpsTaskInfo.getMaintainid());
-                return Either.right(task);
-            }
-            return Either.left(new SQLException(
-                String.format("resume Task failed, no match task found, %d", devOpsTaskInfo.getMaintainid())));
-        } catch (SQLException e) {
-            return Either.left(e);
-        }
     }
 
     @Override

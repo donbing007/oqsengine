@@ -545,34 +545,6 @@ public class SphinxQLManticoreIndexStorageTest {
         Assertions.assertEquals(10 + 2 - 3, page.getTotalCount());
     }
 
-    @Test
-    public void testClean() throws Exception {
-        List<OriginalEntity> initDatas = new LinkedList<>();
-        initDatas.addAll(buildSyncData(OperationType.CREATE, 10, Long.MAX_VALUE));
-
-        IndexInitialization.getInstance().getIndexStorage().saveOrDeleteOriginalEntities(initDatas);
-        IndexInitialization.getInstance().getIndexStorage().clean(l2EntityClass, 10, 0, Long.MAX_VALUE);
-
-        Page page = Page.newSinglePage(1000);
-        Collection<EntityRef> refs =
-            IndexInitialization.getInstance().getIndexStorage().select(Conditions.buildEmtpyConditions(), l2EntityClass,
-                SelectConfig.Builder.anSelectConfig().withPage(page).withCommitId(0).build());
-        Assertions.assertEquals(0, refs.size());
-        Assertions.assertEquals(0, page.getTotalCount());
-
-        initDatas.clear();
-
-        initDatas.addAll(buildSyncData(OperationType.CREATE, 10, Long.MAX_VALUE));
-        IndexInitialization.getInstance().getIndexStorage().saveOrDeleteOriginalEntities(initDatas);
-        IndexInitialization.getInstance().getIndexStorage().clean(l2EntityClass, 0, 0, Long.MAX_VALUE);
-
-        page = Page.newSinglePage(1000);
-        refs =
-            IndexInitialization.getInstance().getIndexStorage().select(Conditions.buildEmtpyConditions(), l2EntityClass,
-                SelectConfig.Builder.anSelectConfig().withPage(page).withCommitId(0).build());
-        Assertions.assertEquals(initDatas.size(), refs.size());
-        Assertions.assertEquals(initDatas.size(), page.getTotalCount());
-    }
 
     // 构造同步数据
     private Collection<OriginalEntity> buildSyncData(OperationType op, int size, long lastId) {

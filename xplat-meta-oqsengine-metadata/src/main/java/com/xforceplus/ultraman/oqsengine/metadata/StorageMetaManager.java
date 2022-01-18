@@ -378,6 +378,11 @@ public class StorageMetaManager implements MetaManager {
         return true;
     }
 
+    @Override
+    public Map<String, String> showApplications() {
+        return cacheExecutor.showAppEnv();
+    }
+
     private void offLineInit(String path) {
         if (OffLineMetaHelper.isValidPath(path)) {
 

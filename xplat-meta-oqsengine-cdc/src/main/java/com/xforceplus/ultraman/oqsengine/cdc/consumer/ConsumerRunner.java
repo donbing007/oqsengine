@@ -13,6 +13,7 @@ import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.ZE
 import com.alibaba.otter.canal.protocol.Message;
 import com.xforceplus.ultraman.oqsengine.cdc.connect.AbstractCDCConnector;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
+import com.xforceplus.ultraman.oqsengine.devops.rebuild.RebuildIndexExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.RunningStatus;
@@ -39,6 +40,8 @@ public class ConsumerRunner extends Thread {
 
     private AbstractCDCConnector connector;
 
+    private RebuildIndexExecutor rebuildIndexExecutor;
+
     private static volatile RunningStatus runningStatus;
 
     /**
@@ -46,11 +49,13 @@ public class ConsumerRunner extends Thread {
      */
     public ConsumerRunner(ConsumerService consumerService,
                           CDCMetricsService cdcMetricsService,
-                          AbstractCDCConnector connector) {
+                          AbstractCDCConnector connector,
+                          RebuildIndexExecutor rebuildIndexExecutor) {
 
         this.consumerService = consumerService;
         this.cdcMetricsService = cdcMetricsService;
         this.connector = connector;
+        this.rebuildIndexExecutor = rebuildIndexExecutor;
     }
 
     /**
@@ -94,7 +99,7 @@ public class ConsumerRunner extends Thread {
             }
 
             try {
-                //  连接CanalServer，如果是服务启动(runningStatus = INIT),则同步缓存中cdcMetrics信息
+                //  连接CanalServer,如果是服务启动(runningStatus = INIT),则同步缓存中cdcMetrics信息
                 connectAndReset(currentConnectTimes);
             } catch (Exception e) {
                 currentConnectTimes++;
@@ -204,6 +209,11 @@ public class ConsumerRunner extends Thread {
 
                     //  canal状态确认、指标同步
                     finishAck(cdcMetrics);
+
+                    //  同步维护指标.
+                    if (!cdcMetrics.getDevOpsMetrics().isEmpty()) {
+                        rebuildIndexExecutor.sync(cdcMetrics.getDevOpsMetrics());
+                    }
                 } else {
                     //  当前没有任务需要消费
                     cdcMetrics = new CDCMetrics(batchId, cdcMetricsService.getCdcMetrics().getCdcAckMetrics(),
@@ -232,6 +242,7 @@ public class ConsumerRunner extends Thread {
     //  首先保存本次消费完时未提交的数据
     private boolean saveMetrics(CDCMetrics cdcMetrics) {
         cdcMetricsService.backup(cdcMetrics);
+
         return true;
     }
 
