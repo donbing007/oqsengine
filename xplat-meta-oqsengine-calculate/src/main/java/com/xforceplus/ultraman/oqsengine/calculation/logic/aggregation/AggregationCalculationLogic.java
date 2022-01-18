@@ -87,10 +87,10 @@ public class AggregationCalculationLogic implements CalculationLogic {
         IEntity byAggEntity = null;
         //定义一个修改前的被聚合entity信息
         Optional<ValueChange> byAggEntityBeforChange = null;
-        List<IEntity> entities = context.getEntitiesFormCache().stream().filter(e ->
-            e.entityClassRef().getId() == byAggEntityClassId).collect(Collectors.toList());
-
-        if (entities.isEmpty()) {
+//        List<IEntity> entities = context.getEntitiesFormCache().stream().filter(e ->
+//            e.entityClassRef().getId() == byAggEntityClassId).collect(Collectors.toList());
+        Optional<IEntity> triggerEntityOp = context.getMaintenanceTriggerEntity();
+        if (!triggerEntityOp.isPresent()) {
             // build场景下，给默认值
             if (context.getScenariso().equals(CalculationScenarios.BUILD)) {
                 FieldType fieldType = aggField.type();
@@ -105,60 +105,100 @@ public class AggregationCalculationLogic implements CalculationLogic {
             }
             return aggValue;
         }
+
+//        if (entities.isEmpty()) {
+//            // build场景下，给默认值
+//            if (context.getScenariso().equals(CalculationScenarios.BUILD)) {
+//                FieldType fieldType = aggField.type();
+//                switch (fieldType) {
+//                    case LONG:
+//                        return Optional.of(new LongValue(aggField, 0L, "0|0"));
+//                    case DECIMAL:
+//                        return Optional.of(new DecimalValue(aggField, BigDecimal.ZERO, "0|0.0"));
+//                    default:
+//                        return Optional.of(new DateTimeValue(aggField, DateTimeValue.MIN_DATE_TIME, "0|0"));
+//                }
+//            }
+//            return aggValue;
+//        }
+
         // 计算相关的字段定义
         Optional<IValue> agg;
         Optional<IValue> n = null;
         Optional<IValue> o = null;
-        if (entities.size() > 1) {
-            //处理两个对象中存在多个一对多，并且都建立了聚合字段-这种情况是比较少见的
-            List<IEntity> byAggEntitys = entities.stream().filter(e -> {
-                return e.entityValue().values().stream().filter(value ->
-                    value.getValue().equals(entity.id())).collect(Collectors.toList()).size() > ZERO;
-            }).collect(Collectors.toList());
-            if (byAggEntitys.size() == ONE) {
-                byAggEntity = byAggEntitys.get(ZERO);
-                Optional<IEntityClass> byAggEntityClass =
-                    context.getMetaManager().get()
-                        .load(byAggEntity.entityClassRef().getId(), byAggEntity.entityClassRef().getProfile());
-                if (aggregation.getAggregationType().equals(AggregationType.COUNT)) {
-                    if (context.getScenariso().equals(CalculationScenarios.BUILD)) {
-                        n = Optional.of(new LongValue(aggField, 1));
-                        o = Optional.of(new EmptyTypedValue(aggField));
-                    } else if (context.getScenariso().equals(CalculationScenarios.DELETE)) {
-                        o = Optional.of(new LongValue(aggField, 1));
-                        n = Optional.of(new EmptyTypedValue(aggField));
-                    }
-                } else {
-                    if (byAggEntityClass.isPresent()) {
-                        byAggEntityBeforChange =
-                            context.getValueChange(byAggEntity, byAggEntityClass.get().field(byAggFieldId).get());
-                        n = byAggEntityBeforChange.get().getNewValue();
-                        o = byAggEntityBeforChange.get().getOldValue();
-                    }
-                }
+//        if (entities.size() > 1) {
+//            //处理两个对象中存在多个一对多，并且都建立了聚合字段-这种情况是比较少见的
+//            List<IEntity> byAggEntitys = entities.stream().filter(e -> {
+//                return e.entityValue().values().stream().filter(value ->
+//                    value.getValue().equals(entity.id())).collect(Collectors.toList()).size() > ZERO;
+//            }).collect(Collectors.toList());
+//            if (byAggEntitys.size() == ONE) {
+//                byAggEntity = byAggEntitys.get(ZERO);
+//                Optional<IEntityClass> byAggEntityClass =
+//                    context.getMetaManager().get()
+//                        .load(byAggEntity.entityClassRef().getId(), byAggEntity.entityClassRef().getProfile());
+//                if (aggregation.getAggregationType().equals(AggregationType.COUNT)) {
+//                    if (context.getScenariso().equals(CalculationScenarios.BUILD)) {
+//                        n = Optional.of(new LongValue(aggField, 1));
+//                        o = Optional.of(new EmptyTypedValue(aggField));
+//                    } else if (context.getScenariso().equals(CalculationScenarios.DELETE)) {
+//                        o = Optional.of(new LongValue(aggField, 1));
+//                        n = Optional.of(new EmptyTypedValue(aggField));
+//                    }
+//                } else {
+//                    if (byAggEntityClass.isPresent()) {
+//                        byAggEntityBeforChange =
+//                            context.getValueChange(byAggEntity, byAggEntityClass.get().field(byAggFieldId).get());
+//                        n = byAggEntityBeforChange.get().getNewValue();
+//                        o = byAggEntityBeforChange.get().getOldValue();
+//                    }
+//                }
+//            }
+//        } else {
+//            // 正常情况两个对象只存在一个一对多，在cache中该对象也只会存在一个实例
+//            byAggEntity = entities.get(ZERO);
+//            Optional<IEntityClass> byAggEntityClass =
+//                context.getMetaManager().get().load(byAggEntity.entityClassRef());
+//            if (aggregation.getAggregationType().equals(AggregationType.COUNT)) {
+//                if (context.getScenariso().equals(CalculationScenarios.BUILD)) {
+//                    n = Optional.of(new LongValue(aggField, 1));
+//                    o = Optional.of(new EmptyTypedValue(aggField));
+//                } else if (context.getScenariso().equals(CalculationScenarios.DELETE)) {
+//                    o = Optional.of(new LongValue(aggField, 1));
+//                    n = Optional.of(new EmptyTypedValue(aggField));
+//                } else {
+//                    return aggValue;
+//                }
+//            } else {
+//                if (byAggEntityClass.isPresent()) {
+//                    byAggEntityBeforChange =
+//                        context.getValueChange(byAggEntity, byAggEntityClass.get().field(byAggFieldId).get());
+//                    n = byAggEntityBeforChange.get().getNewValue();
+//                    o = byAggEntityBeforChange.get().getOldValue();
+//                }
+//            }
+//        }
+
+        // 正常情况两个对象只存在一个一对多，在cache中该对象也只会存在一个实例
+        byAggEntity = triggerEntityOp.get();
+        Optional<IEntityClass> byAggEntityClass =
+                context.getMetaManager().get().load(byAggEntity.entityClassRef());
+        if (aggregation.getAggregationType().equals(AggregationType.COUNT)) {
+            if (context.getScenariso().equals(CalculationScenarios.BUILD)) {
+                n = Optional.of(new LongValue(aggField, 1));
+                o = Optional.of(new EmptyTypedValue(aggField));
+            } else if (context.getScenariso().equals(CalculationScenarios.DELETE)) {
+                o = Optional.of(new LongValue(aggField, 1));
+                n = Optional.of(new EmptyTypedValue(aggField));
+            } else {
+                return aggValue;
             }
         } else {
-            // 正常情况两个对象只存在一个一对多，在cache中该对象也只会存在一个实例
-            byAggEntity = entities.get(ZERO);
-            Optional<IEntityClass> byAggEntityClass =
-                context.getMetaManager().get().load(byAggEntity.entityClassRef());
-            if (aggregation.getAggregationType().equals(AggregationType.COUNT)) {
-                if (context.getScenariso().equals(CalculationScenarios.BUILD)) {
-                    n = Optional.of(new LongValue(aggField, 1));
-                    o = Optional.of(new EmptyTypedValue(aggField));
-                } else if (context.getScenariso().equals(CalculationScenarios.DELETE)) {
-                    o = Optional.of(new LongValue(aggField, 1));
-                    n = Optional.of(new EmptyTypedValue(aggField));
-                } else {
-                    return aggValue;
-                }
-            } else {
-                if (byAggEntityClass.isPresent()) {
-                    byAggEntityBeforChange =
+            if (byAggEntityClass.isPresent()) {
+                byAggEntityBeforChange =
                         context.getValueChange(byAggEntity, byAggEntityClass.get().field(byAggFieldId).get());
-                    n = byAggEntityBeforChange.get().getNewValue();
-                    o = byAggEntityBeforChange.get().getOldValue();
-                }
+                n = byAggEntityBeforChange.get().getNewValue();
+                o = byAggEntityBeforChange.get().getOldValue();
             }
         }
         //拿到数据后开始进行判断数据是否符合条件
