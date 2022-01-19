@@ -598,7 +598,8 @@ public class SphinxQLManticoreIndexStorageSelectTest {
                     Long.MAX_VALUE - 5, Long.MAX_VALUE - 6, Long.MAX_VALUE - 7, Long.MAX_VALUE - 8,
                     Long.MAX_VALUE - 9
                 }
-            ),
+            )
+            ,
             new Case(
                 "eq dec or eq dec",
                 Conditions.buildEmtpyConditions()

@@ -79,7 +79,7 @@ public class MatchConditionBuilderTest {
                     new StringValue(new EntityField(9223372036854775807L, "test", FieldType.STRING), "test")
                 ),
                 r -> {
-                    Assertions.assertEquals("1y2p0ijtest32e8e7S", r);
+                    Assertions.assertEquals("1y2p0itestj32e8e7S", r);
                 }
             ),
             /**
@@ -93,7 +93,7 @@ public class MatchConditionBuilderTest {
                         "12345678901234567890123456789abcdefghijk-lmn-opq-rstuvwxyz")
                 ),
                 r -> {
-                    Assertions.assertEquals("(1y2p0ij1234567890123456789012345678932e8e7S << 1y2p0ijabcdefghijkMlmnMopqMrstuvwxyz32e8e7S)", r);
+                    Assertions.assertEquals("(1y2p0i1234567890123456789012345j32e8e7P0S 1y2p0i6789abcdefghijkMlmnMopqMrj32e8e7P1S 1y2p0istuvwxyzj32e8e7P2S)", r);
                 }
             ),
             new Case(
@@ -103,7 +103,7 @@ public class MatchConditionBuilderTest {
                     new LongValue(new EntityField(9223372036854775807L, "test", FieldType.LONG), 200L)
                 ),
                 r -> {
-                    Assertions.assertEquals("1y2p0ij20032e8e7L", r);
+                    Assertions.assertEquals("1y2p0i200j32e8e7L", r);
                 }
             ),
             new Case(
@@ -114,7 +114,7 @@ public class MatchConditionBuilderTest {
                         new BigDecimal("123.246"))
                 ),
                 r -> {
-                    Assertions.assertEquals("(1y2p0ij12332e8e7L0 1y2p0ij24600000000000000032e8e7L1)", r);
+                    Assertions.assertEquals("(1y2p0i123j32e8e7L0 1y2p0i246000000000000000j32e8e7L1)", r);
                 }
             ),
             new Case(
@@ -124,7 +124,7 @@ public class MatchConditionBuilderTest {
                     new StringValue(new EntityField(9223372036854775807L, "test", FieldType.STRING), "test")
                 ),
                 r -> {
-                    Assertions.assertEquals("-1y2p0ijtest32e8e7S", r);
+                    Assertions.assertEquals("-1y2p0itestj32e8e7S", r);
                 }
             ),
             /**
@@ -138,7 +138,7 @@ public class MatchConditionBuilderTest {
                         "12345678901234567890123456789abcdefghijk-lmn-opq-rstuvwxyz")
                 ),
                 r -> {
-                    Assertions.assertEquals("-(1y2p0ij1234567890123456789012345678932e8e7S << 1y2p0ijabcdefghijkMlmnMopqMrstuvwxyz32e8e7S)", r);
+                    Assertions.assertEquals("-(1y2p0i1234567890123456789012345j32e8e7P0S 1y2p0i6789abcdefghijkMlmnMopqMrj32e8e7P1S 1y2p0istuvwxyzj32e8e7P2S)", r);
                 }
             ),
             // 没有打开排序,所以退化成精确匹配.
@@ -150,7 +150,7 @@ public class MatchConditionBuilderTest {
                     new StringValue(new EntityField(9223372036854775807L, "test", FieldType.STRING), "test")
                 ),
                 r -> {
-                    Assertions.assertEquals("1y2p0ijtest32e8e7S", r);
+                    Assertions.assertEquals("1y2p0itestj32e8e7S", r);
                 }
             ),
             new Case(
@@ -168,7 +168,7 @@ public class MatchConditionBuilderTest {
                         "工作状态有限公司")
                 ),
                 r -> {
-                    Assertions.assertEquals("(1y2p0ij工作w32e8e7S << 1y2p0ij状态w32e8e7S << 1y2p0ij有限公司w32e8e7S)", r);
+                    Assertions.assertEquals("(1y2p0i工作wj32e8e7S << 1y2p0i状态wj32e8e7S << 1y2p0i有限公司wj32e8e7S)", r);
                 }
             ),
             new Case(
@@ -178,7 +178,7 @@ public class MatchConditionBuilderTest {
                     new EnumValue(new EntityField(9223372036854775807L, "test", FieldType.ENUM), "test")
                 ),
                 r -> {
-                    Assertions.assertEquals("1y2p0ijtest32e8e7S", r);
+                    Assertions.assertEquals("1y2p0itestj32e8e7S", r);
                 }
             ),
             new Case(
@@ -188,7 +188,7 @@ public class MatchConditionBuilderTest {
                     new EnumValue(new EntityField(9223372036854775807L, "test", FieldType.ENUM), "test")
                 ),
                 r -> {
-                    Assertions.assertEquals("-1y2p0ijtest32e8e7S", r);
+                    Assertions.assertEquals("-1y2p0itestj32e8e7S", r);
                 }
             ),
             new Case(
@@ -198,7 +198,7 @@ public class MatchConditionBuilderTest {
                     new DecimalValue(new EntityField(9223372036854775807L, "test", FieldType.DECIMAL), BigDecimal.ZERO)
                 ),
                 r -> {
-                    Assertions.assertEquals("-(1y2p0ij032e8e7L0 1y2p0ij032e8e7L1)", r);
+                    Assertions.assertEquals("-(1y2p0i0j32e8e7L0 1y2p0i0j32e8e7L1)", r);
                 }
             ),
             // 多值只处理第一个值.
@@ -211,7 +211,7 @@ public class MatchConditionBuilderTest {
                 ),
                 true,
                 r -> {
-                    Assertions.assertEquals("1y2p0ijv132e8e7S", r);
+                    Assertions.assertEquals("1y2p0iv1j32e8e7S", r);
                 }
             )
         );

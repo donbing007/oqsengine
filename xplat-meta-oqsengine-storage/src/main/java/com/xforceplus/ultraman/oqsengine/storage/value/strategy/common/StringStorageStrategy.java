@@ -34,7 +34,12 @@ public class StringStorageStrategy implements StorageStrategy {
 
     @Override
     public StorageValue toStorageValue(IValue value) {
-        return new StringStorageValue(Long.toString(value.getField().id()), (String) value.getValue(), true);
+        StorageValue<String> storageValue =
+            new StringStorageValue(Long.toString(value.getField().id()), (String) value.getValue(), true);
+
+        storageValue.notLocationAppend();
+
+        return storageValue;
     }
 
     @Override

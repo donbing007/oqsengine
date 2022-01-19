@@ -8,6 +8,7 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.constant.SQLCons
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLStringStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
+import com.xforceplus.ultraman.oqsengine.storage.value.AbstractStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.AnyStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.ShortStorageName;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
@@ -38,7 +39,7 @@ public class SphinxQLHelper {
     /**
      * select的单个关键字最大长度.
      */
-    public static final int MAX_WORLD_SPLIT_LENGTH = 29;
+    public static final int MAX_WORLD_SPLIT_LENGTH = 25;
 
     /**
      * 标记这是一个支持模糊搜索的拆分词.
@@ -303,12 +304,10 @@ public class SphinxQLHelper {
         return buff.toString();
     }
 
-
-
     /**
      * strings value通用的转换(StorageValue)逻辑.
      */
-    public static StorageValue stringsStorageConvert(String storageName, String originValue, boolean attachment) {
+    public static StorageValue stringsStorageConvert(String storageName, String originValue, boolean attachment, boolean locationAppend) {
 
         String logicName = AnyStorageValue.getInstance(storageName).logicName();
 
@@ -332,9 +331,17 @@ public class SphinxQLHelper {
 
                 //  处理string超长时的逻辑，将会被按照最大长度进行切分
                 String[] values = longStringWrap(buff.toString());
+
+                int partition = values.length > 1 ? StorageValue.FIRST_PARTITION : StorageValue.NOT_PARTITION;
                 for (String v : values) {
                     StorageValue<String> newStorageValue = new StringStorageValue(logicName, v, true);
-                    newStorageValue.locate(location++);
+                    newStorageValue.locate(location);
+                    //  设置超长字段在整个字段中partition.
+                    newStorageValue.partition(partition++);
+
+                    if (!locationAppend) {
+                        newStorageValue.notLocationAppend();
+                    }
 
                     if (head == null) {
                         head = newStorageValue;
@@ -342,6 +349,8 @@ public class SphinxQLHelper {
                         head.stick(newStorageValue);
                     }
                 }
+
+                location++;
 
                 buff.delete(0, buff.length());
                 continue;
@@ -362,29 +371,34 @@ public class SphinxQLHelper {
         String[] values = longStringWrap(word);
 
         StringBuilder stringBuilder = new StringBuilder();
-        boolean isFirst = true;
+
         if (values.length > 1) {
             stringBuilder.append("(");
         }
 
+        int partition = StorageValue.FIRST_PARTITION;
         for (String v : values) {
-            if (!isFirst) {
-                stringBuilder.append(" << ");
+            if (partition > StorageValue.FIRST_PARTITION) {
+                stringBuilder.append(" ");
             }
 
             stringBuilder.append(shortStorageName.getPrefix())
-                .append(filterSymbols(v));
+                .append(filterSymbols(v))
+                .append(shortStorageName.getOriginSuffix());
 
+            if (values.length > 1) {
+                stringBuilder.append(StorageValue.PARTITION_FLAG).append(partition);
+            }
             /*
              * 如果使用组名的话,忽略尾部定位序号.
              */
             if (useGroupName) {
-                stringBuilder.append(shortStorageName.getNoLocationSuffix());
+                stringBuilder.append(shortStorageName.getNoLocationTails());
             } else {
-                stringBuilder.append(shortStorageName.getSuffix());
+                stringBuilder.append(shortStorageName.getTails());
             }
 
-            isFirst = false;
+            partition++;
         }
 
         if (values.length > 1) {
@@ -394,17 +408,14 @@ public class SphinxQLHelper {
     }
 
     /**
-     * 将超长字段拆分为固定格式, 比如ABC -> [A][B][C].
+     * 将超长字段拆分为固定格式, 比如ABC -> [ABC].
      */
     public static String stringValueFormat(String word) {
-        String[] values = longStringWrap(word);
 
         StringBuilder stringBuilder = new StringBuilder();
-        for (String v : values) {
-            stringBuilder.append(START)
-                .append(v)
-                .append(END);
-        }
+        stringBuilder.append(START)
+            .append(word)
+            .append(END);
         return stringBuilder.toString();
     }
 

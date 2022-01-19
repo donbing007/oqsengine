@@ -14,18 +14,40 @@ public final class ShortStorageName implements Serializable {
 
     private String prefix;
     private String suffix;
+    private String tails;
 
-    public ShortStorageName(String prefix, String suffix) {
+    /**
+     * construct.
+     */
+    public ShortStorageName(String prefix, String suffix, String tails) {
         this.prefix = prefix;
         this.suffix = suffix;
+        this.tails = tails;
     }
 
     public String getPrefix() {
         return prefix;
     }
 
+    /**
+     * 默认会返回带tails的后缀.
+     */
     public String getSuffix() {
+        return suffix + tails;
+    }
+
+    /**
+     * 返回不带tails的suffix.
+     */
+    public String getOriginSuffix() {
         return suffix;
+    }
+
+    /**
+     * 返回tails.
+     */
+    public String getTails() {
+        return tails;
     }
 
     /**
@@ -36,19 +58,34 @@ public final class ShortStorageName implements Serializable {
      */
     public String getNoLocationSuffix() {
         int noNumberIndex = 0;
-        for (int i = suffix.length() - 1; i >= 0; i--) {
-            if (!Character.isDigit(this.suffix.charAt(i))) {
+        for (int i = tails.length() - 1; i >= 0; i--) {
+            if (!Character.isDigit(this.tails.charAt(i))) {
                 noNumberIndex = i;
                 break;
             }
         }
 
-        return suffix.substring(0, noNumberIndex + 1);
+        return suffix + tails.substring(0, noNumberIndex + 1);
+    }
+
+    /**
+     * 获取无位置信息的tails.
+     */
+    public String getNoLocationTails() {
+        int noNumberIndex = 0;
+        for (int i = tails.length() - 1; i >= 0; i--) {
+            if (!Character.isDigit(this.tails.charAt(i))) {
+                noNumberIndex = i;
+                break;
+            }
+        }
+
+        return tails.substring(0, noNumberIndex + 1);
     }
 
     @Override
     public String toString() {
-        return String.join("", prefix, suffix);
+        return String.join("", prefix, suffix, tails);
     }
 
     @Override

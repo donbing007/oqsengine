@@ -5,19 +5,20 @@ instance:
 
 grpc:
   server:
-    port: 8090
+    port: 8081
 server:
   port: 8086
 
 logging:
   level:
-    root: debug
+    root: info
     io:
       lettuce: info
-    com.xforceplus.ultraman.oqsengine.changelog: debug
+  pattern:
+    console: "%d{yyyy-MM-dd} %d{hhh:mm:ss},%red(%d{SSS}) %green(%-5level) [%thread] %cyan(%logger{36}) : %msg%n"
 
 transaction:
-  timeoutMs: 3000
+  timeoutMs: 300000
 
 load:
   enabled: true
@@ -35,10 +36,9 @@ threadPool:
     # 后端任务,或者IO线程池中放入的任务执行线程池.
     worker: 0
     queue: 1000
-
 maxVisibleNumber: 10000
 
-ignoreCDCStatusCheck: false
+ignoreCDCStatusCheck: true
 sync:
   allowMaxLiveTimeMs: 3000
   allowMaxUnSyncCommitIdSize: 100
@@ -59,9 +59,9 @@ storage:
         # 字典URL
         url: "-"
   debug:
-    showsql: false
+    showsql: true
   timeoutMs:
-    query: 3000
+    query: 10000
   kv:
     name: "kv"
   master:
@@ -73,13 +73,11 @@ storage:
   index:
     search:
       name: "oqsindex"
-      maxQueryTimeMs: 0
-      maxBatchSize: 50
     write:
       name: "oqsindex"
       shard:
         enabled: false
-        size: 3
+        size: 1
   devOps:
     cdc:
       errors:
@@ -92,6 +90,8 @@ storage:
           size: 2000
       execution:
         timeout: 300000
+      update:
+        frequency: 100
       cache:
         expire: 30
         maxsize: 500
@@ -104,7 +104,7 @@ redis:
   # sentinel: redis-sentinel://[password@]host[:port][,host2[:port2]][/databaseNumber][?[timeout=timeout[d|h|m|s|ms|us|ns]]#sentinelMasterId
   # cluster: redis://127.0.0.1:6379/0?timeout=6000ms
   lettuce:
-    uri: "redis://8eSf4M97VLhP6hq8@127.0.0.1:6379/0?timeout=6000ms"
+    uri: "redis://${REDIS_HOST}:${REDIS_PORT}/0?timeout=6000ms"
     cluster: false
     pingBeforeActivateConnection: true
     maxReqQueue: 10000
@@ -119,7 +119,7 @@ redis:
     timeout: 6000
     retryAttempts: 3
     retryInterval: 1500
-    password: 8eSf4M97VLhP6hq8
+    password:
     subscriptionsPerConnection: 5
     clientName:
     subscriptionConnectionMinimumIdleSize: 1
@@ -134,7 +134,7 @@ redis:
     readMode: "SLAVE"
     singel:
       enabled: true
-      address: "redis://127.0.0.1:6379"
+      address: "redis://${REDIS_HOST}:${REDIS_PORT}"
       subscriptionConnectionPoolSize: 50
       connectionMinimumIdleSize: 32
       connectionPoolSize: 64
@@ -157,7 +157,6 @@ redis:
         - "redis://127.0.0.1:7001"
         - "redis://127.0.0.1:7000"
       scanInterval: 1000
-
 
 management:
   health:
@@ -186,9 +185,9 @@ management:
 cdc:
   connect:
     type: single
-    host: 127.0.0.1
-    port: 11111
-    destination: oqsengine
+    host: "${CANAL_HOST}"
+    port: ${CANAL_PORT}
+    destination: "oqsengine"
     username: root
     password: root
     subscribeFilter: .*\.oqsbigentity.*
@@ -199,41 +198,19 @@ cdc:
 
 meta:
   grpc:
-    # client 启动客户端、server 启动服务端、offline 离线模式、mock
     type: client
-    #    host: ultraman.xforcecloud.com
     host: 120.55.249.44
-    #host: 169.254.106.127
-    #    host: localhost
-    #    port: 8081
     port: 23111
-    #    port: 23120
     seconds:
       heartbeatTimeout: 30
       delaytaskTimeout: 30
       keepAliveDuration: 5
       monitorDuration: 1
       reconnectDuration: 5
-  load:
-    path: "-"
 
 discover:
   sdk:
-    enable: true
-    connection:
-      host: ultraman-devops-service-test.n01103-oqs-cdc
-      port: 8916
-    time:
-      heartbeat:
-        expired: 60000
-        duration: 5000
-    agent:
-      serviceName: oqs-engine
-      serviceGroup: ${HOSTNAME}
-      serviceId: ${discover.sdk.agent.serviceGroup}.${instance.id}
-    threadPool:
-      task: 5
-      queue: 100
+    enable: false
 
 changelog:
   enabled: false
