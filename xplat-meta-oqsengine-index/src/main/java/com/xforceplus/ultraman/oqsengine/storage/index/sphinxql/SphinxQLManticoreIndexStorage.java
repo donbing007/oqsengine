@@ -558,9 +558,11 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
                         buff.append(' ');
                     }
 
-                    buff.append(shortStorageName.getPrefix())
+                    buff.append(shortStorageName.getHead())
+                        .append(shortStorageName.getPrefix())
                         .append(strValue)
-                        .append(shortStorageName.getNoLocationSuffix());
+                        .append(shortStorageName.getOriginSuffix())
+                        .append(shortStorageName.getNoLocationTail());
 
                     if (field.config().isCrossSearch()) {
                         if (crossAttributes == null) {

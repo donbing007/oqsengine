@@ -11,18 +11,19 @@ import java.util.Objects;
  * @since 1.8
  */
 public final class ShortStorageName implements Serializable {
-
+    private String head;
     private String prefix;
     private String suffix;
-    private String tails;
+    private String tail;
 
     /**
      * construct.
      */
-    public ShortStorageName(String prefix, String suffix, String tails) {
+    public ShortStorageName(String head, String prefix, String suffix, String tail) {
+        this.head = head;
         this.prefix = prefix;
         this.suffix = suffix;
-        this.tails = tails;
+        this.tail = tail;
     }
 
     public String getPrefix() {
@@ -30,10 +31,17 @@ public final class ShortStorageName implements Serializable {
     }
 
     /**
+     * 获取head.
+     */
+    public String getHead() {
+        return head;
+    }
+
+    /**
      * 默认会返回带tails的后缀.
      */
     public String getSuffix() {
-        return suffix + tails;
+        return suffix + tail;
     }
 
     /**
@@ -46,46 +54,28 @@ public final class ShortStorageName implements Serializable {
     /**
      * 返回tails.
      */
-    public String getTails() {
-        return tails;
+    public String getTail() {
+        return tail;
     }
 
     /**
-     * 获得无位置信息的后辍.
-     * 只有物理储存是多个字段的时候才有效,否则和getSuffix行为一致.
-     *
-     * @return 无定位信息的字段后辍.
+     * 获取无位置信息的tail.
      */
-    public String getNoLocationSuffix() {
+    public String getNoLocationTail() {
         int noNumberIndex = 0;
-        for (int i = tails.length() - 1; i >= 0; i--) {
-            if (!Character.isDigit(this.tails.charAt(i))) {
+        for (int i = tail.length() - 1; i >= 0; i--) {
+            if (!Character.isDigit(this.tail.charAt(i))) {
                 noNumberIndex = i;
                 break;
             }
         }
 
-        return suffix + tails.substring(0, noNumberIndex + 1);
-    }
-
-    /**
-     * 获取无位置信息的tails.
-     */
-    public String getNoLocationTails() {
-        int noNumberIndex = 0;
-        for (int i = tails.length() - 1; i >= 0; i--) {
-            if (!Character.isDigit(this.tails.charAt(i))) {
-                noNumberIndex = i;
-                break;
-            }
-        }
-
-        return tails.substring(0, noNumberIndex + 1);
+        return tail.substring(0, noNumberIndex + 1);
     }
 
     @Override
     public String toString() {
-        return String.join("", prefix, suffix, tails);
+        return String.join("", head, prefix, suffix, tail);
     }
 
     @Override

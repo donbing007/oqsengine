@@ -333,6 +333,7 @@ public class SphinxQLHelper {
                 String[] values = longStringWrap(buff.toString());
 
                 int partition = values.length > 1 ? StorageValue.FIRST_PARTITION : StorageValue.NOT_PARTITION;
+
                 for (String v : values) {
                     StorageValue<String> newStorageValue = new StringStorageValue(logicName, v, true);
                     newStorageValue.locate(location);
@@ -382,20 +383,23 @@ public class SphinxQLHelper {
                 stringBuilder.append(" ");
             }
 
-            stringBuilder.append(shortStorageName.getPrefix())
+            String head = "";
+            if (values.length > 1) {
+                head = StorageValue.PARTITION_FLAG + partition;
+            }
+
+            stringBuilder.append(head)
+                .append(shortStorageName.getPrefix())
                 .append(filterSymbols(v))
                 .append(shortStorageName.getOriginSuffix());
 
-            if (values.length > 1) {
-                stringBuilder.append(StorageValue.PARTITION_FLAG).append(partition);
-            }
             /*
              * 如果使用组名的话,忽略尾部定位序号.
              */
             if (useGroupName) {
-                stringBuilder.append(shortStorageName.getNoLocationTails());
+                stringBuilder.append(shortStorageName.getNoLocationTail());
             } else {
-                stringBuilder.append(shortStorageName.getTails());
+                stringBuilder.append(shortStorageName.getTail());
             }
 
             partition++;

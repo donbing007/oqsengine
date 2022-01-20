@@ -102,7 +102,14 @@ public abstract class AbstractStorageValue<V> implements StorageValue<V> {
      */
     @Override
     public String storageName() {
-        return doStorageName(logicName);
+        StringBuilder buff = new StringBuilder();
+        buff.append(logicName)
+            .append(this.type().getType());
+        if (location != StorageValue.NOT_LOCATION) {
+            buff.append(location);
+        }
+
+        return buff.toString();
     }
 
     /**
@@ -112,42 +119,26 @@ public abstract class AbstractStorageValue<V> implements StorageValue<V> {
     public ShortStorageName shortStorageName() {
         String nameRadix36 = Long.toString(Long.parseLong(logicName), 36);
 
-        int middle = nameRadix36.length() / 2 - 1;
-        return new ShortStorageName(nameRadix36.substring(0, middle + 1), nameRadix36.substring(middle + 1), storageTailsName());
-    }
-
-    private String doStorageName(String base) {
-        StringBuilder buff = new StringBuilder();
-        buff.append(base)
-            .append(this.type().getType());
-        if (location != StorageValue.NOT_LOCATION) {
-            buff.append(location);
-        }
-
-        return buff.toString();
-    }
-
-    private String storageTailsName() {
-        StringBuilder buff = new StringBuilder();
 
         /*
             如果是超长字段,需要拼接该部分在整个字段中的位置
             比如: 对于普通String -> rawShortname : 1a2b3h4c5j6k7
                  value AAAAAAABBBBBBBCCCCCCCDDDDDDD
-                 将会被转为 1a2b3h4AAAAAAABBBBBBBCCCCCCCDDDDc5j6k7P0S 和 1a2b3h4DDDc5j6k7P1S的格式
+                 将会被转为 P01a2b3h4AAAAAAABBBBBBBCCCCCCCDDDDc5j6k7S 和 P11a2b3h4DDDc5j6k7S的格式
                  对于Strings
-                 将会被转为 1a2b3h4AAAAAAABBBBBBBCCCCCCCDDDDc5j6k7P1S0 和 1a2b3h4DDDc5j6k7P2S1的格式
+                 将会被转为 P01a2b3h4AAAAAAABBBBBBBCCCCCCCDDDDc5j6k7S0 和 P11a2b3h4DDDc5j6k7S1的格式
         */
-        if (partition != StorageValue.NOT_PARTITION) {
-            buff.append(PARTITION_FLAG).append(partition);
-        }
+        int middle = nameRadix36.length() / 2 - 1;
+        String head = (partition != StorageValue.NOT_PARTITION) ? PARTITION_FLAG + partition : "";
+        return new ShortStorageName(head, nameRadix36.substring(0, middle + 1), nameRadix36.substring(middle + 1), storageTailsName());
+    }
 
-        buff.append(this.type().getType());
+    private String storageTailsName() {
+        StringBuilder buff = new StringBuilder().append(this.type().getType());
         //  只有标记为需要追加location时才拼接.
         if (locationAppend && location != StorageValue.NOT_LOCATION) {
             buff.append(location);
         }
-
         return buff.toString();
     }
 

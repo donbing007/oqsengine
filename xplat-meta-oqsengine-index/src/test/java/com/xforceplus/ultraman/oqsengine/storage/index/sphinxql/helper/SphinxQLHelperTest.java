@@ -96,13 +96,13 @@ public class SphinxQLHelperTest {
     @Test
     public void testStringConditionFormat() {
         String longOverString = "aaaabbbbccccddddeeeeffffggggEAAAABBBBCCCCDDDDEEEEFFFFGGGGECDMA";
-        ShortStorageName shortStorageName = new ShortStorageName("123p", "s456", "S");
+        ShortStorageName shortStorageName = new ShortStorageName("","123p", "s456", "S");
 
         //  测试ConditionOperator.EQUALS
         Tuple2<String, Boolean> format =
             SphinxQLHelper.stringConditionFormat(longOverString, shortStorageName, false);
 
-        Assertions.assertEquals("(123paaaabbbbccccddddeeeeffffgs456P0S 123pgggEAAAABBBBCCCCDDDDEEEEFs456P1S 123pFFFGGGGECDMAs456P2S)", format._1);
+        Assertions.assertEquals("(P0123paaaabbbbccccddddeeeeffffgs456S P1123pgggEAAAABBBBCCCCDDDDEEEEFs456S P2123pFFFGGGGECDMAs456S)", format._1);
     }
 
     /**

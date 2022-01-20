@@ -93,7 +93,7 @@ public class MatchConditionBuilderTest {
                         "12345678901234567890123456789abcdefghijk-lmn-opq-rstuvwxyz")
                 ),
                 r -> {
-                    Assertions.assertEquals("(1y2p0i1234567890123456789012345j32e8e7P0S 1y2p0i6789abcdefghijkMlmnMopqMrj32e8e7P1S 1y2p0istuvwxyzj32e8e7P2S)", r);
+                    Assertions.assertEquals("(P01y2p0i1234567890123456789012345j32e8e7S P11y2p0i6789abcdefghijkMlmnMopqMrj32e8e7S P21y2p0istuvwxyzj32e8e7S)", r);
                 }
             ),
             new Case(
@@ -138,7 +138,7 @@ public class MatchConditionBuilderTest {
                         "12345678901234567890123456789abcdefghijk-lmn-opq-rstuvwxyz")
                 ),
                 r -> {
-                    Assertions.assertEquals("-(1y2p0i1234567890123456789012345j32e8e7P0S 1y2p0i6789abcdefghijkMlmnMopqMrj32e8e7P1S 1y2p0istuvwxyzj32e8e7P2S)", r);
+                    Assertions.assertEquals("-(P01y2p0i1234567890123456789012345j32e8e7S P11y2p0i6789abcdefghijkMlmnMopqMrj32e8e7S P21y2p0istuvwxyzj32e8e7S)", r);
                 }
             ),
             // 没有打开排序,所以退化成精确匹配.

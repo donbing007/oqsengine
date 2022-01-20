@@ -117,7 +117,7 @@ public class MeqMatchConditionBuilderTest {
                 ),
                 true,
                 r -> {
-                    Assertions.assertEquals("((1y2p0iAAAAAAAAAAAAAAAAAAAAAAAAAj32e8e7P0S 1y2p0iAAAABBBj32e8e7P1S) | (1y2p0iBBBBBBBBBBBBBBBBBBBBBBBBBj32e8e7P0S 1y2p0iBBBBCCCj32e8e7P1S) | 1y2p0iDDDj32e8e7S)", r);
+                    Assertions.assertEquals("((P01y2p0iAAAAAAAAAAAAAAAAAAAAAAAAAj32e8e7S P11y2p0iAAAABBBj32e8e7S) | (P01y2p0iBBBBBBBBBBBBBBBBBBBBBBBBBj32e8e7S P11y2p0iBBBBCCCj32e8e7S) | 1y2p0iDDDj32e8e7S)", r);
                 }
             )
         );
