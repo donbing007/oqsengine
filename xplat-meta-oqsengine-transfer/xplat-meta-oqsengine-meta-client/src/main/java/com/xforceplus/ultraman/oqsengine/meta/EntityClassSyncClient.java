@@ -1,10 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.meta;
 
 import com.google.common.util.concurrent.Uninterruptibles;
-import com.xforceplus.ultraman.oqsengine.meta.common.monitor.dto.SyncCode;
 import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
 import com.xforceplus.ultraman.oqsengine.meta.common.executor.IBasicSyncExecutor;
+import com.xforceplus.ultraman.oqsengine.meta.common.monitor.dto.SyncCode;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.ThreadUtils;

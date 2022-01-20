@@ -184,6 +184,7 @@ public interface DevOpsTaskInfo {
      * @return 返回updateTime.
      */
     long updateTime();
+
     /**
      * resetUpdateTime.
      *

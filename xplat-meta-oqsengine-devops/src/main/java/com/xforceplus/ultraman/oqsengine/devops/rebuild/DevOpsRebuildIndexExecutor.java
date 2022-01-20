@@ -62,6 +62,11 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
 
     private ExecutorService asyncThreadPool;
 
+    /**
+     * 构造rebuild执行器实例.
+     *
+     * @param maxQueueSize 最大队列长度.
+     */
     public DevOpsRebuildIndexExecutor(int maxQueueSize) {
         asyncThreadPool = new ThreadPoolExecutor(1, 1,
             0L, TimeUnit.MILLISECONDS,
@@ -77,7 +82,8 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
     }
 
     @Override
-    public DevOpsTaskInfo rebuildIndex(IEntityClass entityClass, LocalDateTime start, LocalDateTime end) throws Exception {
+    public DevOpsTaskInfo rebuildIndex(IEntityClass entityClass, LocalDateTime start, LocalDateTime end)
+        throws Exception {
 
         //  init
         DefaultDevOpsTaskInfo devOpsTaskInfo = pending(entityClass, start, end);

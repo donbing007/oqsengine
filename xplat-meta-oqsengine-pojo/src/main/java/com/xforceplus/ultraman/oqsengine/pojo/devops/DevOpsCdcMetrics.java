@@ -28,6 +28,9 @@ public class DevOpsCdcMetrics {
         this.fails = fails;
     }
 
+    /**
+     * 修改状态.
+     */
     public void incrementByStatus(boolean isSuccess) {
         if (isSuccess) {
             success++;

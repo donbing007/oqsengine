@@ -1,18 +1,24 @@
 package com.xforceplus.ultraman.oqsengine.meta.utils;
 
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.*;
+import static com.xforceplus.ultraman.oqsengine.meta.common.utils.MD5Utils.getMD5;
+
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassInfo;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfo;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import static com.xforceplus.ultraman.oqsengine.meta.common.utils.MD5Utils.getMD5;
 
 /**
  * desc :
- * name : EntityClassSyncResponseBuilder
+ * name : EntityClassSyncResponseBuilder.
  *
- * @author : xujia
- * date : 2021/2/24
+ * @author : xujia 2021/2/24
  * @since : 1.8
  */
 public class EntityClassSyncResponseBuilder {
@@ -22,13 +28,14 @@ public class EntityClassSyncResponseBuilder {
      * 每层存在2条关系.
      */
     public static EntityClassSyncResponse entityClassSyncResponseGenerator(String appId, int version,
-                                                                           boolean withMD5, List<ExpectedEntityStorage> expectedEntityStorages) {
+                                                                           boolean withMD5,
+                                                                           List<ExpectedEntityStorage> expectedEntityStorages) {
 
         EntityClassSyncRspProto entityClassSyncRspProto = entityClassSyncRspProtoGenerator(expectedEntityStorages);
         EntityClassSyncResponse.Builder builder = EntityClassSyncResponse.newBuilder()
-                .setAppId(appId)
-                .setVersion(version + 1)
-                .setEntityClassSyncRspProto(entityClassSyncRspProto);
+            .setAppId(appId)
+            .setVersion(version + 1)
+            .setEntityClassSyncRspProto(entityClassSyncRspProto);
         if (withMD5) {
             builder.setMd5(getMD5(entityClassSyncRspProto.toByteArray()));
         }
@@ -38,21 +45,22 @@ public class EntityClassSyncResponseBuilder {
     /**
      * entityClassSyncRspProtoGenerator.
      */
-    public static EntityClassSyncRspProto entityClassSyncRspProtoGenerator(List<ExpectedEntityStorage> expectedEntityStorages) {
+    public static EntityClassSyncRspProto entityClassSyncRspProtoGenerator(
+        List<ExpectedEntityStorage> expectedEntityStorages) {
         /*
          * 生成爷爷
          */
         List<EntityClassInfo> entityClassInfos = new ArrayList<>();
         expectedEntityStorages.forEach(
-                e -> {
-                    entityClassInfos.add(entityClassInfo(e.getSelf(), e.getFather(),
-                            null != e.getAncestors() ? e.getAncestors().size() : 0));
-                }
+            e -> {
+                entityClassInfos.add(entityClassInfo(e.getSelf(), e.getFather(),
+                    null != e.getAncestors() ? e.getAncestors().size() : 0));
+            }
         );
 
         return EntityClassSyncRspProto.newBuilder()
-                .addAllEntityClasses(entityClassInfos)
-                .build();
+            .addAllEntityClasses(entityClassInfos)
+            .build();
     }
 
 
@@ -69,16 +77,16 @@ public class EntityClassSyncResponseBuilder {
         relationInfos.add(relationInfo(id + 1, id + 2, id + 1, 1, id + 1));
 
         return EntityClassInfo.newBuilder()
-                .setId(id)
-                .setVersion(1)
-                .setCode(id + "_level" + level + "_code")
-                .setName(id + "_level" + level + "_name")
-                .setFather(father)
-                .setLevel(level)
-                .addAllEntityFields(entityFieldInfos)
-                .addAllRelations(relationInfos)
-                .addAllProfiles(Collections.singletonList(profileInfo(id * 10)))
-                .build();
+            .setId(id)
+            .setVersion(1)
+            .setCode(id + "_level" + level + "_code")
+            .setName(id + "_level" + level + "_name")
+            .setFather(father)
+            .setLevel(level)
+            .addAllEntityFields(entityFieldInfos)
+            .addAllRelations(relationInfos)
+            .addAllProfiles(Collections.singletonList(profileInfo(id * 10)))
+            .build();
     }
 
 
@@ -87,9 +95,9 @@ public class EntityClassSyncResponseBuilder {
      */
     public static ProfileInfo profileInfo(long id) {
         return ProfileInfo.newBuilder().setCode("common")
-                .addRelationInfo(relationInfo(id, id + 2, id, 1, id))
-                .addEntityFieldInfo(entityFieldInfo(id, EntityFieldInfo.FieldType.LONG))
-                .build();
+            .addRelationInfo(relationInfo(id, id + 2, id, 1, id))
+            .addEntityFieldInfo(entityFieldInfo(id, EntityFieldInfo.FieldType.LONG))
+            .build();
     }
 
     /**
@@ -97,43 +105,53 @@ public class EntityClassSyncResponseBuilder {
      */
     public static EntityFieldInfo entityFieldInfo(long id, EntityFieldInfo.FieldType fieldType) {
         return EntityFieldInfo.newBuilder()
-                .setId(id)
-                .setName(id + "_name")
-                .setCname(id + "_cname")
-                .setFieldType(fieldType)
-                .setDictId(id + "_dictId")
-                .setFieldConfig(fieldConfig(true, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.MetaFieldSense.NORMAL))
-                .build();
+            .setId(id)
+            .setName(id + "_name")
+            .setCname(id + "_cname")
+            .setFieldType(fieldType)
+            .setDictId(id + "_dictId")
+            .setFieldConfig(fieldConfig(true,
+                com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.MetaFieldSense.NORMAL))
+            .build();
     }
 
+    /**
+     * 创建关系信息.
+     */
     public static RelationInfo relationInfo(long id, long entityId, long ownerId, int relationType, long fieldId) {
         return RelationInfo.newBuilder()
-                .setId(id)
-                .setCode(id + "_name")
-                .setRightEntityClassId(entityId)
-                .setLeftEntityClassId(ownerId)
-                .setRelationType(relationType)
-                .setBelongToOwner(id % 2 == 0)
-                .setEntityField(EntityFieldInfo.newBuilder()
-                        .setId(fieldId)
-                        .setFieldType(EntityFieldInfo.FieldType.LONG)
-                        .setName(fieldId + "_name")
-                        .setFieldConfig(FieldConfig.newBuilder().setSearchable(true).build())
-                        .build())
-                .setStrong(true)
-                .build();
+            .setId(id)
+            .setCode(id + "_name")
+            .setRightEntityClassId(entityId)
+            .setLeftEntityClassId(ownerId)
+            .setRelationType(relationType)
+            .setBelongToOwner(id % 2 == 0)
+            .setEntityField(EntityFieldInfo.newBuilder()
+                .setId(fieldId)
+                .setFieldType(EntityFieldInfo.FieldType.LONG)
+                .setName(fieldId + "_name")
+                .setFieldConfig(FieldConfig.newBuilder().setSearchable(true).build())
+                .build())
+            .setStrong(true)
+            .build();
     }
 
-    public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig
-    fieldConfig(boolean searchable, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.MetaFieldSense systemFieldType) {
+    /**
+     * 创建字段信息.
+     */
+    public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig fieldConfig(boolean searchable,
+                com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.MetaFieldSense systemFieldType) {
         return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.newBuilder()
-                .setSearchable(searchable)
-                .setIsRequired(true)
-                .setMetaFieldSense(systemFieldType)
-                .build();
+            .setSearchable(searchable)
+            .setIsRequired(true)
+            .setMetaFieldSense(systemFieldType)
+            .build();
 
     }
 
+    /**
+     * mock关系.
+     */
     public static List<ExpectedEntityStorage> mockSelfFatherAncestorsGenerate(long id) {
         List<ExpectedEntityStorage> expectedEntityStorages = new ArrayList<>();
 
@@ -157,7 +175,7 @@ public class EntityClassSyncResponseBuilder {
     }
 
 
-    public static class ExpectedEntityStorage {
+    private static class ExpectedEntityStorage {
         private List<Long> ancestors;
         private Long self;
         private Long father;

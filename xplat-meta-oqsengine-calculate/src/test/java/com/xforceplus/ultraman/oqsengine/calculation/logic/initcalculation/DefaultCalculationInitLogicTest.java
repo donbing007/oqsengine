@@ -17,23 +17,12 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Aggregation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Formula;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
-import com.xforceplus.ultraman.oqsengine.storage.pojo.EntityPackage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import io.vavr.Tuple2;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
-import org.mockito.Spy;
-
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -47,8 +36,19 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
+import org.mockito.Spy;
 
-class DefaultCalculationInitLogicTest {
+/**
+ * 计算字段初始化测试.
+ */
+public class DefaultCalculationInitLogicTest {
     @InjectMocks
     private DefaultCalculationInitLogic defaultCalculationInitLogic;
 
@@ -73,7 +73,9 @@ class DefaultCalculationInitLogicTest {
 
     private InitCalculationParticipant participant;
 
-
+    /**
+     * 每个测试前的初始化.
+     */
     @BeforeEach
     public void before() throws SQLException {
         defaultCalculationInitLogic = new DefaultCalculationInitLogic();
@@ -88,63 +90,66 @@ class DefaultCalculationInitLogicTest {
 
         MockitoAnnotations.initMocks(this);
         B1 = EntityField.Builder.anEntityField()
-                .withId(Long.MAX_VALUE - 1)
-                .withFieldType(FieldType.LONG)
-                .withName("b1")
-                .withConfig(
-                        FieldConfig.Builder.anFieldConfig()
-                                .withCalculation(Aggregation.Builder.anAggregation()
-                                        .withClassId(Long.MAX_VALUE)
-                                        .withFieldId(Long.MAX_VALUE)
-                                        .withRelationId(Long.MAX_VALUE - 10)
-                                        .withAggregationType(AggregationType.SUM)
-                                        .build()
-                                ).build()
-                ).build();
+            .withId(Long.MAX_VALUE - 1)
+            .withFieldType(FieldType.LONG)
+            .withName("b1")
+            .withConfig(
+                FieldConfig.Builder.anFieldConfig()
+                    .withCalculation(Aggregation.Builder.anAggregation()
+                        .withClassId(Long.MAX_VALUE)
+                        .withFieldId(Long.MAX_VALUE)
+                        .withRelationId(Long.MAX_VALUE - 10)
+                        .withAggregationType(AggregationType.SUM)
+                        .build()
+                    ).build()
+            ).build();
 
         B_FML = EntityField.Builder.anEntityField()
-                .withId(Long.MAX_VALUE - 11)
-                .withFieldType(FieldType.LONG)
-                .withName("b-fml-b-sum")
-                .withConfig(
-                        FieldConfig.Builder.anFieldConfig()
-                                .withCalculation(Formula.Builder.anFormula()
-                                        .withLevel(1)
-                                        .withExpression("${b1} * 2")
-                                        .withFailedDefaultValue(0)
-                                        .withFailedPolicy(Formula.FailedPolicy.USE_FAILED_DEFAULT_VALUE)
-                                        .withArgs(Collections.singletonList("b1"))
-                                        .build()
-                                ).build()
-                ).build();
+            .withId(Long.MAX_VALUE - 11)
+            .withFieldType(FieldType.LONG)
+            .withName("b-fml-b-sum")
+            .withConfig(
+                FieldConfig.Builder.anFieldConfig()
+                    .withCalculation(Formula.Builder.anFormula()
+                        .withLevel(1)
+                        .withExpression("${b1} * 2")
+                        .withFailedDefaultValue(0)
+                        .withFailedPolicy(Formula.FailedPolicy.USE_FAILED_DEFAULT_VALUE)
+                        .withArgs(Collections.singletonList("b1"))
+                        .build()
+                    ).build()
+            ).build();
 
         B_CLASS = EntityClass.Builder.anEntityClass()
-                .withId(Long.MAX_VALUE - 1)
-                .withCode("b-class")
-                .withFields(Arrays.asList(B1, B_FML, EntityField.ID_ENTITY_FIELD))
-                .build();
+            .withId(Long.MAX_VALUE - 1)
+            .withCode("b-class")
+            .withFields(Arrays.asList(B1, B_FML, EntityField.ID_ENTITY_FIELD))
+            .build();
 
         entity = Entity.Builder.anEntity().withId(10000).withEntityClassRef(B_CLASS.ref()).withValues(Arrays.asList(
-                new LongValue(B1, 10)
+            new LongValue(B1, 10)
         )).build();
 
-        participant = InitCalculationParticipant.Builder.anInitCalculationParticipant().withField(B_FML).withEntityClass(B_CLASS).withSourceEntityClass(B_CLASS).withSourceFields(Stream.of(B1).collect(Collectors.toList())).build();
+        participant =
+            InitCalculationParticipant.Builder.anInitCalculationParticipant().withField(B_FML).withEntityClass(B_CLASS)
+                .withSourceEntityClass(B_CLASS).withSourceFields(Stream.of(B1).collect(Collectors.toList())).build();
 
         originalEntity = new OriginalEntity();
 
         originalEntity.setId(10000);
 
-        Mockito.when(masterStorage.iterator(Mockito.any(IEntityClass.class), Mockito.anyLong(), Mockito.anyLong(), Mockito.anyLong(), Mockito.anyInt())).thenReturn(iterator);
+        Mockito.when(masterStorage.iterator(Mockito.any(IEntityClass.class), Mockito.anyLong(), Mockito.anyLong(),
+            Mockito.anyLong(), Mockito.anyInt())).thenReturn(iterator);
 
         Mockito.when(iterator.hasNext()).thenReturn(true, false);
 
         Mockito.when(iterator.next()).thenReturn(originalEntity);
 
-        Mockito.when(masterStorage.selectOne(Mockito.anyLong(), Mockito.any(IEntityClass.class))).thenReturn(Optional.of(entity));
+        Mockito.when(masterStorage.selectOne(Mockito.anyLong(), Mockito.any(IEntityClass.class)))
+            .thenReturn(Optional.of(entity));
 
-//        Mockito.when(masterStorage.replace(Mockito.any(EntityPackage.class))).thenReturn(new int[] {1}, new int[] {0});
-
-        Mockito.when(masterStorage.selectMultiple(Mockito.any())).thenReturn(Stream.of(entity).collect(Collectors.toList()));
+        Mockito.when(masterStorage.selectMultiple(Mockito.any()))
+            .thenReturn(Stream.of(entity).collect(Collectors.toList()));
 
         defaultCalculationInitLogic.init();
 
@@ -165,7 +170,8 @@ class DefaultCalculationInitLogicTest {
 
     @Test
     public void testInitLogic() {
-        Tuple2<Boolean, List<InitCalculationParticipant>> tuple2 = defaultCalculationInitLogic.initLogic(B_CLASS, Stream.of(participant).collect(Collectors.toList()));
+        Tuple2<Boolean, List<InitCalculationParticipant>> tuple2 =
+            defaultCalculationInitLogic.initLogic(B_CLASS, Stream.of(participant).collect(Collectors.toList()));
         Assertions.assertTrue(tuple2._1());
     }
 

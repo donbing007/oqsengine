@@ -46,31 +46,6 @@ public class DiscoverDevOpsServiceTest extends AbstractContainerExtends {
     @MockBean(name = "metaManager")
     private MetaManager metaManager;
 
-//    // mockBean below need to delete
-//    @MockBean(name = "longContinuousPartialOrderIdGenerator")
-//    private LongIdGenerator longIdGenerator;
-//
-//    @MockBean(name = "longNoContinuousPartialOrderIdGenerator")
-//    private LongIdGenerator longPartitionIdGenerator;
-//
-//    @MockBean
-//    private EntitySearchService entitySearchService;
-//
-//    @MockBean
-//    private TransactionManager transactionManager;
-//
-//    @MockBean
-//    private IndexStorage indexStorage;
-//
-//    @MockBean
-//    private MasterStorage masterStorage;
-//
-//    @MockBean
-//    private TaskQueue taskQueue;
-//
-//    @MockBean
-//    private TaskCoordinator taskCoordinator;
-
     private boolean waitForDebug = false;
 
     private static String expectedAppId = "discover-test";

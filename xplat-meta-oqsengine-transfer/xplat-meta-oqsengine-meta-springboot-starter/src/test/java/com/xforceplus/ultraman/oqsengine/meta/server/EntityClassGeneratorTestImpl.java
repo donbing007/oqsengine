@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * desc :
- * name : EntityClassGeneratorTestImpl
+ * name : EntityClassGeneratorTestImpl.
  *
  * @author : xujia
  * date : 2021/3/3

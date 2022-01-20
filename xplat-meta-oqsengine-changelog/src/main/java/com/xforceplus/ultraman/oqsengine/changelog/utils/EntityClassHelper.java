@@ -4,8 +4,11 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
-
-import java.util.*;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * helper for entityclass
@@ -18,9 +21,6 @@ public class EntityClassHelper {
      * find out propagation relation include
      * two parts
      * 1 strong relation part
-     *
-     * @param entityClass
-     * @return
      */
     public static List<Relationship> findPropagationRelation(IEntityClass entityClass) {
         List<Relationship> relationships = new LinkedList<>();
@@ -49,13 +49,10 @@ public class EntityClassHelper {
 
     /**
      * find associated entityClassId
-     *
-     * @param relationship
-     * @return
      */
     public static Long findIdAssociatedEntityClassId(Relationship relationship) {
         if (relationship.getRelationType() == Relationship.RelationType.MANY_TO_ONE
-                || relationship.getRelationType() == Relationship.RelationType.ONE_TO_ONE) {
+            || relationship.getRelationType() == Relationship.RelationType.ONE_TO_ONE) {
             return relationship.getRightEntityClassId();
         } else {
             return relationship.getLeftEntityClassId();
@@ -72,9 +69,6 @@ public class EntityClassHelper {
      * same name or name end with 'MTO'
      * first relation is relation
      * second relation is associated relation
-     *
-     * @param entityClass
-     * @return
      */
     public static List<Tuple2<Relationship, Relationship>> findAssociatedRelations(IEntityClass entityClass) {
 
@@ -92,10 +86,10 @@ public class EntityClassHelper {
             if (retRelationship != null) {
                 //find out which is associate
                 if (retRelationship.getRelationType() == Relationship.RelationType.MANY_TO_ONE
-                        && isRelationOwner(entityClass.id(), retRelationship)) {
+                    && isRelationOwner(entityClass.id(), retRelationship)) {
                     oqsRelations.add(Tuple.of(oqsRelation, retRelationship));
                 } else if (retRelationship.getRelationType() == Relationship.RelationType.MANY_TO_ONE
-                        && isRelationOwner(entityClass.id(), oqsRelation)) {
+                    && isRelationOwner(entityClass.id(), oqsRelation)) {
                     oqsRelations.add(Tuple.of(retRelationship, oqsRelation));
                 }
             } else {

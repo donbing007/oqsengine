@@ -22,7 +22,7 @@ public interface Calculation {
      * ValueChange 记录一个字段从一个值至另一个值的变化,当前焦点字段如果产生变化那需要在此产生记录.
      * CalculationContext 还提供了一个实例池,用以缓存当前处理相关的实例(包含自己).
      * 所有被焦点的实例都应该可以在实例缓存池中找到.
-     *
+     * <p></p>
      * 注意: 当前焦点实例中的
      *
      * @param context 计算的上下文.

@@ -1,9 +1,17 @@
 package com.xforceplus.ultraman.oqsengine.changelog.impl;
 
+import static com.xforceplus.ultraman.oqsengine.changelog.utils.ChangelogHelper.mergeSortedList;
+import static com.xforceplus.ultraman.oqsengine.changelog.utils.ChangelogHelper.serialize;
+
 import com.xforceplus.ultraman.oqsengine.changelog.ChangelogService;
 import com.xforceplus.ultraman.oqsengine.changelog.ReplayService;
-import com.xforceplus.ultraman.oqsengine.changelog.domain.*;
+import com.xforceplus.ultraman.oqsengine.changelog.domain.ChangeValue;
+import com.xforceplus.ultraman.oqsengine.changelog.domain.ChangeVersion;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.ChangedEvent;
+import com.xforceplus.ultraman.oqsengine.changelog.domain.Changelog;
+import com.xforceplus.ultraman.oqsengine.changelog.domain.EntityAggDomain;
+import com.xforceplus.ultraman.oqsengine.changelog.domain.EntityRelation;
+import com.xforceplus.ultraman.oqsengine.changelog.domain.VersiondEntityRef;
 import com.xforceplus.ultraman.oqsengine.changelog.relation.RelationAwareChangelog;
 import com.xforceplus.ultraman.oqsengine.changelog.storage.write.ChangelogStorage;
 import com.xforceplus.ultraman.oqsengine.common.id.IdGenerator;
@@ -13,16 +21,18 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Stack;
+import java.util.stream.Collectors;
+import javax.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import javax.annotation.Resource;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import static com.xforceplus.ultraman.oqsengine.changelog.utils.ChangelogHelper.mergeSortedList;
-import static com.xforceplus.ultraman.oqsengine.changelog.utils.ChangelogHelper.serialize;
 
 /**
  * default changelog implementation
@@ -51,8 +61,6 @@ public class DefaultChangelogImpl implements ChangelogService {
     /**
      * changed event to generate Changelogs
      * changelog should always contains relation value with full value
-     * @param changedEvent
-     * @return
      */
     @Override
     public Changelog generateChangeLog(IEntityClass entityClass, ChangedEvent changedEvent) {
@@ -66,7 +74,7 @@ public class DefaultChangelogImpl implements ChangelogService {
          * get main entityClass
          */
         IEntityClass entityClassOp = metaManager.load(entityClassId, profile)
-                .orElseThrow(() -> new RuntimeException(String.format(FATAL_ERR, entityClassId)));
+            .orElseThrow(() -> new RuntimeException(String.format(FATAL_ERR, entityClassId)));
 
         List<Changelog> sourceChangelog = handleEvent(changedEvent, entityClass, null);
 
@@ -85,18 +93,15 @@ public class DefaultChangelogImpl implements ChangelogService {
 
     /**
      * genChangelog when a changedEvent comes, depend on which relation
-     *
-     * @param changedEvent
-     * @param entityClass
-     * @return
      */
-    private List<Changelog> handleEvent(ChangedEvent changedEvent, IEntityClass entityClass, Relationship relationship) {
+    private List<Changelog> handleEvent(ChangedEvent changedEvent, IEntityClass entityClass,
+                                        Relationship relationship) {
         if (entityClass.id() == changedEvent.getEntityClassId() && relationship == null) {
             return Collections.singletonList(genSourceChangelog(changedEvent));
         } else {
             List<Changelog> changelogs = relationAwareChangeLogs.stream().filter(x -> x.require(relationship))
-                    .flatMap(x -> x.generateOuterChangelog(relationship, entityClass, changedEvent).stream())
-                    .collect(Collectors.toList());
+                .flatMap(x -> x.generateOuterChangelog(relationship, entityClass, changedEvent).stream())
+                .collect(Collectors.toList());
 
             return changelogs;
         }
@@ -104,9 +109,6 @@ public class DefaultChangelogImpl implements ChangelogService {
 
     /**
      * change log
-     *
-     * @param changedEvent
-     * @return
      */
     private Changelog genSourceChangelog(ChangedEvent changedEvent) {
 
@@ -162,19 +164,19 @@ public class DefaultChangelogImpl implements ChangelogService {
 
         stack.push(new VersiondEntityRef(entityClassId, objId));
 
-        while(!stack.isEmpty()){
+        while (!stack.isEmpty()) {
             VersiondEntityRef nextNode = stack.pop();
             changeVersionList = findChangeVersion(changeVersionList, nextNode.getId(), nextNode.getVersion()
-                    , nextNode.getEntityClassId(), stack);
+                , nextNode.getEntityClassId(), stack);
         }
 
         return changeVersionList;
     }
 
     private List<ChangeVersion> findChangeVersion(List<ChangeVersion> changeVersionList, long objId, long version
-            , long entityClassId, Stack<VersiondEntityRef> stack){
+        , long entityClassId, Stack<VersiondEntityRef> stack) {
         List<Changelog> relatedChangelog = replayService.getRelatedChangelog(objId, version, -1);
-        if(!relatedChangelog.isEmpty()){
+        if (!relatedChangelog.isEmpty()) {
 
             List<ChangeVersion> currentList = relatedChangelog.stream().map(x -> {
                 ChangeVersion changeVersion = new ChangeVersion();
@@ -183,13 +185,14 @@ public class DefaultChangelogImpl implements ChangelogService {
                 return changeVersion;
             }).collect(Collectors.toList());
 
-            changeVersionList = mergeSortedList(changeVersionList, currentList, Comparator.comparingLong(ChangeVersion::getVersion));
+            changeVersionList =
+                mergeSortedList(changeVersionList, currentList, Comparator.comparingLong(ChangeVersion::getVersion));
 
             /**
              * TODO current here losing fields
              */
             Optional<IEntityClass> entityClassOp = metaManager.load(entityClassId, "");
-            if(entityClassOp.isPresent()) {
+            if (entityClassOp.isPresent()) {
                 IEntityClass entityClass = entityClassOp.get();
                 EntityRelation mainRelation = replayService.replayRelation(entityClass, objId, relatedChangelog);
                 //search next values
@@ -197,7 +200,7 @@ public class DefaultChangelogImpl implements ChangelogService {
                     long childEntity = key.getRightEntityClassId();
                     value.forEach(valueLife -> {
                         String idValue = valueLife.getValue();
-                        if(idValue != null) {
+                        if (idValue != null) {
                             try {
                                 long idLong = Long.parseLong(idValue);
                                 long endVersion = valueLife.getEnd();
@@ -219,10 +222,6 @@ public class DefaultChangelogImpl implements ChangelogService {
 
     /**
      * TODO a new structure to represent
-     * @param entityClass
-     * @param objId
-     * @param version
-     * @return
      */
     @Override
     public EntityAggDomain replayEntity(long entityClass, long objId, long version) {
