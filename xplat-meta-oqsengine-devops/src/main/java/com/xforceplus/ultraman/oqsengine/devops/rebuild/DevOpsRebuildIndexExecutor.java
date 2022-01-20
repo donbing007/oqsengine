@@ -239,9 +239,18 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
     }
 
     private boolean done(DevOpsTaskInfo devOpsTaskInfo) throws SQLException {
+        //  删除index脏数据
+        try {
+            indexStorage.clean(devOpsTaskInfo.getEntity(), devOpsTaskInfo.getMaintainid(),
+                devOpsTaskInfo.getStarts(), devOpsTaskInfo.getEnds());
+        } catch (Exception e) {
+            logger.warn(e.getMessage());
+        }
 
+        //  更新状态为完成
         devOpsTaskInfo.resetMessage("success");
         boolean isDone = sqlTaskStorage.done(devOpsTaskInfo) > NULL_UPDATE;
+
         if (isDone) {
             logger.info("task done, maintainId {}, finish batchSize {}",
                 devOpsTaskInfo.getMaintainid(), devOpsTaskInfo.getFinishSize());
