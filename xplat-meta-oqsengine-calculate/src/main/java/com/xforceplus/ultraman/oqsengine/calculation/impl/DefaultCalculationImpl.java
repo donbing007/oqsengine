@@ -9,7 +9,6 @@ import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFac
 import com.xforceplus.ultraman.oqsengine.calculation.logic.CalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.CalculationComparator;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.CalculationParticipant;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
@@ -195,10 +194,25 @@ public class DefaultCalculationImpl implements Calculation {
 
                 // 影响实例增加独占锁.
                 if (!affectedInfos.isEmpty()) {
-                    long[] affectedEntityIds = affectedInfos.stream().mapToLong(a -> a.getAffectedEntityId()).toArray();
-                    if (!context.tryLocksEntity(affectedEntityIds)) {
-                        throw new CalculationException(
-                            "Conflicts are calculated and the attempt limit is reached. To give up!");
+                    long[] affectedEntityIds = affectedInfos.stream()
+                        .filter(a -> {
+                            /*
+                            一个优化,减少加锁.
+                            如果是创建场景同时影响的对象又和源头触发对象一致,那么跳过无需再加锁.
+                             */
+                            if (CalculationScenarios.BUILD == context.getScenariso()) {
+                                if (a.getAffectedEntityId() == context.getSourceEntity().id()) {
+                                    return false;
+                                }
+                            }
+                            return true;
+                        })
+                        .mapToLong(a -> a.getAffectedEntityId()).toArray();
+                    if (affectedEntityIds.length > 0) {
+                        if (!context.tryLocksEntity(affectedEntityIds)) {
+                            throw new CalculationException(
+                                "Conflicts are calculated and the attempt limit is reached. To give up!");
+                        }
                     }
                 }
 
@@ -411,7 +425,7 @@ public class DefaultCalculationImpl implements Calculation {
                 if (changeOp.isPresent()) {
                     Infuence infuence = new Infuence(
                         context.getFocusEntity(),
-                        CalculationParticipant.Builder.anParticipant()
+                        Participant.Builder.anParticipant()
                             .withEntityClass(context.getFocusClass())
                             .withField(f)
                             .withAffectedEntities(Arrays.asList(

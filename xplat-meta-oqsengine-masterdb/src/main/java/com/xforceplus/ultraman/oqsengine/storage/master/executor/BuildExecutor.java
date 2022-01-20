@@ -20,8 +20,6 @@ import java.util.Collections;
  */
 public class BuildExecutor extends AbstractJdbcTaskExecutor<JsonAttributeMasterStorageEntity[], boolean[]> {
 
-    private static int ENTITY_CLASS_SIZE = 5;
-
     public static Executor<JsonAttributeMasterStorageEntity[], boolean[]> build(
         String tableName, TransactionResource resource, long timeout) {
         return new BuildExecutor(tableName, resource, timeout);

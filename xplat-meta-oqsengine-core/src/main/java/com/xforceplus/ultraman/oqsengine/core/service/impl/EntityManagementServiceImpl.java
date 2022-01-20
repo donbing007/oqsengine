@@ -132,22 +132,24 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     private CalculationLogicFactory calculationLogicFactory;
 
     /*
-     * 字段校验器工厂.
-     */
-    private VerifierFactory verifierFactory;
-
-    /*
     独占锁的等待时间.
      */
     private long lockTimeoutMs = 30000;
 
+    /**
+     * 设置悲观锁尝试加锁的超时等待毫秒值.
+     *
+     * @param lockTimeoutMs 等待毫秒值.
+     */
     public void setLockTimeoutMs(long lockTimeoutMs) {
-        this.lockTimeoutMs = lockTimeoutMs;
+        if (lockTimeoutMs > 0) {
+            this.lockTimeoutMs = lockTimeoutMs;
+        }
     }
 
     /*
-            只读的原因.
-             */
+                只读的原因.
+                 */
     private enum ReadOnleyModeRease {
         // 未知,不应该产生.
         UNKNOWN(0),
@@ -246,6 +248,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
     @PostConstruct
     public void init() {
+
+        logger.info("Pessimistic lock attempt timeout milliseconds is {}.", this.lockTimeoutMs);
+
         setNormalMode();
         if (!ignoreCDCStatus) {
             checkCDCStatusWorker =
@@ -290,8 +295,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         } else {
             logger.info("Ignore CDC status checks.");
         }
-
-        verifierFactory = new VerifierFactory();
     }
 
     @PreDestroy

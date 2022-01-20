@@ -70,7 +70,7 @@ public class InfuenceTest {
             .withId(Long.MAX_VALUE)
             .withEntityClassRef(A_CLASS.ref()).build();
         Infuence infuence = new Infuence(entity,
-                CalculationParticipant.Builder.anParticipant()
+                Participant.Builder.anParticipant()
                 .withEntityClass(A_CLASS)
                 .withField(EntityField.CREATE_TIME_FILED)
                 .build(),
@@ -113,7 +113,7 @@ public class InfuenceTest {
             .withId(Long.MAX_VALUE)
             .withEntityClassRef(A_CLASS.ref()).build();
         Infuence infuence = new Infuence(rootEntity,
-                CalculationParticipant.Builder.anParticipant()
+                Participant.Builder.anParticipant()
                 .withEntityClass(A_CLASS)
                 .withField(EntityField.CREATE_TIME_FILED)
                 .build(),
@@ -125,14 +125,14 @@ public class InfuenceTest {
 
         // 出现在root结点下.
         infuence.impact(
-                CalculationParticipant.Builder.anParticipant()
+                Participant.Builder.anParticipant()
                 .withEntityClass(B_CLASS).withField(EntityField.CREATE_TIME_FILED).build());
 
         // 出现在B_Class之下.
         infuence.impact(
-                CalculationParticipant.Builder.anParticipant()
+                Participant.Builder.anParticipant()
                 .withEntityClass(B_CLASS).withField(EntityField.CREATE_TIME_FILED).build(),
-                CalculationParticipant.Builder.anParticipant()
+                Participant.Builder.anParticipant()
                 .withEntityClass(C_CLASS).withField(EntityField.CREATE_TIME_FILED).build()
         );
 
@@ -164,7 +164,7 @@ public class InfuenceTest {
             .withId(Long.MAX_VALUE)
             .withEntityClassRef(A_CLASS.ref()).build();
         Infuence infuence = new Infuence(rootEntity,
-                CalculationParticipant.Builder.anParticipant()
+                Participant.Builder.anParticipant()
                 .withEntityClass(A_CLASS)
                 .withField(EntityField.CREATE_TIME_FILED)
                 .build(),
@@ -175,38 +175,38 @@ public class InfuenceTest {
             ));
 
         infuence.impact(
-                CalculationParticipant.Builder.anParticipant()
+                Participant.Builder.anParticipant()
                 .withEntityClass(A_CLASS)
                 .withField(EntityField.CREATE_TIME_FILED)
                 .build(),
-                CalculationParticipant.Builder.anParticipant()
+                Participant.Builder.anParticipant()
                 .withEntityClass(B_CLASS)
                 .withField(EntityField.CREATE_TIME_FILED)
                 .build()
         );
-        infuence.impact(CalculationParticipant.Builder.anParticipant()
+        infuence.impact(Participant.Builder.anParticipant()
                 .withEntityClass(B_CLASS)
                 .withField(EntityField.CREATE_TIME_FILED)
                 .build(),
-                CalculationParticipant.Builder.anParticipant()
+                Participant.Builder.anParticipant()
                 .withEntityClass(C_CLASS)
                 .withField(EntityField.CREATE_TIME_FILED)
                 .build()
         );
 
-        infuence.impact(CalculationParticipant.Builder.anParticipant()
+        infuence.impact(Participant.Builder.anParticipant()
                 .withEntityClass(A_CLASS)
                 .withField(EntityField.CREATE_TIME_FILED)
                 .build(),
-                CalculationParticipant.Builder.anParticipant()
+                Participant.Builder.anParticipant()
                 .withEntityClass(D_CLASS)
                 .withField(EntityField.CREATE_TIME_FILED)
                 .build());
-        infuence.impact(CalculationParticipant.Builder.anParticipant()
+        infuence.impact(Participant.Builder.anParticipant()
                 .withEntityClass(D_CLASS)
                 .withField(EntityField.CREATE_TIME_FILED)
                 .build(),
-                CalculationParticipant.Builder.anParticipant()
+                Participant.Builder.anParticipant()
                 .withEntityClass(E_CLASS)
                 .withField(EntityField.CREATE_TIME_FILED)
                 .build());
@@ -240,7 +240,7 @@ public class InfuenceTest {
             .withId(Long.MAX_VALUE)
             .withEntityClassRef(A_CLASS.ref()).build();
         Infuence infuence = new Infuence(rootEntity,
-                CalculationParticipant.Builder.anParticipant()
+                Participant.Builder.anParticipant()
                 .withEntityClass(A_CLASS)
                 .withField(EntityField.CREATE_TIME_FILED)
                 .build(),
@@ -251,38 +251,38 @@ public class InfuenceTest {
             ));
 
         infuence.impact(
-                CalculationParticipant.Builder.anParticipant()
+                Participant.Builder.anParticipant()
                 .withEntityClass(A_CLASS)
                 .withField(EntityField.CREATE_TIME_FILED)
                 .build(),
-                CalculationParticipant.Builder.anParticipant()
+                Participant.Builder.anParticipant()
                 .withEntityClass(B_CLASS)
                 .withField(EntityField.CREATE_TIME_FILED)
                 .build()
         );
-        infuence.impact(CalculationParticipant.Builder.anParticipant()
+        infuence.impact(Participant.Builder.anParticipant()
                 .withEntityClass(B_CLASS)
                 .withField(EntityField.CREATE_TIME_FILED)
                 .build(),
-                CalculationParticipant.Builder.anParticipant()
+                Participant.Builder.anParticipant()
                 .withEntityClass(C_CLASS)
                 .withField(EntityField.CREATE_TIME_FILED)
                 .build()
         );
 
-        infuence.impact(CalculationParticipant.Builder.anParticipant()
+        infuence.impact(Participant.Builder.anParticipant()
                 .withEntityClass(A_CLASS)
                 .withField(EntityField.CREATE_TIME_FILED)
                 .build(),
-                CalculationParticipant.Builder.anParticipant()
+                Participant.Builder.anParticipant()
                 .withEntityClass(D_CLASS)
                 .withField(EntityField.CREATE_TIME_FILED)
                 .build());
-        infuence.impact(CalculationParticipant.Builder.anParticipant()
+        infuence.impact(Participant.Builder.anParticipant()
                 .withEntityClass(D_CLASS)
                 .withField(EntityField.CREATE_TIME_FILED)
                 .build(),
-                CalculationParticipant.Builder.anParticipant()
+                Participant.Builder.anParticipant()
                 .withEntityClass(E_CLASS)
                 .withField(EntityField.CREATE_TIME_FILED)
                 .build());
@@ -334,7 +334,7 @@ public class InfuenceTest {
         IEntity rootEntity = Entity.Builder.anEntity()
             .withId(Long.MAX_VALUE)
             .withEntityClassRef(A_CLASS.ref()).build();
-        Infuence infuence = new Infuence(rootEntity, CalculationParticipant.Builder.anParticipant()
+        Infuence infuence = new Infuence(rootEntity, Participant.Builder.anParticipant()
             .withEntityClass(A_CLASS)
             .withField(EntityField.CREATE_TIME_FILED)
             .build(),
@@ -344,27 +344,27 @@ public class InfuenceTest {
                 new DateTimeValue(EntityField.CREATE_TIME_FILED, LocalDateTime.MAX)
             ));
 
-        infuence.impact(CalculationParticipant.Builder.anParticipant()
+        infuence.impact(Participant.Builder.anParticipant()
                 .withEntityClass(A_CLASS)
                 .withField(EntityField.CREATE_TIME_FILED)
                 .build(),
-                CalculationParticipant.Builder.anParticipant()
+                Participant.Builder.anParticipant()
                 .withEntityClass(B_CLASS)
                 .withField(EntityField.CREATE_TIME_FILED)
                 .build());
-        infuence.impact(CalculationParticipant.Builder.anParticipant()
+        infuence.impact(Participant.Builder.anParticipant()
                 .withEntityClass(B_CLASS)
                 .withField(EntityField.CREATE_TIME_FILED)
                 .build(),
-                CalculationParticipant.Builder.anParticipant()
+                Participant.Builder.anParticipant()
                 .withEntityClass(C_CLASS)
                 .withField(EntityField.CREATE_TIME_FILED)
                 .build());
-        infuence.impact(CalculationParticipant.Builder.anParticipant()
+        infuence.impact(Participant.Builder.anParticipant()
                 .withEntityClass(A_CLASS)
                 .withField(EntityField.CREATE_TIME_FILED)
                 .build(),
-                CalculationParticipant.Builder.anParticipant()
+                Participant.Builder.anParticipant()
                 .withEntityClass(D_CLASS)
                 .withField(EntityField.CREATE_TIME_FILED)
                 .build());
@@ -375,7 +375,7 @@ public class InfuenceTest {
             if (participant.getEntityClass().id() == D_CLASS.id()) {
                 infuenceInner.impact(
                     parent.get(),
-                        CalculationParticipant.Builder.anParticipant()
+                        Participant.Builder.anParticipant()
                         .withEntityClass(E_CLASS)
                         .withField(EntityField.CREATE_TIME_FILED)
                         .build());
@@ -424,7 +424,7 @@ public class InfuenceTest {
             .withId(Long.MAX_VALUE)
             .withEntityClassRef(A_CLASS.ref()).build();
         Infuence infuence = new Infuence(rootEntity,
-                CalculationParticipant.Builder.anParticipant()
+                Participant.Builder.anParticipant()
                 .withEntityClass(A_CLASS)
                 .withField(EntityField.CREATE_TIME_FILED)
                 .build(),
@@ -434,36 +434,36 @@ public class InfuenceTest {
                 new DateTimeValue(EntityField.CREATE_TIME_FILED, LocalDateTime.MAX)
             ));
 
-        infuence.impact(CalculationParticipant.Builder.anParticipant()
+        infuence.impact(Participant.Builder.anParticipant()
                 .withEntityClass(A_CLASS)
                 .withField(EntityField.CREATE_TIME_FILED)
                 .build(),
-                CalculationParticipant.Builder.anParticipant()
+                Participant.Builder.anParticipant()
                 .withEntityClass(B_CLASS)
                 .withField(EntityField.CREATE_TIME_FILED)
                 .build());
-        infuence.impact(CalculationParticipant.Builder.anParticipant()
+        infuence.impact(Participant.Builder.anParticipant()
                 .withEntityClass(B_CLASS)
                 .withField(EntityField.CREATE_TIME_FILED)
                 .build(),
-                CalculationParticipant.Builder.anParticipant()
+                Participant.Builder.anParticipant()
                 .withEntityClass(C_CLASS)
                 .withField(EntityField.CREATE_TIME_FILED)
                 .build());
 
-        infuence.impact(CalculationParticipant.Builder.anParticipant()
+        infuence.impact(Participant.Builder.anParticipant()
                 .withEntityClass(A_CLASS)
                 .withField(EntityField.CREATE_TIME_FILED)
                 .build(),
-                CalculationParticipant.Builder.anParticipant()
+                Participant.Builder.anParticipant()
                 .withEntityClass(D_CLASS)
                 .withField(EntityField.CREATE_TIME_FILED)
                 .build());
-        infuence.impact(CalculationParticipant.Builder.anParticipant()
+        infuence.impact(Participant.Builder.anParticipant()
                 .withEntityClass(D_CLASS)
                 .withField(EntityField.CREATE_TIME_FILED)
                 .build(),
-                CalculationParticipant.Builder.anParticipant()
+                Participant.Builder.anParticipant()
                 .withEntityClass(E_CLASS)
                 .withField(EntityField.CREATE_TIME_FILED)
                 .build());
@@ -492,7 +492,7 @@ public class InfuenceTest {
             .withId(Long.MAX_VALUE)
             .withEntityClassRef(A_CLASS.ref()).build();
         Infuence infuence = new Infuence(rootEntity,
-                CalculationParticipant.Builder.anParticipant()
+                Participant.Builder.anParticipant()
                 .withEntityClass(A_CLASS)
                 .withField(EntityField.CREATE_TIME_FILED)
                 .build(),
@@ -503,13 +503,13 @@ public class InfuenceTest {
             ));
 
         infuence.impact(
-                CalculationParticipant.Builder.anParticipant()
+                Participant.Builder.anParticipant()
                 .withEntityClass(B_CLASS)
                 .withField(EntityField.UPDATE_TIME_FILED).build()
         );
 
         infuence.impact(
-                CalculationParticipant.Builder.anParticipant()
+                Participant.Builder.anParticipant()
                 .withEntityClass(B_CLASS)
                 .withField(EntityField.UPDATE_TIME_FILED).build()
         );
@@ -532,7 +532,7 @@ public class InfuenceTest {
             .withId(Long.MAX_VALUE)
             .withEntityClassRef(A_CLASS.ref()).build();
         Infuence infuence = new Infuence(rootEntity,
-                CalculationParticipant.Builder.anParticipant()
+                Participant.Builder.anParticipant()
                 .withEntityClass(A_CLASS)
                 .withField(EntityField.CREATE_TIME_FILED)
                 .build(),
@@ -542,7 +542,7 @@ public class InfuenceTest {
                 new DateTimeValue(EntityField.CREATE_TIME_FILED, LocalDateTime.MAX)
             ));
         infuence.impact(
-                CalculationParticipant.Builder.anParticipant()
+                Participant.Builder.anParticipant()
                 .withEntityClass(B_CLASS)
                 .withField(EntityField.UPDATE_TIME_FILED).build()
         );
@@ -553,7 +553,7 @@ public class InfuenceTest {
         rootEntity = Entity.Builder.anEntity()
             .withId(Long.MAX_VALUE)
             .withEntityClassRef(A_CLASS.ref()).build();
-        infuence = new Infuence(rootEntity, CalculationParticipant.Builder.anParticipant()
+        infuence = new Infuence(rootEntity, Participant.Builder.anParticipant()
             .withEntityClass(A_CLASS)
             .withField(EntityField.CREATE_TIME_FILED)
             .build(),
@@ -563,27 +563,27 @@ public class InfuenceTest {
                 new DateTimeValue(EntityField.CREATE_TIME_FILED, LocalDateTime.MAX)
             ));
 
-        infuence.impact(CalculationParticipant.Builder.anParticipant()
+        infuence.impact(Participant.Builder.anParticipant()
                 .withEntityClass(A_CLASS)
                 .withField(EntityField.CREATE_TIME_FILED)
                 .build(),
-                CalculationParticipant.Builder.anParticipant()
+                Participant.Builder.anParticipant()
                 .withEntityClass(B_CLASS)
                 .withField(EntityField.CREATE_TIME_FILED)
                 .build());
-        infuence.impact(CalculationParticipant.Builder.anParticipant()
+        infuence.impact(Participant.Builder.anParticipant()
                 .withEntityClass(B_CLASS)
                 .withField(EntityField.CREATE_TIME_FILED)
                 .build(),
-                CalculationParticipant.Builder.anParticipant()
+                Participant.Builder.anParticipant()
                 .withEntityClass(C_CLASS)
                 .withField(EntityField.CREATE_TIME_FILED)
                 .build());
-        infuence.impact(CalculationParticipant.Builder.anParticipant()
+        infuence.impact(Participant.Builder.anParticipant()
                 .withEntityClass(A_CLASS)
                 .withField(EntityField.CREATE_TIME_FILED)
                 .build(),
-                CalculationParticipant.Builder.anParticipant()
+                Participant.Builder.anParticipant()
                 .withEntityClass(D_CLASS)
                 .withField(EntityField.CREATE_TIME_FILED)
                 .build());

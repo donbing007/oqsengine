@@ -11,6 +11,7 @@ import io.lettuce.core.RedisClient;
 import io.lettuce.core.ScriptOutputType;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
+import java.util.Arrays;
 import java.util.List;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -182,14 +183,18 @@ public class RedisResourceLocker extends AbstractRetryResourceLocker implements 
         返回值是一个列表,包含了一系列序号,从1开始.
         表示未解锁的key下标.
          */
-        List<Long> failKeyIndex =
-            syncCommands.evalsha(unLockScriptSha, ScriptOutputType.MULTI, keys, locker.getName());
+        int[] failKeyIndex =
+            ((List<Long>) (syncCommands.evalsha(unLockScriptSha, ScriptOutputType.MULTI, keys, locker.getName())))
+            .stream().mapToInt(i -> i.intValue()).sorted().toArray();
 
-        for (int i = 0; i < failKeyIndex.size(); i++) {
-            timerWheel.remove(keys[(int) (failKeyIndex.get(i) - 1)]);
+        for (int i = 0; i < keys.length; i++) {
+            if (Arrays.binarySearch(failKeyIndex, i) < 0) {
+                // 序号不在错误列表中,可以清理.
+                timerWheel.remove(keys[i]);
+            }
         }
 
-        return failKeyIndex.stream().mapToInt(i -> i.intValue()).toArray();
+        return failKeyIndex;
     }
 
     @Override
