@@ -196,7 +196,7 @@ public class DefaultInitCalculationManager implements InitCalculationManager {
         if (load.isPresent()) {
             entityClasses.add(load.get());
         }*/
-        List<IEntityClass> entityClasses = (ArrayList) metaManager.appLoad(code);
+        List<IEntityClass> entityClasses = new ArrayList<>(metaManager.appLoad(code));
         Collection<Participant> all = getParticipant(entityClasses);
         List<Infuence> infuences = generateInfluence(all);
         Set<Participant> need = getNeedInitParticipant(all, infuences);

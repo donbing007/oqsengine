@@ -14,6 +14,6 @@ public class FormulaEventExecutor extends AbstractEventExecutor {
 
     @Override
     public boolean execute(CalculationEvent feedBack, CachedEntityClass cachedEntityClass, CalculationEventResource resource) throws SQLException {
-        return true;
+        return kvProcess(feedBack, resource);
     }
 }
