@@ -164,7 +164,7 @@ public class CdcInitialization implements BeanInitialization {
         public int error = 0;
 
         @Override
-        public long clean(IEntityClass entityClass, long maintainId, long start, long end) throws SQLException {
+        public long clean(long entityClassId, long maintainId, long start, long end) throws SQLException {
             return 0;
         }
 

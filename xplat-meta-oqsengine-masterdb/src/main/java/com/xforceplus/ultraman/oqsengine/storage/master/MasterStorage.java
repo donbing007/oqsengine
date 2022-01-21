@@ -44,4 +44,18 @@ public interface MasterStorage extends Storage, PreciseSelectStorage, Conditions
      */
     DataIterator<OriginalEntity> iterator(IEntityClass entityClass, long startTime, long endTime, long lastId, int size)
         throws SQLException;
+
+    /**
+     * 进行索引重建.
+     *
+     * @param entityClassId 业务类别id.
+     * @param maintainId 维护id.
+     * @param startTime 开始时间.
+     * @param endTime 结束时间.
+     *
+     * @return 影响的记录条数.
+     */
+    default int rebuild(long entityClassId, long maintainId, long startTime, long endTime) throws Exception {
+        return 0;
+    }
 }

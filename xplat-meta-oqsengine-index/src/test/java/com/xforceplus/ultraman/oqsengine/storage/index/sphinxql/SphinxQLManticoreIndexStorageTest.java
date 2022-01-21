@@ -551,7 +551,7 @@ public class SphinxQLManticoreIndexStorageTest {
         initDatas.addAll(buildSyncData(OperationType.CREATE, 10, Long.MAX_VALUE));
 
         IndexInitialization.getInstance().getIndexStorage().saveOrDeleteOriginalEntities(initDatas);
-        IndexInitialization.getInstance().getIndexStorage().clean(l2EntityClass, 10, 0, Long.MAX_VALUE);
+        IndexInitialization.getInstance().getIndexStorage().clean(l2EntityClass.id(), 10, 0, Long.MAX_VALUE);
 
         Page page = Page.newSinglePage(1000);
         Collection<EntityRef> refs =
@@ -564,7 +564,7 @@ public class SphinxQLManticoreIndexStorageTest {
 
         initDatas.addAll(buildSyncData(OperationType.CREATE, 10, Long.MAX_VALUE));
         IndexInitialization.getInstance().getIndexStorage().saveOrDeleteOriginalEntities(initDatas);
-        IndexInitialization.getInstance().getIndexStorage().clean(l2EntityClass, 0, 0, Long.MAX_VALUE);
+        IndexInitialization.getInstance().getIndexStorage().clean(l2EntityClass.id(), 0, 0, Long.MAX_VALUE);
 
         page = Page.newSinglePage(1000);
         refs =

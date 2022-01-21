@@ -3,7 +3,6 @@ package com.xforceplus.ultraman.oqsengine.boot.grpc.devops;
 import com.xforceplus.ultraman.devops.service.common.exception.DiscoverClientException;
 import com.xforceplus.ultraman.devops.service.sdk.annotation.DiscoverAction;
 import com.xforceplus.ultraman.devops.service.sdk.annotation.MethodParam;
-import com.xforceplus.ultraman.oqsengine.boot.grpc.utils.PrintErrorHelper;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.condition.CdcErrorQueryCondition;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.dto.ErrorType;
 import com.xforceplus.ultraman.oqsengine.core.service.DevOpsManagementService;
@@ -296,33 +295,6 @@ public class DiscoverDevOpsService {
             exceptionHandle(String.format("rebuildIndex exception, [%d-%s-%s-%s]",
                     entityClassId, profile == null ? "" : profile, start, end), e);
         }
-        return null;
-    }
-
-    /**
-     * 失败的重建索引任务在checkpoint处重试并完成余下任务.
-     *
-     * @param entityClassId 目标entityClass标识.
-     * @param taskId        任务id.
-     * @param profile       替换信息.比如租户.
-     * @return 任务详情.
-     */
-    @DiscoverAction(describe = "失败的重建索引任务在checkpoint处重试并完成余下任务", retClass = DevOpsTaskInfo.class)
-    public DevOpsTaskInfo resumeIndex(
-            @MethodParam(name = "entityClassId", klass = long.class, required = true) long entityClassId,
-            @MethodParam(name = "taskId", klass = String.class, required = true) String taskId,
-            @MethodParam(name = "profile", klass = String.class, required = true) String profile) {
-        try {
-            Optional<IEntityClass> entityClassOp = metaManager.load(entityClassId, profile);
-            if (entityClassOp.isPresent()) {
-                return devOpsManagementService.resumeRebuild(entityClassOp.get(), taskId).orElse(null);
-            }
-            return null;
-        } catch (Exception e) {
-            exceptionHandle(String.format("resumeIndex exception, [%d-%s-%s]",
-                    entityClassId, profile == null ? "" : profile, taskId), e);
-        }
-
         return null;
     }
 

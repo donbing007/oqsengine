@@ -35,6 +35,7 @@ import com.xforceplus.ultraman.oqsengine.storage.master.executor.MultipleQueryEx
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.QueryExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.QueryLimitCommitidByConditionsExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.UpdateExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.master.executor.rebuild.DevOpsRebuildExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.MasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.conditions.SQLJsonConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.master.unique.UniqueKeyGenerator;
@@ -66,6 +67,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
+import javax.sql.DataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -100,6 +102,9 @@ public class SQLMasterStorage implements MasterStorage {
 
     @Resource
     private KeyValueStorage kv;
+
+    @Resource(name = "masterDataSource")
+    private DataSource masterDataSource;
 
     private String tableName;
 
@@ -388,6 +393,20 @@ public class SQLMasterStorage implements MasterStorage {
 
                 return DeleteExecutor.build(tableName, resource, queryTimeout).execute(masterStorageEntities);
             });
+    }
+
+    @Override
+    public int rebuild(long entityClassId, long maintainId, long startTime, long endTime) throws Exception {
+
+        Optional<IEntityClass> actualEntityClassOp = metaManager.load(entityClassId, "");
+
+        if (actualEntityClassOp.isPresent()) {
+            return DevOpsRebuildExecutor
+                .build(tableName, masterDataSource, maintainId, startTime, endTime)
+                .execute(actualEntityClassOp.get());
+        }
+
+        return 0;
     }
 
     private void checkId(EntityPackage entityPackage) throws SQLException {

@@ -14,6 +14,7 @@ import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.ZE
 import com.alibaba.otter.canal.protocol.Message;
 import com.xforceplus.ultraman.oqsengine.cdc.connect.AbstractCDCConnector;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
+import com.xforceplus.ultraman.oqsengine.devops.rebuild.RebuildIndexExecutor;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.RunningStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
@@ -38,6 +39,8 @@ public class ConsumerRunner extends Thread {
 
     private AbstractCDCConnector abstractCdcConnector;
 
+    private RebuildIndexExecutor rebuildIndexExecutor;
+
     private static volatile RunningStatus runningStatus;
 
     /**
@@ -45,11 +48,13 @@ public class ConsumerRunner extends Thread {
      */
     public ConsumerRunner(ConsumerService consumerService,
                           CDCMetricsService cdcMetricsService,
-                          AbstractCDCConnector abstractCdcConnector) {
+                          AbstractCDCConnector abstractCdcConnector,
+                          RebuildIndexExecutor rebuildIndexExecutor) {
 
         this.consumerService = consumerService;
         this.cdcMetricsService = cdcMetricsService;
         this.abstractCdcConnector = abstractCdcConnector;
+        this.rebuildIndexExecutor = rebuildIndexExecutor;
     }
 
     /**
@@ -194,6 +199,11 @@ public class ConsumerRunner extends Thread {
 
                     //  canal状态确认、指标同步
                     syncSuccess(cdcMetrics);
+
+                    //  同步维护指标.
+                    if (!cdcMetrics.getDevOpsMetrics().isEmpty()) {
+                        rebuildIndexExecutor.sync(cdcMetrics.getDevOpsMetrics());
+                    }
                 } else {
 
                     //  当前没有任务需要消费

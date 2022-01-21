@@ -72,5 +72,10 @@
             <artifactId>spring-test</artifactId>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>com.xforceplus.ultraman</groupId>
+            <artifactId>xplat-meta-oqsengine-devops</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 </project>

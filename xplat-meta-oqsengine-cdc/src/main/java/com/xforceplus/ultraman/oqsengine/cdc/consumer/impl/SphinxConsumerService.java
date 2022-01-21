@@ -14,6 +14,7 @@ import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColum
 import com.alibaba.fastjson.JSON;
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
+import com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.CommonUtils;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.dto.RawEntry;
@@ -77,9 +78,7 @@ public class SphinxConsumerService implements ConsumerService {
         return cdcMetricsRecorder.startRecord(cdcUnCommitMetrics, batchId);
     }
 
-    /*
-        数据清洗、同步
-    * */
+    //  数据清洗、同步
     private int syncAfterDataFilter(List<CanalEntry.Entry> entries, CDCMetrics cdcMetrics,
                                     CDCMetricsService cdcMetricsService) throws SQLException {
         int syncCount = ZERO;
@@ -121,6 +120,7 @@ public class SphinxConsumerService implements ConsumerService {
         return syncCount;
     }
 
+    //  记录指标、打印指标
     private void batchLogged(CDCMetrics cdcMetrics) {
         if (cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().size() > EMPTY_BATCH_SIZE) {
             if (logger.isDebugEnabled()) {
@@ -141,6 +141,7 @@ public class SphinxConsumerService implements ConsumerService {
         }
     }
 
+    //  清除未提交的ids
     private void cleanUnCommit(CDCMetrics cdcMetrics) {
         if (cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().size() > EXPECTED_COMMIT_ID_COUNT) {
             if (logger.isWarnEnabled()) {
@@ -161,6 +162,7 @@ public class SphinxConsumerService implements ConsumerService {
         cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().clear();
     }
 
+    //  处理数据同步
     private void internalDataSync(CanalEntry.Entry entry,
                                   CDCMetrics cdcMetrics,
                                   List<Long> commitIDs, Map<Long, RawEntry> rawEntries) throws SQLException {
@@ -219,10 +221,14 @@ public class SphinxConsumerService implements ConsumerService {
                      *  检查是否为跳过不处理的commitId满足commitId > skipCommitId || (commitId == 0 && skipCommitId != 0)
                      * 否则跳过.
                      */
-                    if (commitId > skipCommitId || (commitId == NO_TRANSACTION_COMMIT_ID
-                        && skipCommitId != NO_TRANSACTION_COMMIT_ID)) {
+                    if (commitId > skipCommitId
+                        || (commitId == NO_TRANSACTION_COMMIT_ID && skipCommitId != NO_TRANSACTION_COMMIT_ID)
+                        || (CommonUtils.isMaintainRecord(commitId))) {
 
-                        if (checkCommitReady && !cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().contains(commitId)) {
+                        //  维护的CommitId不需要加入
+                        if ((checkCommitReady
+                            && !cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().contains(commitId))
+                            || !CommonUtils.isMaintainRecord(commitId)) {
                             commitIDs.add(commitId);
                         }
 
@@ -242,11 +248,7 @@ public class SphinxConsumerService implements ConsumerService {
         }
     }
 
-
-
-    /*
-        由于OQS主库的删除都是逻辑删除，实际上是进行了UPDATE操作
-     */
+    //  由于OQS主库的删除都是逻辑删除，实际上是进行了UPDATE操作
     private boolean supportEventType(CanalEntry.EventType eventType) {
         return eventType.equals(CanalEntry.EventType.INSERT)
             || eventType.equals(CanalEntry.EventType.UPDATE);
