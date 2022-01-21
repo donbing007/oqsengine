@@ -71,6 +71,7 @@ public class EntityGenerateTooBar {
             .withFields(
                 Arrays.asList(BOOL_FIELD, DATE_TIME_FIELD)
             ).build();
+
     // level 3
     public static final IEntityClass ENTITY_CLASS_2 =
         EntityClass.Builder.anEntityClass()
