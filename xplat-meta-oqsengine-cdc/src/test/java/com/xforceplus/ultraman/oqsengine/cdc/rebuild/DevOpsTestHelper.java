@@ -1,6 +1,7 @@
-package com.xforceplus.ultraman.oqsengine.devops;
+package com.xforceplus.ultraman.oqsengine.cdc.rebuild;
 
 
+import com.xforceplus.ultraman.oqsengine.cdc.AbstractCDCTestHelper;
 import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MockMetaManagerHolder;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -13,10 +14,12 @@ import java.util.List;
  * @author xujia 2020/11/22
  * @since 1.8
  */
-public abstract class DevOpsTestHelper extends AbstractContainerExtends {
+public abstract class DevOpsTestHelper extends AbstractCDCTestHelper {
 
-    public void init(List<IEntityClass> entityClasses) throws IllegalAccessException {
+    public void init(List<IEntityClass> entityClasses) throws Exception {
         MockMetaManagerHolder.initEntityClassBuilder(entityClasses);
+        consumerRunner = initConsumerRunner();
+        consumerRunner.start();
     }
 
     public void destroy() throws Exception {

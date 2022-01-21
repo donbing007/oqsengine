@@ -176,6 +176,10 @@ storage:
       page:
         size: 1000
 
+locker:
+  try:
+    timeoutMs: 30000
+
 redis:
   # standalone: redis://[password@]host[:port][/databaseNumber][?[timeout=timeout[d|h|m|s|ms|us|ns]]
   # standaloneSSL: rediss://[password@]host[:port][/databaseNumber][?[timeout=timeout[d|h|m|s|ms|us|ns]]
@@ -260,6 +264,13 @@ discover:
     threadPool:
       task: 5
       queue: 100
+
+load:
+  enabled: true
+  weight:
+    heap: 0.2
+    cpu: 0.5
+    io: 0.9
 
 # datasource json config
 # Multiple data sources are separated by Numbers.

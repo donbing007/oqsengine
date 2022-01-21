@@ -36,7 +36,7 @@ public class CleanExecutor implements Executor<Long, Long> {
         sql = buff.toString();
     }
 
-    private IEntityClass entityClass;
+    private long entityClassId;
     private long start;
     private long end;
     private List<DataSource> ds;
@@ -48,7 +48,7 @@ public class CleanExecutor implements Executor<Long, Long> {
         for (DataSource d : ds) {
             try (Connection conn = d.getConnection()) {
                 for (String indexName : indexNames) {
-                    String sql = buildSQL(indexName, entityClass.id());
+                    String sql = buildSQL(indexName, entityClassId);
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {
                         ps.setLong(1, maintainId);
                         ps.setLong(2, start);
@@ -71,7 +71,7 @@ public class CleanExecutor implements Executor<Long, Long> {
      * builder.
      */
     public static final class Builder {
-        private IEntityClass entityClass;
+        private long entityClassId;
         private long start;
         private long end;
         private List<DataSource> ds;
@@ -84,8 +84,8 @@ public class CleanExecutor implements Executor<Long, Long> {
             return new Builder();
         }
 
-        public Builder withEntityClass(IEntityClass entityClass) {
-            this.entityClass = entityClass;
+        public Builder withEntityClassId(long entityClassId) {
+            this.entityClassId = entityClassId;
             return this;
         }
 
@@ -117,7 +117,7 @@ public class CleanExecutor implements Executor<Long, Long> {
         public CleanExecutor build() {
             CleanExecutor cleanExecutor = new CleanExecutor();
             cleanExecutor.end = this.end;
-            cleanExecutor.entityClass = this.entityClass;
+            cleanExecutor.entityClassId = this.entityClassId;
             cleanExecutor.ds = this.ds;
             cleanExecutor.indexNames = this.indexNames;
             cleanExecutor.start = this.start;

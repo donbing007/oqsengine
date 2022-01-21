@@ -45,6 +45,8 @@ data:
               enabled: true
             prometheus:
               enabled: true
+            load:
+              enabled: true
         spring:
           application:
             name: "oqsengine"
@@ -75,7 +77,12 @@ data:
           join:
             maxJoinEntityNumber: {{ .Values.query.join.maxJoinEntityNumber | default "2" }}
             maxJoinDriverLineNumber: {{ .Values.query.join.maxJoinDriverLineNumber | default "1000" }}
-
+        load:
+          enabled: {{ .Values.load.enabled | default "false" }}
+          weight:
+            heap: {{ .Values.load.weight.heap | default "0.2" }}
+            cpu: {{ .Values.load.weight.cpu | default "0.5" }}
+            io: {{ .Values.load.weight.io | default "0.9" }}
         redis:
           lettuce:
             uri: {{ .Values.redis.lettuce.uri }}
@@ -195,6 +202,9 @@ data:
             skipCommitId: {{ .Values.cdc.consumer.skipCommitId | default "-1" | quote }}
         metadata:
           enhanced: {{ .Values.metadata.enhanced | default "false" }}
+        locker:
+          try:
+            timeoutMs: {{ .Values.locker.try.timeoutMs | default "30000" }}
         discover:
           sdk:
             enable: {{ .Values.discover.sdk.enable | default "true" }}

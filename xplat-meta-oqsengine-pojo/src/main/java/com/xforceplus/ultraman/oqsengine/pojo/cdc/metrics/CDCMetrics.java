@@ -5,6 +5,9 @@ import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.EM
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.ZERO;
 
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
+import com.xforceplus.ultraman.oqsengine.pojo.devops.DevOpsCdcMetrics;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * desc :.
@@ -15,8 +18,10 @@ import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
  */
 public class CDCMetrics {
     private long batchId;
+
     private CDCAckMetrics cdcAckMetrics;
     private CDCUnCommitMetrics cdcUnCommitMetrics;
+    private Map<Long, DevOpsCdcMetrics> devOpsMetrics;
 
     public CDCMetrics() {
         this(EMPTY_BATCH_ID, new CDCAckMetrics(CDCStatus.CONNECTED), new CDCUnCommitMetrics());
@@ -34,6 +39,7 @@ public class CDCMetrics {
         this.batchId = batchId;
         this.cdcAckMetrics = cdcAckMetrics;
         this.cdcUnCommitMetrics = cdcUnCommitMetrics;
+        this.devOpsMetrics = new HashMap<>();
     }
 
     public long getBatchId() {
@@ -68,6 +74,10 @@ public class CDCMetrics {
     public void syncFreeMessage(long batchId) {
         this.batchId = batchId;
         this.cdcAckMetrics.setExecuteRows(ZERO);
+    }
+
+    public Map<Long, DevOpsCdcMetrics> getDevOpsMetrics() {
+        return devOpsMetrics;
     }
 
     /**

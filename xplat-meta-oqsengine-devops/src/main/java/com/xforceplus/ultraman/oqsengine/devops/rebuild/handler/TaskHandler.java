@@ -1,8 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.devops.rebuild.handler;
 
-import com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.BatchStatus;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.DevOpsTaskInfo;
-import java.util.Optional;
 
 /**
  * 任务表示.
@@ -31,17 +29,7 @@ public interface TaskHandler {
      *
      * @return true 取消.false没有取消.
      */
-    boolean isCancel();
-
-    /**
-     * 取消任务.
-     */
-    void cancel() throws Exception;
-
-    /**
-     * 任务状态.
-     */
-    Optional<BatchStatus> batchStatus();
+    boolean isError();
 
     /**
      * 返回任务进度百分比.
@@ -50,5 +38,9 @@ public interface TaskHandler {
      */
     long getProgressPercentage();
 
+    /**
+     * 获取任务信息.
+     * @return
+     */
     DevOpsTaskInfo devOpsTaskInfo();
 }
