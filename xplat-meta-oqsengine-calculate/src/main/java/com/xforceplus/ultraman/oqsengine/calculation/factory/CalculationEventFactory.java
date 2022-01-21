@@ -8,9 +8,12 @@ import com.xforceplus.ultraman.oqsengine.calculation.event.executor.FormulaEvent
 import com.xforceplus.ultraman.oqsengine.calculation.event.executor.LookupEventExecutor;
 import com.xforceplus.ultraman.oqsengine.calculation.event.executor.StaticEventExecutor;
 import com.xforceplus.ultraman.oqsengine.calculation.event.helper.CalculationEventResource;
+import com.xforceplus.ultraman.oqsengine.common.serializable.SerializeStrategy;
 import com.xforceplus.ultraman.oqsengine.idgenerator.storage.SegmentStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
+import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
+
 import java.util.Map;
 
 /**
@@ -32,11 +35,13 @@ public class CalculationEventFactory {
     /**
      * 构造事件处理工厂.
      */
-    public CalculationEventFactory(SegmentStorage storage, MetaManager metaManager) {
+    public CalculationEventFactory(SegmentStorage storage, MetaManager metaManager, KeyValueStorage keyValueStorage, SerializeStrategy serializeStrategy) {
         //  注入的初始化类.
         resource = CalculationEventResource.Builder.anCalculationEventContext()
                             .withMeta(metaManager)
                             .withSegmentStorage(storage)
+                            .withKeyValueStorage(keyValueStorage)
+                            .withSerializeStrategy(serializeStrategy)
                             .build();
 
         executors.put(CalculationType.AUTO_FILL, new AutoFillEventExecutor());

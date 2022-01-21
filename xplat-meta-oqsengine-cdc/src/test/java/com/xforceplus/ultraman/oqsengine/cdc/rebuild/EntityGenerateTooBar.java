@@ -6,11 +6,12 @@ import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.BooleanValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
@@ -20,7 +21,9 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * entity生成工具.
@@ -68,6 +71,7 @@ public class EntityGenerateTooBar {
             .withFields(
                 Arrays.asList(BOOL_FIELD, DATE_TIME_FIELD)
             ).build();
+
     // level 3
     public static final IEntityClass ENTITY_CLASS_2 =
         EntityClass.Builder.anEntityClass()
@@ -97,12 +101,11 @@ public class EntityGenerateTooBar {
      * @param size 需要的数量.
      * @return 实例列表.
      */
-    public static com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[] prepareLongStringEntity(int size) {
-        com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[] entities = new com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[size];
+    public static List<IEntity> prepareLongStringEntity(int size) {
+        List<IEntity> entities = new ArrayList<>();
 
         for (int i = 0; i < size; i++) {
-
-            entities[i] = Entity.Builder.anEntity()
+            Entity entity = Entity.Builder.anEntity()
                 .withId(startPos)
                 .withEntityClassRef(EntityClassRef
                     .Builder.anEntityClassRef()
@@ -118,11 +121,13 @@ public class EntityGenerateTooBar {
                 .withTime(defaultTime + startPos * SECOND)
                 .build();
 
+            entities.add(entity);
+
             startPos++;
             //  结束时间
-            longStringEndTime = entities[i].time();
+            longStringEndTime = entity.time();
         }
-        longStringStartTime = entities[0].time();
+        longStringStartTime = entities.get(0).time();
         return entities;
     }
 
@@ -133,8 +138,8 @@ public class EntityGenerateTooBar {
     /**
      * surplus test use.
      */
-    public static com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[] prepareSurPlusNeedDeleteEntity(int size) {
-        com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[] entities = new com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[size];
+    public static IEntity[] prepareSurPlusNeedDeleteEntity(int size) {
+        IEntity[] entities = new IEntity[size];
         for (int i = 0; i < size; i++) {
             entities[i] = Entity.Builder.anEntity()
                 .withId(startPos)
@@ -170,8 +175,8 @@ public class EntityGenerateTooBar {
     /**
      * resume test use.
      */
-    public static com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[] preparePauseResumeEntity(int size) {
-        com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[] entities = new com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[size];
+    public static IEntity[] preparePauseResumeEntity(int size) {
+        IEntity[] entities = new IEntity[size];
         for (int i = 0; i < size; i++) {
             entities[i] = Entity.Builder.anEntity()
                 .withId(startPos)

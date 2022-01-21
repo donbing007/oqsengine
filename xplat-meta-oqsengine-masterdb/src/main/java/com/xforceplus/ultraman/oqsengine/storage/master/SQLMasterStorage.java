@@ -1,9 +1,13 @@
 package com.xforceplus.ultraman.oqsengine.storage.master;
 
 
+import static com.xforceplus.ultraman.oqsengine.storage.master.utils.OriginalEntityUtils.attributesToMap;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
 import com.xforceplus.ultraman.oqsengine.common.map.MapUtils;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
+import com.xforceplus.ultraman.oqsengine.common.profile.OqsProfile;
 import com.xforceplus.ultraman.oqsengine.common.serializable.utils.JacksonDefaultMapper;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
@@ -23,6 +27,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.ValueWithEmpty;
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.master.executor.BatchQueryCountExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.master.executor.BatchQueryExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.BuildExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.DeleteExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.ExistExecutor;
@@ -34,10 +40,12 @@ import com.xforceplus.ultraman.oqsengine.storage.master.executor.rebuild.DevOpsR
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.BaseMasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.JsonAttributeMasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.MapAttributeMasterStorageEntity;
+import com.xforceplus.ultraman.oqsengine.storage.master.pojo.MasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.conditions.SQLJsonConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.master.unique.UniqueKeyGenerator;
 import com.xforceplus.ultraman.oqsengine.storage.master.utils.EntityClassRefHelper;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.EntityPackage;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
@@ -129,6 +137,18 @@ public class SQLMasterStorage implements MasterStorage {
     @PostConstruct
     public void init() {
 
+    }
+
+    @Override
+    public DataIterator<OriginalEntity> iterator(IEntityClass entityClass, long startTime, long endTime, long lastStart)
+        throws SQLException {
+        return new EntityIterator(entityClass, lastStart, startTime, endTime);
+    }
+
+    @Override
+    public DataIterator<OriginalEntity> iterator(IEntityClass entityClass, long startTime, long endTime, long lastId,
+                                                 int size) throws SQLException {
+        return new EntityIterator(entityClass, lastId, startTime, endTime, size);
     }
 
     @Timed(
@@ -502,6 +522,126 @@ public class SQLMasterStorage implements MasterStorage {
     private void checkId(IEntity entity) throws SQLException {
         if (entity.id() == 0) {
             throw new SQLException("Invalid entity`s id.");
+        }
+    }
+
+    /**
+     * 数据迭代器,用以迭代出某个entity的实例列表.
+     */
+    private class EntityIterator implements DataIterator<OriginalEntity> {
+        private static final int DEFAULT_PAGE_SIZE = 100;
+
+        private final IEntityClass entityClass;
+        private long startId;
+        private final long startTime;
+        private final long endTime;
+        private final int pageSize;
+        private final List<OriginalEntity> buffer;
+
+        public EntityIterator(IEntityClass entityClass, long startId, long startTime, long endTime) {
+            this(entityClass, startId, startTime, endTime, DEFAULT_PAGE_SIZE);
+        }
+
+        public EntityIterator(IEntityClass entityClass, long startId, long startTime, long endTime, int pageSize) {
+            this.entityClass = entityClass;
+            this.startId = startId;
+            this.startTime = startTime;
+            this.endTime = endTime;
+            this.pageSize = pageSize;
+            buffer = new ArrayList<>(pageSize);
+        }
+
+        @Override
+        public boolean hasNext() {
+            try {
+                if (buffer.isEmpty()) {
+                    load();
+                }
+            } catch (Exception ex) {
+                throw new RuntimeException(ex.getMessage(), ex);
+            }
+
+            return !buffer.isEmpty();
+        }
+
+        @Override
+        public OriginalEntity next() {
+            if (hasNext()) {
+                OriginalEntity originalEntity = buffer.remove(0);
+                startId = originalEntity.getId();
+                return originalEntity;
+            } else {
+                return null;
+            }
+        }
+
+        private void load() throws Exception {
+            transactionExecutor.execute((tx, resource, hint) -> {
+                Collection<MasterStorageEntity> storageEntities =
+                    BatchQueryExecutor
+                        .build(tableName, resource, queryTimeout, entityClass, startTime, endTime, pageSize)
+                        .execute(startId);
+
+                Collection<OriginalEntity> originalEntities = new ArrayList<>();
+                for (MasterStorageEntity entity : storageEntities) {
+                    try {
+                        IEntityClass realEntityClass = entityClass;
+
+                        //  这里获取一次带有JOJO的真实entityClass
+                        if (null != entity.getAttribute() && !entity.getProfile()
+                            .equals(OqsProfile.UN_DEFINE_PROFILE)) {
+                            Optional<IEntityClass> entityClassOp =
+                                metaManager.load(entityClass.id(), entity.getProfile());
+                            if (!entityClassOp.isPresent()) {
+                                throw new SQLException(
+                                    String.format("entityClass could not be null in meta.[%d]", entityClass.id()));
+                            }
+                            realEntityClass = entityClassOp.get();
+                        }
+
+                        OriginalEntity originalEntity = OriginalEntity.Builder.anOriginalEntity()
+                            .withEntityClass(realEntityClass)
+                            .withId(entity.getId())
+                            .withCreateTime(entity.getCreateTime())
+                            .withUpdateTime(entity.getUpdateTime())
+                            .withOp(OperationType.UPDATE.getValue())
+                            .withTx(entity.getTx())
+                            .withDeleted(entity.isDeleted())
+                            .withCommitid(entity.getCommitid())
+                            .withVersion(entity.getVersion())
+                            .withOqsMajor(entity.getOqsMajor())
+                            .withAttributes(attributesToMap(entity.getAttribute()))
+                            .build();
+
+                        originalEntities.add(originalEntity);
+                    } catch (JsonProcessingException e) {
+                        throw new SQLException(
+                            String.format("to originalEntity failed. message : [%s]", e.getMessage()));
+                    }
+                }
+
+                buffer.addAll(originalEntities);
+
+                return null;
+            });
+        }
+
+        @Override
+        public long size() {
+            try {
+                return (int) transactionExecutor.execute((tx, resource, hint) -> {
+                    return BatchQueryCountExecutor
+                        .build(tableName, resource, queryTimeout, entityClass, startTime, endTime)
+                        .execute(0L);
+                });
+            } catch (SQLException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
+        }
+
+        @Override
+        public boolean provideSize() {
+            return true;
         }
     }
 

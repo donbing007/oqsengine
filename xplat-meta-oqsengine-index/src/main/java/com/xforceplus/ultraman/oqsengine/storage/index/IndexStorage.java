@@ -19,6 +19,17 @@ import java.util.Collection;
 public interface IndexStorage extends ConditionsSelectStorage, ConditionsSearchStorage, Lifecycle {
 
     /**
+     * 维护接口,时间范围清理.
+     *
+     * @param entityClassId 目标Id.
+     * @param maintainId  搜索目标的 taskId.
+     * @param start       开始时间.
+     * @param end         结束时间.
+     * @return 删除的条件.
+     */
+    long clean(long entityClassId, long maintainId, long start, long end) throws SQLException;
+
+    /**
      * 保存原始实体.来源可能是其他的storage实现中的数据.
      *
      * @param originalEntities 原始实体列表.

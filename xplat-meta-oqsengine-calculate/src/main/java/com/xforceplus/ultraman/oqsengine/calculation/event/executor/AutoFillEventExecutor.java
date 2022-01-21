@@ -43,6 +43,7 @@ public class AutoFillEventExecutor extends AbstractEventExecutor {
                 }
             }
         }
+        kvProcess(calculationEvent, resource);
         return true;
     }
 

@@ -167,6 +167,11 @@ public class CdcInitialization implements BeanInitialization {
 
 
         @Override
+        public long clean(long entityClassId, long maintainId, long start, long end) throws SQLException {
+            return 0;
+        }
+
+        @Override
         public void saveOrDeleteOriginalEntities(Collection<OriginalEntity> originalEntities) throws SQLException {
             error++;
 
