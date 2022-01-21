@@ -40,7 +40,6 @@ public interface TaskHandler {
 
     /**
      * 获取任务信息.
-     * @return
      */
     DevOpsTaskInfo devOpsTaskInfo();
 }

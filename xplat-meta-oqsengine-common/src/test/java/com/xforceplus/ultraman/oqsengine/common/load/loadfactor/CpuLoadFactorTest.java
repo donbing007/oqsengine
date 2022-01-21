@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.common.load.loadfactor;
 
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.Test;
  * @version 0.1 2022/1/17 14:43
  * @since 1.8
  */
+@Disabled("非常规测试")
 public class CpuLoadFactorTest {
 
     private CpuLoadFactor loadFactor = new CpuLoadFactor();

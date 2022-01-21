@@ -111,16 +111,6 @@ public class DevOpsController {
     }
 
     /**
-     * 重建索引(从最后失败的位置继续).
-     */
-    @PutMapping("/oqs/devops/rebuild-index/{entityClassId}/{taskId}")
-    public ResponseEntity<DevOpsTaskInfo> resumeIndex(@PathVariable long entityClassId,
-                                                      @PathVariable String taskId,
-                                                      @RequestParam("profile") String profile) {
-        return ResponseEntity.ok(discoverDevOpsService.resumeIndex(entityClassId, taskId, profile));
-    }
-
-    /**
      * 获取当前活动的任务列表.
      */
     @GetMapping("/oqs/devops/rebuild-index/tasks")

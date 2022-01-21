@@ -25,7 +25,6 @@ public interface RebuildIndexExecutor extends Lifecycle {
      * 重新创建索引.
      * 重新创建会让此entityClass进入只读模式.
      * 所以有写入事务都会被拒绝.
-     *
      * 如果有正在活动的EntityClass任务,那么后续的相同entityClass调用将造成异常.
      *
      * @param entityClass 目标entityClass.
@@ -50,7 +49,6 @@ public interface RebuildIndexExecutor extends Lifecycle {
      *
      * @param maintainId maintainId.
      * @return handler.
-     * @throws SQLException
      */
     Optional<TaskHandler> taskHandler(Long maintainId) throws SQLException;
 

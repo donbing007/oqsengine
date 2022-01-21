@@ -99,9 +99,10 @@ public class TestAbstractStorageValueTest {
         MockLongStorageValue v = new MockLongStorageValue("1", 0L, true);
         ShortStorageName shortStorageName = v.shortStorageName();
         Assertions.assertEquals("1L", shortStorageName.toString());
-        Assertions.assertEquals("1", shortStorageName.getPrefix());
-        Assertions.assertEquals("L", shortStorageName.getSuffix());
-
+        Assertions.assertEquals("", shortStorageName.getPrefix());
+        Assertions.assertEquals("1L", shortStorageName.getSuffix());
+        Assertions.assertEquals("1", shortStorageName.getOriginSuffix());
+        Assertions.assertEquals("L", shortStorageName.getTail());
 
         v = new MockLongStorageValue("1000000000000000000", 0L, true);
         shortStorageName = v.shortStorageName();
