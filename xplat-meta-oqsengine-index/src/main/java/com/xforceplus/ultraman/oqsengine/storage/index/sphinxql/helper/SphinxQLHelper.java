@@ -1,12 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper;
 
 import com.xforceplus.ultraman.oqsengine.common.StringUtils;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.constant.SQLConstant;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLStringStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.value.AnyStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.ShortStorageName;
@@ -18,12 +15,9 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.AbstractMap;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -66,12 +60,12 @@ public class SphinxQLHelper {
     protected static final Map<Character, String> REPLACE_SYMBOLS;
 
 
-    /**
-     * 多值字段起始标记
+    /*
+     * 多值字段起始标记.
      */
     private static final char START = '[';
-    /**
-     * 多值字段结束标记
+    /*
+     * 多值字段结束标记.
      */
     private static final char END = ']';
 
@@ -180,27 +174,11 @@ public class SphinxQLHelper {
     /**
      * 构造 sphinxQL 全文索引中精确查询语句.
      *
-     * @param value 目标字段.
+     * @param value        目标字段.
      * @param useGroupName 是否userGroupName.
      * @return 结果.
      */
     public static Tuple2<String, Boolean> buildPreciseQuery(StorageValue value, boolean useGroupName) {
-//        StringBuilder buff = new StringBuilder();
-//        ShortStorageName shortStorageName = value.shortStorageName();
-//        buff.append(shortStorageName.getPrefix())
-//            .append(filterSymbols(value.value().toString()));
-//
-//        /*
-//         * 如果使用组名的话,忽略尾部定位序号.
-//         */
-//        if (useGroupName) {
-//            buff.append(shortStorageName.getNoLocationSuffix());
-//        } else {
-//            buff.append(shortStorageName.getSuffix());
-//        }
-//
-//        return buff.toString();
-
         return stringConditionFormat(value.value().toString(), value.shortStorageName(), useGroupName);
     }
 
@@ -320,12 +298,12 @@ public class SphinxQLHelper {
     }
 
 
-
     /**
      * strings value通用的转换(StorageValue)逻辑.
+     *
      * @param storageName 字段存储名称.
      * @param originValue 字段存储值（origin）.
-     * @param attachment 是否附件.
+     * @param attachment  是否附件.
      * @return 存储结构.
      */
     public static StorageValue stringsStorageConvert(String storageName, String originValue, boolean attachment) {
@@ -376,13 +354,15 @@ public class SphinxQLHelper {
     }
 
     /**
+     * 组装查询条件.
      *
-     * @param word raw word.
+     * @param word             raw word.
      * @param shortStorageName name.
-     * @param useGroupName 是否userGroupName.
-     * @return 转换值, 是否分割为多值.
+     * @param useGroupName     是否userGroupName.
+     * @return 二元组中 1值为转换值, 2值为是否分割为多值.
      */
-    public static Tuple2<String, Boolean> stringConditionFormat(String word, ShortStorageName shortStorageName, boolean useGroupName) {
+    public static Tuple2<String, Boolean> stringConditionFormat(String word, ShortStorageName shortStorageName,
+                                                                boolean useGroupName) {
         String[] values = longStringWrap(word);
 
         StringBuilder stringBuilder = new StringBuilder();
@@ -453,15 +433,17 @@ public class SphinxQLHelper {
     }
 
     /**
-     * 分割字符串
+     * 分割字符串.
+     *
      * @param str 字符串.
-     * @param f 起始位置.
-     * @param t 长度.
+     * @param f   起始位置.
+     * @param t   长度.
      * @return 切割后的字符串.
      */
     private static String substring(String str, int f, int t) {
-        if (f > str.length())
+        if (f > str.length()) {
             return null;
+        }
         if (t > str.length()) {
             return str.substring(f, str.length());
         } else {

@@ -1,6 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.core.service.impl.calculator;
 
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,11 +17,11 @@ public class EntityManagementWithAggregationTest {
 
     @Test
     public void findAggregationsTest() {
-        List<IEntity> entities = findAggregationAndReplace(null, 10);
+        List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> entities = findAggregationAndReplace(null, 10);
         System.out.println(entities.size());
     }
 
-    private List<IEntity> findAggregationAndReplace(List<IEntity> entities, int count) {
+    private List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> findAggregationAndReplace(List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> entities, int count) {
         if (entities == null) {
             entities = new ArrayList<>();
         }

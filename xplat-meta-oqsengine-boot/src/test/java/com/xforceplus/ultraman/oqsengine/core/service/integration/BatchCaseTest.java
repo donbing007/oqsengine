@@ -18,7 +18,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntitys;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
@@ -220,8 +219,9 @@ public class BatchCaseTest {
         Assertions.assertTrue(ok.get());
         Assertions.assertTrue(resourceLocker.isLocking(IEntitys.resource(user.id())));
 
-        IEntity[] orders = IntStream.range(0, 10)
-            .mapToObj(i -> entityHelper.buildOrderEntity(user)).toArray(IEntity[]::new);
+        com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[] orders = IntStream.range(0, 10)
+            .mapToObj(i -> entityHelper.buildOrderEntity(user)).toArray(
+                com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[]::new);
         Assertions.assertEquals(OqsResult.success(), entityManagementService.build(orders));
     }
 
@@ -262,8 +262,9 @@ public class BatchCaseTest {
             Assertions.assertTrue(ok.get());
             Assertions.assertTrue(resourceLocker.isLocking(IEntitys.resource(user.id())));
 
-            IEntity[] orders = IntStream.range(0, 10)
-                .mapToObj(i -> entityHelper.buildOrderEntity(user)).toArray(IEntity[]::new);
+            com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[] orders = IntStream.range(0, 10)
+                .mapToObj(i -> entityHelper.buildOrderEntity(user)).toArray(
+                    com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[]::new);
             try {
                 entityManagementService.build(orders);
                 Assertions.fail("CalculationException was expected to be thrown, but was not.");
@@ -283,7 +284,7 @@ public class BatchCaseTest {
      */
     @Test
     public void testBatchBuild() throws Exception {
-        IEntity[] targetEntities = Stream.concat(
+        com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[] targetEntities = Stream.concat(
             IntStream.range(0, 10).mapToObj(i ->
                 Entity.Builder.anEntity()
                     .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
@@ -307,11 +308,11 @@ public class BatchCaseTest {
                             "test")
                     )
                     .build()
-            )).toArray(IEntity[]::new);
+            )).toArray(com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[]::new);
         Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(targetEntities).getResultStatus());
         Assertions.assertEquals(0, Arrays.stream(targetEntities).filter(e -> e.isDirty()).count());
 
-        OqsResult<Collection<IEntity>> entitiesResult = entitySearchService.selectByConditions(
+        OqsResult<Collection<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity>> entitiesResult = entitySearchService.selectByConditions(
             Conditions.buildEmtpyConditions(),
             MockEntityClassDefine.L2_ENTITY_CLASS.ref(),
             ServiceSelectConfig.Builder.anSearchConfig()
@@ -345,7 +346,7 @@ public class BatchCaseTest {
         创建测试目标.
         在同一批中,两个互不相关,之间没有计算字段依赖.
          */
-        IEntity[] targetEntities = Stream.concat(
+        com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[] targetEntities = Stream.concat(
             IntStream.range(0, 10).mapToObj(i ->
                 Entity.Builder.anEntity()
                     .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
@@ -369,7 +370,7 @@ public class BatchCaseTest {
                             "test")
                     )
                     .build()
-            )).toArray(IEntity[]::new);
+            )).toArray(com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[]::new);
         Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(targetEntities).getResultStatus());
         Assertions.assertEquals(0, Arrays.stream(targetEntities).filter(e -> e.isDirty()).count());
 
@@ -393,7 +394,7 @@ public class BatchCaseTest {
         Assertions.assertEquals(ResultStatus.SUCCESS,
             entityManagementService.replace(targetEntities).getResultStatus());
 
-        OqsResult<Collection<IEntity>> entitiesResult = entitySearchService.selectByConditions(
+        OqsResult<Collection<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity>> entitiesResult = entitySearchService.selectByConditions(
             Conditions.buildEmtpyConditions()
                 .addAnd(
                     new Condition(
@@ -436,7 +437,7 @@ public class BatchCaseTest {
 
     @Test
     public void testDeletes() throws Exception {
-        IEntity[] targetEntities = Stream.concat(
+        com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[] targetEntities = Stream.concat(
             IntStream.range(0, 10).mapToObj(i ->
                 Entity.Builder.anEntity()
                     .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
@@ -460,7 +461,7 @@ public class BatchCaseTest {
                             "test")
                     )
                     .build()
-            )).toArray(IEntity[]::new);
+            )).toArray(com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[]::new);
         Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(targetEntities).getResultStatus());
         Assertions.assertEquals(0, Arrays.stream(targetEntities).filter(e -> e.isDirty()).count());
 
@@ -477,7 +478,7 @@ public class BatchCaseTest {
         Assertions.assertEquals(0, Arrays.stream(targetEntities).filter(e -> !e.isDeleted()).count());
 
         Page page = Page.newSinglePage(100);
-        OqsResult<Collection<IEntity>> entitiesResult = entitySearchService.selectByConditions(
+        OqsResult<Collection<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity>> entitiesResult = entitySearchService.selectByConditions(
             Conditions.buildEmtpyConditions(),
             MockEntityClassDefine.L2_ENTITY_CLASS.ref(),
             ServiceSelectConfig.Builder.anSearchConfig()

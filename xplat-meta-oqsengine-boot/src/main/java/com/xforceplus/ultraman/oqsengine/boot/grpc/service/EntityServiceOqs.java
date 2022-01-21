@@ -32,7 +32,6 @@ import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.core.service.TransactionManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.pojo.OqsResult;
 import com.xforceplus.ultraman.oqsengine.core.service.pojo.ServiceSelectConfig;
-import com.xforceplus.ultraman.oqsengine.event.EventType;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
@@ -80,14 +79,12 @@ import com.xforceplus.ultraman.oqsengine.sdk.SortNode;
 import com.xforceplus.ultraman.oqsengine.sdk.TransRequest;
 import com.xforceplus.ultraman.oqsengine.sdk.TransactionUp;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.CacheEventHandler;
 import com.xforceplus.ultraman.oqsengine.synchronizer.server.LockStateService;
 import io.micrometer.core.annotation.Timed;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -104,7 +101,6 @@ import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.annotation.Resource;
-import org.apache.commons.lang3.StringUtils;
 import org.redisson.OqsLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -125,9 +121,6 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
     @Autowired(required = false)
     private TransactionManagementService transactionManagementService;
-
-    @Autowired
-    private CacheEventHandler cacheEventHandler;
 
     private static final String ENTITYCLASS_NOT_FOUND = "Requested EntityClass not found in current OqsEngine";
 
@@ -403,10 +396,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                  */
                 autoFillLookUp(entity, entityClass);
 
-                OqsResult oqsResult =
-                    entityManagementService.build(entity);
-                long txId = 0;
-                long version = 0;
+                OqsResult oqsResult = entityManagementService.build(entity);
                 ResultStatus createStatus = oqsResult.getResultStatus();
 
                 if (createStatus == null) {
@@ -422,8 +412,6 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                         case SUCCESS:
                             result = OperationResult.newBuilder()
                                 .addIds(entity.id())
-                                .addIds(txId)
-                                .addIds(version)
                                 .setCode(OperationResult.Code.OK)
                                 .setOriginStatus(SUCCESS.name())
                                 .buildPartial();
@@ -439,8 +427,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
                             result = OperationResult.newBuilder()
                                 .addIds(entity.id())
-                                .addIds(txId)
-                                .addIds(version).setCode(OperationResult.Code.OTHER)
+                                .setCode(OperationResult.Code.OTHER)
                                 .setMessage(failedValues)
                                 .setOriginStatus(ResultStatus.HALF_SUCCESS.name())
                                 .buildPartial();
@@ -482,67 +469,14 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     }
 
     /**
-     * build operation result.
-     *
-     * @param successCount  ss
-     * @param failedCount   ss
-     * @param messages      ss
-     * @param failedMapList ss
-     * @return ss
-     */
-    private OperationResult buildOperationResult(
-        Integer successCount,
-        Integer halfSuccessCount,
-        Integer failedCount,
-        List<String> messages,
-        List<Map<String, String>> failedMapList
-    ) {
-
-        OperationResult.Builder builder = OperationResult.newBuilder();
-
-        String message = "";
-
-        MultiResult result = new MultiResult();
-        result.setFailedCount(failedCount);
-        result.setSuccessCount(successCount);
-        result.setMessages(messages);
-        result.setFailedMapList(failedMapList);
-
-        try {
-            message = mapper.writeValueAsString(result);
-        } catch (Exception ex) {
-            logger.error("{}", ex);
-        }
-
-        if (failedCount > 0) {
-            builder.setOriginStatus("EXCEPTION");
-            builder.setCode(OperationResult.Code.EXCEPTION);
-            builder.setMessage(message);
-        } else {
-            builder.addIds(successCount);
-            builder.setAffectedRow(successCount);
-            if (halfSuccessCount > 0) {
-                builder.setOriginStatus(ResultStatus.HALF_SUCCESS.name());
-                builder.setCode(OperationResult.Code.OTHER);
-                builder.setMessage(message);
-            } else {
-                builder.setCode(OperationResult.Code.OK);
-                builder.setOriginStatus(SUCCESS.name());
-            }
-        }
-
-
-        return builder.build();
-    }
-
-    /**
      * build multi.
      *
-     * @param in       ss
-     * @param metadata ss
+     * @param in       data.
+     * @param metadata meta data.
      * @return ss
      */
-    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "service", "action", "buildMulti"})
+    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "service", "action",
+        "buildMulti"})
     @Override
     public CompletionStage<OperationResult> buildMulti(EntityMultiUp in, Metadata metadata) {
         return asyncWrite(() -> {
@@ -578,58 +512,65 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             OperationResult result;
 
             try {
-                List<IEntity> entityList = toEntity(entityClassRef, entityClass, in);
-                OqsResult[] oqsResultList =
-                    new OqsResult[] {
-                        entityManagementService.build(entityList.toArray(new IEntity[] {}))
-                    };
+                List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> entityList =
+                    toEntity(entityClassRef, entityClass, in);
 
-                AtomicInteger successCount = new AtomicInteger(0);
-                AtomicInteger halfSuccessCount = new AtomicInteger(0);
-                AtomicInteger failedCount = new AtomicInteger(0);
-                List<Map<String, String>> failedMapList = new ArrayList<>();
-                List<String> failedString = new ArrayList<>();
+                // do auto fill
+                entityList.forEach(e -> autoFillLookUp(e, entityClass));
 
-                Arrays.stream(oqsResultList).forEach(operationResult -> {
-                    long txId = 0;
-                    long version = 0;
-                    ResultStatus createStatus = operationResult.getResultStatus();
+                OqsResult oqsResult = entityManagementService.build(
+                    entityList.toArray(new com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[0]));
+                ResultStatus createStatus = oqsResult.getResultStatus();
+                switch (createStatus) {
+                    case SUCCESS: {
 
-                    if (createStatus == null) {
-                        failedCount.getAndIncrement();
-                        failedString.add(other("Unknown response status."));
-                    } else {
-                        switch (createStatus) {
-                            case SUCCESS:
-                                successCount.getAndIncrement();
-                                break;
-                            case HALF_SUCCESS:
-                                halfSuccessCount.getAndIncrement();
-                                Map<String, String> failedMap = hintsToFails(operationResult.getHints());
-                                failedMapList.add(failedMap);
-                                break;
-                            case ELEVATEFAILED:
-                            case FIELD_MUST:
-                            case FIELD_TOO_LONG:
-                            case FIELD_HIGH_PRECISION:
-                                failedCount.getAndIncrement();
-                                failedString.add(operationResult.getMessage());
-                                break;
-                            default:
-                                failedCount.getAndIncrement();
-                                failedString
-                                    .add(other(String.format("Unknown response status %s.", createStatus.name())));
-                        }
+                        OperationResult.Builder resultBuilder = OperationResult.newBuilder();
+                        resultBuilder.setCode(OperationResult.Code.OK)
+                            .setAffectedRow(entityList.size())
+                            .setOriginStatus(SUCCESS.name());
+                        entityList.forEach(e -> resultBuilder.addIds(e.id()));
+                        result = resultBuilder.buildPartial();
+                        break;
                     }
-                });
+                    case HALF_SUCCESS: {
 
-                //build result
-                return buildOperationResult(successCount.get(),
-                    halfSuccessCount.get(),
-                    failedCount.get(),
-                    failedString,
-                    failedMapList
-                );
+                        Map<String, String> failedMap = hintsToFails(oqsResult.getHints());
+                        String failedValues = "";
+                        try {
+                            failedValues = mapper.writeValueAsString(failedMap);
+                        } catch (Exception ex) {
+                            logger.error("{}", ex);
+                        }
+
+                        OperationResult.Builder resultBuilder = OperationResult.newBuilder();
+                        resultBuilder.setCode(OperationResult.Code.OTHER)
+                            .setMessage(failedValues)
+                            .setAffectedRow(entityList.size())
+                            .setOriginStatus(HALF_SUCCESS.name());
+                        entityList.forEach(e -> resultBuilder.addIds(e.id()));
+                        result = resultBuilder.buildPartial();
+                        break;
+                    }
+                    case ELEVATEFAILED:
+                    case FIELD_MUST:
+                    case FIELD_TOO_LONG:
+                    case FIELD_HIGH_PRECISION:
+                        result = OperationResult.newBuilder()
+                            .setAffectedRow(0)
+                            .setCode(OperationResult.Code.FAILED)
+                            .setOriginStatus(createStatus.name())
+                            .setMessage(oqsResult.getMessage())
+                            .buildPartial();
+                        break;
+                    default:
+                        result = OperationResult.newBuilder()
+                            .setAffectedRow(0)
+                            .setCode(OperationResult.Code.FAILED)
+                            .setOriginStatus(createStatus.name())
+                            .setMessage(
+                                other(String.format("Unknown response status %s.", createStatus.name())))
+                            .buildPartial();
+                }
 
             } catch (Exception e) {
                 logger.error(e.getMessage(), e);
@@ -668,7 +609,8 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     /**
      * fill all empty field to empty.
      */
-    private void replaceEntity(IEntity entity, IEntityClass entityClass) {
+    private void replaceEntity(IEntity entity,
+                               IEntityClass entityClass) {
         Collection<IEntityField> fields = entityClass.fields();
         IEntityValue entityValue = entity.entityValue();
         fields.forEach(x -> {
@@ -679,7 +621,8 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         });
     }
 
-    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "service", "action", "replace"})
+    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "service", "action",
+        "replace"})
     @Override
     public CompletionStage<OperationResult> replace(EntityUp in, Metadata metadata) {
         return asyncWrite(() -> {
@@ -715,7 +658,8 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
             try {
                 Optional<String> mode = metadata.getText("mode");
-                IEntity entity = toEntity(entityClassRef, entityClass, in);
+                com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity
+                    entity = toEntity(entityClassRef, entityClass, in);
 
                 /*
                  * do auto fill
@@ -876,11 +820,12 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 }
             }
 
-            OperationResult result;
+            OperationResult result = null;
 
             try {
 
-                List<IEntity> entityList = toEntity(entityClassRef, entityClass, in);
+                List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> entityList =
+                    toEntity(entityClassRef, entityClass, in);
 
                 //----------------------------
                 AtomicInteger successCount = new AtomicInteger(0);
@@ -892,65 +837,88 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 Optional<String> mode = metadata.getText("mode");
                 if (!entityList.isEmpty()) {
 
-                    IEntity[] entities = entityList.stream().peek(entity -> {
-                        if (mode.filter("replace"::equals).isPresent()) {
-                            //need reset version here
-                            replaceEntity(entity, entityClass);
-                        }
-                    }).toArray(IEntity[]::new);
+                    com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[] entities =
+                        entityList.stream().peek(entity -> {
+                            if (mode.filter("replace"::equals).isPresent()) {
+                                //need reset version here
+                                replaceEntity(entity, entityClass);
+                            }
+                        }).toArray(com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[]::new);
 
                     //side effect
                     try {
-                        OqsResult[] replace =
-                            new OqsResult[]
-                                {entityManagementService.replace(entities)};
+                        OqsResult oqsResult = entityManagementService.replace(entities);
+                        ResultStatus replaceStatus = oqsResult.getResultStatus();
 
-                        Arrays.stream(replace).forEach(operationResult -> {
-                            ResultStatus replaceStatus = operationResult.getResultStatus();
-                            if (replaceStatus == null) {
-                                failedCount.incrementAndGet();
-                                failedString.add(other("Unknown response status."));
-                            } else {
-
-                                switch (replaceStatus) {
-                                    case SUCCESS:
-                                        successCount.incrementAndGet();
-                                        break;
-                                    case HALF_SUCCESS:
-                                        Map<String, String> failedMap = hintsToFails(operationResult.getHints());
-                                        halfSuccessCount.incrementAndGet();
-                                        failedMapList.add(failedMap);
-                                        break;
-                                    case CONFLICT:
-                                        //send to sdk
-                                        failedCount.incrementAndGet();
-                                        failedString.add(ResultStatus.CONFLICT.name());
-                                        break;
-                                    case NOT_FOUND:
-                                        //send to sdk
-                                        failedString.add(notFound("No record found."));
-                                        break;
-                                    case ELEVATEFAILED:
-                                    case FIELD_MUST:
-                                    case FIELD_TOO_LONG:
-                                    case FIELD_HIGH_PRECISION:
-                                        failedCount.incrementAndGet();
-                                        failedString.add(operationResult.getMessage());
-                                        break;
-                                    default:
-                                        failedCount.incrementAndGet();
-                                        failedString.add(
-                                            other(String.format("Unknown response status %s.", replaceStatus.name())));
+                        switch (replaceStatus) {
+                            case SUCCESS:
+                                result = OperationResult.newBuilder()
+                                    .setAffectedRow(entities.length)
+                                    .setCode(OperationResult.Code.OK)
+                                    .setOriginStatus(SUCCESS.name())
+                                    .buildPartial();
+                                break;
+                            case HALF_SUCCESS:
+                                Map<String, String> failedMap = hintsToFails(oqsResult.getHints());
+                                String failedValues = "";
+                                try {
+                                    failedValues = mapper.writeValueAsString(failedMap);
+                                } catch (Exception ex) {
+                                    logger.error("{}", ex);
                                 }
-                            }
-                        });
+
+                                result = OperationResult.newBuilder()
+                                    .setAffectedRow(entities.length)
+                                    .setCode(OperationResult.Code.OTHER)
+                                    .setOriginStatus(HALF_SUCCESS.name())
+                                    .setMessage(failedValues)
+                                    .buildPartial();
+                                break;
+                            case CONFLICT:
+                                //send to sdk
+                                result = OperationResult.newBuilder()
+                                    .setAffectedRow(0)
+                                    .setCode(OperationResult.Code.OTHER)
+                                    .setOriginStatus(ResultStatus.CONFLICT.name())
+                                    .setMessage(ResultStatus.CONFLICT.name())
+                                    .buildPartial();
+                                break;
+                            case NOT_FOUND:
+                                //send to sdk
+                                result = OperationResult.newBuilder()
+                                    .setAffectedRow(0)
+                                    .setCode(OperationResult.Code.FAILED)
+                                    .setMessage(notFound("No record found."))
+                                    .setOriginStatus(NOT_FOUND.name())
+                                    .buildPartial();
+                                break;
+                            case ELEVATEFAILED:
+                            case FIELD_MUST:
+                            case FIELD_TOO_LONG:
+                            case FIELD_HIGH_PRECISION:
+                                result = OperationResult.newBuilder()
+                                    .setAffectedRow(0)
+                                    .setCode(OperationResult.Code.FAILED)
+                                    .setOriginStatus(replaceStatus.name())
+                                    .setMessage(oqsResult.getMessage())
+                                    .buildPartial();
+                                break;
+                            default:
+                                //unreachable code
+                                result = OperationResult.newBuilder()
+                                    .setAffectedRow(0)
+                                    .setCode(OperationResult.Code.FAILED)
+                                    .setOriginStatus(replaceStatus.name())
+                                    .setMessage(
+                                        other(String.format("Unknown response status %s.", replaceStatus.name())))
+                                    .buildPartial();
+                        }
+
                     } catch (SQLException e) {
                         //TODO
                         logger.error(e.getMessage(), e);
                     }
 
-                    result = buildOperationResult(successCount.get(), halfSuccessCount.get(), failedCount.get(),
-                        failedString, failedMapList);
                 } else {
                     result = OperationResult.newBuilder()
                         .setCode(OperationResult.Code.OK)
@@ -1068,7 +1036,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     }
                 }
 
-                OqsResult<Collection<IEntity>> entities =
+                OqsResult<Collection<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity>> entities =
                     entitySearchService
                         .selectByConditions(consOp.orElseGet(Conditions::buildEmtpyConditions), entityClassRef,
                             serviceSelectConfigBuilder.build());
@@ -1080,7 +1048,8 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
                     entities.getValue().get().forEach(entityResult -> {
 
-                        IEntity entity = toEntity(entityClassRef, entityClass, in.getEntity());
+                        com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity
+                            entity = toEntity(entityClassRef, entityClass, in.getEntity());
                         if (mode.filter("replace"::equals).isPresent()) {
                             //need reset version here
                             replaceEntity(entity, entityClass);
@@ -1137,12 +1106,6 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
             //check entityRef
             EntityClassRef entityClassRef = EntityClassHelper.toEntityClassRef(in, profile);
-            IEntityClass entityClass;
-            try {
-                entityClass = checkedEntityClassRef(entityClassRef);
-            } catch (Exception ex) {
-                return exceptional(ex);
-            }
 
             if (extractTransaction(metadata).isPresent()) {
                 Long id = extractTransaction(metadata).get();
@@ -1163,14 +1126,12 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             OperationResult result;
             try {
 
-                Entity targetEntity =
+                IEntity targetEntity =
                     Entity.Builder.anEntity().withId(in.getObjId()).withEntityClassRef(entityClassRef).build();
 
                 if (!Boolean.parseBoolean(force)) {
                     OqsResult oqsResult =
                         entityManagementService.delete(targetEntity);
-                    long txId = 0;
-                    long version = 0;
                     ResultStatus deleteStatus = oqsResult.getResultStatus();
                     if (deleteStatus == null) {
                         result = OperationResult.newBuilder()
@@ -1187,8 +1148,6 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                                     .setAffectedRow(1)
                                     .setCode(OperationResult.Code.OK)
                                     .setOriginStatus(SUCCESS.name())
-                                    .addIds(txId)
-                                    .addIds(version)
                                     .buildPartial();
                                 break;
                             case CONFLICT:
@@ -1290,18 +1249,10 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     public CompletionStage<OperationResult> removeMulti(EntityMultiUp in, Metadata metadata) {
         return asyncWrite(() -> {
 
-            //checkLock(in.getObjId(), metadata);
-
             String profile = extractProfile(metadata).orElse("");
 
             //check entityRef
             EntityClassRef entityClassRef = EntityClassHelper.toEntityClassRef(in, profile);
-            IEntityClass entityClass;
-            try {
-                entityClass = checkedEntityClassRef(entityClassRef);
-            } catch (Exception ex) {
-                return exceptional(ex);
-            }
 
             Long transId = null;
             if (extractTransaction(metadata).isPresent()) {
@@ -1325,87 +1276,60 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 }
             }
 
-            List<Long> idList = in.getValuesList().stream().map(x -> x.getObjId()).collect(Collectors.toList());
-            String force = metadata.getText("force").orElse("false");
-
-            OperationResult result;
-
-            Entity[] entityList = idList.stream().map(x -> {
+            Entity[] entities = in.getValuesList().stream().map(x -> {
                 Entity targetEntity =
-                    Entity.Builder.anEntity().withId(x).withEntityClassRef(entityClassRef).build();
+                    Entity.Builder.anEntity().withId(x.getObjId()).withEntityClassRef(entityClassRef).build();
                 return targetEntity;
             }).toArray(Entity[]::new);
 
-            AtomicInteger successCount = new AtomicInteger();
-            AtomicInteger failedCount = new AtomicInteger();
-            List<String> failedString = new ArrayList<>();
+            boolean force = Boolean.parseBoolean(metadata.getText("force").orElse("false"));
+
+            OperationResult result;
 
             try {
-                if (!Boolean.parseBoolean(force)) {
-                    OqsResult[] oqsResultList =
-                        new OqsResult[] {
-                            entityManagementService.delete(entityList)
-                        };
+                OqsResult oqsResult;
+                if (!force) {
+                    oqsResult = entityManagementService.delete(entities);
 
-                    Arrays.stream(oqsResultList).forEach(operationResult -> {
-                        ResultStatus deleteStatus = operationResult.getResultStatus();
-                        if (deleteStatus == null) {
-                            failedCount.getAndIncrement();
-                            failedString.add(other("Unknown response status."));
-                        } else {
-                            switch (deleteStatus) {
-                                case SUCCESS:
-                                    successCount.incrementAndGet();
-                                    break;
-                                case CONFLICT:
-                                    //send to sdk
-                                    failedCount.incrementAndGet();
-                                    break;
-                                case NOT_FOUND:
-                                    //send to sdk
-                                    //do nothing
-                                    break;
-                                default:
-                                    failedCount.incrementAndGet();
-                                    failedString.add(other(String.format("Unknown response status %s.",
-                                        deleteStatus != null ? deleteStatus.name() : "NULL")));
-                            }
-                        }
-                    });
                 } else {
 
-                    OqsResult[] oqsResultList =
-                        new OqsResult[] {entityManagementService.deleteForce(entityList)};
+                    oqsResult = entityManagementService.deleteForce(entities);
 
-                    Arrays.stream(oqsResultList).forEach(operationResult -> {
-                        ResultStatus deleteStatus = operationResult.getResultStatus();
-                        if (deleteStatus == null) {
-                            failedCount.getAndIncrement();
-                            failedString.add(other("Unknown response status."));
-                        } else {
-                            switch (deleteStatus) {
-                                case SUCCESS:
-                                    successCount.incrementAndGet();
-                                    break;
-                                case CONFLICT:
-                                    //send to sdk
-                                    failedCount.incrementAndGet();
-                                    break;
-                                case NOT_FOUND:
-                                    //send to sdk
-                                    //do nothing
-                                    break;
-                                default:
-                                    failedCount.incrementAndGet();
-                                    failedString.add(other(String.format("Unknown response status %s.",
-                                        deleteStatus != null ? deleteStatus.name() : "NULL")));
-                            }
-                        }
-                    });
                 }
 
-                result = buildOperationResult(successCount.get(), 0, failedCount.get(), failedString,
-                    Collections.emptyList());
+                switch (oqsResult.getResultStatus()) {
+                    case SUCCESS: {
+                        result = OperationResult.newBuilder()
+                            .setAffectedRow(1)
+                            .setCode(OperationResult.Code.OK)
+                            .setOriginStatus(oqsResult.getResultStatus().name())
+                            .buildPartial();
+                        break;
+                    }
+                    case CONFLICT: {
+                        result = OperationResult.newBuilder()
+                            .setAffectedRow(0)
+                            .setCode(OperationResult.Code.FAILED)
+                            .setOriginStatus(oqsResult.getResultStatus().name())
+                            .buildPartial();
+                        break;
+                    }
+                    case NOT_FOUND: {
+                        result = OperationResult.newBuilder()
+                            .setAffectedRow(0)
+                            .setCode(OperationResult.Code.OK)
+                            .setOriginStatus(oqsResult.getResultStatus().name())
+                            .buildPartial();
+                        break;
+                    }
+                    default: {
+                        result = OperationResult.newBuilder()
+                            .setAffectedRow(0)
+                            .setCode(OperationResult.Code.FAILED)
+                            .setOriginStatus(oqsResult.getResultStatus().name())
+                            .buildPartial();
+                    }
+                }
 
             } catch (Exception e) {
                 logger.error(e.getMessage(), e);
@@ -1462,7 +1386,8 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
             try {
 
-                OqsResult<IEntity> ds = entitySearchService.selectOne(in.getObjId(), entityClassRef);
+                OqsResult<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> ds =
+                    entitySearchService.selectOne(in.getObjId(), entityClassRef);
 
                 result = ds.getValue().map(entity -> OperationResult
                     .newBuilder()
@@ -1632,12 +1557,12 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 Optional<Conditions> consOp = toConditions(
                     entityClass, in.getConditions(), in.getIdsList(), metaManager);
 
-                OqsResult<Collection<IEntity>> entities =
+                OqsResult<Collection<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity>> entities =
                     entitySearchService
                         .selectByConditions(consOp.orElseGet(Conditions::buildEmtpyConditions), entityClassRef,
                             serviceSelectConfigBuilder.build());
 
-                Collection<IEntity> retCollections = simplify(
+                Collection<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> retCollections = simplify(
                     metadata, entities.getValue().get(), in.getQueryFieldsList());
 
                 result = OperationResult.newBuilder()
@@ -1667,8 +1592,9 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         });
     }
 
-    private Collection<IEntity> simplify(Metadata metadata, Collection<IEntity> rawEntities,
-                                         List<QueryFieldsUp> projects) {
+    private Collection<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> simplify(Metadata metadata,
+                                                                                           Collection<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> rawEntities,
+                                                                                           List<QueryFieldsUp> projects) {
         Boolean isSimplify = extractSimplify(metadata).map(Boolean::parseBoolean).orElse(false);
         if (!isSimplify) {
             return rawEntities;
@@ -1776,7 +1702,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             OperationResult result;
             try {
 
-                OqsResult<Collection<IEntity>> entities = null;
+                OqsResult<Collection<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity>> entities = null;
 
                 int pageNo = in.getRange().getPageIndex();
                 int pageSize = in.getRange().getPageSize();
@@ -1990,22 +1916,9 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     @Override
     public CompletionStage<OperationResult> expand(TransRequest transRequest, Metadata metadata) {
         return asyncRead(() -> {
-            long txId = transRequest.getTxId();
-            //ver is 0
-            long ver = transRequest.getVer();
-            long objId = transRequest.getObjId();
-            int transType = transRequest.getTransType();
-            String type = transRequest.getType();
-            EventType eventType = null;
-            if (!StringUtils.isEmpty(type)) {
-                eventType = EventType.valueOf(type);
-            }
-            Collection<String> payloads = cacheEventHandler
-                .eventsQuery(txId, objId, ver == 0 ? null : Long.valueOf(ver).intValue(),
-                    eventType == null ? null : eventType.ordinal());
             return OperationResult.newBuilder()
                 .setCode(OperationResult.Code.OK)
-                .setMessage("[" + payloads.stream().collect(Collectors.joining(",")) + "]")
+                .setMessage("")
                 .build();
         });
     }

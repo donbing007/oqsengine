@@ -165,7 +165,7 @@ public class SQLMasterStorageQueryTest {
         .withFather(l1EntityClass)
         .build();
 
-    private List<IEntity> entityes;
+    private List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> entityes;
 
     public SQLMasterStorageQueryTest() throws Exception {
     }
@@ -212,12 +212,12 @@ public class SQLMasterStorageQueryTest {
 
     @Test
     public void testActualEntityClass() throws Exception {
-        Optional<IEntity> entityOp = storage.selectOne(entityes.get(0).id(), l0EntityClass);
+        Optional<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> entityOp = storage.selectOne(entityes.get(0).id(), l0EntityClass);
         Assertions.assertTrue(entityOp.isPresent());
         IEntity entity = entityOp.get();
         Assertions.assertEquals(l2EntityClass.ref(), entity.entityClassRef());
 
-        Collection<IEntity> entities = storage.selectMultiple(new long[] {entityes.get(1).id()}, l0EntityClass);
+        Collection<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> entities = storage.selectMultiple(new long[] {entityes.get(1).id()}, l0EntityClass);
         for (IEntity e : entities) {
             Assertions.assertEquals(l2EntityClass.ref(), e.entityClassRef());
         }

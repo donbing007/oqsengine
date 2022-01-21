@@ -18,7 +18,6 @@ import com.xforceplus.ultraman.oqsengine.idgenerator.storage.SegmentStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
@@ -238,7 +237,7 @@ public class CalculationTest extends AbstractContainerExtends {
     public void testLookupReplace() throws Exception {
         IEntity user0 = entityHelper.buildUserEntity();
         IEntity user1 = entityHelper.buildUserEntity();
-        entityManagementService.build(new IEntity[] {user0, user1});
+        entityManagementService.build(new com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[] {user0, user1});
 
         IEntity order = entityHelper.buildOrderEntity(user0);
         entityManagementService.build(order);
@@ -299,7 +298,7 @@ public class CalculationTest extends AbstractContainerExtends {
 
 
         logger.info("Query {} orders.", orderSize);
-        OqsResult<Collection<IEntity>> orders = entitySearchService.selectByConditions(
+        OqsResult<Collection<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity>> orders = entitySearchService.selectByConditions(
             Conditions.buildEmtpyConditions(),
             MockEntityClassDefine.ORDER_CLASS.ref(),
             ServiceSelectConfig.Builder.anSearchConfig().withPage(Page.newSinglePage(orderSize)).build()
@@ -403,7 +402,7 @@ public class CalculationTest extends AbstractContainerExtends {
         long userId = user.id();
         CountDownLatch startLatch = new CountDownLatch(1);
         CountDownLatch finishLatch = new CountDownLatch(size);
-        Queue<IEntity> queue = new ConcurrentLinkedQueue();
+        Queue<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> queue = new ConcurrentLinkedQueue();
         for (int i = 0; i < size; i++) {
             taskThreadPool.submit(() -> {
                 // 阻塞等待同时开始.
@@ -411,7 +410,7 @@ public class CalculationTest extends AbstractContainerExtends {
                     startLatch.await();
                     entityManagementService.build(entityHelper.buildOrderEntity(user));
 
-                    OqsResult<IEntity> currentUserOp = entitySearchService.selectOne(
+                    OqsResult<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> currentUserOp = entitySearchService.selectOne(
                         userId, MockEntityClassDefine.USER_CLASS.ref());
                     queue.add(currentUserOp.getValue().get());
 
@@ -428,7 +427,8 @@ public class CalculationTest extends AbstractContainerExtends {
 
         Assertions.assertEquals(size, queue.size());
 
-        IEntity currentUser = entitySearchService.selectOne(user.id(), user.entityClassRef()).getValue().get();
+        com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity
+            currentUser = entitySearchService.selectOne(user.id(), user.entityClassRef()).getValue().get();
         long max = currentUser.entityValue().getValue("订单总数count").get().valueToLong();
         Assertions.assertEquals(size, max);
 
@@ -761,7 +761,7 @@ public class CalculationTest extends AbstractContainerExtends {
         Assertions.assertFalse(user.isDirty());
         user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).getValue().get();
 
-        IEntity[] orders = new IEntity[10];
+        com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[] orders = new com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[10];
         for (int i = 0; i < orders.length; i++) {
             orders[i] = entityHelper.buildOrderEntity(user);
         }
@@ -793,7 +793,7 @@ public class CalculationTest extends AbstractContainerExtends {
             .build();
 
         int size = 200;
-        Collection<IEntity> entities = new ArrayList<>(size);
+        Collection<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> entities = new ArrayList<>(size);
         for (int i = 0; i < size; i++) {
             IEntity e = Entity.Builder.anEntity()
                 .withEntityClassRef(MockEntityClassDefine.ORDER_ITEM_CLASS.ref())
@@ -843,7 +843,7 @@ public class CalculationTest extends AbstractContainerExtends {
         MockEntityClassDefine.initMetaManager(metaManager);
 
         Either<String, List<IEntityField>> test = initCalculationManager.initAppCalculations("test");
-        OqsResult<IEntity> entity1;
+        OqsResult<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> entity1;
         while (true) {
             entity1 = entitySearchService.selectOne(entity.id(), entity.entityClassRef());
             if (entity1.getValue().get().entityValue().size() >= 11) {

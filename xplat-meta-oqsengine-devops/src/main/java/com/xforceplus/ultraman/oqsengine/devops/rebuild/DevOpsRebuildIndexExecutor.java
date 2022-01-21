@@ -176,10 +176,8 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
                                 } catch (SQLException ex) {
                                     logger.warn("do task-done exception, maintainId {}.", dt.getMaintainid());
                                 }
-                            }
-
-                            //  任务存在失败数据.
-                            else if (dt.getErrorSize() > 0) {
+                            } else if (dt.getErrorSize() > 0) {
+                                //  任务存在失败数据.
                                 try {
                                     dt.resetMessage("task end with error.");
                                     sqlTaskStorage.error(dt);

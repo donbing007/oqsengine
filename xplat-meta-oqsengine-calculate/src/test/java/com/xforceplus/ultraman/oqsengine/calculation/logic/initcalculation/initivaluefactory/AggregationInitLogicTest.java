@@ -7,12 +7,10 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.AggregationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Aggregation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.StaticCalculation;
@@ -20,14 +18,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
-
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.Month;
@@ -39,6 +29,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
 
 class AggregationInitLogicTest {
     @InjectMocks
@@ -146,7 +143,7 @@ class AggregationInitLogicTest {
                 .build();
 
 
-        Collection<IEntity> masterEntitys =  new ArrayList<>();
+        Collection<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> masterEntitys =  new ArrayList<>();
         for (int i = 0; i < 100; i++) {
             masterEntitys.add(Entity.Builder.anEntity() // 1002
                     .withId(20000 + i)
@@ -162,7 +159,7 @@ class AggregationInitLogicTest {
                     .build());
         }
 
-        Collection<IEntity> indexEntitys =  new ArrayList<>();
+        Collection<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> indexEntitys =  new ArrayList<>();
         for (int i = 100; i < 2000; i++) {
             indexEntitys.add(Entity.Builder.anEntity() // 1002
                     .withId(20000 + i)

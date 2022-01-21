@@ -16,7 +16,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.FormulaTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
@@ -26,7 +25,6 @@ import com.xforceplus.ultraman.oqsengine.sdk.FieldUp;
 import com.xforceplus.ultraman.oqsengine.sdk.OperationResult;
 import com.xforceplus.ultraman.oqsengine.sdk.ValueUp;
 import io.vavr.API;
-import io.vavr.Tuple2;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -94,17 +92,11 @@ public class EntityClassHelper {
      * 构造实体实例.
      */
     public static List<IEntity> toEntity(EntityClassRef entityClassRef, IEntityClass entityClass, EntityMultiUp in) {
-        return in.getValuesList().stream().map(value -> {
-            return Entity.Builder.anEntity()
-                .withId(value.getObjId())
-                .withEntityClassRef(entityClassRef)
-                .withValues(toValues(entityClass, value.getValuesList()))
-                .build();
-        }).collect(Collectors.toList());
-    }
-
-    public static boolean isRelatedField(Tuple2<Relationship, IEntityField> tuple) {
-        return tuple._1 != null;
+        return in.getValuesList().stream().map(value -> Entity.Builder.anEntity()
+            .withId(value.getObjId())
+            .withEntityClassRef(entityClassRef)
+            .withValues(toValues(entityClass, value.getValuesList()))
+            .build()).collect(Collectors.toList());
     }
 
     /**
@@ -197,13 +189,15 @@ public class EntityClassHelper {
 
         //  add auto_fill.
         List<IValue> autoFilled =
-            entityClass.fields().stream().filter(x -> x.calculationType() == CalculationType.AUTO_FILL).map(x -> {
-                return x.type().toTypedValue(x, "");
-            }).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
+            entityClass.fields().stream()
+                .filter(x -> x.calculationType() == CalculationType.AUTO_FILL)
+                .map(x -> x.type().toTypedValue(x, ""))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toList());
 
 
-        List<IValue> values = new LinkedList<>();
-
+        List<IValue> values = new ArrayList<>(valueList.size() + autoFilled.size());
         values.addAll(valueList);
         values.addAll(autoFilled);
         return values;

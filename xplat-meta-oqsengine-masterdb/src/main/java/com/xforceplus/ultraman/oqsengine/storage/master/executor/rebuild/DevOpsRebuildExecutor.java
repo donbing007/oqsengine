@@ -28,12 +28,13 @@ public class DevOpsRebuildExecutor implements Executor<IEntityClass, Integer> {
     /**
      * 实例化.
      *
-     * @param tableName     表名.
-     * @param dataSource    dataSource.
-     * @param startTime     开始时间.
-     * @param endTime       结束时间.
+     * @param tableName  表名.
+     * @param dataSource dataSource.
+     * @param startTime  开始时间.
+     * @param endTime    结束时间.
      */
-    public DevOpsRebuildExecutor(String tableName, DataSource dataSource, long maintainId, long startTime, long endTime) {
+    public DevOpsRebuildExecutor(String tableName, DataSource dataSource, long maintainId, long startTime,
+                                 long endTime) {
         this.tableName = tableName;
         this.dataSource = dataSource;
         this.maintainId = maintainId;
@@ -41,7 +42,8 @@ public class DevOpsRebuildExecutor implements Executor<IEntityClass, Integer> {
         this.endTime = endTime;
     }
 
-    public static Executor<IEntityClass, Integer> build(String tableName, DataSource dataSource, long maintainId, long startTime, long endTime) {
+    public static Executor<IEntityClass, Integer> build(String tableName, DataSource dataSource, long maintainId,
+                                                        long startTime, long endTime) {
         return new DevOpsRebuildExecutor(tableName, dataSource, maintainId, startTime, endTime);
     }
 
@@ -50,8 +52,8 @@ public class DevOpsRebuildExecutor implements Executor<IEntityClass, Integer> {
 
         String sql = buildSQL(entityClass);
 
-        try(Connection connection = dataSource.getConnection();
-            PreparedStatement st = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement st = connection.prepareStatement(sql)) {
 
             st.setLong(1, System.currentTimeMillis());
             st.setLong(2, maintainId);

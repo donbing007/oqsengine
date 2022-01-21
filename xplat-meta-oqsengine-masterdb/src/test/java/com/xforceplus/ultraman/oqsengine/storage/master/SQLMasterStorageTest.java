@@ -136,7 +136,7 @@ public class SQLMasterStorageTest {
             .withEntityClassId(l2EntityClass.id()).withEntityClassCode(l2EntityClass.code())
             .build();
 
-    private List<IEntity> expectedEntitys;
+    private List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> expectedEntitys;
 
     public SQLMasterStorageTest() throws Exception {
     }
@@ -188,7 +188,7 @@ public class SQLMasterStorageTest {
         // 所有值都应该为干净的.
         Assertions.assertEquals(0, newEntity.entityValue().values().stream().filter(v -> v.isDirty()).count());
 
-        Optional<IEntity> entityOptional = storage.selectOne(newEntity.id(), l1EntityClass);
+        Optional<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> entityOptional = storage.selectOne(newEntity.id(), l1EntityClass);
         Assertions.assertTrue(entityOptional.isPresent());
         IEntity targetEntity = entityOptional.get();
         Assertions.assertEquals(100, targetEntity.entityValue().getValue("l0-long").get().valueToLong());
@@ -202,9 +202,9 @@ public class SQLMasterStorageTest {
 
     @Test
     public void testSelectOne() throws Exception {
-        List<IEntity> entities = new ArrayList<>(expectedEntitys.size());
+        List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> entities = new ArrayList<>(expectedEntitys.size());
         expectedEntitys.stream().mapToLong(e -> e.id()).forEach(id -> {
-            Optional<IEntity> entityOp;
+            Optional<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> entityOp;
             try {
                 entityOp = storage.selectOne(id, l1EntityClass);
             } catch (SQLException ex) {
@@ -260,7 +260,7 @@ public class SQLMasterStorageTest {
             entityPackage.stream().filter(en -> !en.getKey().isDirty()).count());
 
         long[] ids = IntStream.range(0, expectedSize).mapToLong(i -> 100000 + i).toArray();
-        List<IEntity> entities = new ArrayList(storage.selectMultiple(ids));
+        List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> entities = new ArrayList(storage.selectMultiple(ids));
         Collections.sort(entities, (o1, o2) -> {
             if (o1.id() < o2.id()) {
                 return -1;
@@ -285,9 +285,9 @@ public class SQLMasterStorageTest {
     @Test
     public void testSelectMultiple() throws Exception {
         long[] ids = expectedEntitys.stream().mapToLong(e -> e.id()).toArray();
-        Collection<IEntity> entities = storage.selectMultiple(ids, l1EntityClass);
+        Collection<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> entities = storage.selectMultiple(ids, l1EntityClass);
 
-        Map<Long, IEntity> expectedEntityMap =
+        Map<Long, com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> expectedEntityMap =
             expectedEntitys.stream().collect(Collectors.toMap(e -> e.id(), e -> e, (e0, e1) -> e0));
 
         Assertions.assertEquals(expectedEntityMap.size(), entities.size());
@@ -326,7 +326,7 @@ public class SQLMasterStorageTest {
         Assertions.assertFalse(targetEntity.isDirty());
 
 
-        Optional<IEntity> targetEntityOp = storage.selectOne(targetEntity.id(), l2EntityClass);
+        Optional<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> targetEntityOp = storage.selectOne(targetEntity.id(), l2EntityClass);
         Assertions.assertTrue(targetEntityOp.isPresent());
         Assertions.assertEquals(1000000L,
             targetEntityOp.get().entityValue().getValue("l0-long").get().valueToLong());
@@ -387,7 +387,7 @@ public class SQLMasterStorageTest {
 
         // 得到应该被更新的实例id列表
         long[] ids = entityPackage.stream().mapToLong(e -> e.getKey().id()).toArray();
-        Collection<IEntity> entities = storage.selectMultiple(ids);
+        Collection<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> entities = storage.selectMultiple(ids);
         Assertions.assertEquals(expectedDirtySize,
             entities.stream()
                 .filter(e -> e.entityValue().getValue("l0-long").get().valueToLong() == -100).count());
@@ -481,10 +481,10 @@ public class SQLMasterStorageTest {
     }
 
     // 初始化数据
-    private List<IEntity> initData(SQLMasterStorage storage, int size) throws Exception {
+    private List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> initData(SQLMasterStorage storage, int size) throws Exception {
         Transaction tx = transactionManager.create();
         transactionManager.bind(tx.id());
-        List<IEntity> expectedEntitys = new ArrayList<>(size);
+        List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> expectedEntitys = new ArrayList<>(size);
         EntityPackage entityPackage = new EntityPackage();
         for (int i = 1; i <= size; i++) {
             IEntity entity = buildEntity(i * size);

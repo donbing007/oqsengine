@@ -85,7 +85,7 @@ public class MatchConditionBuilder extends AbstractSphinxQLConditionBuilder impl
             if (buff.length() > 0) {
                 buff.append(' ');
             }
-            conditionSize ++;
+            conditionSize++;
             buff.append(query);
 
             storageValue = storageValue.next();

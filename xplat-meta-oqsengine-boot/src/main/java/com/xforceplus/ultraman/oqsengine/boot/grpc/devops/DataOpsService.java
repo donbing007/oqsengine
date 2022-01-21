@@ -157,7 +157,7 @@ public class DataOpsService {
                 }
             });
 
-            OqsResult<Collection<IEntity>> entities =
+            OqsResult<Collection<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity>> entities =
                 entitySearchService.selectByConditions(conditions, new EntityClassRef(config.getEntityClassId(), ""),
                     serviceSelectConfig);
 

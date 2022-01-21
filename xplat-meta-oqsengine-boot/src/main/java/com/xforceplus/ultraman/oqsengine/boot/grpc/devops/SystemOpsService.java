@@ -19,7 +19,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.CdcErrorTask;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.FixedStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
@@ -201,7 +200,7 @@ public class SystemOpsService {
                             && task.getEntity() > CDCConstant.UN_KNOW_ID
                             && task.getId() > CDCConstant.UN_KNOW_ID) {
 
-                        OqsResult<IEntity> result =
+                        OqsResult<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> result =
                                 entitySearchService.selectOne(task.getId(), new EntityClassRef(task.getEntity(), ""));
 
                         OqsResult oqsResult = null;

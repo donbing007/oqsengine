@@ -13,7 +13,6 @@ import com.xforceplus.ultraman.oqsengine.core.service.impl.mock.EntityClassDefin
 import com.xforceplus.ultraman.oqsengine.core.service.pojo.OqsResult;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EnumValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
@@ -76,7 +75,7 @@ public class EntityManagementServiceImplTest {
     public void testBuildBatch() throws Exception {
         MasterStorage masterStorage = mock(MasterStorage.class);
 
-        IEntity[] targetEntities = new IEntity[1000];
+        com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[] targetEntities = new com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[1000];
         EntityPackage expectedEntityPackage = new EntityPackage();
         for (int i = 0; i < 1000; i++) {
 

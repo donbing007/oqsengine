@@ -14,7 +14,6 @@ import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
@@ -92,8 +91,8 @@ public class JoinSelectTest extends AbstractContainerExtends {
 
     private boolean initialization;
 
-    private List<IEntity> entities;
-    private List<IEntity> driverEntities;
+    private List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> entities;
+    private List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> driverEntities;
 
     public JoinSelectTest() throws IllegalAccessException {
     }
@@ -149,7 +148,7 @@ public class JoinSelectTest extends AbstractContainerExtends {
             );
 
         Page page = new Page(1, 100);
-        OqsResult<Collection<IEntity>> results =
+        OqsResult<Collection<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity>> results =
             entitySearchService.selectByConditions(conditions, MockEntityClassDefine.L2_ENTITY_CLASS.ref(), page);
         Assertions.assertEquals(0, results.getValue().get().size());
         Assertions.assertEquals(0, page.getTotalCount());
@@ -176,7 +175,7 @@ public class JoinSelectTest extends AbstractContainerExtends {
             );
 
         Page page = Page.newSinglePage(100);
-        OqsResult<Collection<IEntity>> results =
+        OqsResult<Collection<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity>> results =
             entitySearchService.selectByConditions(conditions, MockEntityClassDefine.L2_ENTITY_CLASS.ref(),
                 ServiceSelectConfig.Builder.anSearchConfig().withPage(page).build());
         Assertions.assertEquals(1, results.getValue().get().size());
@@ -335,7 +334,7 @@ public class JoinSelectTest extends AbstractContainerExtends {
         }
     }
 
-    private void buildEntities(List<IEntity> entities, long txId) throws SQLException {
+    private void buildEntities(List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> entities, long txId) throws SQLException {
         for (IEntity e : entities) {
             transactionManagementService.restore(txId);
             managementService.build(e);

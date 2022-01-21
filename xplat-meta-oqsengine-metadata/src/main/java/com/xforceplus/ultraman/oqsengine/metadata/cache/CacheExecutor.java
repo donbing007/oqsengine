@@ -191,7 +191,7 @@ public interface CacheExecutor {
     void localAdd(long entityClassId, int version, String profile, IEntityClass entityClass);
 
     /**
-     * 展示当前Redis中所有AppId-Env
+     * 展示当前Redis中所有AppId-Env.
      */
     Map<String, String> showAppEnv();
 }
