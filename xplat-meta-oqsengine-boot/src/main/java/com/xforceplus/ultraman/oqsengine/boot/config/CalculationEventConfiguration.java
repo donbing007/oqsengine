@@ -4,8 +4,8 @@ import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationEventFac
 import com.xforceplus.ultraman.oqsengine.common.serializable.SerializeStrategy;
 import com.xforceplus.ultraman.oqsengine.idgenerator.storage.SegmentStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
-import javax.annotation.Resource;
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
+import javax.annotation.Resource;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
@@ -16,8 +16,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class CalculationEventConfiguration {
 
     @Resource
-    public CalculationEventFactory calculationEventFactory(@Autowired SegmentStorage storage, @Autowired MetaManager metaManager,
-                                                           @Autowired KeyValueStorage keyValueStorage, @Autowired SerializeStrategy serializeStrategy) {
+    public CalculationEventFactory calculationEventFactory(@Autowired SegmentStorage storage,
+                                                           @Autowired MetaManager metaManager,
+                                                           @Autowired KeyValueStorage keyValueStorage,
+                                                           @Autowired SerializeStrategy serializeStrategy) {
         return new CalculationEventFactory(storage, metaManager, keyValueStorage, serializeStrategy);
     }
 }

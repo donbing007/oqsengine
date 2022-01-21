@@ -1,8 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.devops.rebuild.handler;
 
 import static com.xforceplus.ultraman.oqsengine.devops.rebuild.constant.ConstantDefine.ONE_HUNDRED_PERCENT;
+
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.DevOpsTaskInfo;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.storage.SQLTaskStorage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -12,7 +15,10 @@ import com.xforceplus.ultraman.oqsengine.devops.rebuild.storage.SQLTaskStorage;
  * @since : 1.8
  */
 public class DefaultDevOpsTaskHandler implements TaskHandler {
-    protected DevOpsTaskInfo devOpsTaskInfo;
+
+    private final Logger logger = LoggerFactory.getLogger(DefaultDevOpsTaskHandler.class);
+
+    private DevOpsTaskInfo devOpsTaskInfo;
     private SQLTaskStorage sqlTaskStorage;
 
     public DefaultDevOpsTaskHandler(SQLTaskStorage sqlTaskStorage, DevOpsTaskInfo taskInfo) {
@@ -57,17 +63,16 @@ public class DefaultDevOpsTaskHandler implements TaskHandler {
     private void flush() {
         try {
             sqlTaskStorage.selectUnique((devOpsTaskInfo).getMaintainid()).ifPresent(opsTaskInfo -> {
-                    synchronized (DefaultDevOpsTaskHandler.class) {
-                        devOpsTaskInfo.setFinishSize(opsTaskInfo.getFinishSize());
-                        devOpsTaskInfo.setErrorSize(opsTaskInfo.getErrorSize());
-                        devOpsTaskInfo.resetStatus(opsTaskInfo.getStatus());
-                        devOpsTaskInfo.resetMessage(opsTaskInfo.message());
-                        devOpsTaskInfo.resetUpdateTime(opsTaskInfo.updateTime());
-                    }
-                });
+                synchronized (DefaultDevOpsTaskHandler.class) {
+                    devOpsTaskInfo.setFinishSize(opsTaskInfo.getFinishSize());
+                    devOpsTaskInfo.setErrorSize(opsTaskInfo.getErrorSize());
+                    devOpsTaskInfo.resetStatus(opsTaskInfo.getStatus());
+                    devOpsTaskInfo.resetMessage(opsTaskInfo.message());
+                    devOpsTaskInfo.resetUpdateTime(opsTaskInfo.updateTime());
+                }
+            });
         } catch (Exception e) {
-            e.printStackTrace();
-            //  ignore
+            logger.error(e.getMessage(), e);
         }
     }
 }

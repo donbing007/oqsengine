@@ -512,7 +512,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             OperationResult result;
 
             try {
-                List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> entityList =
+                List<IEntity> entityList =
                     toEntity(entityClassRef, entityClass, in);
 
                 // do auto fill
@@ -824,7 +824,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
             try {
 
-                List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> entityList =
+                List<IEntity> entityList =
                     toEntity(entityClassRef, entityClass, in);
 
                 //----------------------------
@@ -1036,7 +1036,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     }
                 }
 
-                OqsResult<Collection<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity>> entities =
+                OqsResult<Collection<IEntity>> entities =
                     entitySearchService
                         .selectByConditions(consOp.orElseGet(Conditions::buildEmtpyConditions), entityClassRef,
                             serviceSelectConfigBuilder.build());
@@ -1386,7 +1386,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
             try {
 
-                OqsResult<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> ds =
+                OqsResult<IEntity> ds =
                     entitySearchService.selectOne(in.getObjId(), entityClassRef);
 
                 result = ds.getValue().map(entity -> OperationResult
@@ -1557,12 +1557,12 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 Optional<Conditions> consOp = toConditions(
                     entityClass, in.getConditions(), in.getIdsList(), metaManager);
 
-                OqsResult<Collection<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity>> entities =
+                OqsResult<Collection<IEntity>> entities =
                     entitySearchService
                         .selectByConditions(consOp.orElseGet(Conditions::buildEmtpyConditions), entityClassRef,
                             serviceSelectConfigBuilder.build());
 
-                Collection<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> retCollections = simplify(
+                Collection<IEntity> retCollections = simplify(
                     metadata, entities.getValue().get(), in.getQueryFieldsList());
 
                 result = OperationResult.newBuilder()
@@ -1592,8 +1592,8 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         });
     }
 
-    private Collection<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> simplify(Metadata metadata,
-                                                                                           Collection<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> rawEntities,
+    private Collection<IEntity> simplify(Metadata metadata,
+                                                                                           Collection<IEntity> rawEntities,
                                                                                            List<QueryFieldsUp> projects) {
         Boolean isSimplify = extractSimplify(metadata).map(Boolean::parseBoolean).orElse(false);
         if (!isSimplify) {
@@ -1702,7 +1702,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             OperationResult result;
             try {
 
-                OqsResult<Collection<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity>> entities = null;
+                OqsResult<Collection<IEntity>> entities = null;
 
                 int pageNo = in.getRange().getPageIndex();
                 int pageSize = in.getRange().getPageSize();

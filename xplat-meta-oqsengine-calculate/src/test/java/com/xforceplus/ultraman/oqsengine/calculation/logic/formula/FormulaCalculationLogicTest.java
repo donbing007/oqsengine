@@ -13,6 +13,7 @@ import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.CalculationP
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
+import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MockMetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
@@ -20,6 +21,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.AggregationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
@@ -33,6 +35,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.EntityPackage;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionExclusiveAction;
@@ -63,7 +66,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * 测试类.
- * A
+ *                  A
  * /                                 \
  * B(sum) ——> B(Formula c(sum) * 2)  C(COUNT)
  * /            \
@@ -613,7 +616,7 @@ public class FormulaCalculationLogicTest {
 
         private Map<Long, com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> entities = new HashMap<>();
 
-        private List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> replaceEntities = new ArrayList<>();
+        private List<IEntity> replaceEntities = new ArrayList<>();
 
         @Override
         public void replace(EntityPackage entityPackage) throws SQLException {
@@ -627,7 +630,7 @@ public class FormulaCalculationLogicTest {
             entities.put(entity.id(), entity);
         }
 
-        public List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> getReplaceEntities() {
+        public List<IEntity> getReplaceEntities() {
             return replaceEntities;
         }
 
@@ -638,17 +641,17 @@ public class FormulaCalculationLogicTest {
         }
 
         @Override
-        public Optional<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> selectOne(long id) throws SQLException {
+        public Optional<IEntity> selectOne(long id) throws SQLException {
             return Optional.ofNullable(entities.get(id));
         }
 
         @Override
-        public Optional<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> selectOne(long id, IEntityClass entityClass) throws SQLException {
+        public Optional<IEntity> selectOne(long id, IEntityClass entityClass) throws SQLException {
             return Optional.ofNullable(entities.get(id));
         }
 
         @Override
-        public Collection<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> selectMultiple(long[] ids) throws SQLException {
+        public Collection<IEntity> selectMultiple(long[] ids) throws SQLException {
             return Arrays.stream(ids)
                 .mapToObj(id -> Optional.of(entities.get(id)))
                 .filter(e -> e.isPresent())
@@ -656,7 +659,7 @@ public class FormulaCalculationLogicTest {
         }
 
         @Override
-        public Collection<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> selectMultiple(long[] ids, IEntityClass entityClass) throws SQLException {
+        public Collection<IEntity> selectMultiple(long[] ids, IEntityClass entityClass) throws SQLException {
             return selectMultiple(ids);
         }
 
@@ -668,6 +671,18 @@ public class FormulaCalculationLogicTest {
             } else {
                 return entity.version();
             }
+        }
+
+        @Override
+        public DataIterator<OriginalEntity> iterator(IEntityClass entityClass, long startTime, long endTime,
+                                                     long lastId) throws SQLException {
+            return null;
+        }
+
+        @Override
+        public DataIterator<OriginalEntity> iterator(IEntityClass entityClass, long startTime, long endTime,
+                                                     long lastId, int size) throws SQLException {
+            return null;
         }
     }
 
@@ -729,7 +744,7 @@ public class FormulaCalculationLogicTest {
 
         @Override
         public Collection<AffectedInfo> getMaintainTarget(CalculationContext context, Participant participant,
-                                                          Collection<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> triggerEntities)
+                                                          Collection<IEntity> triggerEntities)
             throws CalculationException {
             AffectedInfo[] infos = entityIds.get(participant);
             if (infos == null) {

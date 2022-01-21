@@ -12,6 +12,7 @@ import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.STRING_FI
 
 import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.BooleanValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
@@ -37,8 +38,8 @@ public class EntityGenerateToolBar {
     /**
      * 测试实体生成.
      */
-    public static com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[] generateWithBadEntities(long id, int version) {
-        com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[] entityes = new com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[11];
+    public static IEntity[] generateWithBadEntities(long id, int version) {
+        IEntity[] entityes = new IEntity[11];
 
         IEntity bad = Entity.Builder.anEntity()
             .withId(id * 10)
@@ -56,7 +57,7 @@ public class EntityGenerateToolBar {
                     new StringValue(STRING_FIELD, "v1><^^A\n\\0x00\4'$231....\n\\xEF\\xBB\\xBF.")))
             .build();
 
-        com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[] good = generateFixedEntities(id, version);
+        IEntity[] good = generateFixedEntities(id, version);
         for (int i = 0; i < good.length; i++) {
             if (i < 5) {
                 entityes[i] = good[i];
@@ -74,9 +75,9 @@ public class EntityGenerateToolBar {
     /**
      * 测试用固定存在的实体生成.
      */
-    public static com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[] generateFixedEntities(long startId, int version) {
+    public static IEntity[] generateFixedEntities(long startId, int version) {
 
-        com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[] entityes = new com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[10];
+        IEntity[] entityes = new IEntity[10];
 
         long id = startId;
         List<IValue> values = Arrays.asList(new LongValue(LONG_FIELD, 1L), new StringValue(STRING_FIELD, "v1"));

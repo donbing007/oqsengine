@@ -199,7 +199,7 @@ public class TaskStorageCommand {
         String sql = updateSql(taskInfo);
 
         try (Connection connection = dataSource.getConnection();
-            PreparedStatement st = connection.prepareStatement(sql)) {
+             PreparedStatement st = connection.prepareStatement(sql)) {
 
             int pos = 1;
 
@@ -252,8 +252,8 @@ public class TaskStorageCommand {
         if (null != taskInfo.message()) {
             stringBuilder.append(", ").append("message = ?");
         }
-        /**
-         * 由于改变方式为cdc同步、所以该字段记录为错误数量.
+        /*
+          由于改变方式为cdc同步、所以该字段记录为错误数量.
          */
         if (taskInfo.getErrorSize() > 0) {
             stringBuilder.append(", ").append("startid = ?");

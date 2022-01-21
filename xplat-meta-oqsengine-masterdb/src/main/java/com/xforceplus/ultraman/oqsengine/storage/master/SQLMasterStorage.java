@@ -182,8 +182,8 @@ public class SQLMasterStorage implements MasterStorage {
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "master", "action", "one"})
     @Override
-    public Optional<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> selectOne(long id) throws SQLException {
-        return (Optional<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity>) transactionExecutor.execute((tx, resource, hint) -> {
+    public Optional<IEntity> selectOne(long id) throws SQLException {
+        return (Optional<IEntity>) transactionExecutor.execute((tx, resource, hint) -> {
             Optional<JsonAttributeMasterStorageEntity> masterStorageEntityOptional =
                 QueryExecutor.buildHaveDetail(tableName, resource, queryTimeout).execute(id);
             if (masterStorageEntityOptional.isPresent()) {
@@ -198,8 +198,8 @@ public class SQLMasterStorage implements MasterStorage {
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "master", "action", "one"})
     @Override
-    public Optional<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> selectOne(long id, IEntityClass entityClass) throws SQLException {
-        Optional<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> entityOptional = selectOne(id);
+    public Optional<IEntity> selectOne(long id, IEntityClass entityClass) throws SQLException {
+        Optional<IEntity> entityOptional = selectOne(id);
         if (entityOptional.isPresent()) {
 
             // 校验类型是否正确.
@@ -227,7 +227,7 @@ public class SQLMasterStorage implements MasterStorage {
         extraTags = {"initiator", "master", "action", "multiple"}
     )
     @Override
-    public Collection<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> selectMultiple(long[] ids) throws SQLException {
+    public Collection<IEntity> selectMultiple(long[] ids) throws SQLException {
         // 排重.
         long[] useIds = removeDuplicate(ids);
 
@@ -243,7 +243,7 @@ public class SQLMasterStorage implements MasterStorage {
                 }
             );
 
-        List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> entities = new ArrayList<>(masterStorageEntities.size());
+        List<IEntity> entities = new ArrayList<>(masterStorageEntities.size());
         IEntity entity;
         for (JsonAttributeMasterStorageEntity masterStorageEntity : masterStorageEntities) {
             entity = buildEntityFromJsonStorageEntity(masterStorageEntity);
@@ -261,8 +261,8 @@ public class SQLMasterStorage implements MasterStorage {
         extraTags = {"initiator", "master", "action", "multiple"}
     )
     @Override
-    public Collection<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> selectMultiple(long[] ids, IEntityClass entityClass) throws SQLException {
-        Collection<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> entities = selectMultiple(ids);
+    public Collection<IEntity> selectMultiple(long[] ids, IEntityClass entityClass) throws SQLException {
+        Collection<IEntity> entities = selectMultiple(ids);
         if (entities.isEmpty()) {
             return entities;
         }
@@ -513,7 +513,8 @@ public class SQLMasterStorage implements MasterStorage {
     }
 
     private void checkId(EntityPackage entityPackage) throws SQLException {
-        Iterator<Map.Entry<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity, IEntityClass>> iter = entityPackage.iterator();
+        Iterator<Map.Entry<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity, IEntityClass>> iter =
+            entityPackage.iterator();
         while (iter.hasNext()) {
             checkId(iter.next().getKey());
         }

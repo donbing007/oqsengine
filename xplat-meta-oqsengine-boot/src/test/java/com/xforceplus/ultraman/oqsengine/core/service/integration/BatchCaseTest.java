@@ -18,6 +18,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntitys;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
@@ -312,7 +313,7 @@ public class BatchCaseTest {
         Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(targetEntities).getResultStatus());
         Assertions.assertEquals(0, Arrays.stream(targetEntities).filter(e -> e.isDirty()).count());
 
-        OqsResult<Collection<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity>> entitiesResult = entitySearchService.selectByConditions(
+        OqsResult<Collection<IEntity>> entitiesResult = entitySearchService.selectByConditions(
             Conditions.buildEmtpyConditions(),
             MockEntityClassDefine.L2_ENTITY_CLASS.ref(),
             ServiceSelectConfig.Builder.anSearchConfig()
@@ -394,7 +395,7 @@ public class BatchCaseTest {
         Assertions.assertEquals(ResultStatus.SUCCESS,
             entityManagementService.replace(targetEntities).getResultStatus());
 
-        OqsResult<Collection<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity>> entitiesResult = entitySearchService.selectByConditions(
+        OqsResult<Collection<IEntity>> entitiesResult = entitySearchService.selectByConditions(
             Conditions.buildEmtpyConditions()
                 .addAnd(
                     new Condition(
@@ -478,7 +479,7 @@ public class BatchCaseTest {
         Assertions.assertEquals(0, Arrays.stream(targetEntities).filter(e -> !e.isDeleted()).count());
 
         Page page = Page.newSinglePage(100);
-        OqsResult<Collection<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity>> entitiesResult = entitySearchService.selectByConditions(
+        OqsResult<Collection<IEntity>> entitiesResult = entitySearchService.selectByConditions(
             Conditions.buildEmtpyConditions(),
             MockEntityClassDefine.L2_ENTITY_CLASS.ref(),
             ServiceSelectConfig.Builder.anSearchConfig()

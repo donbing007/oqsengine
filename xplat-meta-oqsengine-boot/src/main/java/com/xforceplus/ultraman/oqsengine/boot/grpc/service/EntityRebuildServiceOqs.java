@@ -288,7 +288,7 @@ public class EntityRebuildServiceOqs implements EntityRebuildServicePowerApi {
                         && task.getEntity() > UN_KNOW_ID
                         && task.getId() > UN_KNOW_ID) {
 
-                        OqsResult<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> result =
+                        OqsResult<IEntity> result =
                             entitySearchService.selectOne(task.getId(), new EntityClassRef(task.getEntity(), ""));
 
                         OqsResult oqsResult = null;

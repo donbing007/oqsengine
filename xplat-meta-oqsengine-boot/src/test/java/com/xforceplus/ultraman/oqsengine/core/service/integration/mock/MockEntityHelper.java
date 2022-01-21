@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.core.service.integration.mock;
 
 import com.github.javafaker.Faker;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
@@ -52,8 +53,7 @@ public class MockEntityHelper {
      *
      * @param user 相关联的 MockEntityClassDefine.USER_CLASS 实例.
      */
-    public IEntity buildOrderEntity(
-        IEntity user) {
+    public IEntity buildOrderEntity(IEntity user) {
         return Entity.Builder.anEntity()
             .withEntityClassRef(MockEntityClassDefine.ORDER_CLASS.ref())
             .withValue(
@@ -89,8 +89,7 @@ public class MockEntityHelper {
      * @param order 相关的 MockEntityClassDefine.ORDER_CLASS 实例.
      * @return 实例.
      */
-    public IEntity buildOrderItem(
-        IEntity order) {
+    public IEntity buildOrderItem(IEntity order) {
         return Entity.Builder.anEntity()
             .withEntityClassRef(MockEntityClassDefine.ORDER_ITEM_CLASS.ref())
             .withValue(

@@ -1,11 +1,13 @@
 package com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.task;
 
+import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MockMetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
@@ -20,6 +22,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.storage.ConditionsSelectStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.EntityPackage;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import com.xforceplus.ultraman.oqsengine.task.DefaultTaskCoordinator;
 import com.xforceplus.ultraman.oqsengine.task.queue.MemoryTaskKeyQueue;
@@ -255,7 +258,7 @@ public class LookupMaintainingTaskRunnerTest {
         runner.run(coordinator, task);
 
         // 等待所有lookup字段被更新.
-        Collection<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> newLookupEntities = null;
+        Collection<IEntity> newLookupEntities = null;
         boolean notUpdate = true;
         int okSize = 0;
         while (notUpdate) {
@@ -382,23 +385,23 @@ public class LookupMaintainingTaskRunnerTest {
         }
 
         @Override
-        public Optional<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> selectOne(long id) throws SQLException {
+        public Optional<IEntity> selectOne(long id) throws SQLException {
             return Optional.ofNullable(data.get(id));
         }
 
         @Override
-        public Optional<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> selectOne(long id, IEntityClass entityClass) throws SQLException {
+        public Optional<IEntity> selectOne(long id, IEntityClass entityClass) throws SQLException {
             return Optional.ofNullable(data.get(id));
         }
 
         @Override
-        public Collection<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> selectMultiple(long[] ids) throws SQLException {
+        public Collection<IEntity> selectMultiple(long[] ids) throws SQLException {
             return Arrays.stream(ids).mapToObj(id -> data.get(id)).filter(Objects::nonNull)
                 .collect(Collectors.toList());
         }
 
         @Override
-        public Collection<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> selectMultiple(long[] ids, IEntityClass entityClass) throws SQLException {
+        public Collection<IEntity> selectMultiple(long[] ids, IEntityClass entityClass) throws SQLException {
             throw new UnsupportedOperationException();
         }
 
@@ -410,6 +413,18 @@ public class LookupMaintainingTaskRunnerTest {
             } else {
                 return entity.version();
             }
+        }
+
+        @Override
+        public DataIterator<OriginalEntity> iterator(IEntityClass entityClass, long startTime, long endTime,
+                                                     long lastId) throws SQLException {
+            return null;
+        }
+
+        @Override
+        public DataIterator<OriginalEntity> iterator(IEntityClass entityClass, long startTime, long endTime,
+                                                     long lastId, int size) throws SQLException {
+            return null;
         }
     }
 

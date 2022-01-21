@@ -19,7 +19,7 @@ public interface TaskStorage {
      *
      * @param taskInfo 任务信息.
      * @return 写入表是否成功 return value > 0 成功、否则失败.
-     * @throws SQLException
+     * @throws SQLException 异常.
      */
     Integer build(DevOpsTaskInfo taskInfo) throws SQLException;
 
@@ -35,9 +35,10 @@ public interface TaskStorage {
 
     /**
      * 终止一个任务.
+     *
      * @param taskId 任务id.
      * @return > 0 终止.
-     * @throws SQLException
+     * @throws SQLException 异常.
      */
     int cancel(long taskId) throws SQLException;
 

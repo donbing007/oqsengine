@@ -181,9 +181,9 @@ public class DefaultDevOpsTaskInfo implements DevOpsTaskInfo {
 
     @Override
     public boolean isEnd() {
-        return status == BatchStatus.DONE.getCode() ||
-                status == BatchStatus.CANCEL.getCode() ||
-                    status == BatchStatus.ERROR.getCode();
+        return status == BatchStatus.DONE.getCode()
+            || status == BatchStatus.CANCEL.getCode()
+            || status == BatchStatus.ERROR.getCode();
     }
 
     @Override

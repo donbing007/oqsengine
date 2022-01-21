@@ -16,6 +16,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
@@ -127,7 +128,7 @@ public class EntitySearchServiceImplTest {
         });
 
         Page page = Page.emptyPage();
-        OqsResult<Collection<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity>> entities = impl.selectByConditions(
+        OqsResult<Collection<IEntity>> entities = impl.selectByConditions(
             Conditions.buildEmtpyConditions(),
             EntityClassRef.Builder.anEntityClassRef()
                 .withEntityClassId(EntityClassDefine.l1EntityClass.id())
@@ -195,7 +196,7 @@ public class EntitySearchServiceImplTest {
 
 
         Page page = Page.newSinglePage(100);
-        OqsResult<Collection<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity>> entities = impl.selectByConditions(
+        OqsResult<Collection<IEntity>> entities = impl.selectByConditions(
             Conditions.buildEmtpyConditions(),
             EntityClassDefine.l2EntityClass.ref(),
             ServiceSelectConfig.Builder.anSearchConfig().withPage(page).build()
@@ -211,7 +212,7 @@ public class EntitySearchServiceImplTest {
         when(masterStorage.selectOne(1, EntityClassDefine.l0EntityClass)).thenReturn(
             Optional.of(Entity.Builder.anEntity().withId(1).build())
         );
-        OqsResult<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> entityOp = impl.selectOne(1, EntityClassDefine.l0EntityClass.ref());
+        OqsResult<IEntity> entityOp = impl.selectOne(1, EntityClassDefine.l0EntityClass.ref());
 
         Assertions.assertTrue(entityOp.getValue().isPresent());
         Assertions.assertEquals(1, entityOp.getValue().get().id());
@@ -230,10 +231,10 @@ public class EntitySearchServiceImplTest {
             )
         );
 
-        OqsResult<Collection<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity>> entities = impl.selectMultiple(ids, EntityClassDefine.l2EntityClass.ref());
+        OqsResult<Collection<IEntity>> entities = impl.selectMultiple(ids, EntityClassDefine.l2EntityClass.ref());
 
         Assertions.assertEquals(ids.length, entities.getValue().get().size());
-        List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> entityList = new ArrayList(entities.getValue().get());
+        List<IEntity> entityList = new ArrayList(entities.getValue().get());
         for (int i = 0; i < ids.length; i++) {
             Assertions.assertEquals(ids[i], entityList.get(i).id());
         }
@@ -250,7 +251,7 @@ public class EntitySearchServiceImplTest {
             Entity.Builder.anEntity().withId(100L).build()
         ));
 
-        OqsResult<Collection<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity>> entities = impl.selectByConditions(conditions,
+        OqsResult<Collection<IEntity>> entities = impl.selectByConditions(conditions,
             EntityClassDefine.l2EntityClass.ref(),
             ServiceSelectConfig.Builder.anSearchConfig().withPage(Page.newSinglePage(1000)).build()
         );
@@ -318,7 +319,7 @@ public class EntitySearchServiceImplTest {
             )
         );
 
-        List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> entities = new ArrayList(impl.selectByConditions(
+        List<IEntity> entities = new ArrayList(impl.selectByConditions(
             conditions,
             EntityClassDefine.l2EntityClass.ref(),
             ServiceSelectConfig.Builder.anSearchConfig().withPage(page).build()

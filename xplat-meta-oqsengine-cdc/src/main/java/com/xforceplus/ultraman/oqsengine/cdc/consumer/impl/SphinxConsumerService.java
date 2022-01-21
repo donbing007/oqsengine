@@ -17,7 +17,6 @@ import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.CommonUtils;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
-import com.xforceplus.ultraman.oqsengine.devops.rebuild.RebuildIndexExecutor;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.dto.RawEntry;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetricsRecorder;
@@ -222,14 +221,14 @@ public class SphinxConsumerService implements ConsumerService {
                      *  检查是否为跳过不处理的commitId满足commitId > skipCommitId || (commitId == 0 && skipCommitId != 0)
                      * 否则跳过.
                      */
-                    if (commitId > skipCommitId ||
-                        (commitId == NO_TRANSACTION_COMMIT_ID && skipCommitId != NO_TRANSACTION_COMMIT_ID) ||
-                        (CommonUtils.isMaintainRecord(commitId))) {
+                    if (commitId > skipCommitId
+                        || (commitId == NO_TRANSACTION_COMMIT_ID && skipCommitId != NO_TRANSACTION_COMMIT_ID)
+                        || (CommonUtils.isMaintainRecord(commitId))) {
 
-                        if ((checkCommitReady &&
-                            !cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().contains(commitId)) ||
-                            //  维护的CommitId不需要加入
-                            !CommonUtils.isMaintainRecord(commitId)) {
+                        //  维护的CommitId不需要加入
+                        if ((checkCommitReady
+                            && !cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().contains(commitId))
+                            || !CommonUtils.isMaintainRecord(commitId)) {
                             commitIDs.add(commitId);
                         }
 

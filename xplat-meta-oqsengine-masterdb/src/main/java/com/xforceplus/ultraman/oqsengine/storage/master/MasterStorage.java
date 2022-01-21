@@ -40,9 +40,8 @@ public interface MasterStorage extends Storage, PreciseSelectStorage, Conditions
      * @param endTime     结束时间.
      * @param lastId      上次迭代的最后id.
      * @param size        迭代数量.
-     * @return 迭代器.
-     * @throws SQLException 发生异常.
      * @return 影响的记录条数.
+     * @throws SQLException 发生异常.
      */
     DataIterator<OriginalEntity> iterator(IEntityClass entityClass, long startTime, long endTime, long lastId, int size)
         throws SQLException;

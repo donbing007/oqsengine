@@ -22,7 +22,7 @@ import java.util.Optional;
 public interface RebuildIndexExecutor extends Lifecycle {
 
     /**
-     * 重新创建索引.
+     * 重新创建索引.`
      * 重新创建会让此entityClass进入只读模式.
      * 所以有写入事务都会被拒绝.
      * 如果有正在活动的EntityClass任务,那么后续的相同entityClass调用将造成异常.
@@ -49,7 +49,6 @@ public interface RebuildIndexExecutor extends Lifecycle {
      *
      * @param maintainId maintainId.
      * @return handler.
-     * @throws SQLException
      */
     Optional<TaskHandler> taskHandler(Long maintainId) throws SQLException;
 
@@ -81,8 +80,6 @@ public interface RebuildIndexExecutor extends Lifecycle {
      * 同步任务状态.
      *
      * @param devOpsCdcMetrics 维护指标.
-     *
-     * @return 同步状态
      */
     void sync(Map<Long, DevOpsCdcMetrics> devOpsCdcMetrics) throws SQLException;
 }

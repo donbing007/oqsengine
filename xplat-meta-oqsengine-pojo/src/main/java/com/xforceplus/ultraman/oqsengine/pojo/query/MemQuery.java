@@ -7,6 +7,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.LinkConditionNode;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ParentheseConditionNode;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ValueConditionNode;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import java.util.Collection;
@@ -29,11 +30,11 @@ public class MemQuery {
      * @param conditions 條件
      * @return 過濾完的數據
      */
-    public static Collection<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> query(Collection<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> entities, Conditions conditions) {
+    public static Collection<IEntity> query(Collection<IEntity> entities, Conditions conditions) {
         PredicateHolder holder = new PredicateHolder();
         conditions.scan(holder::accept, holder::accept, holder::accept);
 
-        Predicate<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> predicate = holder.getPredicate();
+        Predicate<IEntity> predicate = holder.getPredicate();
 
         return Optional.ofNullable(entities)
             .orElseGet(Collections::emptyList)
@@ -110,7 +111,7 @@ public class MemQuery {
          *
          * @return 生成出来的Predicate
          */
-        public Predicate<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> getPredicate() {
+        public Predicate<IEntity> getPredicate() {
             while (stack.size() > 1) {
                 Object expectedPredicate = stack.pop();
 
@@ -118,7 +119,7 @@ public class MemQuery {
                 if (expectedPredicate instanceof Predicate) {
 
                     if (stack.isEmpty()) {
-                        return (Predicate<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity>) expectedPredicate;
+                        return (Predicate<IEntity>) expectedPredicate;
                     }
 
                     Object expectedLinkOrNull = stack.peek();
@@ -150,7 +151,7 @@ public class MemQuery {
                 }
             }
 
-            return (Predicate<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity>) stack.pop();
+            return (Predicate<IEntity>) stack.pop();
         }
     }
 
