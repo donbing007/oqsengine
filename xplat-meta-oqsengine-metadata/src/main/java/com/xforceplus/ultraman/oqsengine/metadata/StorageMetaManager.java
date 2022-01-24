@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.metadata;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
 import static com.xforceplus.ultraman.oqsengine.metadata.cache.DefaultCacheExecutor.OBJECT_MAPPER;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.COMMON_WAIT_TIME_OUT;
+import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.HEALTH_CHECK_ENTITY_ID;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_CODE;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_FATHER;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_FIELDS;
@@ -25,6 +26,7 @@ import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.CacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.DefaultCacheExecutor;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.HealthCheckEntityClass;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.model.AbstractMetaModel;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.model.MetaModel;
@@ -152,6 +154,10 @@ public class StorageMetaManager implements MetaManager {
                 throw new RuntimeException(
                     String.format("invalid entityClassId : [%d], no version pair", entityClassId));
             }
+        }
+
+        if (entityClassId == HEALTH_CHECK_ENTITY_ID) {
+            return Optional.of(HealthCheckEntityClass.getInstance());
         }
 
         Optional<IEntityClass> ecOp = cacheExecutor.localRead(entityClassId, version, profile);
