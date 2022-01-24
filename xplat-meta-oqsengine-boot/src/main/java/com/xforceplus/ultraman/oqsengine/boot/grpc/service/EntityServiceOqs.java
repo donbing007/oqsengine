@@ -492,20 +492,12 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 return exceptional(ex);
             }
 
-            Long transId = null;
             if (extractTransaction(metadata).isPresent()) {
-                transId = extractTransaction(metadata).get();
+                Long id = extractTransaction(metadata).get();
                 try {
-                    transactionManagementService.restore(transId);
+                    transactionManagementService.restore(id);
                 } catch (Exception ex) {
                     return exceptional(ex);
-                }
-            } else {
-                //create inner
-                try {
-                    transId = transactionManagementService.begin();
-                } catch (SQLException throwables) {
-                    throwables.printStackTrace();
                 }
             }
 
@@ -579,9 +571,9 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
                     .buildPartial();
             } finally {
-                if (transId != null) {
+                extractTransaction(metadata).ifPresent(id -> {
                     transactionManager.unbind();
-                }
+                });
             }
             return result;
         });
@@ -644,13 +636,8 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 Long id = extractTransaction(metadata).get();
                 try {
                     transactionManagementService.restore(id);
-                } catch (Exception e) {
-                    logger.error("{}", e);
-                    //fast fail
-                    return OperationResult.newBuilder()
-                        .setCode(OperationResult.Code.EXCEPTION)
-                        .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
-                        .buildPartial();
+                } catch (Exception ex) {
+                    return exceptional(ex);
                 }
             }
 
@@ -798,25 +785,12 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 return exceptional(ex);
             }
 
-            Long transId = null;
             if (extractTransaction(metadata).isPresent()) {
-                transId = extractTransaction(metadata).get();
+                Long id = extractTransaction(metadata).get();
                 try {
-                    transactionManagementService.restore(transId);
-                } catch (Exception e) {
-                    logger.error(e.getMessage(), e);
-                    //fast fail
-                    return OperationResult.newBuilder()
-                        .setCode(OperationResult.Code.EXCEPTION)
-                        .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
-                        .buildPartial();
-                }
-            } else {
-                //create inner
-                try {
-                    transId = transactionManagementService.begin();
-                } catch (SQLException throwables) {
-                    throwables.printStackTrace();
+                    transactionManagementService.restore(id);
+                } catch (Exception ex) {
+                    return exceptional(ex);
                 }
             }
 
@@ -824,15 +798,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
             try {
 
-                List<IEntity> entityList =
-                    toEntity(entityClassRef, entityClass, in);
-
-                //----------------------------
-                AtomicInteger successCount = new AtomicInteger(0);
-                AtomicInteger halfSuccessCount = new AtomicInteger(0);
-                AtomicInteger failedCount = new AtomicInteger(0);
-                List<Map<String, String>> failedMapList = new ArrayList<>();
-                List<String> failedString = new ArrayList<>();
+                List<IEntity> entityList = toEntity(entityClassRef, entityClass, in);
 
                 Optional<String> mode = metadata.getText("mode");
                 if (!entityList.isEmpty()) {
@@ -934,9 +900,9 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     .buildPartial();
             } finally {
 
-                if (transId != null) {
+                extractTransaction(metadata).ifPresent(id -> {
                     transactionManager.unbind();
-                }
+                });
             }
 
             return result;
@@ -980,13 +946,8 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 Long id = extractTransaction(metadata).get();
                 try {
                     transactionManagementService.restore(id);
-                } catch (Exception e) {
-                    logger.error(e.getMessage(), e);
-                    //fast fail
-                    return OperationResult.newBuilder()
-                        .setCode(OperationResult.Code.EXCEPTION)
-                        .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
-                        .buildPartial();
+                } catch (Exception ex) {
+                    return exceptional(ex);
                 }
             }
 
@@ -1111,13 +1072,8 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 Long id = extractTransaction(metadata).get();
                 try {
                     transactionManagementService.restore(id);
-                } catch (Exception e) {
-                    logger.error(e.getMessage(), e);
-                    //fast fail
-                    return OperationResult.newBuilder()
-                        .setCode(OperationResult.Code.EXCEPTION)
-                        .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
-                        .buildPartial();
+                } catch (Exception ex) {
+                    return exceptional(ex);
                 }
             }
 
@@ -1254,25 +1210,12 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             //check entityRef
             EntityClassRef entityClassRef = EntityClassHelper.toEntityClassRef(in, profile);
 
-            Long transId = null;
             if (extractTransaction(metadata).isPresent()) {
-                transId = extractTransaction(metadata).get();
+                Long id = extractTransaction(metadata).get();
                 try {
-                    transactionManagementService.restore(transId);
-                } catch (Exception e) {
-                    logger.error(e.getMessage(), e);
-                    //fast fail
-                    return OperationResult.newBuilder()
-                        .setCode(OperationResult.Code.EXCEPTION)
-                        .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
-                        .buildPartial();
-                }
-            } else {
-                //create inner
-                try {
-                    transId = transactionManagementService.begin();
-                } catch (SQLException throwables) {
-                    throwables.printStackTrace();
+                    transactionManagementService.restore(id);
+                } catch (Exception ex) {
+                    return exceptional(ex);
                 }
             }
 
@@ -1372,13 +1315,8 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 Long id = extractTransaction(metadata).get();
                 try {
                     transactionManagementService.restore(id);
-                } catch (Exception e) {
-                    logger.error(e.getMessage(), e);
-                    //fast fail
-                    return OperationResult.newBuilder()
-                        .setCode(OperationResult.Code.EXCEPTION)
-                        .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
-                        .buildPartial();
+                } catch (Exception ex) {
+                    return exceptional(ex);
                 }
             }
 
@@ -1493,13 +1431,8 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 Long id = extractTransaction(metadata).get();
                 try {
                     transactionManagementService.restore(id);
-                } catch (Exception e) {
-                    logger.error("{}", e);
-                    //fast fail
-                    return OperationResult.newBuilder()
-                        .setCode(OperationResult.Code.EXCEPTION)
-                        .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
-                        .buildPartial();
+                } catch (Exception ex) {
+                    return exceptional(ex);
                 }
             }
 
@@ -1593,8 +1526,8 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     }
 
     private Collection<IEntity> simplify(Metadata metadata,
-                                                                                           Collection<IEntity> rawEntities,
-                                                                                           List<QueryFieldsUp> projects) {
+                                         Collection<IEntity> rawEntities,
+                                         List<QueryFieldsUp> projects) {
         Boolean isSimplify = extractSimplify(metadata).map(Boolean::parseBoolean).orElse(false);
         if (!isSimplify) {
             return rawEntities;
@@ -1689,13 +1622,8 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 Long id = extractTransaction(metadata).get();
                 try {
                     transactionManagementService.restore(id);
-                } catch (Exception e) {
-                    logger.error("{}", e);
-                    //fast fail
-                    return OperationResult.newBuilder()
-                        .setCode(OperationResult.Code.EXCEPTION)
-                        .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
-                        .buildPartial();
+                } catch (Exception ex) {
+                    return exceptional(ex);
                 }
             }
 
