@@ -37,6 +37,27 @@ spec:
   selector:
     app: {{ template "oqsengine.name" . }}
     release: {{ .Release.Name }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "oqsengine.fullname" . }}-grpc-hl
+  labels:
+    app: {{ template "oqsengine.name" . }}
+    chart: {{ template "oqsengine.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  type: {{ .Values.service.type }}
+  clusterIP: None
+  ports:
+    - port: {{ .Values.service.port.grpc }}
+      targetPort: grpc
+      protocol: TCP
+      name: grpc
+  selector:
+    app: {{ template "oqsengine.name" . }}
+    release: {{ .Release.Name }}
 {{- if .Values.storage.debug.remote.enabled }}
 ---
 apiVersion: v1
