@@ -1,0 +1,220 @@
+instance:
+  # static | statefulset 前者读取配置文件,后者使用 k8s statefulset 生成的 hostname.
+  type: static
+  id: 0
+
+grpc:
+  server:
+    port: 8081
+server:
+  port: 8086
+
+logging:
+  level:
+    root: info
+    io:
+      lettuce: info
+  pattern:
+    console: "%d{yyyy-MM-dd} %d{hhh:mm:ss},%red(%d{SSS}) %green(%-5level) [%thread] %cyan(%logger{36}) : %msg%n"
+
+transaction:
+  timeoutMs: 300000
+
+load:
+  enabled: true
+  weight:
+    heap: 0.2
+    cpu: 0.5
+    io: 0.9
+
+threadPool:
+  io:
+    # 服务响应线程池.
+    worker: 0
+    queue: 1000
+  task:
+    # 后端任务,或者IO线程池中放入的任务执行线程池.
+    worker: 0
+    queue: 1000
+maxVisibleNumber: 10000
+
+ignoreCDCStatusCheck: true
+sync:
+  allowMaxLiveTimeMs: 3000
+  allowMaxUnSyncCommitIdSize: 100
+
+query:
+  # 查询的最大匹配数量.
+  maxVisibleTotalCount: 10000
+  join:
+    # join查询时的驱动表匹配上限,此值不能大于 maxVisibleTotalCount
+    maxJoinEntityNumber: 1000
+    # join查询时的主表+驱动表的数量最大上限.
+    maxJoinDriverLineNumber: 2
+
+storage:
+  tokenizer:
+    segmentation:
+      lexicon:
+        # 字典URL
+        url: "-"
+  debug:
+    showsql: true
+  timeoutMs:
+    query: 10000
+  kv:
+    name: "kv"
+  master:
+    name: "oqsbigentity"
+    shard:
+      table:
+        enabled: false
+        size: 1
+  index:
+    search:
+      name: "oqsindex"
+    write:
+      name: "oqsindex"
+      shard:
+        enabled: false
+        size: 1
+  devOps:
+    cdc:
+      errors:
+        name: "cdcerrors"
+    maxQueryTimeMs: 3000
+    task:
+      split: 10
+      max:
+        queue:
+          size: 2000
+      execution:
+        timeout: 300000
+      update:
+        frequency: 100
+      cache:
+        expire: 30
+        maxsize: 500
+      page:
+        size: 1000
+
+redis:
+  # standalone: redis://[password@]host[:port][/databaseNumber][?[timeout=timeout[d|h|m|s|ms|us|ns]]
+  # standaloneSSL: rediss://[password@]host[:port][/databaseNumber][?[timeout=timeout[d|h|m|s|ms|us|ns]]
+  # sentinel: redis-sentinel://[password@]host[:port][,host2[:port2]][/databaseNumber][?[timeout=timeout[d|h|m|s|ms|us|ns]]#sentinelMasterId
+  # cluster: redis://127.0.0.1:6379/0?timeout=6000ms
+  lettuce:
+    uri: "redis://${REDIS_HOST}:${REDIS_PORT}/0?timeout=6000ms"
+    cluster: false
+    pingBeforeActivateConnection: true
+    maxReqQueue: 10000
+  # https://github.com/redisson/redisson/wiki/2.-%E9%85%8D%E7%BD%AE%E6%96%B9%E6%B3%95
+  redisson:
+    threads: 0
+    nettyThreads: 0
+    lockWatchdogTimeout: 30000
+    keepPubSubOrder: true
+    idleConnectionTimeout: 10000
+    connectTimeout: 10000
+    timeout: 6000
+    retryAttempts: 3
+    retryInterval: 1500
+    password:
+    subscriptionsPerConnection: 5
+    clientName:
+    subscriptionConnectionMinimumIdleSize: 1
+    database: 0
+    dnsMonitoringInterval: -1
+    slaveSubscriptionConnectionMinimumIdleSize: 1
+    slaveSubscriptionConnectionPoolSize: 50
+    slaveConnectionMinimumIdleSize: 32
+    slaveConnectionPoolSize: 64
+    masterConnectionMinimumIdleSize: 32
+    masterConnectionPoolSize: 64
+    readMode: "SLAVE"
+    singel:
+      enabled: true
+      address: "redis://${REDIS_HOST}:${REDIS_PORT}"
+      subscriptionConnectionPoolSize: 50
+      connectionMinimumIdleSize: 32
+      connectionPoolSize: 64
+    sentine:
+      enabled: false
+      sentinelAddresses:
+        - "redis://127.0.0.1:26379"
+        - "redis://127.0.0.1:26389"
+      masterName: "mymaster"
+    masterSlave:
+      enabled: false
+      slaveAddresses:
+        - "redis://127.0.0.1:6381"
+        - "redis://127.0.0.1:6380"
+      masterAddress: "redis://127.0.0.1:6379"
+    cluster:
+      enabled: false
+      nodeAddresses:
+        - "redis://127.0.0.1:7004"
+        - "redis://127.0.0.1:7001"
+        - "redis://127.0.0.1:7000"
+      scanInterval: 1000
+
+management:
+  health:
+    redis:
+      enabled: false
+    db:
+      enabled: false
+  endpoints:
+    enabled-by-default: false
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      enabled: true
+      show-details: always
+    shutdown:
+      enabled: true
+    info:
+      enabled: true
+    prometheus:
+      enabled: true
+    load:
+      enabled: true
+
+cdc:
+  connect:
+    type: single
+    host: "${CANAL_HOST}"
+    port: ${CANAL_PORT}
+    destination: "oqsengine"
+    username: root
+    password: root
+    subscribeFilter: .*\.oqsbigentity.*
+    batchSize: 2048
+  consumer:
+    checkCommitReady: true
+    skipCommitId: -1
+
+meta:
+  grpc:
+    type: client
+    host: 120.55.249.44
+    port: 23111
+    seconds:
+      heartbeatTimeout: 30
+      delaytaskTimeout: 30
+      keepAliveDuration: 5
+      monitorDuration: 1
+      reconnectDuration: 5
+
+discover:
+  sdk:
+    enable: false
+
+changelog:
+  enabled: false
+  queue: local
+
+metadata:
+  enhanced: false
