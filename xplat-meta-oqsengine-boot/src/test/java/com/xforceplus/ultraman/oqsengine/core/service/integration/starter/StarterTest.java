@@ -40,7 +40,7 @@ public class StarterTest {
 
     private ApplicationContext applicationContext;
 
-    private boolean isStartTest = true;
+    private boolean isStartTest = false;
 
     @Resource(name = "metaManager")
     private MetaManager metaManager;
