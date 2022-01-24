@@ -3,7 +3,6 @@ package com.xforceplus.ultraman.oqsengine.metadata;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
 import static com.xforceplus.ultraman.oqsengine.metadata.cache.DefaultCacheExecutor.OBJECT_MAPPER;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.COMMON_WAIT_TIME_OUT;
-import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.HEALTH_CHECK_ENTITY_ID;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_CODE;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_FATHER;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_FIELDS;
@@ -145,6 +144,14 @@ public class StorageMetaManager implements MetaManager {
 
     @Override
     public Optional<IEntityClass> load(long entityClassId, int version, String profile) {
+
+        /*
+        健康检查使用的
+         */
+        if (entityClassId == HealthCheckEntityClass.getInstance().id()) {
+            return Optional.of(HealthCheckEntityClass.getInstance());
+        }
+
         /*
          * 不存在时抛出异常
          */
@@ -154,10 +161,6 @@ public class StorageMetaManager implements MetaManager {
                 throw new RuntimeException(
                     String.format("invalid entityClassId : [%d], no version pair", entityClassId));
             }
-        }
-
-        if (entityClassId == HEALTH_CHECK_ENTITY_ID) {
-            return Optional.of(HealthCheckEntityClass.getInstance());
         }
 
         Optional<IEntityClass> ecOp = cacheExecutor.localRead(entityClassId, version, profile);
