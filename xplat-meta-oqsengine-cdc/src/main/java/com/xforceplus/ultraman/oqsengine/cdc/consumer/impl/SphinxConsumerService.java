@@ -227,9 +227,10 @@ public class SphinxConsumerService implements ConsumerService {
 
                         //  维护的CommitId不需要加入
                         if ((checkCommitReady
-                            && !cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().contains(commitId))
-                            || !CommonUtils.isMaintainRecord(commitId)) {
-                            commitIDs.add(commitId);
+                            && !cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().contains(commitId))) {
+                            if (!CommonUtils.isMaintainRecord(commitId)) {
+                                commitIDs.add(commitId);
+                            }
                         }
 
                         //  更新
