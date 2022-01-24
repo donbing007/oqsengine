@@ -220,7 +220,7 @@ public class BatchCaseTest {
         Assertions.assertTrue(ok.get());
         Assertions.assertTrue(resourceLocker.isLocking(IEntitys.resource(user.id())));
 
-        com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[] orders = IntStream.range(0, 10)
+        IEntity[] orders = IntStream.range(0, 10)
             .mapToObj(i -> entityHelper.buildOrderEntity(user)).toArray(
                 com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[]::new);
         Assertions.assertEquals(OqsResult.success(), entityManagementService.build(orders));
@@ -263,9 +263,8 @@ public class BatchCaseTest {
             Assertions.assertTrue(ok.get());
             Assertions.assertTrue(resourceLocker.isLocking(IEntitys.resource(user.id())));
 
-            com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[] orders = IntStream.range(0, 10)
-                .mapToObj(i -> entityHelper.buildOrderEntity(user)).toArray(
-                    com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[]::new);
+            IEntity[] orders = IntStream.range(0, 10)
+                .mapToObj(i -> entityHelper.buildOrderEntity(user)).toArray(IEntity[]::new);
             try {
                 entityManagementService.build(orders);
                 Assertions.fail("CalculationException was expected to be thrown, but was not.");
@@ -285,7 +284,7 @@ public class BatchCaseTest {
      */
     @Test
     public void testBatchBuild() throws Exception {
-        com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[] targetEntities = Stream.concat(
+        IEntity[] targetEntities = Stream.concat(
             IntStream.range(0, 10).mapToObj(i ->
                 Entity.Builder.anEntity()
                     .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
@@ -347,7 +346,7 @@ public class BatchCaseTest {
         创建测试目标.
         在同一批中,两个互不相关,之间没有计算字段依赖.
          */
-        com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[] targetEntities = Stream.concat(
+        IEntity[] targetEntities = Stream.concat(
             IntStream.range(0, 10).mapToObj(i ->
                 Entity.Builder.anEntity()
                     .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
@@ -371,7 +370,7 @@ public class BatchCaseTest {
                             "test")
                     )
                     .build()
-            )).toArray(com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[]::new);
+            )).toArray(IEntity[]::new);
         Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(targetEntities).getResultStatus());
         Assertions.assertEquals(0, Arrays.stream(targetEntities).filter(e -> e.isDirty()).count());
 
@@ -438,7 +437,7 @@ public class BatchCaseTest {
 
     @Test
     public void testDeletes() throws Exception {
-        com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[] targetEntities = Stream.concat(
+        IEntity[] targetEntities = Stream.concat(
             IntStream.range(0, 10).mapToObj(i ->
                 Entity.Builder.anEntity()
                     .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
@@ -462,7 +461,7 @@ public class BatchCaseTest {
                             "test")
                     )
                     .build()
-            )).toArray(com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[]::new);
+            )).toArray(IEntity[]::new);
         Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(targetEntities).getResultStatus());
         Assertions.assertEquals(0, Arrays.stream(targetEntities).filter(e -> e.isDirty()).count());
 
