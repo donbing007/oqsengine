@@ -274,18 +274,16 @@ public class DiscoverDevOpsService {
      * @param entityClassId 目标entityClassId.
      * @param start         开始时间.
      * @param end           结束时间.
-     * @param profile       可能的替身信息.
      * @return 任务详情.
      */
     @DiscoverAction(describe = "重建索引", retClass = DevOpsTaskInfo.class)
     public DevOpsTaskInfo rebuildIndex(
             @MethodParam(name = "entityClassId", klass = long.class, required = true) long entityClassId,
             @MethodParam(name = "start", klass = String.class, required = true) String start,
-            @MethodParam(name = "end", klass = String.class, required = true) String end,
-            @MethodParam(name = "profile", klass = String.class, required = false) String profile) {
+            @MethodParam(name = "end", klass = String.class, required = true) String end) {
         try {
             Optional<IEntityClass> entityClassOp =
-                metaManager.load(entityClassId, null == profile ? "" : profile);
+                metaManager.load(entityClassId, "");
             if (entityClassOp.isPresent()) {
                 return devOpsManagementService.rebuildIndex(entityClassOp.get(),
                         LocalDateTime.parse(start, dateTimeFormatter),
@@ -293,8 +291,8 @@ public class DiscoverDevOpsService {
             }
             return null;
         } catch (Exception e) {
-            exceptionHandle(String.format("rebuildIndex exception, [%d-%s-%s-%s]",
-                    entityClassId, profile == null ? "" : profile, start, end), e);
+            exceptionHandle(String.format("rebuildIndex exception, [%d-%s-%s]",
+                    entityClassId, start, end), e);
         }
         return null;
     }

@@ -112,6 +112,18 @@ public class DefaultDevOpsTaskInfo implements DevOpsTaskInfo {
         return errorSize;
     }
 
+    public long getCreateTime() {
+        return createTime;
+    }
+
+    public long getUpdateTime() {
+        return updateTime;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
     @Override
     public String message() {
         return message;

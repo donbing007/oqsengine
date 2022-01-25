@@ -105,9 +105,8 @@ public class DevOpsController {
     @PostMapping("/oqs/devops/rebuild-index/{entityClassId}/{startTime}/{endTime}")
     public ResponseEntity<DevOpsTaskInfo> rebuildIndex(@PathVariable long entityClassId,
                                                        @PathVariable String start,
-                                                       @PathVariable String end,
-                                                       @RequestParam("profile") String profile) {
-        return ResponseEntity.ok(discoverDevOpsService.rebuildIndex(entityClassId, start, end, profile));
+                                                       @PathVariable String end) {
+        return ResponseEntity.ok(discoverDevOpsService.rebuildIndex(entityClassId, start, end));
     }
 
     /**
