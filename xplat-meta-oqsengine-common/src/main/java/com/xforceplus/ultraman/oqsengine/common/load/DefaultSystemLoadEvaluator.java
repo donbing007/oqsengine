@@ -15,22 +15,28 @@ public class DefaultSystemLoadEvaluator implements SystemLoadEvaluator {
 
     private static double MAX_VALUE = 100.0D;
     private static double MIN_VALUE = 0.0D;
+    // 所有最大负载.
+    private double max;
 
     @Resource
     private Collection<LoadFactor> loadFactors;
 
-    public void setLoadFactors(
-        Collection<LoadFactor> loadFactors) {
+    /**
+     * 设置负载因子.
+     */
+    public void setLoadFactors(Collection<LoadFactor> loadFactors) {
         this.loadFactors = loadFactors;
+
+        max = this.loadFactors.size() * MAX_VALUE;
     }
 
     @Override
     public double evaluate() {
         if (loadFactors == null) {
-            return MIN_VALUE;
+            return (int) MIN_VALUE;
         }
 
-        return loadFactors.stream()
+        double value = loadFactors.stream()
             .filter(
                 loadFactor ->
                     loadFactor.weight() >= LoadFactor.MIN_WEIGHT && loadFactor.weight() <= LoadFactor.MAX_WEIGHT)
@@ -45,5 +51,7 @@ public class DefaultSystemLoadEvaluator implements SystemLoadEvaluator {
                 }
             })
             .sum();
+
+        return (value / max) * 100D;
     }
 }
