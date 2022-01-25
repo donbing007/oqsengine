@@ -282,9 +282,10 @@ public class DiscoverDevOpsService {
             @MethodParam(name = "entityClassId", klass = long.class, required = true) long entityClassId,
             @MethodParam(name = "start", klass = String.class, required = true) String start,
             @MethodParam(name = "end", klass = String.class, required = true) String end,
-            @MethodParam(name = "profile", klass = String.class, required = true) String profile) {
+            @MethodParam(name = "profile", klass = String.class, required = false) String profile) {
         try {
-            Optional<IEntityClass> entityClassOp = metaManager.load(entityClassId, profile);
+            Optional<IEntityClass> entityClassOp =
+                metaManager.load(entityClassId, null == profile ? "" : profile);
             if (entityClassOp.isPresent()) {
                 return devOpsManagementService.rebuildIndex(entityClassOp.get(),
                         LocalDateTime.parse(start, dateTimeFormatter),
