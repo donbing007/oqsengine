@@ -31,9 +31,9 @@ import org.slf4j.LoggerFactory;
  * @since 1.8
  */
 @Disabled
-public abstract class AbstractRetryResourceLockerTest {
+public abstract class AbstractResourceLockerTest {
 
-    final Logger logger = LoggerFactory.getLogger(AbstractRetryResourceLockerTest.class);
+    final Logger logger = LoggerFactory.getLogger(AbstractResourceLockerTest.class);
 
     static ThreadPoolExecutor WORKER;
 

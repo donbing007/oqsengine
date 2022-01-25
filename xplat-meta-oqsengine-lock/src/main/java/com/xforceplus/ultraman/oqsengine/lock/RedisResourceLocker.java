@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory;
  * @version 0.1 2021/08/10 18:41
  * @since 1.8
  */
-public class RedisResourceLocker extends AbstractRetryResourceLocker implements Lifecycle {
+public class RedisResourceLocker extends AbstractResourceLocker implements Lifecycle {
 
     /*
     批量加锁lua脚本.使用一个hash结构来记录锁,如下.

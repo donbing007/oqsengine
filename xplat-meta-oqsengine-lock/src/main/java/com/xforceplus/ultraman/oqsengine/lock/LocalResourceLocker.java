@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentMap;
  * @version 0.1 2020/11/26 11:10
  * @since 1.5
  */
-public class LocalResourceLocker extends AbstractRetryResourceLocker {
+public class LocalResourceLocker extends AbstractResourceLocker {
 
     private final ConcurrentMap<String, LockInfo> lockPool = new ConcurrentHashMap();
 

@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit;
  * @version 0.1 2020/11/26 11:10
  * @since 1.5
  */
-public abstract class AbstractRetryResourceLocker implements ResourceLocker {
+public abstract class AbstractResourceLocker implements ResourceLocker {
 
     /*
      * 重试的默认间隔,{@value}毫秒.
