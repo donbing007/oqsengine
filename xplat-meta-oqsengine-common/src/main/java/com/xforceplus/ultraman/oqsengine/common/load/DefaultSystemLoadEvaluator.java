@@ -27,7 +27,7 @@ public class DefaultSystemLoadEvaluator implements SystemLoadEvaluator {
     public void setLoadFactors(Collection<LoadFactor> loadFactors) {
         this.loadFactors = loadFactors;
 
-        max = this.loadFactors.size() * MAX_VALUE;
+        max = loadFactors.stream().mapToDouble(loadFactor -> MAX_VALUE * loadFactor.weight()).sum();
     }
 
     @Override
