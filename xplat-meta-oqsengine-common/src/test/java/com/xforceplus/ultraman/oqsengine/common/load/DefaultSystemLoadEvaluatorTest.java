@@ -29,7 +29,9 @@ public class DefaultSystemLoadEvaluatorTest {
         DefaultSystemLoadEvaluator evaluator = new DefaultSystemLoadEvaluator();
         evaluator.setLoadFactors(loadFactors);
 
-        double expectedLoad = 100D * 0.1D + 20D * 0.9D;
+        double max = loadFactors.stream().mapToDouble(l -> 100D * l.weight()).sum();
+
+        double expectedLoad = ((100D * 0.1D + 20D * 0.9D) /  max) * 100D;
         Assertions.assertEquals(expectedLoad, evaluator.evaluate());
     }
 
@@ -48,7 +50,8 @@ public class DefaultSystemLoadEvaluatorTest {
         DefaultSystemLoadEvaluator evaluator = new DefaultSystemLoadEvaluator();
         evaluator.setLoadFactors(loadFactors);
 
-        double expectedLoad = 100D * 0.1D + 20D * 0.9D;
+        double max = loadFactors.stream().mapToDouble(l -> 100D * l.weight()).sum();
+        double expectedLoad = ((100D * 0.1D + 20D * 0.9D) / max) * 100D;
         Assertions.assertEquals(expectedLoad, evaluator.evaluate());
 
 
@@ -79,7 +82,8 @@ public class DefaultSystemLoadEvaluatorTest {
         DefaultSystemLoadEvaluator evaluator = new DefaultSystemLoadEvaluator();
         evaluator.setLoadFactors(loadFactors);
 
-        double expectedLoad = 100D * 0.1D + 20D * 0.9D + 30D * 0.2D;
+        double max = loadFactors.stream().mapToDouble(l -> 100D * l.weight()).sum();
+        double expectedLoad = ((100D * 0.1D + 20D * 0.9D + 30D * 0.2D) / max) * 100D;
         Assertions.assertEquals(expectedLoad, evaluator.evaluate());
     }
 
