@@ -21,10 +21,13 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntitys;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.CanalContainer;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.ManticoreContainer;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.MysqlContainer;
@@ -32,8 +35,10 @@ import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.RedisConta
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -101,6 +106,9 @@ public class BatchCaseTest {
 
     @Resource
     private SegmentStorage segmentStorage;
+
+    @Resource
+    private TransactionManager transactionManager;
 
     @MockBean(name = "metaManager")
     private MetaManager metaManager;
@@ -179,10 +187,72 @@ public class BatchCaseTest {
         segmentStorage.delete(segmentInfo);
     }
 
+    /**
+     * 测试有部份实例不需要替换.
+     */
+    @Test
+    public void testReplaceNoDiry() throws Exception {
+        IEntity[] targetEntities = IntStream.range(0, 10).mapToObj(i ->
+            Entity.Builder.anEntity()
+                .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
+                .withValues(
+                    Arrays.asList(
+                        new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 990L)
+                    )
+                ).build()).toArray(IEntity[]::new);
+        Assertions.assertEquals(OqsResult.success(), entityManagementService.build(targetEntities));
+        // 都创建成功,都是干净的预期.
+        Assertions.assertEquals(0, Arrays.stream(targetEntities).filter(e -> e.isDirty()).count());
+
+        Assertions.assertEquals(OqsResult.success(), entityManagementService.replace(targetEntities));
+
+        OqsResult<Collection<IEntity>> entitiesResult = entitySearchService.selectByConditions(
+            Conditions.buildEmtpyConditions(),
+            MockEntityClassDefine.L2_ENTITY_CLASS.ref(),
+            ServiceSelectConfig.Builder.anSearchConfig().withPage(Page.newSinglePage(100)).withSort(Sort.buildAscSort(
+                EntityField.ID_ENTITY_FIELD)).build()
+        );
+        List<IEntity> entities = new ArrayList<>(entitiesResult.getValue().get());
+        IEntity newEntity = entities.get(0);
+        // 应该被更新,当前处于"脏"状态.
+        newEntity.entityValue().addValue(
+            new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 1000L)
+        );
+        // 虽然写入一个新值,但由于和原始值一致那么当前不会处于"脏"状态.
+        newEntity = entities.get(1);
+        newEntity.entityValue().addValue(
+            new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 990L)
+        );
+
+        Assertions.assertEquals(OqsResult.success(),
+            entityManagementService.replace(entities.stream().toArray(IEntity[]::new)));
+
+        // 检查结果.
+        entitiesResult = entitySearchService.selectByConditions(
+            Conditions.buildEmtpyConditions(),
+            MockEntityClassDefine.L2_ENTITY_CLASS.ref(),
+            ServiceSelectConfig.Builder.anSearchConfig().withPage(Page.newSinglePage(100)).withSort(Sort.buildAscSort(
+                EntityField.ID_ENTITY_FIELD)).build()
+        );
+        entities = new ArrayList<>(entitiesResult.getValue().get());
+        Assertions.assertEquals(1000L,
+            entities.get(0).entityValue().getValue("l0-long").get().valueToLong());
+        Assertions.assertEquals(1, entities.get(0).version());
+        Assertions.assertEquals(990,
+            entities.get(1).entityValue().getValue("l0-long").get().valueToLong());
+
+        // 跳过第一个,之后的应该都没有被更新过.
+        for (int i = 1; i < entities.size(); i++) {
+            IEntity e = entities.get(i);
+            Assertions.assertEquals(0, e.version());
+        }
+    }
+
     @Test
     public void testMaintainConflictRestore() throws Exception {
         IEntity user = entityHelper.buildUserEntity();
         Assertions.assertEquals(OqsResult.success(), entityManagementService.build(user));
+        Assertions.assertFalse(user.isDirty());
 
         // 保证进行了同步.
         while (commitIdStatusService.size() > 0) {
@@ -234,6 +304,7 @@ public class BatchCaseTest {
     public void testMaintainConflict() throws Exception {
         IEntity user = entityHelper.buildUserEntity();
         Assertions.assertEquals(OqsResult.success(), entityManagementService.build(user));
+        Assertions.assertFalse(user.isDirty());
 
         // 保证进行了同步.
         while (commitIdStatusService.size() > 0) {

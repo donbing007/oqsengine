@@ -121,7 +121,11 @@ public class EntityValue implements IEntityValue, Cloneable, Serializable {
 
     @Override
     public boolean isDirty() {
-        return this.values.values().stream().filter(v -> v.isDirty()).count() > 0;
+        if (this.values.isEmpty()) {
+            return false;
+        } else {
+            return this.values.values().stream().filter(v -> v.isDirty()).count() > 0;
+        }
     }
 
     @Override

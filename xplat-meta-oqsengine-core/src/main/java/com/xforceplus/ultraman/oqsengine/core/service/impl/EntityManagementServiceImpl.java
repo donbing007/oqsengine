@@ -148,8 +148,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     }
 
     /*
-                只读的原因.
-                 */
+    只读的原因.
+    */
     private enum ReadOnleyModeRease {
         // 未知,不应该产生.
         UNKNOWN(0),
@@ -514,6 +514,10 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     public OqsResult replace(IEntity[] entities) throws SQLException {
         checkReady();
 
+        if (entities.length == 0) {
+            return OqsResult.success();
+        }
+
         IEntityClass[] entityClasses = new IEntityClass[entities.length];
         Optional<IEntityClass> entityClassOp;
         EntityClassRef ref;
@@ -551,15 +555,23 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 calculationContext.focusTx(tx);
 
                 long[] targetIds = Arrays.stream(entities).filter(e -> e.isDirty()).mapToLong(e -> e.id()).toArray();
+                if (targetIds.length == 0) {
+                    return OqsResult.success();
+                }
+
                 // 当前需要更新的目标实例列表.
                 List<IEntity> targetEntities = new ArrayList(masterStorage.selectMultiple(targetIds));
+
+                if (targetEntities.isEmpty()) {
+                    return OqsResult.success();
+                }
 
                 // 含有更新字段的对象速查表,其每一个entity都只包含需要更新的IValue实例,所以并不完整.
                 // key为实例id.
                 Map<Long, IEntity> replaceEntityTable =
-                    Arrays.stream(entities).collect(Collectors.toMap(e -> e.id(), e -> e, (e0, e1) -> e0));
-
-                Map.Entry<VerifierResult, IEntityField> verify = null;
+                    Arrays.stream(entities)
+                        .filter(e -> e.isDirty())
+                        .collect(Collectors.toMap(e -> e.id(), e -> e, (e0, e1) -> e0));
 
                 /*
                 处理计算字段,并替换需要更新的值.
@@ -571,7 +583,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
                 // 加锁
                 String[] resoruces =
-                    Arrays.stream(targetIds).mapToObj(id -> IEntitys.resource(id)).toArray(String[]::new);
+                    targetEntities.stream().map(e -> IEntitys.resource(e.id())).toArray(String[]::new);
                 boolean lockResult = resourceLocker.tryLocks(this.lockTimeoutMs, resoruces);
                 if (!lockResult) {
                     // 加锁失败.
@@ -589,33 +601,47 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
                         } else {
 
+                            /*
+                             * 这里注意,必须先将需要更新的值替换才能进行正确计算字段计算.
+                             * 如果新旧两个IValue一致那么将不会更新.
+                             */
+                            for (IValue newValue : replaceEntity.entityValue().values()) {
+
+                                targetEntity.entityValue().addValue(newValue);
+
+                            }
+
+                            if (!targetEntity.isDirty()) {
+                                continue;
+                            }
+
+                            targetEntity.markTime();
+
                             IEntityClass entityClass = entityClassTable.get(targetEntity.entityClassRef().getId());
+                            Map.Entry<VerifierResult, IEntityField> verify = verifyFields(entityClass, targetEntity);
+                            if (VerifierResult.OK != verify.getKey()) {
+                                return transformVerifierResultToOperationResult(verify, targetEntity);
+                            }
+
                             calculationContext.focusSourceEntity(targetEntity);
                             calculationContext.focusEntity(targetEntity, entityClass);
                             targetEntity = calculation.calculate(calculationContext);
                             setValueChange(calculationContext,
                                 Optional.ofNullable(replaceEntity), Optional.ofNullable(targetEntity));
 
-                            for (IValue newValue : replaceEntity.entityValue().values()) {
-
-                                targetEntity.entityValue().addValue(newValue);
-                            }
-
-                            targetEntity.markTime();
-
-                            verify = verifyFields(entityClass, targetEntity);
-                            if (VerifierResult.OK != verify.getKey()) {
-                                return transformVerifierResultToOperationResult(verify, targetEntity);
-                            }
 
                             calculation.maintain(calculationContext);
                         }
                     }
 
                     EntityPackage entityPackage = new EntityPackage();
-                    for (int i = 0; i < targetEntities.size(); i++) {
-                        targetEntity = targetEntities.get(i);
-                        entityPackage.put(targetEntity, entityClassTable.get(targetEntity.entityClassRef().getId()));
+                    // 忽略掉所有替换后计算后仍然是干净的对象,表示没有任何改变.
+                    targetEntities.stream().filter(e -> e.isDirty()).forEach(e ->
+                        entityPackage.put(e, entityClassTable.get(e.entityClassRef().getId()))
+                    );
+
+                    if (entityPackage.isEmpty()) {
+                        return OqsResult.success();
                     }
 
                     masterStorage.replace(entityPackage);
