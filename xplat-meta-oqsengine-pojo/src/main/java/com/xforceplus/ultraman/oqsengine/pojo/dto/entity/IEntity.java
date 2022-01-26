@@ -6,7 +6,7 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.entity;
  * @author wangzheng
  * @version 1.0 2020/3/26 15:10
  */
-public interface IEntity extends Cloneable {
+public interface IEntity {
 
     /**
      * 获得本对象的id - 数据id.
@@ -86,7 +86,7 @@ public interface IEntity extends Cloneable {
     /**
      * 克隆.
      */
-    public Object clone() throws CloneNotSupportedException;
+    public IEntity copy();
 
     /**
      * 维护ID.

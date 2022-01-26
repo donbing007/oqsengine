@@ -5,9 +5,11 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.Hint;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -37,6 +39,18 @@ public class OqsResult<V> implements Serializable {
 
     public static OqsResult<IEntity> success(IEntity entity) {
         return new OqsResult(ResultStatus.SUCCESS, entity, null);
+    }
+
+    public static OqsResult<IEntity[]> success(IEntity[] entities) {
+        return new OqsResult(ResultStatus.SUCCESS, entities, null);
+    }
+
+    public static OqsResult<Map<IEntity, IValue[]>> success(Map<IEntity, IValue[]> changes) {
+        return new OqsResult<>(ResultStatus.SUCCESS, changes, null);
+    }
+
+    public static OqsResult<Map.Entry<IEntity, IValue[]>> success(Map.Entry<IEntity, IValue[]> change) {
+        return new OqsResult<>(ResultStatus.SUCCESS, change, null);
     }
 
     public static OqsResult<Long> success(long value) {

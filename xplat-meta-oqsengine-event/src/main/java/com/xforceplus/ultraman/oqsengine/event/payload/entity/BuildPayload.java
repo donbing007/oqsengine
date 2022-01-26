@@ -7,6 +7,7 @@ import java.util.Objects;
 
 /**
  * 创建的负载.
+ * 记录了创建成功的新对象快照.
  *
  * @author dongbin
  * @version 0.1 2021/3/24 15:39
@@ -15,20 +16,17 @@ import java.util.Objects;
 public class BuildPayload implements Serializable {
 
     private long txId;
-    private long number;
     private IEntity[] entities;
 
     /**
      * 实例化.
      *
      * @param txId 事务id.
-     * @param number 创建的数量.
-     * @param entities 创建的目标实体.
+     * @param createdEntities 创建的目标实体.
      */
-    public BuildPayload(long txId, long number, IEntity ...entities) {
+    public BuildPayload(long txId, IEntity ...createdEntities) {
         this.txId = txId;
-        this.entities = entities;
-        this.number = number;
+        this.entities = createdEntities;
     }
 
     public IEntity getEntity() {
@@ -43,10 +41,6 @@ public class BuildPayload implements Serializable {
         return txId;
     }
 
-    public long getNumber() {
-        return number;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -56,13 +50,12 @@ public class BuildPayload implements Serializable {
             return false;
         }
         BuildPayload that = (BuildPayload) o;
-        return getTxId() == that.getTxId() && getNumber() == that.getNumber() && Arrays.equals(getEntities(),
-            that.getEntities());
+        return getTxId() == that.getTxId() && Arrays.equals(getEntities(), that.getEntities());
     }
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(getTxId(), getNumber());
+        int result = Objects.hash(getTxId());
         result = 31 * result + Arrays.hashCode(getEntities());
         return result;
     }
@@ -71,9 +64,9 @@ public class BuildPayload implements Serializable {
     public String toString() {
         final StringBuilder sb = new StringBuilder("BuildPayload{");
         sb.append("entities=").append(Arrays.toString(entities));
-        sb.append(", number=").append(number);
         sb.append(", txId=").append(txId);
         sb.append('}');
         return sb.toString();
     }
+
 }

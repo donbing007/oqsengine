@@ -15,7 +15,7 @@ import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * 基于内存的KV实现,数据不过时行持久化.
+ * 基于内存的KV实现,数据不进时行持久化.
  *
  * @author dongbin
  * @version 0.1 2021/08/17 10:52
