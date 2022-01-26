@@ -177,13 +177,7 @@ public class TestAbstractTransactionManagerTest {
         tm.unbind();
         TimeUnit.SECONDS.sleep(1);
 
-        try {
-            tm.bind(tx.id());
-            Assertions.fail("An unbound exception is expected, but it is not.");
-        } catch (RuntimeException ex) {
-            Assertions.assertEquals(
-                String.format("Invalid transaction(%s), transaction may have timed out.", tx.id()), ex.getMessage());
-        }
+        Assertions.assertFalse(tm.bind(tx.id()));
 
         Assertions.assertFalse(tm.getCurrent().isPresent());
         Assertions.assertTrue(tx.isCompleted());
