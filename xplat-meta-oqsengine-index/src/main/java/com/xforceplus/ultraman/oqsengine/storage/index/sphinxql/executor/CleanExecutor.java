@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.executor;
 
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
 import java.sql.Connection;
 import java.sql.PreparedStatement;

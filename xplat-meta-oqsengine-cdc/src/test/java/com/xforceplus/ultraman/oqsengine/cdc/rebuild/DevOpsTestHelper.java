@@ -5,7 +5,6 @@ import com.xforceplus.ultraman.oqsengine.cdc.AbstractCDCTestHelper;
 import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MockMetaManagerHolder;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.testcontainer.basic.AbstractContainerExtends;
 import java.util.List;
 
 /**

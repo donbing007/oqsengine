@@ -1,8 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.index;
 
 import com.xforceplus.ultraman.oqsengine.common.lifecycle.Lifecycle;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.ConditionsSearchStorage;
 import com.xforceplus.ultraman.oqsengine.storage.ConditionsSelectStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;

@@ -46,7 +46,6 @@ public interface MasterStorage extends Storage, PreciseSelectStorage, Conditions
     DataIterator<OriginalEntity> iterator(IEntityClass entityClass, long startTime, long endTime, long lastId, int size)
         throws SQLException;
 
-
     /**
      * 进行索引重建.
      *

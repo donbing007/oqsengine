@@ -4,8 +4,6 @@ import static com.xforceplus.ultraman.oqsengine.devops.rebuild.constant.Constant
 
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.DevOpsTaskInfo;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.storage.SQLTaskStorage;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 
 /**
@@ -15,10 +13,7 @@ import org.slf4j.LoggerFactory;
  * @since : 1.8
  */
 public class DefaultDevOpsTaskHandler implements TaskHandler {
-
-    private final Logger logger = LoggerFactory.getLogger(DefaultDevOpsTaskHandler.class);
-
-    private DevOpsTaskInfo devOpsTaskInfo;
+    protected DevOpsTaskInfo devOpsTaskInfo;
     private SQLTaskStorage sqlTaskStorage;
 
     public DefaultDevOpsTaskHandler(SQLTaskStorage sqlTaskStorage, DevOpsTaskInfo taskInfo) {
@@ -72,7 +67,8 @@ public class DefaultDevOpsTaskHandler implements TaskHandler {
                 }
             });
         } catch (Exception e) {
-            logger.error(e.getMessage(), e);
+            e.printStackTrace();
+            //  ignore
         }
     }
 }

@@ -17,14 +17,14 @@ public class SphinxQLStringStorageStrategyTest {
     public void testConvert() {
         SphinxQLStringStorageStrategy storageStrategy = new SphinxQLStringStorageStrategy();
         StorageValue storageValue = storageStrategy.convertIndexStorageValue(
-            "123S", "aaaabbbbccccddddeeeeffffgggg!AAAABBBBCCCCDDDDEEEEFFFFGGGG!CDMA", false, true);
+            String.valueOf(Long.MAX_VALUE - 1), "aaaabbbbccccddddeeeeffffgggg!AAAABBBBCCCCDDDDEEEEFFFFGGGG!CDMA", false, true);
         StorageValue firstStorageValue = storageValue;
         StorageValue secondStorageValue = storageValue.next();
         StorageValue thirdStorageValue = secondStorageValue.next();
 
-        Assertions.assertEquals("aaaabbbbccccddddeeeeffffgggg!", firstStorageValue.value());
-        Assertions.assertEquals("AAAABBBBCCCCDDDDEEEEFFFFGGGG!", secondStorageValue.value());
-        Assertions.assertEquals("CDMA", thirdStorageValue.value());
+        Assertions.assertEquals("aaaabbbbccccddddeeeeffffg", firstStorageValue.value());
+        Assertions.assertEquals("ggg!AAAABBBBCCCCDDDDEEEEF", secondStorageValue.value());
+        Assertions.assertEquals("FFFGGGG!CDMA", thirdStorageValue.value());
 
         Assertions.assertEquals(0, firstStorageValue.location());
         Assertions.assertEquals(1, secondStorageValue.location());

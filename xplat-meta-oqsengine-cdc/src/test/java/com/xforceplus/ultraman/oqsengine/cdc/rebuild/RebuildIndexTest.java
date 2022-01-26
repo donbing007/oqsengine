@@ -3,25 +3,21 @@ package com.xforceplus.ultraman.oqsengine.cdc.rebuild;
 import static com.xforceplus.ultraman.oqsengine.devops.rebuild.constant.ConstantDefine.ONE_HUNDRED_PERCENT;
 
 import com.google.common.collect.Lists;
-
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.handler.TaskHandler;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.mock.RebuildInitialization;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.DevOpsTaskInfo;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.storage.master.SQLMasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.mock.MasterDBInitialization;
-
 import com.xforceplus.ultraman.oqsengine.storage.pojo.EntityPackage;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -115,14 +111,14 @@ public class RebuildIndexTest extends DevOpsTestHelper {
         if (!ifTest) {
             return;
         }
-        int batchSize = 1024 * 1000;
+        int batchSize = 1024 * 200;
 
         //  初始化数据
         boolean initOk = initData(
             EntityGenerateTooBar.prepareLongStringEntity(batchSize), EntityGenerateTooBar.LONG_STRING_ENTITY_CLASS);
 
         Assertions.assertTrue(initOk);
-        Thread.sleep(200_000);
+        Thread.sleep(100_000);
 
         long start = System.currentTimeMillis();
 

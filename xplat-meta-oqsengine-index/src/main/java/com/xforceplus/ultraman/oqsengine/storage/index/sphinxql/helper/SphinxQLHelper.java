@@ -1,10 +1,14 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper;
 
 import com.xforceplus.ultraman.oqsengine.common.StringUtils;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.constant.SQLConstant;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLStringStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
+import com.xforceplus.ultraman.oqsengine.storage.value.AbstractStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.AnyStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.ShortStorageName;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
@@ -15,9 +19,12 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -32,7 +39,7 @@ public class SphinxQLHelper {
     /**
      * select的单个关键字最大长度.
      */
-    public static final int MAX_WORLD_SPLIT_LENGTH = 29;
+    public static final int MAX_WORLD_SPLIT_LENGTH = 25;
 
     /**
      * 标记这是一个支持模糊搜索的拆分词.
@@ -60,11 +67,11 @@ public class SphinxQLHelper {
     protected static final Map<Character, String> REPLACE_SYMBOLS;
 
 
-    /*
+    /**
      * 多值字段起始标记.
      */
     private static final char START = '[';
-    /*
+    /**
      * 多值字段结束标记.
      */
     private static final char END = ']';
@@ -174,7 +181,7 @@ public class SphinxQLHelper {
     /**
      * 构造 sphinxQL 全文索引中精确查询语句.
      *
-     * @param value        目标字段.
+     * @param value 目标字段.
      * @param useGroupName 是否userGroupName.
      * @return 结果.
      */
@@ -297,16 +304,10 @@ public class SphinxQLHelper {
         return buff.toString();
     }
 
-
     /**
      * strings value通用的转换(StorageValue)逻辑.
-     *
-     * @param storageName 字段存储名称.
-     * @param originValue 字段存储值（origin）.
-     * @param attachment  是否附件.
-     * @return 存储结构.
      */
-    public static StorageValue stringsStorageConvert(String storageName, String originValue, boolean attachment) {
+    public static StorageValue stringsStorageConvert(String storageName, String originValue, boolean attachment, boolean locationAppend) {
 
         String logicName = AnyStorageValue.getInstance(storageName).logicName();
 
@@ -330,9 +331,18 @@ public class SphinxQLHelper {
 
                 //  处理string超长时的逻辑，将会被按照最大长度进行切分
                 String[] values = longStringWrap(buff.toString());
+
+                int partition = values.length > 1 ? StorageValue.FIRST_PARTITION : StorageValue.NOT_PARTITION;
+
                 for (String v : values) {
                     StorageValue<String> newStorageValue = new StringStorageValue(logicName, v, true);
-                    newStorageValue.locate(location++);
+                    newStorageValue.locate(location);
+                    //  设置超长字段在整个字段中partition.
+                    newStorageValue.partition(partition++);
+
+                    if (!locationAppend) {
+                        newStorageValue.notLocationAppend();
+                    }
 
                     if (head == null) {
                         head = newStorageValue;
@@ -340,6 +350,8 @@ public class SphinxQLHelper {
                         head.stick(newStorageValue);
                     }
                 }
+
+                location++;
 
                 buff.delete(0, buff.length());
                 continue;
@@ -354,41 +366,43 @@ public class SphinxQLHelper {
     }
 
     /**
-     * 组装查询条件.
-     *
-     * @param word             raw word.
-     * @param shortStorageName name.
-     * @param useGroupName     是否userGroupName.
-     * @return 二元组中 1值为转换值, 2值为是否分割为多值.
+     * 对condition进行超长字符处理.
      */
-    public static Tuple2<String, Boolean> stringConditionFormat(String word, ShortStorageName shortStorageName,
-                                                                boolean useGroupName) {
+    public static Tuple2<String, Boolean> stringConditionFormat(String word, ShortStorageName shortStorageName, boolean useGroupName) {
         String[] values = longStringWrap(word);
 
         StringBuilder stringBuilder = new StringBuilder();
-        boolean isFirst = true;
+
         if (values.length > 1) {
             stringBuilder.append("(");
         }
 
+        int partition = StorageValue.FIRST_PARTITION;
         for (String v : values) {
-            if (!isFirst) {
-                stringBuilder.append(" << ");
+            if (partition > StorageValue.FIRST_PARTITION) {
+                stringBuilder.append(" ");
             }
 
-            stringBuilder.append(shortStorageName.getPrefix())
-                .append(filterSymbols(v));
+            String head = "";
+            if (values.length > 1) {
+                head = StorageValue.PARTITION_FLAG + partition;
+            }
+
+            stringBuilder.append(head)
+                .append(shortStorageName.getPrefix())
+                .append(filterSymbols(v))
+                .append(shortStorageName.getOriginSuffix());
 
             /*
              * 如果使用组名的话,忽略尾部定位序号.
              */
             if (useGroupName) {
-                stringBuilder.append(shortStorageName.getNoLocationSuffix());
+                stringBuilder.append(shortStorageName.getNoLocationTail());
             } else {
-                stringBuilder.append(shortStorageName.getSuffix());
+                stringBuilder.append(shortStorageName.getTail());
             }
 
-            isFirst = false;
+            partition++;
         }
 
         if (values.length > 1) {
@@ -398,25 +412,19 @@ public class SphinxQLHelper {
     }
 
     /**
-     * 将超长字段拆分为固定格式, 比如ABC -> [A][B][C].
+     * 将超长字段拆分为固定格式, 比如ABC -> [ABC].
      */
     public static String stringValueFormat(String word) {
-        String[] values = longStringWrap(word);
 
         StringBuilder stringBuilder = new StringBuilder();
-        for (String v : values) {
-            stringBuilder.append(START)
-                .append(v)
-                .append(END);
-        }
+        stringBuilder.append(START)
+            .append(word)
+            .append(END);
         return stringBuilder.toString();
     }
 
     /**
      * 切割一个长字符串, 按照传入的长度.
-     *
-     * @param word 字符串.
-     * @return 切割后的字符串数组.
      */
     private static String[] longStringWrap(String word) {
         int fullSize = word.length() / MAX_WORLD_SPLIT_LENGTH;
@@ -434,21 +442,17 @@ public class SphinxQLHelper {
 
     /**
      * 分割字符串.
-     *
-     * @param str 字符串.
-     * @param f   起始位置.
-     * @param t   长度.
-     * @return 切割后的字符串.
      */
     private static String substring(String str, int f, int t) {
         if (f > str.length()) {
             return null;
         }
+
         if (t > str.length()) {
             return str.substring(f, str.length());
-        } else {
-            return str.substring(f, t);
         }
+
+        return str.substring(f, t);
     }
 
 }

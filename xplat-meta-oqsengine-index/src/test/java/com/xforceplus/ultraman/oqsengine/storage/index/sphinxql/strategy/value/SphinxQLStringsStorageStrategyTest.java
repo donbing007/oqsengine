@@ -24,7 +24,7 @@ public class SphinxQLStringsStorageStrategyTest {
         //  check一个包含超长字段的
         check("123S",
             "[aaaabbbbccccddddeeeeffffgggg!AAAABBBBCCCCDDDDEEEEFFFFGGGG!CDMA][fuchsia][cyan]",
-            new String[]{"aaaabbbbccccddddeeeeffffgggg!", "AAAABBBBCCCCDDDDEEEEFFFFGGGG!", "CDMA", "fuchsia", "cyan"});
+            new String[]{"aaaabbbbccccddddeeeeffffg", "ggg!AAAABBBBCCCCDDDDEEEEF", "FFFGGGG!CDMA", "fuchsia", "cyan"});
     }
 
     private void check(String storageName, String value, String[] expectedValue) {
