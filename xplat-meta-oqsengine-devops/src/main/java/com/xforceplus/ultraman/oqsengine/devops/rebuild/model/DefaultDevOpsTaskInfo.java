@@ -40,6 +40,7 @@ public class DefaultDevOpsTaskInfo implements DevOpsTaskInfo {
         this(maintainId, entityClass.id(), starts, ends, 0, 0,
                         BatchStatus.PENDING.getCode(), System.currentTimeMillis(), 0);
         this.entityClass = entityClass;
+        this.message = "TASK INIT";
     }
 
     /**

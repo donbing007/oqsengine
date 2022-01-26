@@ -4,7 +4,6 @@ import static com.xforceplus.ultraman.oqsengine.devops.rebuild.constant.Constant
 import static com.xforceplus.ultraman.oqsengine.devops.rebuild.constant.ConstantDefine.MAX_ALLOW_ACTIVE;
 import static com.xforceplus.ultraman.oqsengine.devops.rebuild.constant.ConstantDefine.NULL_UPDATE;
 import static com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.BatchStatus.DONE;
-import static com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.BatchStatus.PENDING;
 import static com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.BatchStatus.RUNNING;
 
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
@@ -65,8 +64,8 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
     /**
      * construct.
      */
-    public DevOpsRebuildIndexExecutor(int maxQueueSize) {
-        asyncThreadPool = new ThreadPoolExecutor(1, 1,
+    public DevOpsRebuildIndexExecutor(int taskSize, int maxQueueSize) {
+        asyncThreadPool = new ThreadPoolExecutor(taskSize, taskSize,
             0L, TimeUnit.MILLISECONDS,
             new ArrayBlockingQueue<>(maxQueueSize),
             ExecutorHelper.buildNameThreadFactory("task-threads", false));
@@ -89,7 +88,38 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
             devOpsTaskInfo.id(), entityClass.id(), start, end
         );
 
-        taskBuild(devOpsTaskInfo);
+        if (NULL_UPDATE == sqlTaskStorage.build(devOpsTaskInfo)) {
+            return null;
+        }
+
+        asyncThreadPool.submit(() -> {
+            try {
+                //  执行主表更新
+                int rebuildCount =
+                    masterStorage.rebuild(devOpsTaskInfo.getEntity(), devOpsTaskInfo.getMaintainid(),
+                        devOpsTaskInfo.getStarts(), devOpsTaskInfo.getEnds());
+
+                if (rebuildCount > 0) {
+                    devOpsTaskInfo.setBatchSize(rebuildCount);
+                    devOpsTaskInfo.resetStatus(RUNNING.getCode());
+                    devOpsTaskInfo.resetMessage("TASK PROCESSING");
+
+                    sqlTaskStorage.update(devOpsTaskInfo);
+                } else {
+                    devOpsTaskInfo.setBatchSize(0);
+                    devOpsTaskInfo.resetMessage("TASK END");
+
+                    sqlTaskStorage.done(devOpsTaskInfo);
+                }
+            } catch (Exception e) {
+                devOpsTaskInfo.resetMessage(e.getMessage());
+                try {
+                    sqlTaskStorage.error(devOpsTaskInfo);
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
 
         return devOpsTaskInfo;
     }
@@ -136,9 +166,9 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
     @Override
     public void sync(Map<Long, DevOpsCdcMetrics> devOpsCdcMetrics) throws SQLException {
         //  提交到异步执行.
-        asyncThreadPool.submit(() -> {
-            devOpsCdcMetrics.forEach(
-                (maintainId, devOpsMetrics) -> {
+        devOpsCdcMetrics.forEach(
+            (maintainId, devOpsMetrics) -> {
+                asyncThreadPool.submit(() -> {
                     Optional<DevOpsTaskInfo> devOpsTaskInfoOp = null;
                     try {
                         devOpsTaskInfoOp = sqlTaskStorage.selectUnique(maintainId);
@@ -191,9 +221,9 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
                             }
                         }
                     }
-                }
-            );
-        });
+                });
+            }
+        );
     }
 
     private DefaultDevOpsTaskInfo pending(IEntityClass entityClass, LocalDateTime start, LocalDateTime end) {
@@ -203,40 +233,6 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
             start.toInstant(zoneOffset).toEpochMilli(),
             end.toInstant(zoneOffset).toEpochMilli()
         );
-    }
-
-    private boolean taskBuild(DefaultDevOpsTaskInfo taskInfo) throws Exception {
-        taskInfo.setStatus(PENDING.getCode());
-        taskInfo.resetMessage("TASK INIT");
-
-        if (NULL_UPDATE == sqlTaskStorage.build(taskInfo)) {
-            return false;
-        }
-
-        //  执行主表更新
-        try {
-            int rebuildCount =
-                masterStorage
-                    .rebuild(taskInfo.getEntity(), taskInfo.getMaintainid(), taskInfo.getStarts(), taskInfo.getEnds());
-
-            if (rebuildCount > 0) {
-                taskInfo.setBatchSize(rebuildCount);
-                taskInfo.resetStatus(RUNNING.getCode());
-                taskInfo.resetMessage("TASK PROCESSING");
-
-                sqlTaskStorage.update(taskInfo);
-            } else {
-                taskInfo.setBatchSize(0);
-                taskInfo.resetMessage("TASK END");
-
-                sqlTaskStorage.done(taskInfo);
-            }
-        } catch (Exception e) {
-            taskInfo.resetMessage(e.getMessage());
-            sqlTaskStorage.error(taskInfo);
-        }
-
-        return true;
     }
 
     private boolean done(DevOpsTaskInfo devOpsTaskInfo) throws SQLException {

@@ -60,7 +60,7 @@ public class RebuildInitialization implements BeanInitialization {
         ReflectionUtils.reflectionFieldValue(fields, "devOpsDataSource", sqlTaskStorage, devOpsDataSource);
         sqlTaskStorage.setTable(DEVOPS_TABLE_NAME);
 
-        taskExecutor = new DevOpsRebuildIndexExecutor(1024);
+        taskExecutor = new DevOpsRebuildIndexExecutor(10, 1024);
         Collection<Field> taskFields = ReflectionUtils.printAllMembers(taskExecutor);
         ReflectionUtils.reflectionFieldValue(taskFields, "indexStorage", taskExecutor,
             IndexInitialization.getInstance().getIndexStorage());
