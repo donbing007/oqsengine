@@ -44,6 +44,11 @@ public class ReplacePayload implements Serializable {
         changes.put(entity, newValues);
     }
 
+    /**
+     * 获取更新造成的改变.
+     *
+     * @return 改变.
+     */
     public Map<IEntity, IValue[]> getChanges() {
         if (changes == null) {
             return Collections.emptyMap();
