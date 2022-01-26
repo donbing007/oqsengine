@@ -16,54 +16,46 @@ public interface TaskStorage {
 
     /**
      * 生成buildTask.
-     *
-     * @param taskInfo 任务信息.
-     * @return 写入表是否成功 return value > 0 成功、否则失败.
-     * @throws SQLException 异常.
      */
     Integer build(DevOpsTaskInfo taskInfo) throws SQLException;
 
-    /*
-       任务信息更新
+    /**
+       任务信息更新.
      */
     int update(DevOpsTaskInfo taskInfo) throws SQLException;
 
-    /*
-       任务完成
+    /**
+       任务完成.
      */
     int done(DevOpsTaskInfo taskInfo) throws SQLException;
 
     /**
      * 终止一个任务.
-     *
-     * @param taskId 任务id.
-     * @return > 0 终止.
-     * @throws SQLException 异常.
      */
     int cancel(long taskId) throws SQLException;
 
-    /*
-       设置为任务异常
+    /**
+       设置为任务异常.
      */
     int error(DevOpsTaskInfo taskInfo) throws SQLException;
 
-    /*
-        当前活动任务
+    /**
+        当前活动任务.
      */
     Collection<DevOpsTaskInfo> selectActive(long entityClassId) throws SQLException;
 
-    /*
-        获取taskId的任务
+    /**
+        获取taskId的任务.
      */
     Optional<DevOpsTaskInfo> selectUnique(long taskId) throws SQLException;
 
-    /*
-        查询当前所有的活动任务
+    /**
+        查询当前所有的活动任务.
      */
     Collection<DevOpsTaskInfo> listActives(Page page) throws SQLException;
 
-    /*
-        查询所有的任务，包括历史任务
+    /**
+        查询所有的任务，包括历史任务.
      */
     Collection<DevOpsTaskInfo> listAll(Page page) throws SQLException;
 }

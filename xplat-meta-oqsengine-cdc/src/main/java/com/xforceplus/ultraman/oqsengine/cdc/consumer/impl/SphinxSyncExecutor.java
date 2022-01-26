@@ -309,9 +309,6 @@ public class SphinxSyncExecutor implements SyncExecutor {
             }
         }
 
-
-
-
         return null;
     }
 

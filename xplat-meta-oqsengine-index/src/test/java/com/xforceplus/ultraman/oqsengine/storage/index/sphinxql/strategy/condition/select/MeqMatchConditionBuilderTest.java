@@ -66,7 +66,7 @@ public class MeqMatchConditionBuilderTest {
                     new StringValue(new EntityField(9223372036854775807L, "test", FieldType.STRING), "test2")
                 ),
                 r -> {
-                    Assertions.assertEquals("(1y2p0ijtest032e8e7S | 1y2p0ijtest132e8e7S | 1y2p0ijtest232e8e7S)", r);
+                    Assertions.assertEquals("(1y2p0itest0j32e8e7S | 1y2p0itest1j32e8e7S | 1y2p0itest2j32e8e7S)", r);
                 }
             ),
             new Case(
@@ -78,7 +78,7 @@ public class MeqMatchConditionBuilderTest {
                     new LongValue(new EntityField(9223372036854775807L, "test", FieldType.LONG), 3L)
                 ),
                 r -> {
-                    Assertions.assertEquals("(1y2p0ij132e8e7L | 1y2p0ij232e8e7L | 1y2p0ij332e8e7L)", r);
+                    Assertions.assertEquals("(1y2p0i1j32e8e7L | 1y2p0i2j32e8e7L | 1y2p0i3j32e8e7L)", r);
                 }
             ),
             new Case(
@@ -88,7 +88,7 @@ public class MeqMatchConditionBuilderTest {
                     new EnumValue(new EntityField(9223372036854775807L, "test", FieldType.ENUM), "one")
                 ),
                 r -> {
-                    Assertions.assertEquals("(1y2p0ijone32e8e7S)", r);
+                    Assertions.assertEquals("(1y2p0ionej32e8e7S)", r);
                 }
             ),
             new Case(
@@ -100,7 +100,7 @@ public class MeqMatchConditionBuilderTest {
                 ),
                 true,
                 r -> {
-                    Assertions.assertEquals("(1y2p0ijone32e8e7S | 1y2p0ijtwo32e8e7S)", r);
+                    Assertions.assertEquals("(1y2p0ionej32e8e7S | 1y2p0itwoj32e8e7S)", r);
                 }
             ),
 
@@ -117,7 +117,7 @@ public class MeqMatchConditionBuilderTest {
                 ),
                 true,
                 r -> {
-                    Assertions.assertEquals("((1y2p0ijAAAAAAAAAAAAAAAAAAAAAAAAAAAAA32e8e7S << 1y2p0ijBBB32e8e7S) | (1y2p0ijBBBBBBBBBBBBBBBBBBBBBBBBBBBBB32e8e7S << 1y2p0ijCCC32e8e7S) | 1y2p0ijDDD32e8e7S)", r);
+                    Assertions.assertEquals("((P01y2p0iAAAAAAAAAAAAAAAAAAAAAAAAAj32e8e7S P11y2p0iAAAABBBj32e8e7S) | (P01y2p0iBBBBBBBBBBBBBBBBBBBBBBBBBj32e8e7S P11y2p0iBBBBCCCj32e8e7S) | 1y2p0iDDDj32e8e7S)", r);
                 }
             )
         );

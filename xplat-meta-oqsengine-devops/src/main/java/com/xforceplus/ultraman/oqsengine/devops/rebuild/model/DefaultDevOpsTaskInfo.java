@@ -40,6 +40,7 @@ public class DefaultDevOpsTaskInfo implements DevOpsTaskInfo {
         this(maintainId, entityClass.id(), starts, ends, 0, 0,
                         BatchStatus.PENDING.getCode(), System.currentTimeMillis(), 0);
         this.entityClass = entityClass;
+        this.message = "TASK INIT";
     }
 
     /**
@@ -112,6 +113,18 @@ public class DefaultDevOpsTaskInfo implements DevOpsTaskInfo {
         return errorSize;
     }
 
+    public long getCreateTime() {
+        return createTime;
+    }
+
+    public long getUpdateTime() {
+        return updateTime;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
     @Override
     public String message() {
         return message;
@@ -182,8 +195,8 @@ public class DefaultDevOpsTaskInfo implements DevOpsTaskInfo {
     @Override
     public boolean isEnd() {
         return status == BatchStatus.DONE.getCode()
-            || status == BatchStatus.CANCEL.getCode()
-            || status == BatchStatus.ERROR.getCode();
+                || status == BatchStatus.CANCEL.getCode()
+                    || status == BatchStatus.ERROR.getCode();
     }
 
     @Override

@@ -15,8 +15,12 @@ public class ShortStorageNameTest {
 
     @Test
     public void testNoLocationSuffix() {
-        ShortStorageName shortStorageName = new ShortStorageName("123", "678L0");
-        Assertions.assertEquals("678L", shortStorageName.getNoLocationSuffix());
+        ShortStorageName shortStorageName = new ShortStorageName("P0", "123", "678", "L0");
+        Assertions.assertEquals("P0", shortStorageName.getHead());
+        Assertions.assertEquals("123", shortStorageName.getPrefix());
+        Assertions.assertEquals("678", shortStorageName.getOriginSuffix());
+        Assertions.assertEquals("678L0", shortStorageName.getSuffix());
+        Assertions.assertEquals("L0", shortStorageName.getTail());
     }
 
 } 

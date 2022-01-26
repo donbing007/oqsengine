@@ -91,7 +91,7 @@ public class MatchConditionBuilder extends AbstractSphinxQLConditionBuilder impl
             storageValue = storageValue.next();
         }
 
-        int onlyOneCondition = 1;
+        final int onlyOneCondition = 1;
         if (multiCondition) {
             //  只有存在多个条件的情况、才前后增加括号()
             if (conditionSize > onlyOneCondition) {
@@ -102,7 +102,6 @@ public class MatchConditionBuilder extends AbstractSphinxQLConditionBuilder impl
         } else {
             buff.insert(0, symbol);
         }
-
 
         return buff.toString();
     }
