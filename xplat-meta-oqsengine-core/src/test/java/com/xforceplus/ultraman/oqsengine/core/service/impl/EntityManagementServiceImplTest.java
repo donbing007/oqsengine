@@ -103,7 +103,9 @@ public class EntityManagementServiceImplTest {
         }).when(masterStorage).build(any(EntityPackage.class));
 
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
-        Assertions.assertEquals(ResultStatus.SUCCESS, impl.build(targetEntities).getResultStatus());
+        OqsResult<IEntity[]> results = impl.build(targetEntities);
+        Assertions.assertEquals(ResultStatus.SUCCESS, results.getResultStatus());
+        Assertions.assertEquals(targetEntities.length, results.getValue().get().length);
 
         verify(masterStorage, times(1)).build(expectedEntityPackage);
     }
@@ -132,7 +134,9 @@ public class EntityManagementServiceImplTest {
 
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
 
-        Assertions.assertEquals(ResultStatus.SUCCESS, impl.build(targetEntity).getResultStatus());
+        OqsResult<IEntity> result = impl.build(targetEntity);
+        Assertions.assertEquals(ResultStatus.SUCCESS, result.getResultStatus());
+        Assertions.assertEquals(targetEntity.id(), result.getValue().get().id());
     }
 
     @Test
