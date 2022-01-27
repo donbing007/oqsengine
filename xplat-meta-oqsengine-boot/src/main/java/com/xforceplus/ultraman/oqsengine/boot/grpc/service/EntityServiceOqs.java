@@ -397,7 +397,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                  */
                 autoFillLookUp(entity, entityClass);
 
-                OqsResult oqsResult = entityManagementService.build(entity);
+                OqsResult<IEntity> oqsResult = entityManagementService.build(entity);
                 ResultStatus createStatus = oqsResult.getResultStatus();
 
                 if (createStatus == null) {
@@ -665,7 +665,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 }
 
                 //side effect
-                OqsResult oqsResult =
+                OqsResult<Map.Entry<IEntity, IValue[]>> oqsResult =
                     entityManagementService.replace(entity);
                 long txId = 0;
                 int version = 0;
@@ -821,7 +821,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
                     //side effect
                     try {
-                        OqsResult oqsResult = entityManagementService.replace(entities);
+                        OqsResult<Map<IEntity, IValue[]>> oqsResult = entityManagementService.replace(entities);
                         ResultStatus replaceStatus = oqsResult.getResultStatus();
 
                         switch (replaceStatus) {
@@ -1096,7 +1096,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     Entity.Builder.anEntity().withId(in.getObjId()).withEntityClassRef(entityClassRef).build();
 
                 if (!Boolean.parseBoolean(force)) {
-                    OqsResult oqsResult =
+                    OqsResult<IEntity> oqsResult =
                         entityManagementService.delete(targetEntity);
                     ResultStatus deleteStatus = oqsResult.getResultStatus();
                     if (deleteStatus == null) {
@@ -1146,7 +1146,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                         }
                     }
                 } else {
-                    OqsResult oqsResult =
+                    OqsResult<IEntity> oqsResult =
                         entityManagementService.deleteForce(targetEntity);
                     long txId = 0;
                     long version = 0;
@@ -1241,7 +1241,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             OperationResult result;
 
             try {
-                OqsResult oqsResult;
+                OqsResult<IEntity[]> oqsResult;
                 if (!force) {
                     oqsResult = entityManagementService.delete(entities);
 
