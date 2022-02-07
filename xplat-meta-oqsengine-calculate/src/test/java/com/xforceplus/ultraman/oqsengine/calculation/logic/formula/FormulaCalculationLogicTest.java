@@ -61,8 +61,6 @@ import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * 测试类.
@@ -73,16 +71,6 @@ import org.slf4j.LoggerFactory;
  * D(SUM)    D(SUM B(Formula c(sum) * 2))
  */
 public class FormulaCalculationLogicTest {
-
-    final Logger logger = LoggerFactory.getLogger(FormulaCalculationLogicTest.class);
-
-    public static final int ONE = 1;
-
-    public static final int ZERO = 0;
-
-    private List<IEntityClass> entityClasses = new ArrayList<>();
-
-    private CalculationContext context;
 
     private FormulaCalculationLogic formulaCalculationLogic;
 
@@ -473,7 +461,7 @@ public class FormulaCalculationLogicTest {
             .withScenarios(CalculationScenarios.BUILD).build();
         context.getCalculationLogicFactory().get().register(aggregationLogic);
         context.focusEntity(entityB, B_CLASS);
-        context.focusField(B_SUM);
+        context.focusField(B_FML);
         context.putEntityToCache(entityA);
         context.addValueChange(
             ValueChange.build(entityA.id(), new EmptyTypedValue(A_LONG), new LongValue(A_LONG, 200L)));
@@ -511,7 +499,7 @@ public class FormulaCalculationLogicTest {
             .withScenarios(CalculationScenarios.DELETE).build();
         context.getCalculationLogicFactory().get().register(aggregationLogic);
         context.focusEntity(entityB, B_CLASS);
-        context.focusField(B_SUM);
+        context.focusField(B_FML);
         context.putEntityToCache(entityA);
         context.addValueChange(
             ValueChange.build(entityA.id(), new LongValue(A_LONG, 10L), new EmptyTypedValue(A_LONG)));
