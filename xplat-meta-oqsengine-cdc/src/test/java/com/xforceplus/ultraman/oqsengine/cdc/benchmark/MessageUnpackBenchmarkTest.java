@@ -20,13 +20,13 @@ import org.slf4j.LoggerFactory;
 
 /**
  * desc :.
- * name : MassageUnpackBenchmarkTest
+ * name : MessageUnpackBenchmarkTest
  *
  * @author : xujia 2020/11/13
  * @since : 1.8
  */
-public class MassageUnpackBenchmarkTest extends AbstractCDCTestHelper {
-    final Logger logger = LoggerFactory.getLogger(MassageUnpackBenchmarkTest.class);
+public class MessageUnpackBenchmarkTest extends AbstractCDCTestHelper {
+    final Logger logger = LoggerFactory.getLogger(MessageUnpackBenchmarkTest.class);
     private static List<CanalEntry.Entry> entries;
     private static List<CanalEntry.Entry> preWarms;
 

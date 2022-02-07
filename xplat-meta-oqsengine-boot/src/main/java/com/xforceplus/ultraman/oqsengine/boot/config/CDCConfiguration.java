@@ -43,7 +43,7 @@ public class CDCConfiguration {
     }
 
     /**
-     * CDC 集群的cannal连接器.
+     * CDC 集群的canal连接器.
      */
     @ConditionalOnExpression("'${cdc.connect.type}'.equals('cluster')")
     @Bean("clusterCDCConnector")
@@ -52,18 +52,18 @@ public class CDCConfiguration {
         @Value("${cdc.connect.destination:}") String destination,
         @Value("${cdc.connect.username}") String userName,
         @Value("${cdc.connect.password}") String password,
+        @Value("${cdc.connect.clientId}") String clientId,
         @Value("${cdc.connect.batchSize:2048}") int batchSize) {
 
-
         ClusterCDCConnector clusterCanalConnector = new ClusterCDCConnector();
-        clusterCanalConnector.init(host, destination, userName, password);
+        clusterCanalConnector.init(host, destination, userName, password, clientId);
 
         initProperties(clusterCanalConnector, batchSize);
         return clusterCanalConnector;
     }
 
     /**
-     * 非集群的cannal连接器.
+     * 非集群的canal连接器.
      */
     @ConditionalOnExpression("'${cdc.connect.type}'.equals('single')")
     @Bean("singleCDCConnector")
@@ -73,10 +73,11 @@ public class CDCConfiguration {
         @Value("${cdc.connect.destination:}") String destination,
         @Value("${cdc.connect.username}") String userName,
         @Value("${cdc.connect.password}") String password,
+        @Value("${cdc.connect.clientId}") String clientId,
         @Value("${cdc.connect.batchSize:2048}") int batchSize) {
 
         SingleCDCConnector singleCDCConnector = new SingleCDCConnector();
-        singleCDCConnector.init(host, port, destination, userName, password);
+        singleCDCConnector.init(host, port, destination, userName, password, clientId);
 
         initProperties(singleCDCConnector, batchSize);
         return singleCDCConnector;
