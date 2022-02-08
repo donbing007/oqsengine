@@ -45,10 +45,10 @@ public class TaskKeyValueQueueTest {
         System.setProperty(DataSourceFactory.CONFIG_FILE, "classpath:oqsengine-ds.conf");
 
         worker = new ThreadPoolExecutor(5, 5,
-                0L, TimeUnit.MILLISECONDS,
-                new ArrayBlockingQueue(10000),
-                ExecutorHelper.buildNameThreadFactory("task", false),
-                new ThreadPoolExecutor.AbortPolicy()
+            0L, TimeUnit.MILLISECONDS,
+            new ArrayBlockingQueue(10000),
+            ExecutorHelper.buildNameThreadFactory("task", false),
+            new ThreadPoolExecutor.AbortPolicy()
         );
 
         instance = new TaskKeyValueQueue(NAME);
@@ -86,7 +86,7 @@ public class TaskKeyValueQueueTest {
     /**
      * 测试添加单个任务.
      *
-     * @throws NoSuchFieldException .
+     * @throws NoSuchFieldException   .
      * @throws IllegalAccessException .
      */
     @Test
@@ -108,7 +108,7 @@ public class TaskKeyValueQueueTest {
     /**
      * 测试添加空任务，任务队列应该为空.
      *
-     * @throws NoSuchFieldException .
+     * @throws NoSuchFieldException   .
      * @throws IllegalAccessException .
      */
     @Test
@@ -124,9 +124,9 @@ public class TaskKeyValueQueueTest {
     /**
      * 并发添加任务，断言任务队列elementKey是否符合预期，断言任务数.
      *
-     * @throws InterruptedException .
+     * @throws InterruptedException   .
      * @throws IllegalAccessException .
-     * @throws NoSuchFieldException .
+     * @throws NoSuchFieldException   .
      */
     @Test
     public void testAppend() throws InterruptedException, IllegalAccessException, NoSuchFieldException {
