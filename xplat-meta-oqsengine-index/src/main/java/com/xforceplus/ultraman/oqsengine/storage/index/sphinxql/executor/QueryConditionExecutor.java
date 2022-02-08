@@ -360,9 +360,8 @@ public class QueryConditionExecutor
             // 设置manticore的查询超时时间.
             st.setLong(4, getTimeoutMs());
 
+            List<EntityRef> refs = new ArrayList((int) page.getPageSize());
             try (ResultSet rs = st.executeQuery()) {
-                List<EntityRef> refs = new ArrayList((int) page.getPageSize());
-
                 while (rs.next()) {
                     EntityRef.Builder entityRefBuilder = EntityRef.Builder.anEntityRef();
                     long id = rs.getLong(FieldDefine.ID);
@@ -372,16 +371,17 @@ public class QueryConditionExecutor
                     refs.add(entityRefBuilder.build());
 
                 }
-
-                if (!page.isSinglePage()) {
-                    long count = SphinxQLHelper.count(getResource());
-                    page.setTotalCount(count);
-                } else {
-                    page.setTotalCount(refs.size());
-                }
-
-                return refs;
             }
+
+            if (!page.isSinglePage()) {
+                // 注意这里会复用 PreparedStatement 之前打开的 ResultSet 会被关闭.
+                long count = SphinxQLHelper.count(st);
+                page.setTotalCount(count);
+            } else {
+                page.setTotalCount(refs.size());
+            }
+
+            return refs;
         }
     }
 
