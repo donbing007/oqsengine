@@ -52,7 +52,7 @@ public class CDCConfiguration {
         @Value("${cdc.connect.destination:}") String destination,
         @Value("${cdc.connect.username}") String userName,
         @Value("${cdc.connect.password}") String password,
-        @Value("${cdc.connect.clientId}") String clientId,
+        @Value("${cdc.connect.clientId:}") String clientId,
         @Value("${cdc.connect.batchSize:2048}") int batchSize) {
 
         ClusterCDCConnector clusterCanalConnector = new ClusterCDCConnector();
@@ -73,7 +73,7 @@ public class CDCConfiguration {
         @Value("${cdc.connect.destination:}") String destination,
         @Value("${cdc.connect.username}") String userName,
         @Value("${cdc.connect.password}") String password,
-        @Value("${cdc.connect.clientId}") String clientId,
+        @Value("${cdc.connect.clientId:}") String clientId,
         @Value("${cdc.connect.batchSize:2048}") int batchSize) {
 
         SingleCDCConnector singleCDCConnector = new SingleCDCConnector();
