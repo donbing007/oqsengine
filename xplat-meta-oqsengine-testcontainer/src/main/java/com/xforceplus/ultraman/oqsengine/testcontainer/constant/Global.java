@@ -1,8 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.testcontainer.constant;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,7 +60,11 @@ public class Global {
 
     // 为了检查问题,打印错误可能的现场信息.
     private static void survey(Throwable ex) {
-        String msg = ex.getMessage();
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        PrintStream pout = new PrintStream(out);
+        ex.printStackTrace(pout);
+        String msg = new String(out.toByteArray());
+
         LOGGER.warn("There was an error starting the container. The following is the field information.\n [{}]", msg);
 
         final String target = "proxy: listen tcp 0.0.0.0:";
