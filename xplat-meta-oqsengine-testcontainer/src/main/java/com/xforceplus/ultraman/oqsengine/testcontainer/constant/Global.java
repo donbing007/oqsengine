@@ -58,9 +58,9 @@ public class Global {
 
     // 为了检查问题,打印错误可能的现场信息.
     private static void survey(Throwable ex) {
-        LOGGER.warn("There was an error starting the container. The following is the field information.");
-
         String msg = ex.getMessage();
+        LOGGER.warn("There was an error starting the container. The following is the field information.\n [{}]", msg);
+
         final String target = "proxy: listen tcp 0.0.0.0:";
         final char endChar = ':';
         int index = msg.indexOf(target);
