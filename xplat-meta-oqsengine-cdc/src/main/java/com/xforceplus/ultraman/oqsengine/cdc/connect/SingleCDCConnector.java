@@ -18,7 +18,7 @@ public class SingleCDCConnector extends AbstractCDCConnector {
 
         short clientIdentity = 1001;
 
-        if (null != clientId) {
+        if (null != clientId || "".equals(clientId)) {
             clientIdentity = Short.parseShort(clientId);
         }
 
