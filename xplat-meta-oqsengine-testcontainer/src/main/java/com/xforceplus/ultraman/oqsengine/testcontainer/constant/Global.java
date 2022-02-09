@@ -1,5 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.testcontainer.constant;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +40,8 @@ public class Global {
             container.start();
         } catch (Throwable ex) {
 
+            survey(ex);
+
             LOGGER.error(ex.getMessage(), ex);
 
             containerSize--;
@@ -49,6 +54,51 @@ public class Global {
         }
 
         return true;
+    }
+
+    // 为了检查问题,打印错误可能的现场信息.
+    private static void survey(Throwable ex) {
+        LOGGER.warn("There was an error starting the container. The following is the field information.");
+
+        String msg = ex.getMessage();
+        final String target = "proxy: listen tcp 0.0.0.0:";
+        final char endChar = ':';
+        int index = msg.indexOf(target);
+        StringBuilder buff = new StringBuilder();
+        if (index > -1) {
+            char point;
+            for (int i = index; i < msg.length(); i++) {
+                point = msg.charAt(i);
+                if (endChar == point) {
+                    break;
+                } else {
+                    buff.append(point);
+                }
+            }
+
+            String command = String.format("netstat -a | grep %s", buff.toString());
+            Process process = null;
+            try {
+                process = Runtime.getRuntime().exec(command);
+                BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+
+                buff.delete(0, buff.length());
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    buff.append(line).append('\n');
+                }
+
+                LOGGER.warn(buff.toString());
+
+            } catch (IOException e) {
+                LOGGER.error(e.getMessage(), e);
+                return;
+            } finally {
+                if (process != null) {
+                    process.destroy();
+                }
+            }
+        }
     }
 
     /**
