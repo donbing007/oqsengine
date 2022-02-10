@@ -23,11 +23,6 @@ public abstract class AbstractContainerExtension implements BeforeAllCallback, A
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractContainerExtension.class);
 
-    /**
-     * 一个boolean值环境变量,如果是true表示在CI环境中,否则不是.
-     */
-    private static final String CI_RUNTIME = "OQS_CI_RUNTIME";
-
     // 启动错误的最大重试次数.
     private static final int MAX_TRY_NUMBER = 6;
 
@@ -45,7 +40,7 @@ public abstract class AbstractContainerExtension implements BeforeAllCallback, A
     @Override
     public void beforeAll(ExtensionContext extensionContext) {
 
-        LOGGER.info("Start the container {}...(ci = {})", containerSupport().name(), isCiRuntime());
+        LOGGER.info("Start the container {}...", containerSupport().name());
 
         GenericContainer container;
         // 容器启动错误,重试最多 MAX_TRY_NUMBER 次数.
@@ -61,13 +56,13 @@ public abstract class AbstractContainerExtension implements BeforeAllCallback, A
 
                 init();
 
-                LOGGER.info("Start the container {}...(ci = {}) OK!", containerSupport().name(), isCiRuntime());
+                LOGGER.info("Start the container {}... OK!", containerSupport().name());
 
                 return;
             } else {
 
-                LOGGER.info("Failed to start container {} (ci = {}), wait {} seconds and try again.[{}/{}]",
-                    containerSupport().name(), isCiRuntime(),
+                LOGGER.info("Failed to start container {}, wait {} seconds and try again.[{}/{}]",
+                    containerSupport().name(),
                     TimeUnit.MILLISECONDS.toSeconds(REPLAY_WAIT_TIME_MS), i + 1,
                     MAX_TRY_NUMBER);
 
@@ -91,16 +86,6 @@ public abstract class AbstractContainerExtension implements BeforeAllCallback, A
         Global.closeContainer(getGenericContainer());
 
         LOGGER.info("Close the container {}...OK!", containerSupport().name());
-    }
-
-    /**
-     * 当前是否处于CI环境.
-     *
-     * @return true 是, false 不是.
-     */
-    public boolean isCiRuntime() {
-        String value = System.getenv(CI_RUNTIME);
-        return Boolean.parseBoolean(value);
     }
 
     /**

@@ -28,11 +28,8 @@ public class RedisContainer extends AbstractContainerExtension {
     protected GenericContainer buildContainer() {
         container = new GenericContainer("redis:6.0.9-alpine3.12")
             .withNetworkAliases(buildAliase("redis"))
+            .withExposedPorts(6379)
             .waitingFor(Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(Global.WAIT_START_TIME_OUT)));
-
-        if (!isCiRuntime()) {
-            container.withExposedPorts(6379);
-        }
 
 
         return container;
@@ -40,11 +37,7 @@ public class RedisContainer extends AbstractContainerExtension {
 
     @Override
     protected void init() {
-        if (isCiRuntime()) {
-            setSystemProperties(container.getHost(), "6379");
-        } else {
-            setSystemProperties(container.getContainerIpAddress(), container.getFirstMappedPort().toString());
-        }
+        setSystemProperties(container.getHost(), container.getMappedPort(6379).toString());
     }
 
     @Override

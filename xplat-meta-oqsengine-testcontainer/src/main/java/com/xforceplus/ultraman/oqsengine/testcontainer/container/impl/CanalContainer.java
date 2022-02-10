@@ -28,6 +28,7 @@ public class CanalContainer extends AbstractContainerExtension {
 
         container = new GenericContainer("canal/canal-server:v1.1.4")
             .withNetworkAliases(buildAliase("canal"))
+            .withExposedPorts(11111)
             .withEnv("canal.instance.mysql.slaveId", "12")
             .withEnv("canal.auto.scan", "false")
             .withEnv("canal.destinations", System.getProperty("CANAL_DESTINATION"))
@@ -37,20 +38,12 @@ public class CanalContainer extends AbstractContainerExtension {
             .withEnv("canal.instance.filter.regex", ".*\\.oqsbigentity.*")
             .waitingFor(Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(Global.WAIT_START_TIME_OUT)));
 
-        if (!isCiRuntime()) {
-            container.withExposedPorts(11111);
-        }
-
         return container;
     }
 
     @Override
     protected void init() {
-        if (isCiRuntime()) {
-            setSystemProperties(container.getHost(), "11111");
-        } else {
-            setSystemProperties(container.getContainerIpAddress(), container.getFirstMappedPort().toString());
-        }
+        setSystemProperties(container.getHost(), container.getMappedPort(11111).toString());
     }
 
     @Override
