@@ -45,7 +45,7 @@ public class MysqlContainer extends AbstractContainerExtension {
     @Override
     protected void init() {
         if (isCiRuntime()) {
-            setSystemProperties(container.getContainerIpAddress(), "3306");
+            setSystemProperties(container.getHost(), "3306");
         } else {
             setSystemProperties(container.getContainerIpAddress(), container.getFirstMappedPort().toString());
         }

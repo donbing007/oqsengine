@@ -47,7 +47,7 @@ public class CanalContainer extends AbstractContainerExtension {
     @Override
     protected void init() {
         if (isCiRuntime()) {
-            setSystemProperties(container.getContainerIpAddress(), "11111");
+            setSystemProperties(container.getHost(), "11111");
         } else {
             setSystemProperties(container.getContainerIpAddress(), container.getFirstMappedPort().toString());
         }

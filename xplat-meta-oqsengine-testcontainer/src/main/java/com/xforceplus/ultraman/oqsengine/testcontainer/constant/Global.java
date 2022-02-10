@@ -38,7 +38,7 @@ public class Global {
 
             LOGGER.error(ex.getMessage(), ex);
 
-            containerSize--;
+//            containerSize--;
 
             container.close();
 
