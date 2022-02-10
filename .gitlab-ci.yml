@@ -19,8 +19,6 @@ maven-build:
   except:
     - tags
     - master
-  tags:
-    - oqs
 
 tag-mvn-deploy:
   stage: tag-mvn-deploy
