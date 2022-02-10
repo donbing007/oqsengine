@@ -19,6 +19,8 @@ maven-build:
   except:
     - tags
     - master
+  tags:
+    - oqs
 
 tag-mvn-deploy:
   stage: tag-mvn-deploy
@@ -69,4 +71,5 @@ docker-build:
 before_script:
   - *mvnwfix
   - echo "${CHOERODON_URL}"
+  - echo "${DOCKER_REGISTRY}"
   - *auto_devops
