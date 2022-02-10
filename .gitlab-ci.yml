@@ -6,6 +6,15 @@ stages:
   - tag-mvn-deploy
   - docker-build
 
+variables:
+  DOCKER_HOST: "tcp://docker:2375"
+  DOCKER_TLS_CERTDIR: ""
+  DOCKER_DRIVER: overlay2
+
+cache:
+  paths:
+    - .m2/repository/
+
 maven-build:
   stage: mvn-package
   coverage: '/Total.*?([0-9]{1,3})%/'
