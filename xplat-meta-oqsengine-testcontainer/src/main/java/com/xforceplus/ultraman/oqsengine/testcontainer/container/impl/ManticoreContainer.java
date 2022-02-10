@@ -41,7 +41,7 @@ public class ManticoreContainer extends AbstractContainerExtension {
     @Override
     protected void init() {
         if (isCiRuntime()) {
-            setSystemProperties(buildAliase("manticore"), "9306");
+            setSystemProperties(container.getContainerIpAddress(), "9306");
         } else {
             setSystemProperties(container.getContainerIpAddress(), container.getFirstMappedPort().toString());
         }

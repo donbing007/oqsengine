@@ -41,7 +41,7 @@ public class RedisContainer extends AbstractContainerExtension {
     @Override
     protected void init() {
         if (isCiRuntime()) {
-            setSystemProperties(buildAliase("redis"), "6379");
+            setSystemProperties(container.getContainerIpAddress(), "6379");
         } else {
             setSystemProperties(container.getContainerIpAddress(), container.getFirstMappedPort().toString());
         }
