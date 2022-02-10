@@ -99,7 +99,7 @@ public abstract class AbstractContainerExtension implements BeforeAllCallback, A
      * @return true 是, false 不是.
      */
     public boolean isCiRuntime() {
-        String value = System.getProperty(CI_RUNTIME, "false");
+        String value = System.getenv(CI_RUNTIME);
         return Boolean.parseBoolean(value);
     }
 
