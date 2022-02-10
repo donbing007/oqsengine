@@ -27,8 +27,7 @@ public class MysqlContainer extends AbstractContainerExtension {
     @Override
     protected GenericContainer buildContainer() {
         container = new GenericContainer("mysql:5.7")
-            .withNetworkAliases("mysql")
-            .withExposedPorts(3306)
+            .withNetworkAliases(buildAliase("mysql"))
             .withEnv("MYSQL_DATABASE", "oqsengine")
             .withEnv("MYSQL_ROOT_USERNAME", MYSQL_USER_PASS)
             .withEnv("MYSQL_ROOT_PASSWORD", MYSQL_USER_PASS)
@@ -36,12 +35,20 @@ public class MysqlContainer extends AbstractContainerExtension {
             .waitingFor(
                 Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(Global.WAIT_START_TIME_OUT)));
 
+        if (!isCiRuntime()) {
+            container.withExposedPorts(3306);
+        }
+
         return container;
     }
 
     @Override
     protected void init() {
-        setSystemProperties(container.getContainerIpAddress(), container.getFirstMappedPort().toString());
+        if (isCiRuntime()) {
+            setSystemProperties(buildAliase("mysql"), "3306");
+        } else {
+            setSystemProperties(container.getContainerIpAddress(), container.getFirstMappedPort().toString());
+        }
 
 
         try {

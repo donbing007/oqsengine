@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.testcontainer.container;
 
 import com.xforceplus.ultraman.oqsengine.testcontainer.constant.Global;
 import com.xforceplus.ultraman.oqsengine.testcontainer.enums.ContainerSupport;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Consumer;
@@ -22,11 +23,19 @@ public abstract class AbstractContainerExtension implements BeforeAllCallback, A
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractContainerExtension.class);
 
+    /**
+     * 一个boolean值环境变量,如果是true表示在CI环境中,否则不是.
+     */
+    private static final String CI_RUNTIME = "OQS_CI_RUNTIME";
+
     // 启动错误的最大重试次数.
     private static final int MAX_TRY_NUMBER = 6;
 
     // 启动错误再次尝试的等待时间.
     private static final int REPLAY_WAIT_TIME_MS = 1000 * 60;
+
+    // 全局名称.
+    private static final String GLOBAL_NAME = UUID.randomUUID().toString();
 
     /**
      * 每个测试用例类开启执行前执行.
@@ -36,7 +45,7 @@ public abstract class AbstractContainerExtension implements BeforeAllCallback, A
     @Override
     public void beforeAll(ExtensionContext extensionContext) {
 
-        LOGGER.info("Start the container {}...", containerSupport().name());
+        LOGGER.info("Start the container {}...(ci = {})", containerSupport().name(), isCiRuntime());
 
         GenericContainer container;
         // 容器启动错误,重试最多 MAX_TRY_NUMBER 次数.
@@ -52,13 +61,14 @@ public abstract class AbstractContainerExtension implements BeforeAllCallback, A
 
                 init();
 
-                LOGGER.info("Start the container {}...OK!", containerSupport().name());
+                LOGGER.info("Start the container {}...(ci = {}) OK!", containerSupport().name(), isCiRuntime());
 
                 return;
             } else {
 
-                LOGGER.info("Failed to start container {}, wait {} seconds and try again.[{}/{}]",
-                    containerSupport().name(), TimeUnit.MILLISECONDS.toSeconds(REPLAY_WAIT_TIME_MS), i + 1,
+                LOGGER.info("Failed to start container {} (ci = {}), wait {} seconds and try again.[{}/{}]",
+                    containerSupport().name(), isCiRuntime(),
+                    TimeUnit.MILLISECONDS.toSeconds(REPLAY_WAIT_TIME_MS), i + 1,
                     MAX_TRY_NUMBER);
 
                 LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(REPLAY_WAIT_TIME_MS));
@@ -83,6 +93,34 @@ public abstract class AbstractContainerExtension implements BeforeAllCallback, A
         LOGGER.info("Close the container {}...OK!", containerSupport().name());
     }
 
+    /**
+     * 当前是否处于CI环境.
+     *
+     * @return true 是, false 不是.
+     */
+    public boolean isCiRuntime() {
+        String value = System.getProperty(CI_RUNTIME, "false");
+        return Boolean.parseBoolean(value);
+    }
+
+    /**
+     * 全局名称.
+     *
+     * @return 全局名称.
+     */
+    public static String globalName() {
+        return GLOBAL_NAME;
+    }
+
+    /**
+     * 构造一个网络别名.
+     *
+     * @param name 原始名称.
+     * @return 别名.
+     */
+    public static String buildAliase(String name) {
+        return String.format("%s-%s", GLOBAL_NAME, name);
+    }
 
     /**
      * 构建子容器，由子类来实现.

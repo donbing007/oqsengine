@@ -26,18 +26,25 @@ public class ManticoreContainer extends AbstractContainerExtension {
     @Override
     protected GenericContainer buildContainer() {
         container = new GenericContainer<>("manticoresearch/manticore:3.5.4")
-            .withExposedPorts(9306)
-            .withNetworkAliases("manticore")
+            .withNetworkAliases(buildAliase("manticore"))
             .withClasspathResourceMapping("manticore/manticore.conf", "/manticore.conf", BindMode.READ_ONLY)
             .withCommand("/usr/bin/searchd", "--nodetach", "--config", "/manticore.conf")
             .waitingFor(Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(Global.WAIT_START_TIME_OUT)));
+
+        if (!isCiRuntime()) {
+            container.withExposedPorts(9306);
+        }
 
         return container;
     }
 
     @Override
     protected void init() {
-        setSystemProperties(container.getContainerIpAddress(), container.getFirstMappedPort().toString());
+        if (isCiRuntime()) {
+            setSystemProperties(buildAliase("manticore"), "9306");
+        } else {
+            setSystemProperties(container.getContainerIpAddress(), container.getFirstMappedPort().toString());
+        }
 
         try {
             SqlInitUtils.execute("/manticore", "MANTICORE_JDBC");

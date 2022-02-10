@@ -133,12 +133,9 @@ public class TaskKeyValueQueueTest {
         int count = 10000;
         CountDownLatch latch = new CountDownLatch(count);
         for (int i = 0; i < count; i++) {
-            worker.submit(new Runnable() {
-                @Override
-                public void run() {
-                    instance.append(new MockTask());
-                    latch.countDown();
-                }
+            worker.submit(() -> {
+                instance.append(new MockTask());
+                latch.countDown();
             });
         }
         latch.await();
@@ -227,22 +224,18 @@ public class TaskKeyValueQueueTest {
         CountDownLatch latch = new CountDownLatch(count);
 
         for (int i = 0; i < 3; i++) {
-            worker.submit(new Runnable() {
-                @Override
-                public void run() {
-                    while (true) {
-                        Task task = instance.get(1000L);
-                        if (task != null) {
-                            try {
-                                lock.lock();
-                                latch.countDown();
-                                logger.info("latch = " + latch.getCount());
-                                if (latch.getCount() <= 2) {
-                                    break;
-                                }
-                            } finally {
-                                lock.unlock();
+            worker.submit(() -> {
+                while (true) {
+                    Task task = instance.get(1000L);
+                    if (task != null) {
+                        try {
+                            lock.lock();
+                            latch.countDown();
+                            if (latch.getCount() <= 2) {
+                                break;
                             }
+                        } finally {
+                            lock.unlock();
                         }
                     }
                 }

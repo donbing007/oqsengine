@@ -27,23 +27,30 @@ public class CanalContainer extends AbstractContainerExtension {
         System.setProperty("CANAL_DESTINATION", "oqsengine");
 
         container = new GenericContainer("canal/canal-server:v1.1.4")
-            .withNetworkAliases("canal")
-            .withExposedPorts(11111)
+            .withNetworkAliases(buildAliase("canal"))
             .withEnv("canal.instance.mysql.slaveId", "12")
             .withEnv("canal.auto.scan", "false")
             .withEnv("canal.destinations", System.getProperty("CANAL_DESTINATION"))
-            .withEnv("canal.instance.master.address", "mysql:3306")
+            .withEnv("canal.instance.master.address", String.join(":", buildAliase("mysql"), "3306"))
             .withEnv("canal.instance.dbUsername", "root")
             .withEnv("canal.instance.dbPassword", "root")
             .withEnv("canal.instance.filter.regex", ".*\\.oqsbigentity.*")
             .waitingFor(Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(Global.WAIT_START_TIME_OUT)));
+
+        if (!isCiRuntime()) {
+            container.withExposedPorts(11111);
+        }
 
         return container;
     }
 
     @Override
     protected void init() {
-        setSystemProperties(container.getContainerIpAddress(), container.getFirstMappedPort().toString());
+        if (isCiRuntime()) {
+            setSystemProperties(buildAliase("canal"), "11111");
+        } else {
+            setSystemProperties(container.getContainerIpAddress(), container.getFirstMappedPort().toString());
+        }
     }
 
     @Override

@@ -4,7 +4,6 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.Network;
 
 /**
  * Created by justin.xu on 09/2021.
@@ -15,7 +14,7 @@ public class Global {
     private static final Logger LOGGER = LoggerFactory.getLogger(Global.class);
     public static final int WAIT_START_TIME_OUT = 200;
 
-    private static Network network;
+//    private static Network network;
 
     private static int containerSize = 0;
 
@@ -28,12 +27,12 @@ public class Global {
         try {
             containerSize++;
 
-            if (network == null) {
-                LOGGER.info("The first container is created, creating the network.");
-                network = Network.newNetwork();
-            }
+//            if (network == null) {
+//                LOGGER.info("The first container is created, creating the network.");
+//                network = Network.newNetwork();
+//            }
 
-            container.withNetwork(network);
+//            container.withNetwork(network);
             container.start();
         } catch (Throwable ex) {
 
@@ -74,12 +73,12 @@ public class Global {
     }
 
     private static void releaseNetwork() {
-        if (containerSize <= 0 && network != null) {
-
-            LOGGER.info("The last container is closed, shutting down the network.");
-
-            network.close();
-            network = null;
-        }
+//        if (containerSize <= 0 && network != null) {
+//
+//            LOGGER.info("The last container is closed, shutting down the network.");
+//
+//            network.close();
+//            network = null;
+//        }
     }
 }
