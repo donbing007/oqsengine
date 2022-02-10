@@ -81,7 +81,7 @@ public class TaskKeyValueQueueSQLTest {
         keyValueStorage = new SqlKeyValueStorage();
         keyValueStorage.setTableName("kv");
         keyValueStorage.setTimeoutMs(200);
-        ds = CommonInitialization.getInstance().getDataSourcePackage(true).getFirstMaster();
+        ds = CommonInitialization.getInstance().getDataSourcePackage(false).getFirstMaster();
 
         AutoJoinTransactionExecutor executor = new AutoJoinTransactionExecutor(
                 StorageInitialization.getInstance().getTransactionManager(),

@@ -45,7 +45,7 @@ public class SqlKeyValueStorageTest extends AbstractKVTest {
         storage.setTableName("kv");
         storage.setTimeoutMs(200);
 
-        ds = CommonInitialization.getInstance().getDataSourcePackage(true).getFirstMaster();
+        ds = CommonInitialization.getInstance().getDataSourcePackage(false).getFirstMaster();
 
         AutoJoinTransactionExecutor executor = new AutoJoinTransactionExecutor(
             StorageInitialization.getInstance().getTransactionManager(),

@@ -82,7 +82,7 @@ public class CdcInitialization implements BeanInitialization {
 
     @Override
     public void clear() throws Exception {
-        DataSourcePackage dataSourcePackage = CommonInitialization.getInstance().getDataSourcePackage(true);
+        DataSourcePackage dataSourcePackage = CommonInitialization.getInstance().getDataSourcePackage(false);
         if (null != dataSourcePackage && null != dataSourcePackage.getDevOps()) {
             for (DataSource ds : dataSourcePackage.getMaster()) {
                 Connection conn = ds.getConnection();
@@ -154,7 +154,7 @@ public class CdcInitialization implements BeanInitialization {
     }
 
     private DataSource buildDevOpsDataSource() throws IllegalAccessException {
-        return CommonInitialization.getInstance().getDataSourcePackage(true).getDevOps();
+        return CommonInitialization.getInstance().getDataSourcePackage(false).getDevOps();
     }
 
     /**

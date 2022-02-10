@@ -31,7 +31,7 @@ public class SphinxQLTransactionResourceTest {
 
     @Test
     public void testCommit() throws Exception {
-        DataSource ds = CommonInitialization.getInstance().getDataSourcePackage(true).getIndexWriter().get(0);
+        DataSource ds = CommonInitialization.getInstance().getDataSourcePackage(false).getIndexWriter().get(0);
         Connection conn = ds.getConnection();
         SphinxQLTransactionResource sqtr = new SphinxQLTransactionResource("test", conn, false);
         try (Statement stat = conn.createStatement()) {
