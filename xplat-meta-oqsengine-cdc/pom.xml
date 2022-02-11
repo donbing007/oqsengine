@@ -13,6 +13,7 @@
 
     <properties>
         <checkstyle.skip>false</checkstyle.skip>
+        <test.skip>false</test.skip>
     </properties>
 
     <dependencies>
