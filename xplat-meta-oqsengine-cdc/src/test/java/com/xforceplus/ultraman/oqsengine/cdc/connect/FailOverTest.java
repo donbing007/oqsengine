@@ -19,6 +19,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +32,7 @@ import org.slf4j.LoggerFactory;
  * @author : xujia 2020/11/11
  * @since : 1.8
  */
+@Disabled("暂时关闭测试, 测试不完善.")
 public class FailOverTest extends AbstractCDCTestHelper {
 
     static final Logger LOGGER = LoggerFactory.getLogger(FailOverTest.class);
@@ -155,9 +157,11 @@ public class FailOverTest extends AbstractCDCTestHelper {
     private void initData(IEntity[] datas, boolean replacement) throws Exception {
         for (IEntity entity : datas) {
             if (!replacement) {
-                MasterDBInitialization.getInstance().getMasterStorage().build(entity, getEntityClass(entity.id()));
+                MasterDBInitialization.getInstance().getMasterStorage().build(entity,
+                    getEntityClass(entity.entityClassRef().getId()));
             } else {
-                MasterDBInitialization.getInstance().getMasterStorage().replace(entity, getEntityClass(entity.id()));
+                MasterDBInitialization.getInstance().getMasterStorage().replace(entity,
+                    getEntityClass(entity.entityClassRef().getId()));
             }
         }
     }

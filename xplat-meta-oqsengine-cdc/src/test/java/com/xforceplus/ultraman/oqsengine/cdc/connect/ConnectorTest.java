@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
  * @author : xujia 2020/11/19
  * @since : 1.8
  */
-@Disabled
+@Disabled("暂时关闭测试, 测试不完善.")
 public class ConnectorTest extends AbstractCDCTestHelper {
 
     final Logger logger = LoggerFactory.getLogger(ConnectorTest.class);
