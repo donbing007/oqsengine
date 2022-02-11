@@ -406,7 +406,7 @@
         <checkstyle.skip>false</checkstyle.skip>
         <repository.host>http://nexus.xforceplus.com/nexus</repository.host>
         <deployment.skip>false</deployment.skip>
-        <test.skip>true</test.skip>
+        <test.skip>false</test.skip>
         <aspectj.version>1.9.1</aspectj.version>
         <argLine>-Xmx4096m</argLine>
     </properties>
