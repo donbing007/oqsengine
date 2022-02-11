@@ -31,6 +31,7 @@ import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.CanalConta
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.ManticoreContainer;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.MysqlContainer;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.RedisContainer;
+import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -39,6 +40,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 import javax.annotation.Resource;
@@ -47,6 +49,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -111,7 +114,13 @@ public class UserCaseTest {
      * 每个测试的初始化.
      */
     @BeforeEach
-    public void before() throws Exception {
+    public void before(TestInfo info) throws Exception {
+        Optional<Method> testMethodOp = info.getTestMethod();
+        if (testMethodOp.isPresent()) {
+            Method method = testMethodOp.get();
+            logger.info("Start test method {}.", method.getName());
+        }
+
         System.setProperty(DataSourceFactory.CONFIG_FILE, "classpath:oqsengine-ds.conf");
 
 

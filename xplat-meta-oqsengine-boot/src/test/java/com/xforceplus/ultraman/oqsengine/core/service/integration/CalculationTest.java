@@ -35,6 +35,7 @@ import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.ManticoreC
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.MysqlContainer;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.RedisContainer;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -57,6 +58,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -129,7 +131,13 @@ public class CalculationTest extends AbstractContainerExtends {
      * 每个测试的初始化.
      */
     @BeforeEach
-    public void before() throws Exception {
+    public void before(TestInfo info) throws Exception {
+        Optional<Method> testMethodOp = info.getTestMethod();
+        if (testMethodOp.isPresent()) {
+            Method method = testMethodOp.get();
+            logger.info("Start test method {}.", method.getName());
+        }
+
         System.setProperty(DataSourceFactory.CONFIG_FILE, "classpath:oqsengine-ds.conf");
 
         try (Connection conn = masterDataSource.getConnection()) {
