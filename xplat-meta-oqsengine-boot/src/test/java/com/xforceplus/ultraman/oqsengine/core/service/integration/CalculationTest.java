@@ -155,7 +155,13 @@ public class CalculationTest extends AbstractContainerExtends {
      */
     @AfterEach
     public void after() throws Exception {
+        int number = 0;
+        int maxNumber = 100;
         while (commitIdStatusService.size() > 0) {
+            if (number > maxNumber) {
+                Assertions.fail("Waiting for the commit number to be synchronized timed out.");
+            }
+            number++;
             logger.info("Wait for CDC synchronization to complete.");
             TimeUnit.MILLISECONDS.sleep(10);
         }
