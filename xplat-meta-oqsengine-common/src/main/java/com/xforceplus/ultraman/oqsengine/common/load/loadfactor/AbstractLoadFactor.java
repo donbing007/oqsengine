@@ -11,7 +11,16 @@ public abstract class AbstractLoadFactor implements LoadFactor {
 
     private double weight;
 
+    /**
+     * 构造新的负载因子实例.
+     *
+     * @param weight 权重.
+     */
     public AbstractLoadFactor(double weight) {
-        this.weight = weight;
+        if (weight > 1D) {
+            this.weight = 1D;
+        } else {
+            this.weight = weight;
+        }
     }
 }

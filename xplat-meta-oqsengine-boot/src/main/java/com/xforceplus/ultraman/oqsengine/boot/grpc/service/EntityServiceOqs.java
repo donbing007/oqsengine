@@ -83,6 +83,7 @@ import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -397,8 +398,10 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                  */
                 autoFillLookUp(entity, entityClass);
 
-                OqsResult oqsResult = entityManagementService.build(entity);
+                OqsResult<IEntity> oqsResult = entityManagementService.build(entity);
                 ResultStatus createStatus = oqsResult.getResultStatus();
+                Optional<IEntity> valueOp = oqsResult.getValue();
+
 
                 if (createStatus == null) {
                     result = OperationResult.newBuilder()
@@ -410,14 +413,20 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                         .buildPartial();
                 } else {
                     switch (createStatus) {
-                        case SUCCESS:
-                            result = OperationResult.newBuilder()
+                        case SUCCESS: {
+                            OperationResult.Builder builder = OperationResult
+                                .newBuilder()
                                 .addIds(entity.id())
                                 .setCode(OperationResult.Code.OK)
-                                .setOriginStatus(SUCCESS.name())
-                                .buildPartial();
+                                .setOriginStatus(SUCCESS.name());
+
+                            //add ret value
+                            valueOp.ifPresent(value -> builder.addQueryResult(toEntityUp(value)));
+
+                            result = builder.buildPartial();
                             break;
-                        case HALF_SUCCESS:
+                        }
+                        case HALF_SUCCESS: {
                             Map<String, String> failedMap = hintsToFails(oqsResult.getHints());
                             String failedValues = "";
                             try {
@@ -426,13 +435,19 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                                 logger.error("{}", ex);
                             }
 
-                            result = OperationResult.newBuilder()
+                            OperationResult.Builder builder = OperationResult
+                                .newBuilder()
                                 .addIds(entity.id())
                                 .setCode(OperationResult.Code.OTHER)
                                 .setMessage(failedValues)
-                                .setOriginStatus(ResultStatus.HALF_SUCCESS.name())
-                                .buildPartial();
+                                .setOriginStatus(HALF_SUCCESS.name());
+
+                            //add ret value
+                            valueOp.ifPresent(value -> builder.addQueryResult(toEntityUp(value)));
+
+                            result = builder.buildPartial();
                             break;
+                        }
                         case ELEVATEFAILED:
                         case FIELD_MUST:
                         case FIELD_TOO_LONG:
@@ -514,9 +529,10 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 // do auto fill
                 entityList.forEach(e -> autoFillLookUp(e, entityClass));
 
-                OqsResult oqsResult = entityManagementService.build(
+                OqsResult<IEntity[]> oqsResult = entityManagementService.build(
                     entityList.toArray(new com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[0]));
                 ResultStatus createStatus = oqsResult.getResultStatus();
+                Optional<IEntity[]> valueOp = oqsResult.getValue();
                 switch (createStatus) {
                     case SUCCESS: {
 
@@ -525,6 +541,16 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                             .setAffectedRow(entityList.size())
                             .setOriginStatus(SUCCESS.name());
                         entityList.forEach(e -> resultBuilder.addIds(e.id()));
+
+                        //add values
+                        valueOp.ifPresent(value -> {
+                            resultBuilder.addAllQueryResult(Arrays
+                                .stream(value)
+                                .map(EntityClassHelper::toEntityUp)
+                                .collect(
+                                    Collectors.toList()));
+                        });
+
                         result = resultBuilder.buildPartial();
                         break;
                     }
@@ -544,6 +570,16 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                             .setAffectedRow(entityList.size())
                             .setOriginStatus(HALF_SUCCESS.name());
                         entityList.forEach(e -> resultBuilder.addIds(e.id()));
+
+                        //add values
+                        valueOp.ifPresent(value -> {
+                            resultBuilder.addAllQueryResult(Arrays
+                                .stream(value)
+                                .map(EntityClassHelper::toEntityUp)
+                                .collect(
+                                    Collectors.toList()));
+                        });
+
                         result = resultBuilder.buildPartial();
                         break;
                     }
@@ -665,12 +701,12 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 }
 
                 //side effect
-                OqsResult oqsResult =
+                OqsResult<Map.Entry<IEntity, IValue[]>> oqsResult =
                     entityManagementService.replace(entity);
                 long txId = 0;
                 int version = 0;
                 ResultStatus replaceStatus = oqsResult.getResultStatus();
-
+                Optional<Map.Entry<IEntity, IValue[]>> valueOp = oqsResult.getValue();
 
                 if (replaceStatus == null) {
                     result = OperationResult.newBuilder()
@@ -681,18 +717,30 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                             other("Unknown response status."))
                         .buildPartial();
                 } else {
-
                     switch (replaceStatus) {
-                        case SUCCESS:
-                            result = OperationResult.newBuilder()
+                        case SUCCESS: { //add block
+                            OperationResult.Builder builder = OperationResult.newBuilder()
                                 .setAffectedRow(1)
                                 .setCode(OperationResult.Code.OK)
                                 .setOriginStatus(SUCCESS.name())
                                 .addIds(txId)
-                                .addIds(version)
-                                .buildPartial();
+                                .addIds(version);
+
+                            valueOp.ifPresent(x -> {
+                                IEntity key = x.getKey();
+                                IValue[] value = x.getValue();
+                                //add old and new
+                                builder.addQueryResult(toEntityUp(key));
+                                Entity newEntity = Entity.Builder.anEntity()
+                                    .withId(key.id())
+                                    .withValues(Arrays.asList(value))
+                                    .build();
+                                builder.addQueryResult(toEntityUp(newEntity));
+                            });
+                            result = builder.buildPartial();
                             break;
-                        case HALF_SUCCESS:
+                        }
+                        case HALF_SUCCESS: { //add block
                             Map<String, String> failedMap = hintsToFails(oqsResult.getHints());
                             String failedValues = "";
                             try {
@@ -701,15 +749,29 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                                 logger.error("{}", ex);
                             }
 
-                            result = OperationResult.newBuilder()
+                            OperationResult.Builder builder = OperationResult.newBuilder()
                                 .setAffectedRow(1)
                                 .setCode(OperationResult.Code.OTHER)
                                 .setOriginStatus(HALF_SUCCESS.name())
                                 .setMessage(failedValues)
                                 .addIds(txId)
-                                .addIds(version)
-                                .buildPartial();
+                                .addIds(version);
+
+                            valueOp.ifPresent(x -> {
+                                IEntity key = x.getKey();
+                                IValue[] value = x.getValue();
+                                //add old and new
+                                builder.addQueryResult(toEntityUp(key));
+                                Entity newEntity = Entity.Builder.anEntity()
+                                    .withId(key.id())
+                                    .withValues(Arrays.asList(value))
+                                    .build();
+                                builder.addQueryResult(toEntityUp(newEntity));
+                            });
+
+                            result = builder.buildPartial();
                             break;
+                        }
                         case CONFLICT:
                             //send to sdk
                             result = OperationResult.newBuilder()
@@ -821,18 +883,33 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
                     //side effect
                     try {
-                        OqsResult oqsResult = entityManagementService.replace(entities);
+                        OqsResult<Map<IEntity, IValue[]>> oqsResult = entityManagementService.replace(entities);
                         ResultStatus replaceStatus = oqsResult.getResultStatus();
+                        Optional<Map<IEntity, IValue[]>> valueOp = oqsResult.getValue();
 
                         switch (replaceStatus) {
-                            case SUCCESS:
-                                result = OperationResult.newBuilder()
+                            case SUCCESS: {
+                                OperationResult.Builder builder = OperationResult.newBuilder()
                                     .setAffectedRow(entities.length)
                                     .setCode(OperationResult.Code.OK)
-                                    .setOriginStatus(SUCCESS.name())
-                                    .buildPartial();
+                                    .setOriginStatus(SUCCESS.name());
+
+                                valueOp.ifPresent(value -> {
+                                    value.forEach((k, v) -> {
+                                        //add old and new
+                                        builder.addQueryResult(toEntityUp(k));
+                                        Entity newEntity = Entity.Builder.anEntity()
+                                            .withId(k.id())
+                                            .withValues(Arrays.asList(v))
+                                            .build();
+                                        builder.addQueryResult(toEntityUp(newEntity));
+                                    });
+                                });
+
+                                result = builder.buildPartial();
                                 break;
-                            case HALF_SUCCESS:
+                            }
+                            case HALF_SUCCESS: {
                                 Map<String, String> failedMap = hintsToFails(oqsResult.getHints());
                                 String failedValues = "";
                                 try {
@@ -841,13 +918,27 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                                     logger.error("{}", ex);
                                 }
 
-                                result = OperationResult.newBuilder()
+                                OperationResult.Builder builder = OperationResult.newBuilder()
                                     .setAffectedRow(entities.length)
                                     .setCode(OperationResult.Code.OTHER)
                                     .setOriginStatus(HALF_SUCCESS.name())
-                                    .setMessage(failedValues)
-                                    .buildPartial();
+                                    .setMessage(failedValues);
+
+                                valueOp.ifPresent(value -> {
+                                    value.forEach((k, v) -> {
+                                        //add old and new
+                                        builder.addQueryResult(toEntityUp(k));
+                                        Entity newEntity = Entity.Builder.anEntity()
+                                            .withId(k.id())
+                                            .withValues(Arrays.asList(v))
+                                            .build();
+                                        builder.addQueryResult(toEntityUp(newEntity));
+                                    });
+                                });
+
+                                result = builder.buildPartial();
                                 break;
+                            }
                             case CONFLICT:
                                 //send to sdk
                                 result = OperationResult.newBuilder()
@@ -1096,9 +1187,10 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     Entity.Builder.anEntity().withId(in.getObjId()).withEntityClassRef(entityClassRef).build();
 
                 if (!Boolean.parseBoolean(force)) {
-                    OqsResult oqsResult =
+                    OqsResult<IEntity> oqsResult =
                         entityManagementService.delete(targetEntity);
                     ResultStatus deleteStatus = oqsResult.getResultStatus();
+                    Optional<IEntity> valueOp = oqsResult.getValue();
                     if (deleteStatus == null) {
                         result = OperationResult.newBuilder()
                             .setAffectedRow(0)
@@ -1109,13 +1201,20 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                             .buildPartial();
                     } else {
                         switch (deleteStatus) {
-                            case SUCCESS:
-                                result = OperationResult.newBuilder()
+                            case SUCCESS: {
+
+                                OperationResult.Builder builder = OperationResult.newBuilder()
                                     .setAffectedRow(1)
                                     .setCode(OperationResult.Code.OK)
-                                    .setOriginStatus(SUCCESS.name())
-                                    .buildPartial();
+                                    .setOriginStatus(SUCCESS.name());
+
+                                valueOp.ifPresent(value -> {
+                                    builder.addQueryResult(toEntityUp(value));
+                                });
+
+                                result = builder.buildPartial();
                                 break;
+                            }
                             case CONFLICT:
                                 //send to sdk
                                 result = OperationResult.newBuilder()
@@ -1146,11 +1245,12 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                         }
                     }
                 } else {
-                    OqsResult oqsResult =
+                    OqsResult<IEntity> oqsResult =
                         entityManagementService.deleteForce(targetEntity);
                     long txId = 0;
                     long version = 0;
                     ResultStatus deleteStatus = oqsResult.getResultStatus();
+                    Optional<IEntity> valueOp = oqsResult.getValue();
                     if (deleteStatus == null) {
                         result = OperationResult.newBuilder()
                             .setAffectedRow(0)
@@ -1162,13 +1262,18 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     } else {
                         switch (deleteStatus) {
                             case SUCCESS:
-                                result = OperationResult.newBuilder()
+                                OperationResult.Builder builder = OperationResult.newBuilder()
                                     .setAffectedRow(1)
                                     .setCode(OperationResult.Code.OK)
                                     .addIds(txId)
                                     .addIds(version)
-                                    .setOriginStatus(SUCCESS.name())
-                                    .buildPartial();
+                                    .setOriginStatus(SUCCESS.name());
+
+                                valueOp.ifPresent(value -> {
+                                    builder.addQueryResult(toEntityUp(value));
+                                });
+
+                                result = builder.buildPartial();
                                 break;
                             case NOT_FOUND:
                                 //send to sdk
@@ -1241,23 +1346,31 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             OperationResult result;
 
             try {
-                OqsResult oqsResult;
+                OqsResult<IEntity[]> oqsResult;
                 if (!force) {
                     oqsResult = entityManagementService.delete(entities);
-
                 } else {
-
                     oqsResult = entityManagementService.deleteForce(entities);
-
                 }
+
+                Optional<IEntity[]> valueOp = oqsResult.getValue();
 
                 switch (oqsResult.getResultStatus()) {
                     case SUCCESS: {
-                        result = OperationResult.newBuilder()
+
+                        OperationResult.Builder builder = OperationResult.newBuilder()
                             .setAffectedRow(1)
                             .setCode(OperationResult.Code.OK)
-                            .setOriginStatus(oqsResult.getResultStatus().name())
-                            .buildPartial();
+                            .setOriginStatus(oqsResult.getResultStatus().name());
+
+                        valueOp.ifPresent(value -> {
+                            List<EntityUp> entityUps = Arrays.stream(value)
+                                .map(EntityClassHelper::toEntityUp)
+                                .collect(Collectors.toList());
+                            builder.addAllQueryResult(entityUps);
+                        });
+
+                        result = builder.buildPartial();
                         break;
                     }
                     case CONFLICT: {

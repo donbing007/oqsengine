@@ -1,30 +1,21 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper;
 
 import com.xforceplus.ultraman.oqsengine.common.StringUtils;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.constant.SQLConstant;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLStringStorageStrategy;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
-import com.xforceplus.ultraman.oqsengine.storage.value.AbstractStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.AnyStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.ShortStorageName;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StringStorageValue;
 import com.xforceplus.ultraman.oqsengine.tokenizer.Tokenizer;
 import io.vavr.Tuple2;
-import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.AbstractMap;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -181,7 +172,7 @@ public class SphinxQLHelper {
     /**
      * 构造 sphinxQL 全文索引中精确查询语句.
      *
-     * @param value 目标字段.
+     * @param value        目标字段.
      * @param useGroupName 是否userGroupName.
      * @return 结果.
      */
@@ -270,23 +261,20 @@ public class SphinxQLHelper {
     /**
      * 计算sphinxql的查询数据总量.必须紧跟查询语句.
      *
-     * @param resource 当前资源.
+     * @param statement 当前资源.
      * @return 数量.
      * @throws SQLException 发生异常.
      */
-    public static long count(TransactionResource resource) throws SQLException {
+    public static long count(Statement statement) throws SQLException {
 
         long count = 0;
         final String targetKey = "total_found";
 
-        Connection conn = (Connection) resource.value();
-        try (Statement statement = conn.createStatement()) {
-            try (ResultSet rs = statement.executeQuery(SQLConstant.SELECT_COUNT_SQL)) {
-                while (rs.next()) {
-                    if (targetKey.equals(rs.getString("Variable_name"))) {
-                        count = rs.getLong("Value");
-                        break;
-                    }
+        try (ResultSet rs = statement.executeQuery(SQLConstant.SELECT_COUNT_SQL)) {
+            while (rs.next()) {
+                if (targetKey.equals(rs.getString("Variable_name"))) {
+                    count = rs.getLong("Value");
+                    break;
                 }
             }
         }
@@ -307,7 +295,8 @@ public class SphinxQLHelper {
     /**
      * strings value通用的转换(StorageValue)逻辑.
      */
-    public static StorageValue stringsStorageConvert(String storageName, String originValue, boolean attachment, boolean locationAppend) {
+    public static StorageValue stringsStorageConvert(String storageName, String originValue, boolean attachment,
+                                                     boolean locationAppend) {
 
         String logicName = AnyStorageValue.getInstance(storageName).logicName();
 
@@ -368,7 +357,8 @@ public class SphinxQLHelper {
     /**
      * 对condition进行超长字符处理.
      */
-    public static Tuple2<String, Boolean> stringConditionFormat(String word, ShortStorageName shortStorageName, boolean useGroupName) {
+    public static Tuple2<String, Boolean> stringConditionFormat(String word, ShortStorageName shortStorageName,
+                                                                boolean useGroupName) {
         String[] values = longStringWrap(word);
 
         StringBuilder stringBuilder = new StringBuilder();

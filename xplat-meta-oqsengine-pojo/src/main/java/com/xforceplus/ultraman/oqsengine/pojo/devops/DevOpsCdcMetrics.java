@@ -29,7 +29,7 @@ public class DevOpsCdcMetrics {
     }
 
     /**
-     * 修改状态.
+     * 根据标记位确定成功/失败 +1.
      */
     public void incrementByStatus(boolean isSuccess) {
         if (isSuccess) {
