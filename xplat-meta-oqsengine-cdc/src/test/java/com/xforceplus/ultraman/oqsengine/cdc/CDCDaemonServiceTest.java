@@ -1,6 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.cdc;
 
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.MockRedisCallbackService;
+import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -38,8 +40,13 @@ public class CDCDaemonServiceTest extends AbstractCDCTestHelper {
     @AfterEach
     public void after() throws Exception {
         if (isTest) {
-            super.destroy(true);
+            super.clear(true);
         }
+    }
+
+    @AfterAll
+    public static void afterAll() {
+        InitializationHelper.destroy();
     }
 
     @Test

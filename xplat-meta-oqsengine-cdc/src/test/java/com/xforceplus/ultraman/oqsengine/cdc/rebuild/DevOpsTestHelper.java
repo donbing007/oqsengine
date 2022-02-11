@@ -21,7 +21,7 @@ public abstract class DevOpsTestHelper extends AbstractCDCTestHelper {
         consumerRunner.start();
     }
 
-    public void destroy() throws Exception {
+    public void clear() throws Exception {
         InitializationHelper.clearAll();
     }
 }
