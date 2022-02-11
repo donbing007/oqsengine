@@ -2,10 +2,12 @@ package com.xforceplus.ultraman.oqsengine.cdc.connect;
 
 import com.xforceplus.ultraman.oqsengine.cdc.AbstractCDCTestHelper;
 import com.xforceplus.ultraman.oqsengine.cdc.CDCDaemonService;
+import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,7 +39,12 @@ public class ConnectorTest extends AbstractCDCTestHelper {
 
     @AfterEach
     public void after() throws Exception {
-        super.destroy(true);
+        super.clear(true);
+    }
+
+    @AfterAll
+    public static void afterAll() {
+        InitializationHelper.destroy();
     }
 
     @Test

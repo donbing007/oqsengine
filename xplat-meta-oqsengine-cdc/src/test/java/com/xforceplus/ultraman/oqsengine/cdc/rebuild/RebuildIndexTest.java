@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.cdc.rebuild;
 import static com.xforceplus.ultraman.oqsengine.devops.rebuild.constant.ConstantDefine.ONE_HUNDRED_PERCENT;
 
 import com.google.common.collect.Lists;
+import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.handler.TaskHandler;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.mock.RebuildInitialization;
@@ -61,6 +62,7 @@ public class RebuildIndexTest extends DevOpsTestHelper {
     public static void afterAll() {
         if (null != asyncThreadPool) {
             ExecutorHelper.shutdownAndAwaitTermination(asyncThreadPool, 3600);
+            InitializationHelper.destroy();
         }
     }
 
@@ -74,7 +76,7 @@ public class RebuildIndexTest extends DevOpsTestHelper {
     public void after() throws Exception {
         EntityGenerateTooBar.startPos = 1;
 
-        super.destroy();
+        clear();
     }
 
     /**

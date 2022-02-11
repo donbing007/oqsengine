@@ -5,6 +5,7 @@ import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.getEntity
 import com.xforceplus.ultraman.oqsengine.cdc.AbstractCDCTestHelper;
 import com.xforceplus.ultraman.oqsengine.cdc.CDCDaemonService;
 import com.xforceplus.ultraman.oqsengine.cdc.EntityGenerateToolBar;
+import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.mock.MasterDBInitialization;
 import com.xforceplus.ultraman.oqsengine.storage.mock.StorageInitialization;
@@ -15,8 +16,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 
@@ -27,6 +30,7 @@ import org.junit.jupiter.api.Test;
  * @author : xujia 2020/11/11
  * @since : 1.8
  */
+@Disabled
 public class FailOverTest extends AbstractCDCTestHelper {
     private static CDCDaemonService cdcDaemonService;
 
@@ -44,7 +48,12 @@ public class FailOverTest extends AbstractCDCTestHelper {
 
     @AfterEach
     public void after() throws Exception {
-        super.destroy(true);
+        super.clear(true);
+    }
+
+    @AfterAll
+    public static void afterAll() {
+        InitializationHelper.destroy();
     }
 
     @Test

@@ -4,11 +4,13 @@ import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.getEntity
 
 import com.xforceplus.ultraman.oqsengine.cdc.AbstractCDCTestHelper;
 import com.xforceplus.ultraman.oqsengine.cdc.EntityGenerateToolBar;
+import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.mock.MasterDBInitialization;
 import com.xforceplus.ultraman.oqsengine.storage.mock.StorageInitialization;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,12 +36,12 @@ public class ConsumerRunnerTest extends AbstractCDCTestHelper {
     @BeforeEach
     public void before() throws Exception {
         super.init(true);
-
     }
 
     @AfterEach
     public void after() throws Exception {
-        super.destroy(true);
+        super.clear(true);
+        InitializationHelper.destroy();
     }
 
     private void startConsumerRunner(long partitionId) {
