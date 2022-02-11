@@ -129,6 +129,12 @@ public class SphinxSyncExecutor implements SyncExecutor {
         if (!storageEntityList.isEmpty()) {
             try {
                 //  执行更新
+                if (logger.isDebugEnabled()) {
+                    logger.debug(
+                        "[cdc-sync-executor] Writes the batch object, the number of objects is {}.",
+                        storageEntityList.size());
+                }
+
                 sphinxQLIndexStorage.saveOrDeleteOriginalEntities(storageEntityList);
             } catch (Exception e) {
                 //  设置所有的maintain数据都失败了.
