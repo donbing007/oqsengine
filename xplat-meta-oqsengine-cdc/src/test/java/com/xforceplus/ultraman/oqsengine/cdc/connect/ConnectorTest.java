@@ -9,6 +9,7 @@ import java.util.concurrent.locks.LockSupport;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +22,7 @@ import org.slf4j.LoggerFactory;
  * @author : xujia 2020/11/19
  * @since : 1.8
  */
+@Disabled
 public class ConnectorTest extends AbstractCDCTestHelper {
 
     final Logger logger = LoggerFactory.getLogger(ConnectorTest.class);

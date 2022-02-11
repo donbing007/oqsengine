@@ -72,8 +72,7 @@ public class CdcInitialization implements BeanInitialization {
             Integer.parseInt(System.getProperty(EnvMockConstant.CANAL_PORT)),
             System.getProperty(EnvMockConstant.CANAL_DESTINATION),
             System.getProperty(EnvMockConstant.CANAL_USER),
-            System.getProperty(EnvMockConstant.CANAL_PASSWORD),
-            "1001");
+            System.getProperty(EnvMockConstant.CANAL_PASSWORD));
 
         initCdcErrors();
 

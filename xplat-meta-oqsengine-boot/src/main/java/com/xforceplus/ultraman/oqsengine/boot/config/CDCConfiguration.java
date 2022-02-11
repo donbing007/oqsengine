@@ -52,11 +52,10 @@ public class CDCConfiguration {
         @Value("${cdc.connect.destination:}") String destination,
         @Value("${cdc.connect.username}") String userName,
         @Value("${cdc.connect.password}") String password,
-        @Value("${cdc.connect.clientId:1001}") String clientId,
         @Value("${cdc.connect.batchSize:2048}") int batchSize) {
 
         ClusterCDCConnector clusterCanalConnector = new ClusterCDCConnector();
-        clusterCanalConnector.init(host, destination, userName, password, clientId);
+        clusterCanalConnector.init(host, destination, userName, password);
 
         initProperties(clusterCanalConnector, batchSize);
         return clusterCanalConnector;
@@ -73,11 +72,10 @@ public class CDCConfiguration {
         @Value("${cdc.connect.destination:}") String destination,
         @Value("${cdc.connect.username}") String userName,
         @Value("${cdc.connect.password}") String password,
-        @Value("${cdc.connect.clientId:1001}") String clientId,
         @Value("${cdc.connect.batchSize:2048}") int batchSize) {
 
         SingleCDCConnector singleCDCConnector = new SingleCDCConnector();
-        singleCDCConnector.init(host, port, destination, userName, password, clientId);
+        singleCDCConnector.init(host, port, destination, userName, password);
 
         initProperties(singleCDCConnector, batchSize);
         return singleCDCConnector;
