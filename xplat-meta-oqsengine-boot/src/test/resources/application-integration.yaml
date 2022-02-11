@@ -34,7 +34,7 @@ threadPool:
     queue: 1000
   task:
     # 后端任务,或者IO线程池中放入的任务执行线程池.
-    worker: 0
+    worker: 10
     queue: 1000
 maxVisibleNumber: 10000
 

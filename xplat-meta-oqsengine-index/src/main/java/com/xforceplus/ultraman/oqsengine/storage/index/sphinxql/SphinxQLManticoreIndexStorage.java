@@ -259,6 +259,12 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
             Exception exception = null;
             while (!exit) {
                 try {
+
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("The index performs persistence.[shardKey={}, indexName={}]",
+                            section.getShardKey(), section.getIndexName());
+                    }
+
                     doSave();
                     exit = true;
                     error = false;
