@@ -19,15 +19,14 @@ import org.testcontainers.containers.wait.strategy.Wait;
 public class MysqlContainer extends AbstractContainerExtension {
 
     private static final String MYSQL_USER_PASS = "root";
-    private static final Logger
-        LOGGER = LoggerFactory.getLogger(MysqlContainer.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(MysqlContainer.class);
 
     private GenericContainer container;
 
     @Override
     protected GenericContainer buildContainer() {
         container = new GenericContainer("mysql:5.7")
-            .withNetworkAliases("mysql")
+            .withNetworkAliases(buildAliase("mysql"))
             .withExposedPorts(3306)
             .withEnv("MYSQL_DATABASE", "oqsengine")
             .withEnv("MYSQL_ROOT_USERNAME", MYSQL_USER_PASS)
@@ -41,7 +40,7 @@ public class MysqlContainer extends AbstractContainerExtension {
 
     @Override
     protected void init() {
-        setSystemProperties(container.getContainerIpAddress(), container.getFirstMappedPort().toString());
+        setSystemProperties(container.getHost(), container.getMappedPort(3306).toString());
 
 
         try {

@@ -16,8 +16,7 @@ import org.testcontainers.containers.wait.strategy.Wait;
  */
 public class RedisContainer extends AbstractContainerExtension {
 
-    private static final Logger
-        LOGGER = LoggerFactory.getLogger(RedisContainer.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(RedisContainer.class);
 
     private GenericContainer container;
 
@@ -27,7 +26,7 @@ public class RedisContainer extends AbstractContainerExtension {
     @Override
     protected GenericContainer buildContainer() {
         container = new GenericContainer("redis:6.0.9-alpine3.12")
-            .withNetworkAliases("redis")
+            .withNetworkAliases(buildAliase("redis"))
             .withExposedPorts(6379)
             .waitingFor(Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(Global.WAIT_START_TIME_OUT)));
 
@@ -37,7 +36,7 @@ public class RedisContainer extends AbstractContainerExtension {
 
     @Override
     protected void init() {
-        setSystemProperties(container.getContainerIpAddress(), container.getFirstMappedPort().toString());
+        setSystemProperties(container.getHost(), container.getMappedPort(6379).toString());
     }
 
     @Override

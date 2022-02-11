@@ -9,6 +9,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import javax.sql.DataSource;
 import org.slf4j.Logger;
@@ -23,7 +24,12 @@ public class SqlInitUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(SqlInitUtils.class);
 
     private static List<String> readSqls(String resource) throws IOException {
-        File path = new File(SqlInitUtils.class.getResource(resource).getPath());
+        java.net.URL url = SqlInitUtils.class.getResource(resource);
+        if (url == null) {
+            return Collections.emptyList();
+        }
+
+        File path = new File(url.getPath());
         String[] sqlFiles = path.list((dir, name) -> {
             String[] names = name.split("\\.");
             if (names.length == 2 && names[1].equals("sql")) {
