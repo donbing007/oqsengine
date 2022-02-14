@@ -27,12 +27,12 @@ public class CanalContainer extends AbstractContainerExtension {
         System.setProperty("CANAL_DESTINATION", "oqsengine");
 
         container = new GenericContainer("canal/canal-server:v1.1.4")
-            .withNetworkAliases("canal")
+            .withNetworkAliases(buildAliase("canal"))
             .withExposedPorts(11111)
             .withEnv("canal.instance.mysql.slaveId", "12")
             .withEnv("canal.auto.scan", "false")
             .withEnv("canal.destinations", System.getProperty("CANAL_DESTINATION"))
-            .withEnv("canal.instance.master.address", "mysql:3306")
+            .withEnv("canal.instance.master.address", String.join(":", buildAliase("mysql"), "3306"))
             .withEnv("canal.instance.dbUsername", "root")
             .withEnv("canal.instance.dbPassword", "root")
             .withEnv("canal.instance.filter.regex", ".*\\.oqsbigentity.*")
@@ -43,7 +43,7 @@ public class CanalContainer extends AbstractContainerExtension {
 
     @Override
     protected void init() {
-        setSystemProperties(container.getContainerIpAddress(), container.getFirstMappedPort().toString());
+        setSystemProperties(container.getHost(), container.getMappedPort(11111).toString());
     }
 
     @Override
