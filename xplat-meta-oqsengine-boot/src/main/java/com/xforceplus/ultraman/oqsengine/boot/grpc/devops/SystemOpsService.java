@@ -2,6 +2,8 @@ package com.xforceplus.ultraman.oqsengine.boot.grpc.devops;
 
 import com.xforceplus.ultraman.devops.service.sdk.annotation.DiscoverAction;
 import com.xforceplus.ultraman.devops.service.sdk.annotation.MethodParam;
+import com.xforceplus.ultraman.oqsengine.boot.config.system.SystemInfoConfiguration;
+import com.xforceplus.ultraman.oqsengine.boot.grpc.devops.dto.ApplicationInfo;
 import com.xforceplus.ultraman.oqsengine.boot.grpc.utils.PrintErrorHelper;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.condition.CdcErrorQueryCondition;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.dto.ErrorType;
@@ -30,18 +32,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 /**
  * Created by justin.xu on 08/2021.
  *
  * @since 1.8
  */
-@Component
 public class SystemOpsService {
 
     private DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
@@ -60,6 +59,9 @@ public class SystemOpsService {
 
     @Autowired
     private CommitIdStatusService commitIdStatusService;
+
+    @Autowired
+    private SystemInfoConfiguration systemInfoConfiguration;
 
     /**
      * 导入meta信息.
@@ -391,14 +393,16 @@ public class SystemOpsService {
      *
      * @return app->env pairs.
      */
-    @DiscoverAction(describe = "获取当前oqs下所有的app", retClass = Map.class)
-    public Map<String, String> showApplications() {
+    @DiscoverAction(describe = "获取当前oqs下所有的app", retClass = ApplicationInfo.class)
+    public ApplicationInfo showApplications() {
         try {
-            return metaManager.showApplications();
+            ApplicationInfo applicationInfo = new ApplicationInfo();
+            applicationInfo.setApplicationEnv(metaManager.showApplications());
+            applicationInfo.setSystemInfo(systemInfoConfiguration.printSystemInfo());
+            return applicationInfo;
         } catch (Exception e) {
             PrintErrorHelper.exceptionHandle("show applications exception.", e);
         }
         return null;
     }
-
 }
