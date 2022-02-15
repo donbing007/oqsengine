@@ -96,7 +96,7 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor {
      */
     @Override
     public void add(String clientId, String uid, StreamObserver<EntityClassSyncResponse> observer, WatchElement watchElement, boolean force) {
-        uidWatchers.computeIfAbsent(uid, v -> new ResponseWatcher(clientId, uid, observer)).addWatch(watchElement, true);
+        uidWatchers.computeIfAbsent(uid, v -> new ResponseWatcher(clientId, uid, observer)).addWatch(watchElement, force);
         operationWithLock(keyAppWithEnv(watchElement.getAppId(), watchElement.getEnv()), uid, NEW);
     }
 

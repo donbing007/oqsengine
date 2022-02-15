@@ -255,11 +255,15 @@ public class StorageMetaManager implements MetaManager {
                 throw new RuntimeException("appId has been init with another Id, need failed...");
             }
 
-            int version = cacheExecutor.version(appId);
+            int version = NOT_EXIST_VERSION;
+
+            if (!overWrite) {
+                version = cacheExecutor.version(appId);
+            }
 
             if (metaModel.getModel().equals(MetaModel.CLIENT_SYNC)) {
                 WatchElement watchElement = new WatchElement(appId, env, version, WatchElement.ElementStatus.Register);
-                if (overWrite && version <= NOT_EXIST_VERSION) {
+                if (overWrite) {
                     requestHandler.reset(watchElement);
                 } else {
                     requestHandler.register(watchElement);
@@ -368,20 +372,19 @@ public class StorageMetaManager implements MetaManager {
         if (null == cacheEnv || cacheEnv.isEmpty()) {
             return need(appId, env);
         } else {
-            int version = NOT_EXIST_VERSION;
+            int version = cacheExecutor.version(appId);
 
             if (!cacheEnv.equals(env)) {
-                version = cacheExecutor.version(appId);
-
                 if (version > NOT_EXIST_VERSION) {
                     cacheExecutor.clean(appId, version, true);
                 }
 
                 cacheExecutor.appEnvRemove(appId);
-            }
-            need(appId, env, true);
 
-            version = waitForMetaSync(appId);
+                need(appId, env, true);
+
+                version = waitForMetaSync(appId);
+            }
 
             return version;
         }
