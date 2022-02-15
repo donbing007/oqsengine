@@ -45,8 +45,17 @@ public class DecimalValue extends AbstractValue<BigDecimal> {
 
     // 保证至少有一位数度.
     private static BigDecimal buildWellBigDecimal(IEntityField field, BigDecimal value) {
+
         BigDecimal wellValue;
         String plainValue = value.toPlainString();
+
+        // 这里校验,其整形长度不能超过Long.MAX_VALUE
+        String[] checkValues = plainValue.split("\\.");
+        Long.parseLong(checkValues[0]);
+        if (checkValues.length > 1) {
+            Long.parseLong(checkValues[1]);
+        }
+
         if (plainValue.indexOf(".") < 0) {
             plainValue = value.longValue() + ".0";
             wellValue = new BigDecimal(plainValue);

@@ -177,6 +177,11 @@ public class DataSourceFactory {
         method.invoke(hikariConfig, value.unwrapped());
     }
 
+    /**
+     * 得到当前配置信息.
+     *
+     * @return 配置信息.
+     */
     public static Config getConfig() {
         String dsConfigFile = System.getProperty(DataSourceFactory.CONFIG_FILE);
 

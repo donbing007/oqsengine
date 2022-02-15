@@ -26,7 +26,7 @@ public class DecimalValueTest {
             .withId(123L)
             .withConfig(
                 FieldConfig.Builder.anFieldConfig()
-                .withPrecision(0).build()
+                    .withPrecision(0).build()
             ).build();
 
         DecimalValue value = new DecimalValue(field, new BigDecimal("123"));
@@ -34,5 +34,42 @@ public class DecimalValueTest {
 
         value = new DecimalValue(field, new BigDecimal("123.789"));
         Assertions.assertEquals("123.789", value.valueToString());
+    }
+
+    @Test
+    public void testOverflow() throws Exception {
+        IEntityField field = EntityField.Builder.anEntityField()
+            .withId(123L)
+            .withConfig(
+                FieldConfig.Builder.anFieldConfig()
+                    .withPrecision(0).build()
+            ).build();
+
+        BigDecimal value = new BigDecimal("1.11111111111111111111");
+        try {
+            DecimalValue decimalValue = new DecimalValue(field, value);
+            Assertions.fail("No expected exception is obtained, "
+                + "and neither decimal or integer digits exceed the length of long.MAX_VALUE.");
+        } catch (Exception ex) {
+            // success
+        }
+
+        value = new BigDecimal("11111111111111111111.1");
+        try {
+            DecimalValue decimalValue = new DecimalValue(field, value);
+            Assertions.fail("No expected exception is obtained, "
+                + "and neither decimal or integer digits exceed the length of long.MAX_VALUE.");
+        } catch (Exception ex) {
+            // success
+        }
+
+        value = new BigDecimal("11111111111111111111.11111111111111111111");
+        try {
+            DecimalValue decimalValue = new DecimalValue(field, value);
+            Assertions.fail("No expected exception is obtained, "
+                + "and neither decimal or integer digits exceed the length of long.MAX_VALUE.");
+        } catch (Exception ex) {
+            // success
+        }
     }
 }
