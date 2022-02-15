@@ -136,6 +136,11 @@ public class MockMetaManager implements MetaManager {
     }
 
     @Override
+    public int need(String appId, String env, boolean overWrite) {
+        return 0;
+    }
+
+    @Override
     public void invalidateLocal() {
         entityClassPool.clear();
         profileEntityClassPool.clear();

@@ -14,7 +14,7 @@ import io.grpc.stub.StreamObserver;
  */
 public class DoNothingRequestHandler implements IRequestHandler {
     @Override
-    public boolean register(WatchElement watchElement) {
+    public boolean register(WatchElement watchElement, boolean overWrite) {
         return true;
     }
 

@@ -89,7 +89,7 @@ public class SyncRequestHandler implements IRequestHandler {
     }
 
     @Override
-    public synchronized boolean register(WatchElement watchElement) {
+    public synchronized boolean register(WatchElement watchElement, boolean overWrite) {
         RequestWatcher watcher = requestWatchExecutor.watcher();
 
         //  这里只判断是否watcher为空，如果服务watcher不为空
@@ -101,9 +101,13 @@ public class SyncRequestHandler implements IRequestHandler {
 
         WatchElement w = watcher.watches().get(watchElement.getAppId());
         if (null != w) {
-            if (!w.getEnv().equals(watchElement.getEnv())) {
-                logger.warn("can't register same appId [{}] with another env [{}], env [{}] already registered.",
-                    w.getAppId(), watchElement.getEnv(), w.getEnv());
+            if (!w.getEnv().equals(watchElement.getEnv()) && !overWrite) {
+                metricsRecorder.error(
+                    w.getAppId(), SyncCode.REGISTER_ERROR.name(), String.format(
+                        "can't register same appId [%s] with another env [%s], env [%s] already registered.",
+                        w.getAppId(), watchElement.getEnv(), w.getEnv())
+                );
+                return false;
             }
 
             if (watchElement.getVersion() == NOT_EXIST_VERSION || watchElement.getVersion() > w.getVersion()) {

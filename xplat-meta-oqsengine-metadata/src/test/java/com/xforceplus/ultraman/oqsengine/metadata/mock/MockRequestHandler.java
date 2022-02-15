@@ -31,7 +31,7 @@ public class MockRequestHandler implements IRequestHandler {
 
 
     @Override
-    public boolean register(WatchElement watchElement) {
+    public boolean register(WatchElement watchElement, boolean overWrite) {
 
         try {
             Thread.sleep(MOCK_RESPONSE_TIME_DURATION);

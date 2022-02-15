@@ -89,12 +89,12 @@ public class EntityClassSyncClientTest extends BaseTest {
         String env = "test";
         int version = 1;
 
-        boolean ret = requestHandler.register(new WatchElement(appId, env, version, Register));
+        boolean ret = requestHandler.register(new WatchElement(appId, env, version, Register), false);
         Assertions.assertTrue(ret);
         /*
          重复注册
          */
-        ret = requestHandler.register(new WatchElement(appId, env, version, Register));
+        ret = requestHandler.register(new WatchElement(appId, env, version, Register), false);
         Assertions.assertTrue(ret);
 
         Assertions.assertNotNull(requestWatchExecutor.watcher().watches());
@@ -119,7 +119,7 @@ public class EntityClassSyncClientTest extends BaseTest {
         String env = "test";
         int version = 1;
 
-        boolean ret = requestHandler.register(new WatchElement(appId, env, version, Init));
+        boolean ret = requestHandler.register(new WatchElement(appId, env, version, Init), false);
         Assertions.assertFalse(ret);
         Assertions.assertEquals(1, ((SyncRequestHandler) requestHandler).getForgotQueue().size());
         WatchElement element = ((SyncRequestHandler) requestHandler).getForgotQueue().peek();
@@ -199,7 +199,7 @@ public class EntityClassSyncClientTest extends BaseTest {
          */
         MockServer.isTestOk = false;
 
-        boolean ret = requestHandler.register(new WatchElement(appId, env, version, Register));
+        boolean ret = requestHandler.register(new WatchElement(appId, env, version, Register), false);
         Assertions.assertTrue(ret);
 
         Assertions.assertTrue(null != requestWatchExecutor.watcher().watches() &&

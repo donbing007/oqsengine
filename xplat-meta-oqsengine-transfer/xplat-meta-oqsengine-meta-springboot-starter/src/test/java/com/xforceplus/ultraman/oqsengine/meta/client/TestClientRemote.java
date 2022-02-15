@@ -35,7 +35,7 @@ public class TestClientRemote {
         if (IF_TEST) {
             Thread.sleep(1_000);
             boolean ret =
-                    requestHandler.register(new WatchElement("7", "0", -1, Register));
+                    requestHandler.register(new WatchElement("7", "0", -1, Register), false);
 
             Assertions.assertTrue(ret);
 

@@ -111,7 +111,7 @@ public class TestClientStart {
     public boolean heartBeatTest(String caseName, WatchElement w) {
         String uid = requestWatchExecutor.watcher().uid();
 
-        boolean ret = requestHandler.register(w);
+        boolean ret = requestHandler.register(w, false);
 
         Assertions.assertTrue(ret);
 
@@ -133,7 +133,7 @@ public class TestClientStart {
      * @return
      */
     public boolean registerPullTest(String caseName, WatchElement w) {
-        boolean ret = requestHandler.register(w);
+        boolean ret = requestHandler.register(w, false);
 
         Assertions.assertTrue(ret);
 
@@ -164,7 +164,7 @@ public class TestClientStart {
      */
     public boolean registerPushTest(String caseName, WatchElement w) {
         try {
-            boolean ret = requestHandler.register(w);
+            boolean ret = requestHandler.register(w, false);
             Assertions.assertTrue(ret);
             mockSyncExecutor.status = RequestStatus.SYNC_FAIL;
 
@@ -220,7 +220,7 @@ public class TestClientStart {
     public boolean syncResultTimeOutTest(String caseName, WatchElement w) {
         mockSyncExecutor.status = RequestStatus.DATA_ERROR;
         try {
-            boolean ret = requestHandler.register(w);
+            boolean ret = requestHandler.register(w, false);
             Assertions.assertTrue(ret);
 
             try {
