@@ -55,7 +55,7 @@ public class TestClientStartLocal {
     @Test
     public void test() throws InterruptedException {
             boolean ret =
-                    requestHandler.register(new WatchElement("7", "0", -1, Register), false);
+                    requestHandler.register(new WatchElement("7", "0", -1, Register));
 
             Assertions.assertTrue(ret);
 

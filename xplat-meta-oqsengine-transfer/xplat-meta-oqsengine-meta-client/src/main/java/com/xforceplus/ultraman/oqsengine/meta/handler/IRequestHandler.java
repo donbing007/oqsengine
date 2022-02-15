@@ -19,7 +19,7 @@ public interface IRequestHandler extends IObserverHandler<EntityClassSyncRespons
     /**
      * 注册一个appId，并开始监听.
      */
-    boolean register(WatchElement watchElement, boolean overWrite);
+    boolean register(WatchElement watchElement);
 
     /**
      * 断流自动重新注册.

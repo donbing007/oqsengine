@@ -245,30 +245,31 @@ public class StorageMetaManager implements MetaManager {
     public int need(String appId, String env, boolean overWrite) {
         try {
             cacheExecutor.appEnvSet(appId, env);
-
             String cacheEnv = cacheExecutor.appEnvGet(appId);
-            if (!cacheEnv.equals(env) && !overWrite) {
-                if (!overWrite) {
-                    logger
-                        .warn("appId [{}], param env [{}] not equals to cache's env [{}], will use cache to register.",
-                            appId, env, cacheEnv);
 
-                    throw new RuntimeException("appId has been init with another Id, need failed...");
-                } else {
-                    env = cacheEnv;
-                }
+            if (!cacheEnv.equals(env)) {
+                logger
+                    .warn("appId [{}], param env [{}] not equals to cache's env [{}], will use cache to register.",
+                        appId, env, cacheEnv);
+
+                throw new RuntimeException("appId has been init with another Id, need failed...");
             }
 
             int version = cacheExecutor.version(appId);
 
             if (metaModel.getModel().equals(MetaModel.CLIENT_SYNC)) {
-                requestHandler.register(new WatchElement(appId, env, version, WatchElement.ElementStatus.Register), overWrite);
+                WatchElement watchElement = new WatchElement(appId, env, version, WatchElement.ElementStatus.Register);
+                if (overWrite && version <= NOT_EXIST_VERSION) {
+                    requestHandler.reset(watchElement);
+                } else {
+                    requestHandler.register(watchElement);
+                }
 
-                if (version < 0) {
+                if (version <= NOT_EXIST_VERSION) {
                     version = waitForMetaSync(appId);
                 }
             } else {
-                if (version < 0) {
+                if (version <= NOT_EXIST_VERSION) {
                     throw new RuntimeException(
                         String.format("local cache has not init this version of appId [%s].", appId));
                 }
@@ -362,24 +363,25 @@ public class StorageMetaManager implements MetaManager {
     @Override
     public int reset(String appId, String env) {
         String cacheEnv = cacheExecutor.appEnvGet(appId);
+
         //  重置
         if (null == cacheEnv || cacheEnv.isEmpty()) {
             return need(appId, env);
         } else {
-            int version = cacheExecutor.version(appId);
+            int version = NOT_EXIST_VERSION;
 
             if (!cacheEnv.equals(env)) {
+                version = cacheExecutor.version(appId);
+
                 if (version > NOT_EXIST_VERSION) {
                     cacheExecutor.clean(appId, version, true);
                 }
 
-                requestHandler
-                    .reset(new WatchElement(appId, env, NOT_EXIST_VERSION, WatchElement.ElementStatus.Register));
-
-                version = waitForMetaSync(appId);
-
-                cacheExecutor.appEnvSet(appId, env);
+                cacheExecutor.appEnvRemove(appId);
             }
+            need(appId, env, true);
+
+            version = waitForMetaSync(appId);
 
             return version;
         }
