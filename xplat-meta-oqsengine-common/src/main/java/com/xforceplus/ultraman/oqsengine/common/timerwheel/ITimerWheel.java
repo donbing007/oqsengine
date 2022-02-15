@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.common.timerwheel;
 
+import com.xforceplus.ultraman.oqsengine.common.lifecycle.Lifecycle;
 import java.util.Date;
 
 /**
@@ -10,7 +11,7 @@ import java.util.Date;
  * @version 1.0 2021/5/21 15:50
  * @since 1.5
  */
-public interface ITimerWheel<T> {
+public interface ITimerWheel<T> extends Lifecycle {
 
     /**
      * 添加任务.

@@ -14,6 +14,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import javax.annotation.PreDestroy;
 
 /**
  * 时间轮转算法实现.
@@ -123,6 +124,12 @@ public class TimerWheel<T> implements ITimerWheel<T> {
         );
 
         worker.submit(new PointTask());
+    }
+
+    @PreDestroy
+    @Override
+    public void destroy() throws Exception {
+        this.worker.shutdownNow();
     }
 
     /**

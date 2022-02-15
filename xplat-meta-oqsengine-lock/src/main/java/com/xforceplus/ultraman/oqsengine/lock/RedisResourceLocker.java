@@ -160,6 +160,7 @@ public class RedisResourceLocker extends AbstractResourceLocker implements Lifec
     @PreDestroy
     @Override
     public void destroy() throws Exception {
+        timerWheel.destroy();
         connection.close();
     }
 

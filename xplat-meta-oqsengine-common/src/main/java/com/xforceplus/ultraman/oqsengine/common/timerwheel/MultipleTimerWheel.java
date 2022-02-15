@@ -136,6 +136,11 @@ public class MultipleTimerWheel<T> implements ITimerWheel<T> {
         worker.submit(new PointTask());
     }
 
+    @Override
+    public void destroy() throws Exception {
+        worker.shutdownNow();
+    }
+
     private void initWheelList() {
 
         for (int i = 0; i < this.slotNumber; i++) {
