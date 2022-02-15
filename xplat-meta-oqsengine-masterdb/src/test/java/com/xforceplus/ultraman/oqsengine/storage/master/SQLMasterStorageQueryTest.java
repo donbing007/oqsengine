@@ -255,7 +255,7 @@ public class SQLMasterStorageQueryTest {
         );
         Transaction tx = transactionManager.create();
         transactionManager.bind(tx.id());
-        Assertions.assertEquals(1, storage.build(uncommitEntity, l2EntityClass));
+        Assertions.assertEquals(true, storage.build(uncommitEntity, l2EntityClass));
 
         Collection<EntityRef> refs = storage.select(
             Conditions.buildEmtpyConditions().addAnd(

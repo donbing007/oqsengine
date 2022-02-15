@@ -18,24 +18,24 @@ public class BaseMasterStorageEntityTest {
         entity.setEntityClasses(new long[] {
             1, 2, 3, 0, 0
         });
-        Assertions.assertEquals(3, entity);
+        Assertions.assertEquals(3, entity.getSelfEntityClassId());
 
         entity = new BaseMasterStorageEntity();
         entity.setEntityClasses(new long[] {
             1, 2, 3, 4, 5
         });
-        Assertions.assertEquals(3, entity);
+        Assertions.assertEquals(5, entity.getSelfEntityClassId());
 
         entity = new BaseMasterStorageEntity();
         entity.setEntityClasses(new long[] {
             0
         });
-        Assertions.assertEquals(3, entity);
+        Assertions.assertEquals(0, entity.getSelfEntityClassId());
 
         entity = new BaseMasterStorageEntity();
         entity.setEntityClasses(new long[] {
             0, 0
         });
-        Assertions.assertEquals(3, entity);
+        Assertions.assertEquals(0, entity.getSelfEntityClassId());
     }
 }
