@@ -31,7 +31,7 @@ public class MockedCache {
     /**
      * 元信息储存保存.
      */
-    public static void entityClassStorageSave(String expectedAppId,
+    public static int entityClassStorageSave(String expectedAppId,
                                               int expectedVersion) throws JsonProcessingException {
 
         List<EntityClassStorage> entityClassStorageList = new ArrayList<>();
@@ -39,6 +39,7 @@ public class MockedCache {
 
         initEntityStorage(entityClassStorageList, expectedEntityStorageList);
 
+        cacheExecutor.appEnvSet(expectedAppId, "test");
 
         //  set storage
         MetaChangePayLoad metaChangePayLoad =
@@ -46,6 +47,8 @@ public class MockedCache {
         if (null == metaChangePayLoad) {
             throw new RuntimeException("save error.");
         }
+
+        return entityClassStorageList.size();
     }
 
 

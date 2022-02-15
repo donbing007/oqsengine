@@ -307,6 +307,43 @@ public class CacheExecutorTest {
     }
 
     @Test
+    public void versionsTest() {
+        Map<Long, Integer> expects = new HashMap<>();
+        List<Long> entityClassIds = new ArrayList<>();
+
+        int expectedVersion = 2;
+        entityClassIds.addAll(addAndRetEntityClassId(expects, "testApp1", expectedVersion, Arrays.asList(1L, 2L)));
+        entityClassIds.addAll(addAndRetEntityClassId(expects, "testApp2", expectedVersion + 1, Arrays.asList(3L, 4L)));
+        entityClassIds.addAll(addAndRetEntityClassId(expects, "testApp3", expectedVersion + 2, Arrays.asList(5L, 6L)));
+
+        Map<Long, Integer> res = cacheExecutor.versions(entityClassIds, false);
+
+        Assertions.assertEquals(expects.size(), res.size());
+
+        res.forEach(
+            (k,expected) -> {
+                Integer value = expects.get(k);
+                Assertions.assertEquals(expected, value);
+            }
+        );
+
+    }
+    private List<Long> addAndRetEntityClassId(Map<Long, Integer> expects, String appId, int version, List<Long> entityClassIds) {
+        boolean ret = cacheExecutor.resetVersion(appId, version, entityClassIds);
+        if (!ret) {
+            throw new RuntimeException("reset version failed.");
+        }
+
+        entityClassIds.forEach(
+            e -> {
+                expects.put(e, version);
+            }
+        );
+
+        return entityClassIds;
+    }
+
+    @Test
     public void entityClassStorageQueryTest() throws JsonProcessingException {
 
         List<EntityClassStorage> entityClassStorageList = new ArrayList<>();
