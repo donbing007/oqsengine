@@ -317,9 +317,11 @@ public class SQLMasterStorageTest {
             new EmptyTypedValue(l2StringField)
         );
 
+        Assertions.assertEquals(0, targetEntity.version());
         Assertions.assertTrue(targetEntity.isDirty());
 
         int oldVersion = targetEntity.version();
+
 
         boolean result = storage.replace(targetEntity, l2EntityClass);
         Assertions.assertTrue(result);
@@ -519,7 +521,7 @@ public class SQLMasterStorageTest {
             .withId(baseId)
             .withMajor(OqsVersion.MAJOR)
             .withEntityClassRef(l2EntityClassRef)
-            .withVersion(1)
+            .withVersion(0)
             .build();
         entity.entityValue().addValues(
             buildValue(baseId,

@@ -322,7 +322,7 @@ public class SQLMasterStorage implements MasterStorage {
         boolean[] results = (boolean[]) transactionExecutor.execute(
             (tx, resource, hint) -> {
 
-                Map.Entry<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity, IEntityClass> entry;
+                Map.Entry<IEntity, IEntityClass> entry;
                 IEntity entity;
                 IEntityClass entityClass;
                 int size = entityPackage.size();
@@ -963,7 +963,7 @@ public class SQLMasterStorage implements MasterStorage {
         storageEntity.setUpdateTime(updateTime);
         storageEntity.setDeleted(false);
         storageEntity.setEntityClassVersion(entityClass.version());
-        storageEntity.setVersion(0);
+        storageEntity.setVersion(entity.version());
         try {
             storageEntity.setAttribute(toBuildJson(entity.entityValue()));
         } catch (Exception ex) {
