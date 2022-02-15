@@ -59,7 +59,7 @@ storage:
         # 字典URL
         url: "-"
   debug:
-    showsql: true
+    showsql: false
   timeoutMs:
     query: 10000
   kv:

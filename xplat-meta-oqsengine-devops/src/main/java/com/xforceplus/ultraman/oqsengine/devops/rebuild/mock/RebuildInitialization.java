@@ -90,11 +90,11 @@ public class RebuildInitialization implements BeanInitialization {
     }
 
     private DataSource buildDevOpsDataSource() throws IllegalAccessException {
-        return CommonInitialization.getInstance().getDataSourcePackage(true).getDevOps();
+        return CommonInitialization.getInstance().getDataSourcePackage(false).getDevOps();
     }
 
     private DataSource buildMasterDataSource() throws IllegalAccessException {
-        return CommonInitialization.getInstance().getDataSourcePackage(true).getMaster().get(0);
+        return CommonInitialization.getInstance().getDataSourcePackage(false).getMaster().get(0);
     }
 
     public DevOpsRebuildIndexExecutor getTaskExecutor() {
