@@ -1,6 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.metadata.integeration.recover;
 
-import static com.xforceplus.ultraman.oqsengine.metadata.Constant.IF_TEST_LOCAL;
 import static com.xforceplus.ultraman.oqsengine.metadata.Constant.IS_CLIENT_CLOSED;
 import static com.xforceplus.ultraman.oqsengine.metadata.Constant.IS_SERVER_OK;
 import static com.xforceplus.ultraman.oqsengine.metadata.Constant.TEST_APP_ID;
@@ -16,6 +15,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -25,6 +25,7 @@ import org.junit.jupiter.api.Test;
  * @author : xujia 2021/4/7
  * @since : 1.8
  */
+@Disabled
 public class CacheRecoverClientTest extends MockerRequestClientHelper {
 
     private CacheRecoverMockServer cacheRecoverMockServer = new CacheRecoverMockServer();
@@ -34,32 +35,28 @@ public class CacheRecoverClientTest extends MockerRequestClientHelper {
      */
     @BeforeEach
     public void before() throws Exception {
-        if (IF_TEST_LOCAL) {
-            new Thread(() -> {
-                try {
-                    cacheRecoverMockServer.waitForClientClose();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                    throw new RuntimeException("waitForClientClose failed.");
-                }
-            }).start();
-
-            init(true);
-
-            int i = 0;
-            while (i < 100) {
-                if (IS_SERVER_OK) {
-                    entityClassSyncClient.start();
-
-                    Thread.sleep(5_000);
-                    return;
-                }
-                //  睡眠1秒
-                Thread.sleep(1_000);
-                i++;
+        new Thread(() -> {
+            try {
+                cacheRecoverMockServer.waitForClientClose();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                throw new RuntimeException("waitForClientClose failed.");
             }
-            throw new RuntimeException("test has failed due to server not start.");
+        }).start();
+
+        init(true);
+        int i = 0;
+        while (i < 100) {
+            if (IS_SERVER_OK) {
+                entityClassSyncClient.start();
+                Thread.sleep(5_000);
+                return;
+            }
+            //  睡眠1秒
+            Thread.sleep(1_000);
+            i++;
         }
+        throw new RuntimeException("test has failed due to server not start.");
     }
 
     /**
@@ -67,18 +64,14 @@ public class CacheRecoverClientTest extends MockerRequestClientHelper {
      */
     @AfterEach
     public void after() throws Exception {
-        if (IF_TEST_LOCAL) {
-            super.destroy();
-            IS_CLIENT_CLOSED = true;
-        }
+        super.destroy();
+        IS_CLIENT_CLOSED = true;
     }
 
     //  测试connect sdk中持有版本信息，cache中被清理，是否会重新拉取
     @Test
     public void testClientHasCacheLost() throws InterruptedException, IllegalAccessException {
-        if (IF_TEST_LOCAL) {
-            clientHasCacheLost();
-        }
+        clientHasCacheLost();
     }
 
     private void clientHasCacheLost() throws InterruptedException, IllegalAccessException {

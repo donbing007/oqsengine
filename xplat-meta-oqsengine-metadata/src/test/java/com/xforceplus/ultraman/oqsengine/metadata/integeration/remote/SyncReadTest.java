@@ -12,6 +12,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -21,46 +22,41 @@ import org.junit.jupiter.api.Test;
  * @version 0.1 2021/05/2021/5/17
  * @since 1.8
  */
+@Disabled
 public class SyncReadTest extends MockerRequestClientHelper {
 
     @BeforeEach
     public void before() throws Exception {
-        if (Constant.IF_TEST_REMOTE) {
-            init(false);
-        }
+        init(false);
     }
 
     @AfterEach
     public void after() throws Exception {
-        if (Constant.IF_TEST_REMOTE) {
-            destroy();
-        }
+        destroy();
     }
 
     @Test
     public void testGetFormula() throws Exception {
-        if (Constant.IF_TEST_REMOTE) {
-            try {
-                MetaInitialization.getInstance().getMetaManager().need(TEST_APP_ID, TEST_ENV);
-            } catch (Exception e) {
+        try {
+            MetaInitialization.getInstance().getMetaManager().need(TEST_APP_ID, TEST_ENV);
+        } catch (Exception e) {
 
-            }
-            int count = 0;
-            Optional<IEntityClass> entityClassOptional = null;
-            while (count < 500) {
-                entityClassOptional = MetaInitialization.getInstance().getMetaManager().load(TEST_ENTITY_CLASS_ID, "");
-                if (entityClassOptional.isPresent()) {
-                    break;
-                }
-                count++;
-                Thread.sleep(1_000);
-            }
-            Assertions.assertTrue(entityClassOptional.isPresent());
-
-            IEntityClass iEntityClass = entityClassOptional.get();
-
-            Assertions.assertEquals(TEST_ENTITY_CLASS_ID, iEntityClass.id());
         }
+        int count = 0;
+        Optional<IEntityClass> entityClassOptional = null;
+        while (count < 500) {
+            entityClassOptional = MetaInitialization.getInstance().getMetaManager().load(TEST_ENTITY_CLASS_ID, "");
+            if (entityClassOptional.isPresent()) {
+                break;
+            }
+            count++;
+            Thread.sleep(1_000);
+        }
+        Assertions.assertTrue(entityClassOptional.isPresent());
+
+        IEntityClass iEntityClass = entityClassOptional.get();
+
+        Assertions.assertEquals(TEST_ENTITY_CLASS_ID, iEntityClass.id());
     }
 }
 
