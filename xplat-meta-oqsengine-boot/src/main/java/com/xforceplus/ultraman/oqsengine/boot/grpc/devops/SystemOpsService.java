@@ -35,12 +35,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 /**
  * Created by justin.xu on 08/2021.
  *
  * @since 1.8
  */
+@Component
 public class SystemOpsService {
 
     private DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
@@ -95,7 +97,8 @@ public class SystemOpsService {
     @DiscoverAction(describe = "查询meta信息", retClass = MetaMetrics.class)
     public MetaMetrics showMeta(@MethodParam(name = "appId", klass = String.class, required = true) String appId) {
         try {
-            return metaManager.showMeta(appId).orElse(new MetaMetrics(-1, "", appId, new ArrayList<>()));
+            return metaManager.showMeta(appId).orElseGet(() -> new MetaMetrics(-1, "", appId, new ArrayList<>()));
+
         } catch (Exception e) {
             PrintErrorHelper.exceptionHandle(String.format("showMeta exception, [%s]", appId), e);
         }
@@ -108,7 +111,7 @@ public class SystemOpsService {
      */
     @DiscoverAction(describe = "显示meta同步日志", retClass = Collection.class, retInner = MetricsLog.class)
     public Collection<MetricsLog> metaLogs(
-        @MethodParam(name = "type", klass = String.class, required = true) String type) {
+        @MethodParam(name = "type", klass = String.class, required = false) String type) {
         try {
             return metaManager.metaLogs(MetricsLog.ShowType.getInstance(type));
         } catch (Exception e) {
