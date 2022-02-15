@@ -11,6 +11,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -22,8 +23,8 @@ import org.springframework.test.util.ReflectionTestUtils;
  * @version 0.1 2021/05/2021/5/11
  * @since 1.8
  */
+@Disabled
 public class RemoteRedisTest {
-    private final boolean isTestOpen = false;
     private RedisClient redisClient;
     private DefaultCacheExecutor cacheExecutor;
 
@@ -38,37 +39,31 @@ public class RemoteRedisTest {
 
     @BeforeEach
     public void before() throws Exception {
-        if (isTestOpen) {
-            redisClient =
-                RedisClient.create(RedisURI.Builder.redis(ip, port).withPassword(password).build());
+        redisClient =
+            RedisClient.create(RedisURI.Builder.redis(ip, port).withPassword(password).build());
 
-            cacheExecutor = new DefaultCacheExecutor();
+        cacheExecutor = new DefaultCacheExecutor();
 
-            ReflectionTestUtils.setField(cacheExecutor, "redisClient", redisClient);
-            cacheExecutor.init();
+        ReflectionTestUtils.setField(cacheExecutor, "redisClient", redisClient);
+        cacheExecutor.init();
 
 
-            storageMetaManager = new StorageMetaManager(new ClientModel());
-            ReflectionTestUtils.setField(storageMetaManager, "cacheExecutor", cacheExecutor);
-        }
+        storageMetaManager = new StorageMetaManager(new ClientModel());
+        ReflectionTestUtils.setField(storageMetaManager, "cacheExecutor", cacheExecutor);
     }
 
     @AfterEach
     public void after() throws Exception {
-        if (isTestOpen) {
-            cacheExecutor.destroy();
-            cacheExecutor = null;
+        cacheExecutor.destroy();
+        cacheExecutor = null;
 
-            redisClient.shutdown();
-            redisClient = null;
-        }
+        redisClient.shutdown();
+        redisClient = null;
     }
 
     @Test
     public void load() throws JsonProcessingException {
-        if (isTestOpen) {
-            Optional<IEntityClass> entityClassOptional = storageMetaManager.load(entityClassId, "");
-            Assertions.assertTrue(entityClassOptional.isPresent());
-        }
+        Optional<IEntityClass> entityClassOptional = storageMetaManager.load(entityClassId, "");
+        Assertions.assertTrue(entityClassOptional.isPresent());
     }
 }
