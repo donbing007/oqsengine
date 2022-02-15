@@ -25,15 +25,12 @@ import com.xforceplus.ultraman.oqsengine.common.id.SnowflakeLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.node.NodeIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.node.StaticNodeIdGenerator;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
-import com.xforceplus.ultraman.oqsengine.metadata.StorageMetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
-import com.xforceplus.ultraman.oqsengine.metadata.dto.model.ClientModel;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.vavr.control.Either;
 import java.sql.SQLException;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -125,6 +122,9 @@ public class ChangelogConfiguration {
         return new ManyToOneRelationChangelog();
     }
 
+    /**
+     * id生成器.
+     */
     @Bean
     public LongIdGenerator snowflakeIdGenerator() {
 
@@ -152,6 +152,9 @@ public class ChangelogConfiguration {
         };
     }
 
+    /**
+     * 版本生成器.
+     */
     @Bean
     public LongIdGenerator versionIdGenerator() {
 
@@ -174,6 +177,9 @@ public class ChangelogConfiguration {
         };
     }
 
+    /**
+     * 快照储存.
+     */
     @Bean
     public SnapshotStorage snapshotStorage() {
         return new SnapshotStorage() {
@@ -189,7 +195,9 @@ public class ChangelogConfiguration {
         };
     }
 
-    //mock Changelog storage
+    /**
+     * mock Changelog storage.
+     */
     @Bean
     public ChangelogStorage changelogStorage(ChangelogExample example) {
         return new ChangelogStorage() {
@@ -205,6 +213,9 @@ public class ChangelogConfiguration {
         };
     }
 
+    /**
+     * 元数据管理器.
+     */
     @Bean
     public MetaManager metaManager(ChangelogExample example) {
         return new MetaManager() {
@@ -226,6 +237,11 @@ public class ChangelogConfiguration {
 
             @Override
             public int need(String appId, String env) {
+                return 0;
+            }
+
+            @Override
+            public int need(String appId, String env, boolean overWrite) {
                 return 0;
             }
 

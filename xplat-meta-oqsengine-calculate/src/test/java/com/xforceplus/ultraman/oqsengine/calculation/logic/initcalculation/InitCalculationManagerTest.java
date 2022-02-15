@@ -312,7 +312,9 @@ public class InitCalculationManagerTest {
         .withField(H4_FIELD)
         .build();
 
-
+    /**
+     * 测试实始化.
+     */
     @BeforeEach
     public void before() throws Exception {
         manager = new DefaultInitCalculationManager();
@@ -425,6 +427,11 @@ public class InitCalculationManagerTest {
 
         @Override
         public int need(String appId, String env) {
+            return 0;
+        }
+
+        @Override
+        public int need(String appId, String env, boolean overWrite) {
             return 0;
         }
 
