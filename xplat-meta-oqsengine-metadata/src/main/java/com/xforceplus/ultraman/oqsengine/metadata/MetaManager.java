@@ -75,6 +75,14 @@ public interface MetaManager {
     int need(String appId, String env);
 
     /**
+     * 表示需要关注此appId代表的应用的元信息.
+     *
+     * @param appId 应用标识.
+     * @return 当前的元信息版本号.小于0表示没有持有任何版本的元信息.
+     */
+    int need(String appId, String env, boolean overWrite);
+
+    /**
      * 清空本地缓存.
      * 这个操作将强制将本地缓存清除.
      */

@@ -70,6 +70,25 @@ public class StorageMetaManagerTest extends AbstractMetaTestHelper {
     }
 
     @Test
+    public void needChangeEnvTest() throws IllegalAccessException {
+        MetaManager metaManager = MetaInitialization.getInstance().getMetaManager();
+        for (int j = 0; j < NEED_CONCURRENT_APP_ENV_LIST.length; j++) {
+            String env = NEED_CONCURRENT_APP_ENV_LIST[j];
+
+            metaManager.reset(NEED_CONCURRENT_APP_ID, env);
+            Assertions.assertEquals(env, MetaInitialization.getInstance().getCacheExecutor().appEnvGet(NEED_CONCURRENT_APP_ID));
+        }
+
+        Assertions.assertThrows(RuntimeException.class, () -> {
+            metaManager.need(NEED_CONCURRENT_APP_ID, NEED_CONCURRENT_APP_ENV_LIST[0]);
+        });
+
+        Assertions.assertThrows(RuntimeException.class, () -> {
+            metaManager.need(NEED_CONCURRENT_APP_ID, NEED_CONCURRENT_APP_ENV_LIST[1]);
+        });
+    }
+
+    @Test
     public void needConcurrentTest() throws InterruptedException {
         AtomicInteger successCount = new AtomicInteger(0);
         AtomicInteger failCount = new AtomicInteger(0);
