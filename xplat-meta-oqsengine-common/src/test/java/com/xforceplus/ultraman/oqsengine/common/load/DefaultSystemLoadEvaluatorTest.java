@@ -50,8 +50,8 @@ public class DefaultSystemLoadEvaluatorTest {
         DefaultSystemLoadEvaluator evaluator = new DefaultSystemLoadEvaluator();
         evaluator.setLoadFactors(loadFactors);
 
-        double max = loadFactors.stream().mapToDouble(l -> 100D * l.weight()).sum();
-        double expectedLoad = ((100D * 0.1D + 20D * 0.9D) / max) * 100D;
+        double max = 100D * 0.1D + 100D * 0.9D + 100D * 1.0D;
+        double expectedLoad = ((100D * 0.1D + 20D * 0.9D + 30D * 1.0D) / max) * 100D;
         Assertions.assertEquals(expectedLoad, evaluator.evaluate());
 
 
@@ -64,13 +64,11 @@ public class DefaultSystemLoadEvaluatorTest {
         evaluator = new DefaultSystemLoadEvaluator();
         evaluator.setLoadFactors(loadFactors);
 
-        expectedLoad = 0.0D;
+        max = 100D * 1.0D + 100D * 1.0D + 100D * 1.0D;
+        expectedLoad = ((100D * 1.0D + 20D * 1.0D + 30D * 1.0D) / max) * 100D;
         Assertions.assertEquals(expectedLoad, evaluator.evaluate());
     }
 
-    /**
-     * 错误的权重.
-     */
     @Test
     public void testErrorLoadEvaluate() throws Exception {
         Collection<LoadFactor> loadFactors = Arrays.asList(
