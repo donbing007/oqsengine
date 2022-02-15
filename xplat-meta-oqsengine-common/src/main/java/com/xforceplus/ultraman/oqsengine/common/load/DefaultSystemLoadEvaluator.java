@@ -27,7 +27,17 @@ public class DefaultSystemLoadEvaluator implements SystemLoadEvaluator {
     public void setLoadFactors(Collection<LoadFactor> loadFactors) {
         this.loadFactors = loadFactors;
 
-        max = loadFactors.stream().mapToDouble(loadFactor -> MAX_VALUE * loadFactor.weight()).sum();
+        max = loadFactors.stream()
+            .filter(
+                loadFactor ->
+                    loadFactor.weight() >= LoadFactor.MIN_WEIGHT)
+            .mapToDouble(loadFactor -> {
+                double weight = loadFactor.weight();
+                if (weight > LoadFactor.MAX_WEIGHT) {
+                    weight = LoadFactor.MAX_WEIGHT;
+                }
+                return MAX_VALUE * weight;
+            }).sum();
     }
 
     @Override
@@ -39,19 +49,31 @@ public class DefaultSystemLoadEvaluator implements SystemLoadEvaluator {
         double value = loadFactors.stream()
             .filter(
                 loadFactor ->
-                    loadFactor.weight() >= LoadFactor.MIN_WEIGHT && loadFactor.weight() <= LoadFactor.MAX_WEIGHT)
+                    loadFactor.weight() >= LoadFactor.MIN_WEIGHT)
             .mapToDouble(loadFactor -> {
                 double load = loadFactor.now();
+                double weight = loadFactor.weight();
+                if (weight > LoadFactor.MAX_WEIGHT) {
+                    weight = LoadFactor.MAX_WEIGHT;
+                }
+
                 if (load < MIN_VALUE) {
                     return MIN_VALUE;
                 } else if (load > MAX_VALUE) {
-                    return MAX_VALUE * loadFactor.weight();
+                    return MAX_VALUE * weight;
                 } else {
-                    return loadFactor.now() * loadFactor.weight();
+                    return load * weight;
                 }
             })
             .sum();
 
-        return (value / max) * 100D;
+        double load = (value / max) * 100D;
+        if (Double.isNaN(load)) {
+            return MIN_VALUE;
+        } else if (Double.isInfinite(load)) {
+            return MIN_VALUE;
+        } else {
+            return load;
+        }
     }
 }
