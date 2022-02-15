@@ -52,6 +52,13 @@ public class DefaultSystemLoadEvaluator implements SystemLoadEvaluator {
             })
             .sum();
 
-        return (value / max) * 100D;
+        double load = (value / max) * 100D;
+        if (Double.isNaN(load)) {
+            return MIN_VALUE;
+        } else if (Double.isInfinite(load)) {
+            return MIN_VALUE;
+        } else {
+            return load;
+        }
     }
 }
