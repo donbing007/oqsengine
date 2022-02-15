@@ -1,15 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.boot.config.system;
 
 import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
-import com.typesafe.config.ConfigValue;
 import com.xforceplus.ultraman.oqsengine.boot.util.SystemInfoConfigUtils;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
-import java.io.File;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -60,6 +56,9 @@ public class SystemInfoConfiguration {
 
     private String masterSimpleUri;
 
+    /**
+     * 构造实例.
+     */
     public SystemInfoConfiguration() {
         Config config = DataSourceFactory.getConfig();
 
