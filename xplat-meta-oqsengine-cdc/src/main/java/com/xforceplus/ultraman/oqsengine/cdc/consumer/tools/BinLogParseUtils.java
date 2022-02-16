@@ -64,8 +64,7 @@ public class BinLogParseUtils {
     /**
      * 获取bool类型字段值.
      */
-    public static boolean getBooleanFromColumn(List<CanalEntry.Column> columns, OqsBigEntityColumns oqsBigEntityColumns)
-        throws SQLException {
+    public static boolean getBooleanFromColumn(List<CanalEntry.Column> columns, OqsBigEntityColumns oqsBigEntityColumns) {
         String booleanValue = getColumnWithoutNull(columns, oqsBigEntityColumns).getValue();
 
         return stringToBoolean(booleanValue);
@@ -75,12 +74,8 @@ public class BinLogParseUtils {
      * 转换字符串为布尔.
      */
     public static boolean stringToBoolean(String str) {
-        try {
-            return str.equalsIgnoreCase("true")
-                || (StringUtils.isNumeric(str) && Integer.parseInt(str) > ZERO);
-        } catch (Exception e) {
-            throw e;
-        }
+        return str.equalsIgnoreCase("true")
+            || (StringUtils.isNumeric(str) && Integer.parseInt(str) > ZERO);
     }
 
     /**
@@ -95,7 +90,7 @@ public class BinLogParseUtils {
      * 获取字段表示.
      */
     public static CanalEntry.Column getColumnWithoutNull(List<CanalEntry.Column> columns,
-                                                         OqsBigEntityColumns oqsBigEntityColumns) throws SQLException {
+                                                         OqsBigEntityColumns oqsBigEntityColumns) {
         return columns.get(oqsBigEntityColumns.ordinal());
     }
 

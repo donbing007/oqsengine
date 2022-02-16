@@ -29,8 +29,6 @@ import org.springframework.test.util.ReflectionTestUtils;
 public class ConsumerErrorTest extends AbstractCDCTestHelper {
     final Logger logger = LoggerFactory.getLogger(ConsumerRunnerTest.class);
 
-    private static final boolean IF_TEST = true;
-
     /**
      * 初始化.
      */

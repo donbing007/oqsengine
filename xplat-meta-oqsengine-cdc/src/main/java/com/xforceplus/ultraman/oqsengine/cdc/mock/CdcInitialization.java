@@ -105,6 +105,10 @@ public class CdcInitialization implements BeanInitialization {
         instance = null;
     }
 
+    public SphinxSyncExecutor sphinxSyncExecutor() {
+        return sphinxSyncExecutor;
+    }
+
     /**
      * 使用mock.
      */
