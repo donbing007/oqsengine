@@ -57,6 +57,7 @@ public class BinLogParseUtilsTest {
             BinLogParseUtils.getLongFromColumn(columns, OqsBigEntityColumns.ENTITYCLASSL4));
     }
 
+
     @Test
     public void getIntegerFromColumnTest() throws SQLException {
         Assertions.assertEquals(expectedVersion,

@@ -83,7 +83,7 @@ public class SphinxSyncExecutorTest extends AbstractCDCTestHelper {
         for (IEntityClass entityClass : EntityClassBuilder.entityClassMap.values()) {
             List<CanalEntry.Column> columns =
                 CanalEntryTools.generateColumns(expectedId, expectedLevel, expectedCommitId, expectedTx, expectedVersion,
-                    expectedAttrString, expectedOqsMajor, isDeleted, System.currentTimeMillis(), System.currentTimeMillis(), entityClass.id());
+                    expectedAttrString, expectedOqsMajor, isDeleted, entityClass.id(), System.currentTimeMillis(), System.currentTimeMillis());
 
             long id =
                 (long) getEntityMethod.invoke(sphinxSyncExecutor, columns);
@@ -103,7 +103,7 @@ public class SphinxSyncExecutorTest extends AbstractCDCTestHelper {
 
         List<CanalEntry.Column> columns =
             CanalEntryTools.generateColumns(expectedId, expectedLevel, expectedCommitId, expectedTx, expectedVersion,
-                expectedAttrString, expectedOqsMajor, isDeleted, System.currentTimeMillis(), System.currentTimeMillis(), expectedEntityClass.id());
+                expectedAttrString, expectedOqsMajor, isDeleted, expectedEntityClass.id(), System.currentTimeMillis(), System.currentTimeMillis());
 
         Map<Long, IEntityClass> entityClassMap = new HashMap<>();
         entityClassMap.put(expectedEntityClass.id(), expectedEntityClass);
@@ -125,7 +125,7 @@ public class SphinxSyncExecutorTest extends AbstractCDCTestHelper {
 
         List<CanalEntry.Column> columns =
             CanalEntryTools.generateColumns(expectedId, expectedLevel, expectedCommitId, expectedTx, expectedVersion,
-                expectedAttrString, expectedOqsMajor, isDeleted, System.currentTimeMillis(), System.currentTimeMillis(), expectedEntityClass.id());
+                expectedAttrString, expectedOqsMajor, isDeleted, expectedEntityClass.id(), System.currentTimeMillis(), System.currentTimeMillis());
 
         Map<String, Object> res =
             (Map<String, Object>) attrCollectionMethod.invoke(sphinxSyncExecutor, expectedId, columns);
@@ -145,7 +145,7 @@ public class SphinxSyncExecutorTest extends AbstractCDCTestHelper {
 
         List<CanalEntry.Column> columns =
             CanalEntryTools.generateColumns(expectedId, expectedLevel, expectedCommitId, expectedTx, expectedVersion,
-                expectedAttrString, expectedOqsMajor, isDeleted,  System.currentTimeMillis(), System.currentTimeMillis(), expectedEntityClass.id());
+                expectedAttrString, expectedOqsMajor, isDeleted, expectedEntityClass.id(), System.currentTimeMillis(), System.currentTimeMillis());
 
         Map<Long, IEntityClass> entityClassMap = new HashMap<>();
         entityClassMap.put(expectedEntityClass.id(), expectedEntityClass);
