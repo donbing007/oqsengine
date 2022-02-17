@@ -61,6 +61,6 @@
     </dependencies>
 
     <properties>
-        <test.skip>false</test.skip>
+        <test.skip>true</test.skip>
     </properties>
 </project>
