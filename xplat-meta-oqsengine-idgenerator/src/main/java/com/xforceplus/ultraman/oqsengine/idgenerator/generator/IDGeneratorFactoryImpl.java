@@ -33,7 +33,7 @@ public class IDGeneratorFactoryImpl implements IDGeneratorFactory {
     private Map<String, IDGenerator> generators;
     private Map<String, IDGenerator> distributeGenerators;
 
-    @Resource(name = "redissonClientAutoId")
+    @Resource
     private RedissonClient redissonClient;
     @Resource
     private PatternParserManager patternParserManager;

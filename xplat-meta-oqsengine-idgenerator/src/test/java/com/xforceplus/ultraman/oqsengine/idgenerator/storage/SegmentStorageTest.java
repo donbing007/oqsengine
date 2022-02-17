@@ -4,6 +4,7 @@ import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
 import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.SegmentInfo;
+import com.xforceplus.ultraman.oqsengine.idgenerator.mock.IdGenerateDbScript;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterDecimalStorageStrategy;
@@ -19,6 +20,7 @@ import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import javax.sql.DataSource;
 import org.junit.jupiter.api.AfterEach;
@@ -53,7 +55,13 @@ public class SegmentStorageTest {
                 System.getProperty("MYSQL_HOST"), System.getProperty("MYSQL_PORT")));
 
         dataSource = buildDataSource("./src/test/resources/generator.conf");
-        // 等待加载完毕
+
+        try (Connection conn = dataSource.getConnection()) {
+            Statement st = conn.createStatement();
+            st.executeUpdate(IdGenerateDbScript.CREATE_SEGMENT);
+            st.close();
+        }
+
         TimeUnit.SECONDS.sleep(1L);
         transactionManager = DefaultTransactionManager.Builder.anDefaultTransactionManager()
             .withTxIdGenerator(new IncreasingOrderLongIdGenerator(0))
