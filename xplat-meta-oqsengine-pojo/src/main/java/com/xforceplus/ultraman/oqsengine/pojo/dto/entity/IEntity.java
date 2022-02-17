@@ -1,14 +1,12 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity;
 
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
-
 /**
  * Entity实体定义.
  *
  * @author wangzheng
  * @version 1.0 2020/3/26 15:10
  */
-public interface IEntity extends Cloneable {
+public interface IEntity {
 
     /**
      * 获得本对象的id - 数据id.
@@ -88,7 +86,7 @@ public interface IEntity extends Cloneable {
     /**
      * 克隆.
      */
-    public Object clone() throws CloneNotSupportedException;
+    public IEntity copy();
 
     /**
      * 维护ID.
@@ -122,8 +120,6 @@ public interface IEntity extends Cloneable {
      * 使当前对象是干净的.
      */
     public default void neat() {
-        for (IValue v : entityValue().values()) {
-            v.neat();
-        }
+        entityValue().neat();
     }
 }

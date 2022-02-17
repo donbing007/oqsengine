@@ -2,8 +2,6 @@ package com.xforceplus.ultraman.oqsengine.changelog.domain;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
-
-
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -31,7 +29,7 @@ public class EntityAggDomain {
         this.graph = graph;
     }
 
-    public void put(Relationship relationship, EntityAggDomain entityAggDomain){
+    public void put(Relationship relationship, EntityAggDomain entityAggDomain) {
         List<EntityAggDomain> entityAggDomains = graph.computeIfAbsent(relationship, k -> new LinkedList<>());
         entityAggDomains.add(entityAggDomain);
     }
@@ -39,8 +37,8 @@ public class EntityAggDomain {
     @Override
     public String toString() {
         return "EntityAggDomain{" +
-                "rootIEntity=" + rootIEntity +
-                ", graph=" + graph +
-                '}';
+            "rootIEntity=" + rootIEntity +
+            ", graph=" + graph +
+            '}';
     }
 }

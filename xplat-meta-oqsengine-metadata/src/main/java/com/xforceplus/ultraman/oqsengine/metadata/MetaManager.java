@@ -6,6 +6,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -73,6 +75,14 @@ public interface MetaManager {
     int need(String appId, String env);
 
     /**
+     * 表示需要关注此appId代表的应用的元信息.
+     *
+     * @param appId 应用标识.
+     * @return 当前的元信息版本号.小于0表示没有持有任何版本的元信息.
+     */
+    int need(String appId, String env, boolean overWrite);
+
+    /**
      * 清空本地缓存.
      * 这个操作将强制将本地缓存清除.
      */
@@ -110,4 +120,13 @@ public interface MetaManager {
      * @return true, false.
      */
     boolean remove(String appId);
+
+    /**
+     * 显示当前oqs中所有正在使用的appId.
+     *
+     * @return appId列表.
+     */
+    default Map<String, String> showApplications() {
+        return new HashMap<>();
+    }
 }

@@ -182,7 +182,7 @@ public class TaskStorageCommand {
             // batchCreateTime
             st.setLong(8, System.currentTimeMillis());
             // startid
-            st.setLong(9, taskInfo.startId());
+            st.setLong(9, taskInfo.getErrorSize());
 
             if (logger.isDebugEnabled()) {
                 logger.debug(st.toString());
@@ -195,23 +195,42 @@ public class TaskStorageCommand {
     /**
      * 更新任务.
      */
-    public int update(DataSource dataSource, DefaultDevOpsTaskInfo taskInfo, BatchStatus status) throws SQLException {
-        String sql = String.format(SQL.UPDATE_SQL, tableName);
+    public int update(DataSource dataSource, DefaultDevOpsTaskInfo taskInfo) throws SQLException {
+        String sql = updateSql(taskInfo);
 
         try (Connection connection = dataSource.getConnection();
-             PreparedStatement st = connection.prepareStatement(sql)) {
+            PreparedStatement st = connection.prepareStatement(sql)) {
+
+            int pos = 1;
+
             //  batchUpdateTime
-            st.setLong(1, System.currentTimeMillis());
-            //  finishSize
-            st.setInt(2, taskInfo.getFinishSize());
+            st.setLong(pos++, System.currentTimeMillis());
+
             //  Status
-            st.setInt(3, status.getCode());
+            st.setInt(pos++, taskInfo.getStatus());
+
+            //  batchSize
+            if (taskInfo.getBatchSize() > 0) {
+                st.setInt(pos++, (int) taskInfo.getBatchSize());
+            }
+
+            //  finishSize
+            if (taskInfo.getFinishSize() > 0) {
+                st.setInt(pos++, taskInfo.getFinishSize());
+            }
+
             //  message
-            st.setString(4, taskInfo.message());
-            //  startid
-            st.setLong(5, taskInfo.startId());
+            if (null != taskInfo.message()) {
+                st.setString(pos++, taskInfo.message());
+            }
+
+            //  errorSize
+            if (taskInfo.getErrorSize() > 0) {
+                st.setLong(pos++, taskInfo.getErrorSize());
+            }
+
             //  taskId
-            st.setLong(6, taskInfo.getMaintainid());
+            st.setLong(pos, taskInfo.getMaintainid());
 
             if (logger.isDebugEnabled()) {
                 logger.debug(st.toString());
@@ -220,6 +239,30 @@ public class TaskStorageCommand {
             return st.executeUpdate();
         }
     }
+
+    private String updateSql(DefaultDevOpsTaskInfo taskInfo) {
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("update ").append(tableName).append(" set updatetime = ?, status = ?");
+        if (taskInfo.getBatchSize() > 0) {
+            stringBuilder.append(", ").append("batchsize = ?");
+        }
+        if (taskInfo.getFinishSize() > 0) {
+            stringBuilder.append(", ").append("finishsize = ?");
+        }
+        if (null != taskInfo.message()) {
+            stringBuilder.append(", ").append("message = ?");
+        }
+
+        //  由于改变方式为cdc同步、所以该字段记录为错误数量.
+        if (taskInfo.getErrorSize() > 0) {
+            stringBuilder.append(", ").append("startid = ?");
+        }
+
+        stringBuilder.append(" ").append("where maintainid = ? and status not in (2, 3, 4)");
+
+        return stringBuilder.toString();
+    }
+
 
     /**
      * 任务错误结束.
@@ -233,12 +276,12 @@ public class TaskStorageCommand {
             st.setLong(1, System.currentTimeMillis());
             //  finishSize
             st.setInt(2, taskInfo.getFinishSize());
-            //  Status
+            //  status
             st.setInt(3, taskInfo.getStatus());
             //  message
             st.setString(4, taskInfo.message());
             //  startId
-            st.setLong(5, taskInfo.startId());
+            st.setLong(5, taskInfo.getErrorSize());
             //  taskId
             st.setLong(6, taskInfo.getMaintainid());
 
@@ -332,7 +375,7 @@ public class TaskStorageCommand {
             rs.getLong("updatetime"));
 
         taskInfo.resetMessage(rs.getString("message"));
-        taskInfo.resetStartId(rs.getLong("startid"));
+        taskInfo.setErrorSize(rs.getLong("startid"));
 
         return taskInfo;
     }

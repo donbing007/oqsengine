@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.calculation.impl;
 import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationContext;
 import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationScenarios;
 import com.xforceplus.ultraman.oqsengine.calculation.context.DefaultCalculationContext;
+import com.xforceplus.ultraman.oqsengine.calculation.dto.AffectedInfo;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationException;
 import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFactory;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.CalculationLogic;
@@ -13,6 +14,7 @@ import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
 import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
+import com.xforceplus.ultraman.oqsengine.lock.LocalResourceLocker;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MockMetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
@@ -38,6 +40,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -182,19 +185,23 @@ public class DefaultCalculationImplTest {
         );
         aggregationLogic.setScope(scope);
 
-        Map<AbstractParticipant, long[]> entityIds = new HashMap<>();
+        Map<AbstractParticipant, Collection<AffectedInfo>> entityIds = new HashMap<>();
         entityIds.put(
             CalculationParticipant.Builder.anParticipant()
                 .withEntityClass(B_CLASS)
                 .withField(B_SUM).build(),
-            new long[] {entityB.id()}
+            Arrays.asList(
+                new AffectedInfo(entityB, entityB.id())
+            )
         );
 
         entityIds.put(
             CalculationParticipant.Builder.anParticipant()
                 .withEntityClass(D_CLASS)
                 .withField(D_SUM).build(),
-            new long[] {entityD.id()}
+            Arrays.asList(
+                new AffectedInfo(entityD, entityD.id())
+            )
         );
         aggregationLogic.setEntityIds(entityIds);
 
@@ -223,7 +230,9 @@ public class DefaultCalculationImplTest {
             CalculationParticipant.Builder.anParticipant()
                 .withEntityClass(C_CLASS)
                 .withField(C_LOOKUP).build(),
-            new long[] {entityC.id()}
+            Arrays.asList(
+                new AffectedInfo(entityC, entityC.id())
+            )
         );
         lookupLogic.setEntityIds(entityIds);
 
@@ -290,11 +299,15 @@ public class DefaultCalculationImplTest {
         Assertions.assertEquals(200L, newEntity.entityValue().getValue(C_LOOKUP.id()).get().valueToLong());
     }
 
+    /**
+     * 测试更新entityA造成的entityB,entityC,entityD的变动.
+     */
     @Test
     public void testReplaceMaintenance() throws Exception {
         CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()
             .withMetaManager(metaManager)
             .withMasterStorage(masterStorage)
+            .withResourceLocker(new LocalResourceLocker())
             .withScenarios(CalculationScenarios.REPLACE).withCalculationLogicFactory(new CalculationLogicFactory())
             .build();
         context.getCalculationLogicFactory().get().register(lookupLogic);
@@ -306,6 +319,18 @@ public class DefaultCalculationImplTest {
         );
 
         calculation.maintain(context);
+
+        /*
+        主动设置entityA为干净,因为此对象为实际写事务的目标对象.
+        在计算影响对象时,此对象应该已经处于干净状态.
+         */
+        entityA.neat();
+
+        try {
+            Assertions.assertTrue(context.persist());
+        } finally {
+            context.destroy();
+        }
 
         long[] replaceIds = masterStorage.getReplaceEntities().stream().mapToLong(e -> e.id()).sorted().toArray();
 
@@ -333,6 +358,7 @@ public class DefaultCalculationImplTest {
         CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()
             .withMetaManager(metaManager)
             .withMasterStorage(masterStorage)
+            .withResourceLocker(new LocalResourceLocker())
             .withScenarios(CalculationScenarios.REPLACE).withCalculationLogicFactory(new CalculationLogicFactory())
             .build();
         context.getCalculationLogicFactory().get().register(lookupLogic);
@@ -344,18 +370,31 @@ public class DefaultCalculationImplTest {
         );
 
         calculation.maintain(context);
+        /*
+        主动设置entityA为干净,因为此对象为实际写事务的目标对象.
+        在计算影响对象时,此对象应该已经处于干净状态.
+         */
+        entityA.neat();
 
-        // b 重试了多少次.
+        try {
+
+            Assertions.assertFalse(context.persist());
+
+        } finally {
+            context.destroy();
+        }
+
+        // 由于更新被影响状态的对象会加悲观锁,所以这里最多只会进行一次.
         long size = masterStorage.getReplaceEntities().stream()
             .filter(e -> e.id() == entityB.id())
             .count();
 
-        Assertions.assertEquals(100, size);
+        Assertions.assertEquals(1, size);
     }
 
     static class MockMasterStorage implements MasterStorage {
 
-        private Map<Long, IEntity> entities = new HashMap<>();
+        private Map<Long, com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> entities = new HashMap<>();
 
         private List<IEntity> replaceEntities = new ArrayList<>();
 
@@ -391,18 +430,6 @@ public class DefaultCalculationImplTest {
         }
 
         @Override
-        public DataIterator<OriginalEntity> iterator(IEntityClass entityClass, long startTime, long endTime,
-                                                     long lastId) throws SQLException {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public DataIterator<OriginalEntity> iterator(IEntityClass entityClass, long startTime, long endTime,
-                                                     long lastId, int size) throws SQLException {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
         public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, SelectConfig config)
             throws SQLException {
             throw new UnsupportedOperationException();
@@ -432,8 +459,25 @@ public class DefaultCalculationImplTest {
         }
 
         @Override
-        public boolean exist(long id) throws SQLException {
-            return entities.containsKey(id);
+        public int exist(long id) throws SQLException {
+            IEntity entity = entities.get(id);
+            if (entity == null) {
+                return -1;
+            } else {
+                return entity.version();
+            }
+        }
+
+        @Override
+        public DataIterator<OriginalEntity> iterator(IEntityClass entityClass, long startTime, long endTime,
+                                                     long lastId) throws SQLException {
+            return null;
+        }
+
+        @Override
+        public DataIterator<OriginalEntity> iterator(IEntityClass entityClass, long startTime, long endTime,
+                                                     long lastId, int size) throws SQLException {
+            return null;
         }
     }
 
@@ -446,7 +490,7 @@ public class DefaultCalculationImplTest {
         // 计算字段 key为请求计算的IValue实例, value为计算结果.
         private Map<IEntityField, IValue> valueChanage;
         // 指定一个参与者的影响实例id列表.
-        private Map<AbstractParticipant, long[]> entityIds;
+        private Map<AbstractParticipant, Collection<AffectedInfo>> entityIds;
         // 需要增加的影响范围,当迭代树碰到和key相等的参与者时需要为其增加value影响.
         private Map<AbstractParticipant, AbstractParticipant> scope;
 
@@ -465,7 +509,7 @@ public class DefaultCalculationImplTest {
         }
 
         public void setEntityIds(
-            Map<AbstractParticipant, long[]> entityIds) {
+            Map<AbstractParticipant, Collection<AffectedInfo>> entityIds) {
             this.entityIds = entityIds;
         }
 
@@ -494,13 +538,14 @@ public class DefaultCalculationImplTest {
         }
 
         @Override
-        public long[] getMaintainTarget(CalculationContext context, Participant participant,
-                                        Collection<IEntity> triggerEntities) throws CalculationException {
-            long[] ids = entityIds.get(participant);
-            if (ids == null) {
-                return new long[0];
+        public Collection<AffectedInfo> getMaintainTarget(CalculationContext context, Participant participant,
+                                                          Collection<IEntity> triggerEntities)
+            throws CalculationException {
+            Collection<AffectedInfo> affectedInfos = entityIds.get(participant);
+            if (affectedInfos == null) {
+                return Collections.emptyList();
             } else {
-                return ids;
+                return affectedInfos;
             }
         }
 

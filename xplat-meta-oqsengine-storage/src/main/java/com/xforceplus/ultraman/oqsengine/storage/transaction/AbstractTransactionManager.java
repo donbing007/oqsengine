@@ -177,11 +177,11 @@ public abstract class AbstractTransactionManager implements TransactionManager {
     }
 
     @Override
-    public void bind(long id) {
+    public boolean bind(long id) {
 
         Transaction tx = survival.get(id);
         if (tx == null) {
-            throw new RuntimeException(String.format("Invalid transaction(%s), transaction may have timed out.", id));
+            return false;
         }
 
         long threadId = Thread.currentThread().getId();
@@ -193,6 +193,7 @@ public abstract class AbstractTransactionManager implements TransactionManager {
             logger.debug("Bind transaction({})", tx.id());
         }
 
+        return true;
     }
 
     @Override

@@ -67,13 +67,22 @@ public interface CalculationContext {
 
     /**
      * 标识开始维护.
+     *
+     * @param triggerEntity 维护的触发者.
      */
-    void startMaintenance();
+    void startMaintenance(IEntity triggerEntity);
 
     /**
      * 标识结束维护.
      */
     void stopMaintenance();
+
+    /**
+     * 获取当前维护的触发实例.
+     *
+     * @return 触发实例.
+     */
+    Optional<IEntity> getMaintenanceTriggerEntity();
 
     /**
      * 设置造成一切源头的实例.
@@ -313,10 +322,9 @@ public interface CalculationContext {
     /**
      * 锁定目标实例.
      *
-     * @param waitTimeoutMs 最大等待时间.
      * @param entityIds 目标实例列表.
      */
-    boolean tryLocksEntity(long waitTimeoutMs, long ...entityIds);
+    boolean tryLocksEntity(long ...entityIds);
 
     /**
      * 清理.

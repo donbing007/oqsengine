@@ -13,6 +13,7 @@ import java.sql.SQLException;
  * @since 1.8
  */
 public interface InitIvalueLogic {
+
     public CalculationType getCalculationType();
 
     public IEntity init(IEntity entity, InitCalculationParticipant participant) throws SQLException;

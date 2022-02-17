@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.calculation.impl;
 import com.xforceplus.ultraman.oqsengine.calculation.Calculation;
 import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationContext;
 import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationScenarios;
+import com.xforceplus.ultraman.oqsengine.calculation.dto.AffectedInfo;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationException;
 import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFactory;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.CalculationLogic;
@@ -12,7 +13,6 @@ import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.CalculationP
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
-import com.xforceplus.ultraman.oqsengine.lock.ResourceLocker;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -53,11 +53,6 @@ public class DefaultCalculationImpl implements Calculation {
      * 每一个字段修改维护构造影响树的最大迭代次数.
      */
     private static int MAX_BUILD_INFUENCE_NUMBER = 1000;
-
-    /*
-    独占锁的等待时间.
-     */
-    private long lockTimeoutMs = 30000;
 
     private final Logger logger = LoggerFactory.getLogger(DefaultCalculationImpl.class);
 
@@ -141,8 +136,6 @@ public class DefaultCalculationImpl implements Calculation {
      * @param context 上下文.
      */
     private boolean doMaintain(CalculationContext context) throws CalculationException {
-        // 保留当前引起维护的目标实例标识.
-        long targetEntityId = context.getFocusEntity().id();
         /*
             根据所有影响树得到目标更新实例集合.
             entityClass 表示当前影响树被影响的实例元信息.
@@ -168,8 +161,6 @@ public class DefaultCalculationImpl implements Calculation {
         CalculationLogicFactory calculationLogicFactory =
             context.getResourceWithEx(() -> context.getCalculationLogicFactory());
 
-        ResourceLocker locker = context.getResourceWithEx(() -> context.getResourceLocker());
-
         for (Infuence infuence : infuences) {
 
             if (logger.isDebugEnabled()) {
@@ -187,10 +178,10 @@ public class DefaultCalculationImpl implements Calculation {
 
                 Timer.Sample sample = Timer.start(Metrics.globalRegistry);
 
-                long[] affectedEntityIds = null;
+                Collection<AffectedInfo> affectedInfos = null;
                 try {
 
-                    affectedEntityIds = logic.getMaintainTarget(
+                    affectedInfos = logic.getMaintainTarget(
                         context, participant, parentParticipant.get().getAffectedEntities());
 
                 } catch (CalculationException ex) {
@@ -203,14 +194,30 @@ public class DefaultCalculationImpl implements Calculation {
                     logic, sample, MetricsDefine.CALCULATION_LOGIC_DELAY_LATENCY_SECONDS, "getTarget", false);
 
                 // 影响实例增加独占锁.
-                if (affectedEntityIds.length > 0) {
-                    if (!context.tryLocksEntity(lockTimeoutMs, affectedEntityIds)) {
-                        throw new CalculationException(
-                            "Conflicts are calculated and the attempt limit is reached. To give up!");
+                if (!affectedInfos.isEmpty()) {
+                    long[] affectedEntityIds = affectedInfos.stream()
+                        .filter(a -> {
+                            /*
+                            一个优化,减少加锁.
+                            如果是创建场景同时影响的对象又和源头触发对象一致,那么跳过无需再加锁.
+                             */
+                            if (CalculationScenarios.BUILD == context.getScenariso()) {
+                                if (a.getAffectedEntityId() == context.getSourceEntity().id()) {
+                                    return false;
+                                }
+                            }
+                            return true;
+                        })
+                        .mapToLong(a -> a.getAffectedEntityId()).toArray();
+                    if (affectedEntityIds.length > 0) {
+                        if (!context.tryLocksEntity(affectedEntityIds)) {
+                            throw new CalculationException(
+                                "Conflicts are calculated and the attempt limit is reached. To give up!");
+                        }
                     }
                 }
 
-                IEntity[] affectedEntities = loadEntities(context, affectedEntityIds);
+                IEntity[] affectedEntities = loadEntities(context, affectedInfos);
 
                 // 重新计算影响的entity.
                 for (IEntity affectedEntitiy : affectedEntities) {
@@ -228,7 +235,20 @@ public class DefaultCalculationImpl implements Calculation {
                             participant.getEntityClass().code());
                     }
 
-                    context.startMaintenance();
+                    AffectedInfo affectedInfo = null;
+                    for (AffectedInfo a : affectedInfos) {
+                        if (a.getAffectedEntityId() == affectedEntitiy.id()) {
+                            affectedInfo = a;
+                            break;
+                        }
+                    }
+
+                    if (affectedInfo == null) {
+                        throw new CalculationException(
+                            "An unexpected error occurred and the expected instance was not found in the calculation.");
+                    }
+
+                    context.startMaintenance(affectedInfo.getTriggerEntity());
                     Optional<IValue> newValueOp = logic.calculate(context);
                     context.stopMaintenance();
 
@@ -285,16 +305,20 @@ public class DefaultCalculationImpl implements Calculation {
     }
 
     // 加载实体,缓存+储存.
-    private IEntity[] loadEntities(CalculationContext context, long[] ids)
+    private IEntity[] loadEntities(CalculationContext context, Collection<AffectedInfo> affectedInfos)
         throws CalculationException {
 
-        if (ids == null || ids.length == 0) {
+        if (affectedInfos.isEmpty()) {
             return new IEntity[0];
         }
 
+        long[] ids = affectedInfos.stream().mapToLong(a -> a.getAffectedEntityId()).toArray();
+
         if (logger.isDebugEnabled()) {
-            logger.debug("Load instance. Identity list [{}]", Arrays.toString(ids));
+            logger.debug("Load instance. Identity list [{}]", ids);
         }
+
+
 
         // 过滤掉缓存中已经存在的.
         long[] notCacheIds = Arrays.stream(ids).filter(id -> !context.getEntityToCache(id).isPresent()).toArray();

@@ -751,6 +751,11 @@ public class DefaultCacheExecutor implements CacheExecutor {
         }
     }
 
+    @Override
+    public Map<String, String> showAppEnv() {
+        return syncCommands.hgetall(appEnvKeys);
+    }
+
     private String toNowDateString(LocalDate date) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
         return formatter.format(date);

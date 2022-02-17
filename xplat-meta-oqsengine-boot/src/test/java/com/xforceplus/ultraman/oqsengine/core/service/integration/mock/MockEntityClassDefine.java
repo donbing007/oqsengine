@@ -20,6 +20,8 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.Disabled;
 import org.mockito.Mockito;
 
@@ -1072,6 +1074,8 @@ public class MockEntityClassDefine {
             Mockito.when(metaManager.load(e.id(), null)).thenReturn(Optional.of(e));
             Mockito.when(metaManager.load(e.ref())).thenReturn(Optional.of(e));
         }
+        Mockito.when(metaManager.appLoad(Mockito.anyString())).thenReturn(Stream.of(ORDER_CLASS).collect(Collectors.toList()));
+
     }
 
     /**

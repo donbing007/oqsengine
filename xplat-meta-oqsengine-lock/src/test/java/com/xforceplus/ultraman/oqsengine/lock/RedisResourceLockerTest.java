@@ -21,7 +21,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
  * @since 1.8
  */
 @ExtendWith({RedisContainer.class})
-public class RedisResourceLockerTest extends AbstractRetryResourceLockerTest {
+public class RedisResourceLockerTest extends AbstractResourceLockerTest {
 
     private RedisClient redisClient;
     private RedisResourceLocker locker;

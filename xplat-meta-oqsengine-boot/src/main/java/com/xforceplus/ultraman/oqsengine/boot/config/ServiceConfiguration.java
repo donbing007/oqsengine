@@ -47,7 +47,8 @@ public class ServiceConfiguration {
     public EntityManagementService entityManagementService(
         @Value("${sync.ignoreCDCStatusCheck:false}") boolean ignoreCDCStatusCheck,
         @Value("${sync.allowMaxLiveTimeMs:3000}") long allowMaxLiveTimeMs,
-        @Value("${sync.allowMaxUnSyncCommitIdSize:30}") long allowMaxUnSyncCommitIdSize) {
+        @Value("${sync.allowMaxUnSyncCommitIdSize:30}") long allowMaxUnSyncCommitIdSize,
+        @Value("${locker.try.timeoutMs:30000}") long lockerTimeoutMs) {
 
         EntityManagementServiceImpl impl = new EntityManagementServiceImpl(ignoreCDCStatusCheck);
         if (allowMaxLiveTimeMs > 0) {
@@ -57,6 +58,11 @@ public class ServiceConfiguration {
         if (allowMaxUnSyncCommitIdSize > 0) {
             impl.setAllowMaxUnSyncCommitIdSize(allowMaxUnSyncCommitIdSize);
         }
+
+        if (lockerTimeoutMs > 0) {
+            impl.setLockTimeoutMs(lockerTimeoutMs);
+        }
+
         return impl;
     }
 

@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.common;
 import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.function.Function;
 
 /**
  * 数组帮助工具.
@@ -12,6 +13,8 @@ import java.util.Comparator;
  * @since 1.8
  */
 public class ArrayUtil {
+
+    private ArrayUtil() {}
 
     /**
      * 对有序长整形进行去重.
@@ -322,4 +325,54 @@ public class ArrayUtil {
 
         return Arrays.copyOfRange(buff, 0, point);
     }
+
+    /**
+     * 一个二分搜索的实现.
+     * 其有JDK默认实现不同的是,其可以不比较元素本身,而是比较 keyFunction给出的返回值.
+     * 这将允许例如下的调用.
+     * Bean[] beans = ...
+     * Bean b = ArrayUtil.binarySearch(beans, 3, (bean) -> bean.getId(), (id1, id2) -> Long.compare(id, o.id));
+     * 这里查询beans中每一个元素中的id属性为3的bean实例.
+     * 注意: 只能处理排序的数组,并且只能是升序排序.
+     *
+     * @param target      目标数组.
+     * @param key         查找的目标.
+     * @param keyFunction 查询元素获得方法.
+     * @param comparator  比较器.
+     * @param <T>         目标元素类型.
+     * @param <R>         比较元素类型.
+     * @return 目标元素的下标.
+     */
+    public static <T, R> int binarySearch(T[] target, R key, Function<T, R> keyFunction, Comparator<R> comparator) {
+        int low = 0;
+        int high = target.length - 1;
+        int mid;
+        int compareResult;
+        R midKey;
+
+        while (low <= high) {
+            // div 2
+            mid = (low + high) >>> 1;
+            midKey = keyFunction.apply(target[mid]);
+
+            compareResult = comparator.compare(key, midKey);
+
+            if (compareResult == 0) {
+                // 找到
+                return mid;
+
+            } else if (compareResult == -1) {
+
+                high = mid - 1;
+
+            } else {
+
+                low = mid + 1;
+
+            }
+        }
+
+        return -1;
+    }
+
 }

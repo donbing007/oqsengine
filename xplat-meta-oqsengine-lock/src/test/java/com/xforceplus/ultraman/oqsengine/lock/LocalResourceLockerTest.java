@@ -10,7 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
  * @version 0.1 2021/08/09 14:57
  * @since 1.8
  */
-public class LocalResourceLockerTest extends AbstractRetryResourceLockerTest {
+public class LocalResourceLockerTest extends AbstractResourceLockerTest {
 
     private LocalResourceLocker locker;
 

@@ -8,7 +8,6 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -20,14 +19,18 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public abstract class AbstractParticipant implements Participant {
 
-    private String id;
     private IEntityClass entityClass;
     private IEntityField field;
     private Collection<IEntity> affectedEntities;
     private Object attachment;
 
-    public AbstractParticipant() {
-        this.id = UUID.randomUUID().toString();
+    @Override
+    public String getId() {
+        StringBuilder buff = new StringBuilder();
+        buff.append(getEntityClass().id())
+            .append(".")
+            .append(getField().id());
+        return buff.toString();
     }
 
     public void setEntityClass(IEntityClass entityClass) {
@@ -45,11 +48,6 @@ public abstract class AbstractParticipant implements Participant {
 
     public void setAttachment(Object attachment) {
         this.attachment = attachment;
-    }
-
-    @Override
-    public String getId() {
-        return id;
     }
 
     @Override
@@ -105,17 +103,6 @@ public abstract class AbstractParticipant implements Participant {
     }
 
     @Override
-    public String toString() {
-        final StringBuilder sb = new StringBuilder("AbstractParticipant{");
-        sb.append("entityClass=").append(entityClass);
-        sb.append(", field=").append(field);
-        sb.append(", affectedEntities=").append(affectedEntities);
-        sb.append(", attachment=").append(attachment);
-        sb.append('}');
-        return sb.toString();
-    }
-
-    @Override
     public boolean equals(Object o) {
         if (this == o) {
             return true;
@@ -124,11 +111,11 @@ public abstract class AbstractParticipant implements Participant {
             return false;
         }
         AbstractParticipant that = (AbstractParticipant) o;
-        return Objects.equals(id, that.id);
+        return Objects.equals(getId(), that.getId());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id);
+        return Objects.hash(getId());
     }
 }

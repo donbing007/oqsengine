@@ -53,9 +53,9 @@ public interface PreciseSelectStorage {
      * 判断指定的实例是否存在.
      *
      * @param id 目标标识.
-     * @return true 存在,false不存在.
+     * @return 正整数表示存在且当前的版本号, 负数表示不存在.
      * @throws SQLException 异常.
      */
-    boolean exist(long id) throws SQLException;
+    int exist(long id) throws SQLException;
 
 }

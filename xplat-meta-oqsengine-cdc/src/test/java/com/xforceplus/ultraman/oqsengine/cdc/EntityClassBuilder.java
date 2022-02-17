@@ -19,21 +19,21 @@ import java.util.Map;
  */
 public class EntityClassBuilder {
 
-    public static final IEntityField STRING_FIELD =
-         EntityField.Builder
-                .anEntityField()
-                .withId(1)
-                .withName("string")
-                .withFieldType(FieldType.STRING)
-                .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build())
-                .build();
-
     public static final IEntityField LONG_FIELD =
         EntityField.Builder
             .anEntityField()
-            .withId(2)
+            .withId(1)
             .withName("long")
             .withFieldType(FieldType.LONG)
+            .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build())
+            .build();
+
+    public static final IEntityField STRING_FIELD =
+        EntityField.Builder
+            .anEntityField()
+            .withId(2)
+            .withName("string")
+            .withFieldType(FieldType.STRING)
             .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build())
             .build();
 
@@ -64,10 +64,20 @@ public class EntityClassBuilder {
             .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build())
             .build();
 
-    public static final IEntityField STRINGS_FIELD =
+    public static final IEntityField ENUM_FIELD =
         EntityField.Builder
             .anEntityField()
             .withId(6)
+            .withName("enum")
+            .withFieldType(FieldType.ENUM)
+            .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build())
+            .build();
+
+
+    public static final IEntityField STRINGS_FIELD =
+        EntityField.Builder
+            .anEntityField()
+            .withId(7)
             .withName("strings")
             .withFieldType(FieldType.STRINGS)
             .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build())

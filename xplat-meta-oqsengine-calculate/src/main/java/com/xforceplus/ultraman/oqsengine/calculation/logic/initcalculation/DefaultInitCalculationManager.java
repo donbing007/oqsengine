@@ -21,7 +21,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Lookup
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import io.vavr.control.Either;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -67,6 +66,7 @@ public class DefaultInitCalculationManager implements InitCalculationManager {
     @Resource
     private ResourceLocker locker;
 
+    @Resource(name = "taskThreadPool")
     private ExecutorService worker;
 
     private final List<CalculationType> participantTypes;
@@ -191,12 +191,12 @@ public class DefaultInitCalculationManager implements InitCalculationManager {
     public InitCalculationInfo generateAppInfo(String code) {
 
         // TODO 需要获取redis中元数据配置.
-        List<IEntityClass> entityClasses = new ArrayList<>();
+        /*List<IEntityClass> entityClasses = new ArrayList<>();
         Optional<IEntityClass> load = metaManager.load(Long.MAX_VALUE - 4, null);
         if (load.isPresent()) {
             entityClasses.add(load.get());
-        }
-        entityClasses = (ArrayList) metaManager.appLoad(code);
+        }*/
+        List<IEntityClass> entityClasses = new ArrayList<>(metaManager.appLoad(code));
         Collection<Participant> all = getParticipant(entityClasses);
         List<Infuence> infuences = generateInfluence(all);
         Set<Participant> need = getNeedInitParticipant(all, infuences);

@@ -83,7 +83,7 @@ public class CdcInitialization implements BeanInitialization {
 
     @Override
     public void clear() throws Exception {
-        DataSourcePackage dataSourcePackage = CommonInitialization.getInstance().getDataSourcePackage(true);
+        DataSourcePackage dataSourcePackage = CommonInitialization.getInstance().getDataSourcePackage(false);
         if (null != dataSourcePackage && null != dataSourcePackage.getDevOps()) {
             for (DataSource ds : dataSourcePackage.getMaster()) {
                 Connection conn = ds.getConnection();
@@ -103,6 +103,10 @@ public class CdcInitialization implements BeanInitialization {
         consumerService = null;
 
         instance = null;
+    }
+
+    public SphinxSyncExecutor sphinxSyncExecutor() {
+        return sphinxSyncExecutor;
     }
 
     /**
@@ -166,7 +170,7 @@ public class CdcInitialization implements BeanInitialization {
         public int error = 0;
 
         @Override
-        public long clean(IEntityClass entityClass, long maintainId, long start, long end) throws SQLException {
+        public long clean(long entityClassId, long maintainId, long start, long end) throws SQLException {
             return 0;
         }
 

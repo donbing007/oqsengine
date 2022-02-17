@@ -1,8 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.cdc;
 
 import com.alibaba.otter.canal.protocol.CanalEntry;
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns;
 import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
+import java.util.List;
 
 /**
  * desc :.
@@ -172,6 +174,19 @@ public class CanalEntryTools {
         return builder.build();
     }
 
+    /**
+     * 创建数据行.
+     */
+    public static CanalEntry.Entry buildRow(long id, int levelOrdinal, long entityId, boolean replacement, long tx,
+                                            long commit, String isDeleted,
+                                            String attr, int oqsmajor, int version, Long create, Long update, boolean buildError) {
+        CanalEntry.Entry.Builder builder = getEntryBuildByEntryType(CanalEntry.EntryType.ROWDATA);
+        builder.setStoreValue(
+            buildRowChange(id, levelOrdinal, entityId, replacement, tx, commit, isDeleted, attr, oqsmajor, version,
+                create, update, buildError).toByteString());
+        return builder.build();
+    }
+
     public static CanalEntry.Entry buildTransactionStart() {
         return getEntryBuildByEntryType(CanalEntry.EntryType.TRANSACTIONBEGIN).build();
     }
@@ -211,6 +226,34 @@ public class CanalEntryTools {
         builder.addRowDatas(
             buildRowData(id, levelOrdinal, entityId, tx, op, commit, isDeleted, attrIndex, oqsmajor, version,
                 buildError)
+        );
+
+        return builder.build();
+    }
+
+    /**
+     * 创建数据行改变.
+     */
+    public static CanalEntry.RowChange buildRowChange(long id, int levelOrdinal, long entityId, boolean replacement,
+                                                      long tx, long commit,
+                                                      String isDeleted, String attr, int oqsmajor, int version,
+                                                      Long create, Long update,
+                                                      boolean buildError) {
+        CanalEntry.RowChange.Builder builder = CanalEntry.RowChange.newBuilder();
+
+        CanalEntry.EventType eventType = replacement ? CanalEntry.EventType.UPDATE : CanalEntry.EventType.INSERT;
+        builder.setEventType(eventType);
+
+        int op = OperationType.DELETE.getValue();
+        if (isDeleted.equals("0")) {
+            if (replacement) {
+                op = OperationType.UPDATE.getValue();
+            } else {
+                op = OperationType.CREATE.getValue();
+            }
+        }
+        builder.addRowDatas(
+            buildRowData(id, levelOrdinal, entityId, tx, op, commit, isDeleted, attr, oqsmajor, version, create, update, buildError)
         );
 
         return builder.build();
@@ -266,6 +309,23 @@ public class CanalEntryTools {
         return builder.build();
     }
 
+    private static CanalEntry.RowData buildRowData(long id, int levelOrdinal, long entityId, long tx, int op,
+                                                   long commit,
+                                                   String isDeleted, String attr, int oqsmajor, int version,
+                                                   Long create, Long update, boolean buildError) {
+
+        CanalEntry.RowData.Builder builder = CanalEntry.RowData.newBuilder();
+        for (OqsBigEntityColumns v : OqsBigEntityColumns.values()) {
+            CanalEntry.Column column =
+                buildColumn(id, v, levelOrdinal, entityId, tx, op, commit, isDeleted, attr, oqsmajor,
+                    create, update, version, buildError);
+
+            builder.addAfterColumns(column);
+        }
+
+        return builder.build();
+    }
+
     /**
      * 创建字段.
      */
@@ -301,6 +361,56 @@ public class CanalEntryTools {
                     return buildAttribute(v, attrIndex);
                 }
                 return buildErrorAttribute(v, attrIndex);
+            case CREATETIME:
+                return buildTime(v, create);
+            case UPDATETIME:
+                return buildTime(v, update);
+            case OQSMAJOR:
+                return buildOqsmajor(v, oqsmajor);
+            case VERSION:
+                return buildVersion(v, version);
+            case PROFILE:
+                return buildProfile(v, "");
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * 创建字段.
+     */
+    public static CanalEntry.Column buildColumn(long id, OqsBigEntityColumns v, int levelOrdinal, long entityId,
+                                                long tx, int op,
+                                                long commit, String isDeleted, String attr, int oqsmajor, Long create,
+                                                Long update, int version, boolean buildError) {
+        switch (v) {
+            case ID:
+                return buildId(id, v);
+            case ENTITYCLASSL0:
+            case ENTITYCLASSL1:
+            case ENTITYCLASSL2:
+            case ENTITYCLASSL3:
+            case ENTITYCLASSL4:
+                if (v.ordinal() == levelOrdinal) {
+                    return buildEntityClass(v, entityId);
+                } else {
+                    return getBuilder(v).setValue(Long.toString(0)).build();
+                }
+            case ENTITYCLASSVER:
+                return buildVersion(v, 1);
+            case OP:
+                return buildOP(v, op);
+            case TX:
+                return buildTX(v, tx);
+            case COMMITID:
+                return buildCommitid(v, commit);
+            case DELETED:
+                return buildDeleted(v, isDeleted);
+            case ATTRIBUTE:
+                if (!buildError) {
+                    return buildAttribute(v, attr);
+                }
+                return buildErrorAttribute(v, attr);
             case CREATETIME:
                 return buildTime(v, create);
             case UPDATETIME:
@@ -385,9 +495,21 @@ public class CanalEntryTools {
         return builder.build();
     }
 
+    private static CanalEntry.Column buildAttribute(OqsBigEntityColumns v, String attr) {
+        CanalEntry.Column.Builder builder = getBuilder(v);
+        builder.setValue(attr);
+        return builder.build();
+    }
+
     private static CanalEntry.Column buildErrorAttribute(OqsBigEntityColumns v, int attrIndex) {
         CanalEntry.Column.Builder builder = getBuilder(v);
         builder.setValue(Prepared.attrErrors[attrIndex]);
+        return builder.build();
+    }
+
+    private static CanalEntry.Column buildErrorAttribute(OqsBigEntityColumns v, String attr) {
+        CanalEntry.Column.Builder builder = getBuilder(v);
+        builder.setValue(attr);
         return builder.build();
     }
 
@@ -395,6 +517,21 @@ public class CanalEntryTools {
         CanalEntry.Column.Builder builder = getBuilder(v);
         builder.setValue(profile);
         return builder.build();
+    }
+
+    public static List<CanalEntry.Column> generateColumns(long expectedId, int level,
+                                                          long expectedCommitId, long expectedTx, int expectedVersion,
+                                                          String attrString, int expectedOqsMajor, String isDeleted,
+                                                          Long entityClassId, Long create, Long update)
+        throws InvalidProtocolBufferException {
+
+        CanalEntry.Entry entry =
+            buildRow(expectedId, level, entityClassId, true, expectedTx,
+                expectedCommitId, isDeleted, attrString, expectedOqsMajor, expectedVersion, create, update, false);
+        CanalEntry.RowData rowData =
+            CanalEntry.RowChange.parseFrom(entry.getStoreValue()).getRowDatas(0);
+
+        return rowData.getAfterColumnsList();
     }
 
     /**

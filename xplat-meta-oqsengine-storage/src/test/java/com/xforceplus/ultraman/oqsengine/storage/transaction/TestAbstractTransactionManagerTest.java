@@ -177,13 +177,7 @@ public class TestAbstractTransactionManagerTest {
         tm.unbind();
         TimeUnit.SECONDS.sleep(1);
 
-        try {
-            tm.bind(tx.id());
-            Assertions.fail("An unbound exception is expected, but it is not.");
-        } catch (RuntimeException ex) {
-            Assertions.assertEquals(
-                String.format("Invalid transaction(%s), transaction may have timed out.", tx.id()), ex.getMessage());
-        }
+        Assertions.assertFalse(tm.bind(tx.id()));
 
         Assertions.assertFalse(tm.getCurrent().isPresent());
         Assertions.assertTrue(tx.isCompleted());
@@ -248,7 +242,7 @@ public class TestAbstractTransactionManagerTest {
         public Transaction doCreate(String msg) {
 
             long id = idGenerator.next();
-            return new MockTransaction(id, waitMs, commitIdGenerator, this.commitIdStatusService, cacheEventHandler);
+            return new MockTransaction(id, waitMs, commitIdGenerator, this.commitIdStatusService);
 
         }
     }
@@ -261,15 +255,13 @@ public class TestAbstractTransactionManagerTest {
         private int rollbackNumber;
 
         public MockTransaction(
-            long id, long watiMs, LongIdGenerator longIdGenerator, CommitIdStatusService commitIdStatusService,
-            DoNothingCacheEventHandler cacheEventHandler) {
+            long id, long watiMs, LongIdGenerator longIdGenerator, CommitIdStatusService commitIdStatusService) {
             this.waitMs = watiMs;
 
             transaction = MultiLocalTransaction.Builder.anMultiLocalTransaction()
                 .withId(id)
                 .withLongIdGenerator(longIdGenerator)
                 .withCommitIdStatusService(commitIdStatusService)
-                .withCacheEventHandler(cacheEventHandler)
                 .build();
         }
 

@@ -105,21 +105,8 @@ public class Entity implements IEntity, Serializable {
         return this.major;
     }
 
-    public Entity() {
-    }
-
-    /**
-     * 重置 id 为新的 id.
-     *
-     * @param id 新的 id.
-     */
     @Override
-    public void resetId(long id) {
-        this.id = id;
-    }
-
-    @Override
-    public Object clone() throws CloneNotSupportedException {
+    public IEntity copy() {
         Entity cloneEntity = new Entity();
         cloneEntity.id = this.id;
         cloneEntity.entityClassRef = this.entityClassRef;
@@ -135,6 +122,20 @@ public class Entity implements IEntity, Serializable {
         return cloneEntity;
     }
 
+    public Entity() {
+    }
+
+    /**
+     * 重置 id 为新的 id.
+     *
+     * @param id 新的 id.
+     */
+    @Override
+    public void resetId(long id) {
+        this.id = id;
+    }
+
+
     @Override
     public void restMaintainId(long maintainId) {
         this.maintainid = maintainId;
@@ -143,6 +144,7 @@ public class Entity implements IEntity, Serializable {
     @Override
     public void delete() {
         this.deleted = true;
+        this.neat();
     }
 
     @Override

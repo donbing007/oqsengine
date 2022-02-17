@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.metadata.mock.generator;
 
 import static com.xforceplus.ultraman.oqsengine.metadata.mock.generator.GeneralConstant.DEFAULT_ARGS;
-import static com.xforceplus.ultraman.oqsengine.metadata.mock.generator.GeneralConstant.MOCK_SENIOR_EXPRESSION;
 import static com.xforceplus.ultraman.oqsengine.metadata.mock.generator.GeneralConstant.defaultValue;
 
 import com.google.protobuf.Any;
@@ -23,6 +22,8 @@ import java.util.List;
 import java.util.Optional;
 
 /**
+ * 数据mock.
+ *
  * @author j.xu
  * @version 0.1 2021/05/2021/5/14
  * @since 1.8

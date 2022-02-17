@@ -20,9 +20,24 @@ import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 public interface StorageValue<V> {
 
     /**
+     * 分割标志.
+     */
+    public static final String PARTITION_FLAG = "P";
+
+    /**
+     * 分割点起始.
+     */
+    public static final int FIRST_PARTITION = 0;
+
+    /**
      * 标识不是多值.
      */
     public static final int NOT_LOCATION = -1;
+
+    /**
+     * 标识不是长字符串分割.
+     */
+    public static final int NOT_PARTITION = -1;
 
     /**
      * 判断是否还有下个值.
@@ -111,5 +126,13 @@ public interface StorageValue<V> {
      */
     StorageType type();
 
+    /**
+     * 设置不需要拼接location.
+     */
+    void notLocationAppend();
 
+    /**
+     * 设置当前部分为整个长字段切分中的第几部分.
+     */
+    void partition(int partition);
 }

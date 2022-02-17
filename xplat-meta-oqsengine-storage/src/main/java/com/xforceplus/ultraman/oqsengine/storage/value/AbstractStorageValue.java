@@ -19,12 +19,14 @@ public abstract class AbstractStorageValue<V> implements StorageValue<V> {
      * 序号开始.
      */
     static final int FIRST_LOCATION = 0;
-    
+
     private StorageValue<V> next;
     private String logicName;
     private int location;
     private StorageType type;
     private V value;
+    private boolean locationAppend = true;
+    private int partition;
 
     /**
      * 使用物理字段名和名构造一个储存值实例.
@@ -44,6 +46,7 @@ public abstract class AbstractStorageValue<V> implements StorageValue<V> {
             this.type = parseStorageType(name);
         }
         this.value = value;
+        this.partition = StorageValue.NOT_PARTITION;
     }
 
     @Override
@@ -94,29 +97,48 @@ public abstract class AbstractStorageValue<V> implements StorageValue<V> {
         return logicName;
     }
 
+    /**
+     * 目前只有主库代码使用了该方法.
+     */
     @Override
     public String storageName() {
-        return doStorageName(logicName);
-    }
-
-    @Override
-    public ShortStorageName shortStorageName() {
-        String nameRadix36 = Long.toString(Long.parseLong(logicName), 36);
-
-        String shortStorageName = doStorageName(nameRadix36);
-
-        int middle = shortStorageName.length() / 2 - 1;
-        return new ShortStorageName(shortStorageName.substring(0, middle + 1), shortStorageName.substring(middle + 1));
-    }
-
-    private String doStorageName(String base) {
         StringBuilder buff = new StringBuilder();
-        buff.append(base)
+        buff.append(logicName)
             .append(this.type().getType());
         if (location != StorageValue.NOT_LOCATION) {
             buff.append(location);
         }
 
+        return buff.toString();
+    }
+
+    /**
+     * 目前只有index库代码使用了该方法.
+     */
+    @Override
+    public ShortStorageName shortStorageName() {
+        String nameRadix36 = Long.toString(Long.parseLong(logicName), 36);
+
+
+        /*
+            如果是超长字段,需要拼接该部分在整个字段中的位置
+            比如: 对于普通String -> rawShortname : 1a2b3h4c5j6k7
+                 value AAAAAAABBBBBBBCCCCCCCDDDDDDD
+                 将会被转为 P01a2b3h4AAAAAAABBBBBBBCCCCCCCDDDDc5j6k7S 和 P11a2b3h4DDDc5j6k7S的格式
+                 对于Strings
+                 将会被转为 P01a2b3h4AAAAAAABBBBBBBCCCCCCCDDDDc5j6k7S0 和 P11a2b3h4DDDc5j6k7S1的格式
+        */
+        int middle = nameRadix36.length() / 2 - 1;
+        String head = (partition != StorageValue.NOT_PARTITION) ? PARTITION_FLAG + partition : "";
+        return new ShortStorageName(head, nameRadix36.substring(0, middle + 1), nameRadix36.substring(middle + 1), storageTailsName());
+    }
+
+    private String storageTailsName() {
+        StringBuilder buff = new StringBuilder().append(this.type().getType());
+        //  只有标记为需要追加location时才拼接.
+        if (locationAppend && location != StorageValue.NOT_LOCATION) {
+            buff.append(location);
+        }
         return buff.toString();
     }
 
@@ -182,6 +204,16 @@ public abstract class AbstractStorageValue<V> implements StorageValue<V> {
         } else {
             return StorageType.UNKNOWN;
         }
+    }
+
+    @Override
+    public void notLocationAppend() {
+        locationAppend = false;
+    }
+
+    @Override
+    public void partition(int partition) {
+        this.partition = partition;
     }
 
     // 解析逻辑字段名.

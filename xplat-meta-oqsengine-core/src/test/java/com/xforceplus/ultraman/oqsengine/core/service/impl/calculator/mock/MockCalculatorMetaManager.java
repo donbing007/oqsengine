@@ -5,17 +5,19 @@ import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.AutoFill;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Formula;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.StaticCalculation;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
 
 /**
+ * 测试用mock.
+ *
  * @author j.xu
  * @version 0.1 2021/05/2021/5/18
  * @since 1.8
@@ -227,6 +229,11 @@ public class MockCalculatorMetaManager implements MetaManager {
 
     @Override
     public int need(String appId, String env) {
+        return 0;
+    }
+
+    @Override
+    public int need(String appId, String env, boolean overWrite) {
         return 0;
     }
 

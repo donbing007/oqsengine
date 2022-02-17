@@ -287,7 +287,7 @@ public class SQLMasterStorageTest {
         long[] ids = expectedEntitys.stream().mapToLong(e -> e.id()).toArray();
         Collection<IEntity> entities = storage.selectMultiple(ids, l1EntityClass);
 
-        Map<Long, IEntity> expectedEntityMap =
+        Map<Long, com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> expectedEntityMap =
             expectedEntitys.stream().collect(Collectors.toMap(e -> e.id(), e -> e, (e0, e1) -> e0));
 
         Assertions.assertEquals(expectedEntityMap.size(), entities.size());
@@ -317,9 +317,11 @@ public class SQLMasterStorageTest {
             new EmptyTypedValue(l2StringField)
         );
 
+        Assertions.assertEquals(0, targetEntity.version());
         Assertions.assertTrue(targetEntity.isDirty());
 
         int oldVersion = targetEntity.version();
+
 
         boolean result = storage.replace(targetEntity, l2EntityClass);
         Assertions.assertTrue(result);
@@ -444,7 +446,7 @@ public class SQLMasterStorageTest {
 
         Assertions.assertFalse(storage.selectOne(targetEntity.id(), l2EntityClass).isPresent());
 
-        Assertions.assertFalse(storage.exist(targetEntity.id()));
+        Assertions.assertFalse(storage.exist(targetEntity.id()) >= 0);
     }
 
     @Test
@@ -468,15 +470,16 @@ public class SQLMasterStorageTest {
 
         Assertions.assertTrue(storage.delete(targetEntity, l2EntityClass));
         Assertions.assertFalse(storage.selectOne(targetEntity.id(), l2EntityClass).isPresent());
-        Assertions.assertFalse(storage.exist(targetEntity.id()));
+        Assertions.assertFalse(storage.exist(targetEntity.id()) >= 0);
     }
 
     @Test
     public void testExist() throws Exception {
         IEntity targetEntity = expectedEntitys.get(2);
-        Assertions.assertTrue(storage.exist(targetEntity.id()));
 
-        Assertions.assertFalse(storage.exist(-1));
+        Assertions.assertEquals(0, storage.exist(targetEntity.id()));
+
+        Assertions.assertFalse(storage.exist(-1) >= 0);
     }
 
     // 初始化数据
@@ -518,6 +521,7 @@ public class SQLMasterStorageTest {
             .withId(baseId)
             .withMajor(OqsVersion.MAJOR)
             .withEntityClassRef(l2EntityClassRef)
+            .withVersion(0)
             .build();
         entity.entityValue().addValues(
             buildValue(baseId,

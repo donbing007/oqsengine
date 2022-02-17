@@ -35,9 +35,8 @@ public class BuildExecutor extends AbstractJdbcTaskExecutor<JsonAttributeMasterS
 
     @Override
     public boolean[] execute(JsonAttributeMasterStorageEntity[] masterStorageEntities) throws Exception {
-        int entityClassSize = masterStorageEntities[0].getEntityClasses().length;
 
-        String sql = buildSQL(entityClassSize);
+        String sql = buildSQL();
         try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
             checkTimeout(st);
 
@@ -79,16 +78,22 @@ public class BuildExecutor extends AbstractJdbcTaskExecutor<JsonAttributeMasterS
         fullEntityClass(pos, st, entity);
     }
 
-    private int fullEntityClass(int startPos, PreparedStatement st, JsonAttributeMasterStorageEntity masterStorageEntity)
+    private int fullEntityClass(int startPos,
+                                PreparedStatement st,
+                                JsonAttributeMasterStorageEntity masterStorageEntity)
         throws SQLException {
         int pos = startPos;
-        for (int i = 0; i < masterStorageEntity.getEntityClasses().length; i++) {
-            st.setLong(pos++, masterStorageEntity.getEntityClasses()[i]);
+        for (int i = 0; i < FieldDefine.ENTITYCLASS_LEVEL_LIST.length; i++) {
+            if (i < masterStorageEntity.getEntityClasses().length) {
+                st.setLong(pos++, masterStorageEntity.getEntityClasses()[i]);
+            } else {
+                st.setLong(pos++, 0);
+            }
         }
         return pos;
     }
 
-    private String buildSQL(int entityClassSize) {
+    private String buildSQL() {
         StringBuilder buff = new StringBuilder();
         // insert into ${table}
         buff.append("INSERT INTO ").append(getTableName())
@@ -107,7 +112,7 @@ public class BuildExecutor extends AbstractJdbcTaskExecutor<JsonAttributeMasterS
                 FieldDefine.PROFILE)
         );
 
-        for (int i = 0; i < entityClassSize; i++) {
+        for (int i = 0; i < FieldDefine.ENTITYCLASS_LEVEL_LIST.length; i++) {
             buff.append(",")
                 .append(FieldDefine.ENTITYCLASS_LEVEL_LIST[i]);
         }
@@ -115,7 +120,8 @@ public class BuildExecutor extends AbstractJdbcTaskExecutor<JsonAttributeMasterS
         final int baseColumnSize = 12;
 
         buff.append(") VALUES (")
-            .append(String.join(",", Collections.nCopies(baseColumnSize + entityClassSize, "?")))
+            .append(String.join(",", Collections.nCopies(
+                baseColumnSize + FieldDefine.ENTITYCLASS_LEVEL_LIST.length, "?")))
             .append(")");
         return buff.toString();
     }

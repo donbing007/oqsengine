@@ -14,6 +14,7 @@ import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.MockRedisCallbackService;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
 import com.xforceplus.ultraman.oqsengine.cdc.mock.CdcInitialization;
+import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MetaInitialization;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.CdcErrorTask;
@@ -27,6 +28,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -63,7 +65,12 @@ public class SphinxConsumerServiceTest extends AbstractCDCTestHelper {
 
     @AfterEach
     public void after() throws Exception {
-        super.destroy(false);
+        super.clear(false);
+    }
+
+    @AfterAll
+    public static void afterAll() {
+        InitializationHelper.destroy();
     }
 
 

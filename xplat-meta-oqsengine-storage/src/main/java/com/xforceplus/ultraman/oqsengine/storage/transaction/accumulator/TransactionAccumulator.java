@@ -21,7 +21,7 @@ public interface TransactionAccumulator {
     /**
      * 事务中更新次数累加1.
      */
-    public boolean accumulateReplace(IEntity newEntity, IEntity oldEntity);
+    public boolean accumulateReplace(IEntity entity);
 
     /**
      * 事务中删除次数累加1.

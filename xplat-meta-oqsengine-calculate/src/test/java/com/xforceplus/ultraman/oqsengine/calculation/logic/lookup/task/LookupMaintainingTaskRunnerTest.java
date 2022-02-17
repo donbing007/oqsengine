@@ -21,6 +21,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.storage.ConditionsSelectStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.EntityPackage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import com.xforceplus.ultraman.oqsengine.task.DefaultTaskCoordinator;
@@ -236,7 +237,8 @@ public class LookupMaintainingTaskRunnerTest {
     // 实际测试任务,只有一个target,会有1-N个lookup实例.
     private void doTest(int lookupSize) throws Exception {
         buildDatas(lookupSize);
-        IEntity targetEntity = masterStorage.selectOne(targetEntityId).get();
+        com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity
+            targetEntity = masterStorage.selectOne(targetEntityId).get();
         targetEntity.entityValue().addValue(
             new StringValue(targetField0, "2")
         );
@@ -266,7 +268,7 @@ public class LookupMaintainingTaskRunnerTest {
                 if (lookupEntity.version() == 0) {
                     notUpdate = true;
 
-                    logger.debug("Wait until all tasks are complete.[{}/{}]", okSize, newLookupEntities.size());
+                    logger.info("Wait until all tasks are complete.[{}/{}]", okSize, newLookupEntities.size());
 
                     LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(1000L));
 
@@ -277,7 +279,7 @@ public class LookupMaintainingTaskRunnerTest {
                 }
             }
         }
-        logger.debug("All entity update.[{}/{}]", okSize, newLookupEntities.size());
+        logger.info("All entity update.[{}/{}]", okSize, newLookupEntities.size());
 
         for (IEntity le : newLookupEntities) {
             Assertions.assertEquals(
@@ -327,13 +329,13 @@ public class LookupMaintainingTaskRunnerTest {
 
     class MockMasterStorage implements MasterStorage {
 
-        private Map<Long, IEntity> data;
+        private Map<Long, com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> data;
 
         public MockMasterStorage() {
             data = new ConcurrentHashMap<>();
         }
 
-        public Map<Long, IEntity> getData() {
+        public Map<Long, com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> getData() {
             return data;
         }
 
@@ -345,14 +347,10 @@ public class LookupMaintainingTaskRunnerTest {
 
         @Override
         public boolean replace(IEntity entity, IEntityClass entityClass) throws SQLException {
-            entity.resetVersion(entity.version() + 1);
-            data.put(entity.id(), entity);
-            return true;
-        }
-
-        @Override
-        public boolean delete(IEntity entity, IEntityClass entityClass) throws SQLException {
-            if (data.remove(entity.id()) != null) {
+            if (data.containsKey(entity.id())) {
+                entity.resetVersion(entity.version() + 1);
+                data.put(entity.id(), entity);
+                entity.neat();
                 return true;
             } else {
                 return false;
@@ -360,15 +358,24 @@ public class LookupMaintainingTaskRunnerTest {
         }
 
         @Override
-        public DataIterator<OriginalEntity> iterator(IEntityClass entityClass, long startTime, long endTime,
-                                                     long lastId) throws SQLException {
-            throw new UnsupportedOperationException();
+        public void replace(EntityPackage entityPackage) throws SQLException {
+            entityPackage.stream().forEach(entry -> {
+                IEntity e = entry.getKey();
+                if (data.containsKey(e.id())) {
+                    e.resetVersion(e.version() + 1);
+                    e.neat();
+                }
+            });
         }
 
         @Override
-        public DataIterator<OriginalEntity> iterator(IEntityClass entityClass, long startTime, long endTime,
-                                                     long lastId, int size) throws SQLException {
-            return null;
+        public boolean delete(IEntity entity, IEntityClass entityClass) throws SQLException {
+            if (data.remove(entity.id()) != null) {
+                entity.delete();
+                return true;
+            } else {
+                return false;
+            }
         }
 
         @Override
@@ -399,8 +406,25 @@ public class LookupMaintainingTaskRunnerTest {
         }
 
         @Override
-        public boolean exist(long id) throws SQLException {
-            return data.containsKey(id);
+        public int exist(long id) throws SQLException {
+            IEntity entity = data.get(id);
+            if (entity == null) {
+                return -1;
+            } else {
+                return entity.version();
+            }
+        }
+
+        @Override
+        public DataIterator<OriginalEntity> iterator(IEntityClass entityClass, long startTime, long endTime,
+                                                     long lastId) throws SQLException {
+            return null;
+        }
+
+        @Override
+        public DataIterator<OriginalEntity> iterator(IEntityClass entityClass, long startTime, long endTime,
+                                                     long lastId, int size) throws SQLException {
+            return null;
         }
     }
 

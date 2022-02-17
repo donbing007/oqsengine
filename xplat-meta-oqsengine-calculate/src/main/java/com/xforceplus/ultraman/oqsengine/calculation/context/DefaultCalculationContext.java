@@ -45,8 +45,8 @@ import java.util.stream.Collectors;
 public class DefaultCalculationContext implements CalculationContext {
 
     private IEntity sourceEntity;
-    private boolean maintenance;
     private IEntity focusEntity;
+    private IEntity maintenanceEntity;
     private IEntityClass focusEntityClass;
     private IEntityField focusField;
     private CalculationScenarios scenarios;
@@ -67,6 +67,8 @@ public class DefaultCalculationContext implements CalculationContext {
     // key为 entityId-fieldId的组合.
     private Map<String, ValueChange> valueChanges;
     private Set<Long> lockedEnittyIds;
+    private boolean maintenance;
+    private long lockTimeoutMs;
 
     @Override
     public CalculationScenarios getScenariso() {
@@ -129,13 +131,22 @@ public class DefaultCalculationContext implements CalculationContext {
     }
 
     @Override
-    public void startMaintenance() {
+    public void startMaintenance(IEntity triggerEntity) {
         this.maintenance = true;
+
+        this.maintenanceEntity = triggerEntity;
     }
 
     @Override
     public void stopMaintenance() {
         this.maintenance = false;
+
+        this.maintenanceEntity = null;
+    }
+
+    @Override
+    public Optional<IEntity> getMaintenanceTriggerEntity() {
+        return Optional.ofNullable(this.maintenanceEntity);
     }
 
     @Override
@@ -359,8 +370,12 @@ public class DefaultCalculationContext implements CalculationContext {
         return true;
     }
 
+    /**
+     * 对于指定实例进行加锁.
+     * 已经加锁过的不会再次进行加锁.
+     */
     @Override
-    public boolean tryLocksEntity(long waitTimeoutMs, long... entityIds) {
+    public boolean tryLocksEntity(long... entityIds) {
         if (this.lockedEnittyIds == null) {
             this.lockedEnittyIds = new HashSet<>();
         }
@@ -373,7 +388,7 @@ public class DefaultCalculationContext implements CalculationContext {
         if (keys.length > 0) {
             boolean result = false;
             try {
-                result = this.resourceLocker.tryLocks(waitTimeoutMs, keys);
+                result = this.resourceLocker.tryLocks(lockTimeoutMs, keys);
             } catch (InterruptedException e) {
                 // donothing
             }
@@ -390,6 +405,10 @@ public class DefaultCalculationContext implements CalculationContext {
             return true;
 
         }
+    }
+
+    public Set<Long> getLockedEnittyIds() {
+        return new HashSet<>(lockedEnittyIds);
     }
 
     @Override
@@ -449,6 +468,7 @@ public class DefaultCalculationContext implements CalculationContext {
      * 构造器.
      */
     public static final class Builder {
+        private long lockTimeoutMs = 30000;
         private EventBus eventBus;
         private Transaction transaction;
         private CalculationScenarios scenarios;
@@ -529,6 +549,11 @@ public class DefaultCalculationContext implements CalculationContext {
             return this;
         }
 
+        public Builder withLockTimeroutMs(long lockTimeoutMs) {
+            this.lockTimeoutMs = lockTimeoutMs;
+            return this;
+        }
+
         /**
          * 构造.
          */
@@ -546,6 +571,7 @@ public class DefaultCalculationContext implements CalculationContext {
             defaultCalculationContext.conditionsSelectStorage = this.conditionsSelectStorage;
             defaultCalculationContext.resourceLocker = this.resourceLocker;
             defaultCalculationContext.calculationLogicFactory = this.calculationLogicFactory;
+            defaultCalculationContext.lockTimeoutMs = this.lockTimeoutMs;
             return defaultCalculationContext;
         }
     }

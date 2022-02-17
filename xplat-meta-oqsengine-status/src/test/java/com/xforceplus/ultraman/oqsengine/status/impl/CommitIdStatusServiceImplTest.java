@@ -66,24 +66,24 @@ public class CommitIdStatusServiceImplTest {
             return i;
         }).toArray();
 
-        long[] notReadyCommitIds = LongStream.rangeClosed(12, 19).map(i -> {
-            impl.save(i, false);
-            return i;
-        }).toArray();
-
-        long[] notExistCommitIds = LongStream.rangeClosed(22, 32).toArray();
-
         boolean[] expected;
         boolean[] status = impl.isReady(readyCommitIds);
         expected = new boolean[readyCommitIds.length];
         Arrays.fill(expected, true);
         Assertions.assertArrayEquals(expected, status);
 
+        long[] notReadyCommitIds = LongStream.rangeClosed(12, 19).map(i -> {
+            impl.save(i, false);
+            return i;
+        }).toArray();
+
         status = impl.isReady(notReadyCommitIds);
         expected = new boolean[notReadyCommitIds.length];
         Arrays.fill(expected, false);
         Assertions.assertArrayEquals(expected, status);
 
+
+        long[] notExistCommitIds = LongStream.rangeClosed(22, 32).toArray();
         status = impl.isReady(notExistCommitIds);
         expected = new boolean[notExistCommitIds.length];
         Arrays.fill(expected, true);

@@ -183,9 +183,9 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "index", "action", "clean"})
     @Override
-    public long clean(IEntityClass entityClass, long maintainId, long start, long end) throws SQLException {
+    public long clean(long entityClassId, long maintainId, long start, long end) throws SQLException {
         CleanExecutor executor = CleanExecutor.Builder.anCleanExecutor()
-            .withEntityClass(entityClass)
+            .withEntityClassId(entityClassId)
             .withStart(start)
             .withEnd(end)
             .withIndexNames(indexWriteIndexNameSelector.selects())
@@ -558,9 +558,11 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
                         buff.append(' ');
                     }
 
-                    buff.append(shortStorageName.getPrefix())
+                    buff.append(shortStorageName.getHead())
+                        .append(shortStorageName.getPrefix())
                         .append(strValue)
-                        .append(shortStorageName.getNoLocationSuffix());
+                        .append(shortStorageName.getOriginSuffix())
+                        .append(shortStorageName.getNoLocationTail());
 
                     if (field.config().isCrossSearch()) {
                         if (crossAttributes == null) {

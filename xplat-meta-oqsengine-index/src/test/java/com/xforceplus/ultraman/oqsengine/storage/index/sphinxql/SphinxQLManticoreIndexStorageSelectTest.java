@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.xforceplus.ultraman.oqsengine.common.map.MapUtils;
 import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.common.serializable.utils.JacksonDefaultMapper;
+import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.AttachmentCondition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
@@ -23,7 +24,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
-import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.mock.IndexInitialization;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
@@ -75,17 +75,17 @@ public class SphinxQLManticoreIndexStorageSelectTest {
 
     //-------------level 0--------------------
     private IEntityField l0LongField = EntityField.Builder.anEntityField()
-        .withId(Long.MAX_VALUE)
+        .withId(9223372036854775807L)
         .withFieldType(FieldType.LONG)
         .withName("l0-long")
         .withConfig(FieldConfig.build().searchable(true)).build();
     private IEntityField l0StringField = EntityField.Builder.anEntityField()
-        .withId(Long.MAX_VALUE - 1)
+        .withId(9223372036854775806L)
         .withFieldType(FieldType.STRING)
         .withName("l0-string")
         .withConfig(FieldConfig.build().searchable(true).fuzzyType(FieldConfig.FuzzyType.SEGMENTATION)).build();
     private IEntityField l0StringsField = EntityField.Builder.anEntityField()
-        .withId(Long.MAX_VALUE - 2)
+        .withId(9223372036854775805L)
         .withFieldType(FieldType.STRINGS)
         .withName("l0-strings")
         .withConfig(FieldConfig.build().searchable(true)).build();
@@ -100,12 +100,12 @@ public class SphinxQLManticoreIndexStorageSelectTest {
 
     //-------------level 1--------------------
     private IEntityField l1LongField = EntityField.Builder.anEntityField()
-        .withId(Long.MAX_VALUE - 3)
+        .withId(9223372036854775804L)
         .withFieldType(FieldType.LONG)
         .withName("l1-long")
         .withConfig(FieldConfig.build().searchable(true)).build();
     private IEntityField l1StringField = EntityField.Builder.anEntityField()
-        .withId(Long.MAX_VALUE - 4)
+        .withId(9223372036854775803L)
         .withFieldType(FieldType.STRING)
         .withName("l1-string")
         .withConfig(FieldConfig.Builder.anFieldConfig()
@@ -113,7 +113,7 @@ public class SphinxQLManticoreIndexStorageSelectTest {
             .withFuzzyType(FieldConfig.FuzzyType.WILDCARD)
             .withWildcardMinWidth(3).withWildcardMaxWidth(7).build()).build();
     private IEntityField l1DecField = EntityField.Builder.anEntityField()
-        .withId(Long.MAX_VALUE - 9)
+        .withId(9223372036854775798L)
         .withFieldType(FieldType.DECIMAL)
         .withName("l1-dec")
         .withConfig(FieldConfig.build().searchable(true)).build();
@@ -129,27 +129,27 @@ public class SphinxQLManticoreIndexStorageSelectTest {
 
     //-------------level 2--------------------
     private IEntityField l2StringField = EntityField.Builder.anEntityField()
-        .withId(Long.MAX_VALUE - 5)
+        .withId(9223372036854775802L)
         .withFieldType(FieldType.STRING)
         .withName("l2-string")
         .withConfig(FieldConfig.build().searchable(true)).build();
     private IEntityField l2TimeField = EntityField.Builder.anEntityField()
-        .withId(Long.MAX_VALUE - 6)
+        .withId(9223372036854775801L)
         .withFieldType(FieldType.DATETIME)
         .withName("l2-time")
         .withConfig(FieldConfig.build().searchable(true)).build();
     private IEntityField l2EnumField = EntityField.Builder.anEntityField()
-        .withId(Long.MAX_VALUE - 7)
+        .withId(9223372036854775800L)
         .withFieldType(FieldType.ENUM)
         .withName("l2-enum")
         .withConfig(FieldConfig.build().searchable(true)).build();
     private IEntityField l2DecField = EntityField.Builder.anEntityField()
-        .withId(Long.MAX_VALUE - 8)
+        .withId(9223372036854775799L)
         .withFieldType(FieldType.DECIMAL)
         .withName("l2-dec")
         .withConfig(FieldConfig.build().searchable(true)).build();
     private IEntityField l2NullField = EntityField.Builder.anEntityField()
-        .withId(Long.MAX_VALUE - 9)
+        .withId(9223372036854775797L)
         .withFieldType(FieldType.LONG)
         .withName("l2-null")
         .withConfig(FieldConfig.build().searchable(true)).build();
@@ -209,7 +209,9 @@ public class SphinxQLManticoreIndexStorageSelectTest {
             EntityRef.Builder.anEntityRef()
                 .withId(9223372036854775798L).withOrderValue("190").withSecondOrderValue("-196941314110").build(),
             EntityRef.Builder.anEntityRef()
-                .withId(9223372036854775802L).withOrderValue("193").withSecondOrderValue("761631653530").build()
+                .withId(9223372036854775802L).withOrderValue("193").withSecondOrderValue("761631653530").build(),
+            EntityRef.Builder.anEntityRef()
+                .withId(9223372036854775797L).withOrderValue("199").withSecondOrderValue("-1219838949999").build()
         );
         SelectConfig config = SelectConfig.Builder.anSelectConfig()
             .withSort(Sort.buildAscSort(l2EntityClass.field("l1-long").get()))
@@ -254,7 +256,9 @@ public class SphinxQLManticoreIndexStorageSelectTest {
             EntityRef.Builder.anEntityRef()
                 .withId(9223372036854775798L).withOrderValue("190").build(),
             EntityRef.Builder.anEntityRef()
-                .withId(9223372036854775802L).withOrderValue("193").build()
+                .withId(9223372036854775802L).withOrderValue("193").build(),
+            EntityRef.Builder.anEntityRef()
+                .withId(9223372036854775797L).withOrderValue("199").build()
         );
         config = SelectConfig.Builder.anSelectConfig()
             .withSort(Sort.buildAscSort(l2EntityClass.field("l1-long").get()))
@@ -296,7 +300,9 @@ public class SphinxQLManticoreIndexStorageSelectTest {
             EntityRef.Builder.anEntityRef()
                 .withId(9223372036854775799L).withOrderValue("61894.976727655200000000").build(),
             EntityRef.Builder.anEntityRef()
-                .withId(9223372036854775805L).withOrderValue("84730.454610377100000000").build()
+                .withId(9223372036854775805L).withOrderValue("84730.454610377100000000").build(),
+            EntityRef.Builder.anEntityRef()
+                .withId(9223372036854775797L).withOrderValue("133531.446200000000000000").build()
         );
         config = SelectConfig.Builder.anSelectConfig()
             .withSort(Sort.buildAscSort(l2EntityClass.field("l2-dec").get()))
@@ -500,6 +506,102 @@ public class SphinxQLManticoreIndexStorageSelectTest {
     private Collection<Case> buildSelectCases() {
         return Arrays.asList(
             new Case(
+                "l2-string-longString",
+                Conditions.buildEmtpyConditions()
+                    .addAnd(
+                        new Condition(
+                            l2EntityClass.field("l2-string").get(),
+                            ConditionOperator.EQUALS,
+                            new StringValue(l2EntityClass.field("l2-string").get(),
+                                "ABCDEFGHIJKLMNOPQRSTUVWXYZXXXYYYTTT")
+                        )
+                    ),
+                l2EntityClass,
+                SelectConfig.Builder.anSelectConfig()
+                    .withPage(Page.newSinglePage(20)).build(),
+                new long[] {
+                    Long.MAX_VALUE - 10L
+                }
+            ),
+            new Case(
+                "l2-string-longString-not-eq",
+                Conditions.buildEmtpyConditions()
+                    .addAnd(
+                        new Condition(
+                            l2EntityClass.field("l2-string").get(),
+                            ConditionOperator.NOT_EQUALS,
+                            new StringValue(l2EntityClass.field("l2-string").get(),
+                                "ABCDEFGHIJKLMNOPQRSTUVWXYZXXXYYYTTT")
+                        )
+                    ),
+                l2EntityClass,
+                SelectConfig.Builder.anSelectConfig()
+                    .withPage(Page.newSinglePage(20)).build(),
+                new long[] {
+                    Long.MAX_VALUE, Long.MAX_VALUE - 1, Long.MAX_VALUE - 2, Long.MAX_VALUE - 3, Long.MAX_VALUE - 4,
+                    Long.MAX_VALUE - 5, Long.MAX_VALUE - 6, Long.MAX_VALUE - 7, Long.MAX_VALUE - 8,
+                    Long.MAX_VALUE - 9
+                }
+            ),
+            new Case(
+                "strings eq longString",
+                Conditions.buildEmtpyConditions()
+                    .addAnd(new Condition(
+                        l2EntityClass.field("l0-strings").get(),
+                        ConditionOperator.EQUALS,
+                        new StringsValue(l2EntityClass.field("l0-strings").get(),
+                            "blueSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS")
+                    )),
+                l2EntityClass,
+                SelectConfig.Builder.anSelectConfig()
+                    .withPage(Page.newSinglePage(1000))
+                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
+                    .build(),
+                new long[] {
+                    Long.MAX_VALUE - 10L
+                }
+            ),
+            new Case(
+                "strings in longString",
+                Conditions.buildEmtpyConditions()
+                    .addAnd(new Condition(
+                        l2EntityClass.field("l0-strings").get(),
+                        ConditionOperator.MULTIPLE_EQUALS,
+                        new StringsValue(l2EntityClass.field("l0-strings").get(),
+                            "blueSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS"),
+                        new StringsValue(l2EntityClass.field("l0-strings").get(), "fuchsia")
+                    )),
+                l2EntityClass,
+                SelectConfig.Builder.anSelectConfig()
+                    .withPage(Page.newSinglePage(1000))
+                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
+                    .build(),
+                new long[] {
+                    Long.MAX_VALUE - 3, Long.MAX_VALUE - 10L
+                }
+            ),
+            new Case(
+                "strings not eq longString",
+                Conditions.buildEmtpyConditions()
+                    .addAnd(new Condition(
+                        l2EntityClass.field("l0-strings").get(),
+                        ConditionOperator.NOT_EQUALS,
+                        new StringsValue(l2EntityClass.field("l0-strings").get(),
+                            "blueSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS")
+                    )),
+                l2EntityClass,
+                SelectConfig.Builder.anSelectConfig()
+                    .withPage(Page.newSinglePage(1000))
+                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
+                    .build(),
+                new long[] {
+                    Long.MAX_VALUE, Long.MAX_VALUE - 1, Long.MAX_VALUE - 2, Long.MAX_VALUE - 3, Long.MAX_VALUE - 4,
+                    Long.MAX_VALUE - 5, Long.MAX_VALUE - 6, Long.MAX_VALUE - 7, Long.MAX_VALUE - 8,
+                    Long.MAX_VALUE - 9
+                }
+            )
+            ,
+            new Case(
                 "is not null",
                 Conditions.buildEmtpyConditions()
                     .addAnd(
@@ -573,6 +675,7 @@ public class SphinxQLManticoreIndexStorageSelectTest {
                     9223372036854775804L,
                     9223372036854775801L,
                     9223372036854775798L,
+                    9223372036854775797L
                 }
             ),
             new Case(
@@ -617,7 +720,8 @@ public class SphinxQLManticoreIndexStorageSelectTest {
                     .withPage(Page.newSinglePage(20)).build(),
                 new long[] {
                     Long.MAX_VALUE, Long.MAX_VALUE - 1, Long.MAX_VALUE - 2, Long.MAX_VALUE - 3, Long.MAX_VALUE - 4,
-                    Long.MAX_VALUE - 5, Long.MAX_VALUE - 6, Long.MAX_VALUE - 7, Long.MAX_VALUE - 8, Long.MAX_VALUE - 9
+                    Long.MAX_VALUE - 5, Long.MAX_VALUE - 6, Long.MAX_VALUE - 7, Long.MAX_VALUE - 8, Long.MAX_VALUE - 9,
+                    Long.MAX_VALUE - 10
                 }
             ),
             new Case(
@@ -740,7 +844,7 @@ public class SphinxQLManticoreIndexStorageSelectTest {
                 Conditions.buildEmtpyConditions(),
                 l2EntityClass,
                 SelectConfig.Builder.anSelectConfig()
-                    .withPage(new Page(2, 5))
+                    .withPage(new Page(2, 6))
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
                 null
@@ -778,7 +882,7 @@ public class SphinxQLManticoreIndexStorageSelectTest {
                 new long[] {
                     Long.MAX_VALUE, Long.MAX_VALUE - 1, Long.MAX_VALUE - 2, Long.MAX_VALUE - 3,
                     Long.MAX_VALUE - 5, Long.MAX_VALUE - 6, Long.MAX_VALUE - 7, Long.MAX_VALUE - 8,
-                    Long.MAX_VALUE - 9
+                    Long.MAX_VALUE - 9, Long.MAX_VALUE - 10
                 }
             ),
             new Case(
@@ -796,7 +900,8 @@ public class SphinxQLManticoreIndexStorageSelectTest {
                     .build(),
                 new long[] {
                     Long.MAX_VALUE, Long.MAX_VALUE - 1, Long.MAX_VALUE - 2, Long.MAX_VALUE - 4,
-                    Long.MAX_VALUE - 5, Long.MAX_VALUE - 6, Long.MAX_VALUE - 8, Long.MAX_VALUE - 9
+                    Long.MAX_VALUE - 5, Long.MAX_VALUE - 6, Long.MAX_VALUE - 8, Long.MAX_VALUE - 9,
+                    Long.MAX_VALUE - 10
                 }
             ),
             new Case(
@@ -832,7 +937,7 @@ public class SphinxQLManticoreIndexStorageSelectTest {
                 new long[] {
                     Long.MAX_VALUE, Long.MAX_VALUE - 1, Long.MAX_VALUE - 2, Long.MAX_VALUE - 4,
                     Long.MAX_VALUE - 5, Long.MAX_VALUE - 6, Long.MAX_VALUE - 7, Long.MAX_VALUE - 8,
-                    Long.MAX_VALUE - 9
+                    Long.MAX_VALUE - 9, Long.MAX_VALUE - 10
                 }
             ),
             new Case(
@@ -849,7 +954,7 @@ public class SphinxQLManticoreIndexStorageSelectTest {
                     .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
                     .build(),
                 new long[] {
-                    Long.MAX_VALUE - 3, Long.MAX_VALUE - 7,
+                    Long.MAX_VALUE - 3, Long.MAX_VALUE - 7
                 }
             ),
             new Case(
@@ -903,7 +1008,7 @@ public class SphinxQLManticoreIndexStorageSelectTest {
                 new long[] {
                     Long.MAX_VALUE, Long.MAX_VALUE - 2, Long.MAX_VALUE - 4, Long.MAX_VALUE - 9,
                     Long.MAX_VALUE - 5, Long.MAX_VALUE - 6, Long.MAX_VALUE - 7, Long.MAX_VALUE - 8,
-                    Long.MAX_VALUE - 3
+                    Long.MAX_VALUE - 3, Long.MAX_VALUE - 10
                 }
             ),
             new Case(
@@ -1041,7 +1146,7 @@ public class SphinxQLManticoreIndexStorageSelectTest {
                 new long[] {
                     Long.MAX_VALUE, Long.MAX_VALUE - 1, Long.MAX_VALUE - 2, Long.MAX_VALUE - 3,
                     Long.MAX_VALUE - 4, Long.MAX_VALUE - 5, Long.MAX_VALUE - 6, Long.MAX_VALUE - 7,
-                    Long.MAX_VALUE - 8
+                    Long.MAX_VALUE - 8, Long.MAX_VALUE - 10
                 }
             ),
             new Case(
@@ -1059,7 +1164,7 @@ public class SphinxQLManticoreIndexStorageSelectTest {
                     .build(),
                 new long[] {
                     Long.MAX_VALUE, Long.MAX_VALUE - 1, Long.MAX_VALUE - 2, Long.MAX_VALUE - 3,
-                    Long.MAX_VALUE - 4, Long.MAX_VALUE - 5, Long.MAX_VALUE - 7, Long.MAX_VALUE - 8
+                    Long.MAX_VALUE - 4, Long.MAX_VALUE - 5, Long.MAX_VALUE - 7, Long.MAX_VALUE - 8, Long.MAX_VALUE - 10
                 }
             ),
             new Case(
@@ -1131,7 +1236,7 @@ public class SphinxQLManticoreIndexStorageSelectTest {
                 new long[] {
                     Long.MAX_VALUE, Long.MAX_VALUE - 1, Long.MAX_VALUE - 2, Long.MAX_VALUE - 3,
                     Long.MAX_VALUE - 4, Long.MAX_VALUE - 5, Long.MAX_VALUE - 6, Long.MAX_VALUE - 7,
-                    Long.MAX_VALUE - 8, Long.MAX_VALUE - 9
+                    Long.MAX_VALUE - 8, Long.MAX_VALUE - 9, Long.MAX_VALUE - 10
                 }
             ),
             new Case(
@@ -1185,7 +1290,7 @@ public class SphinxQLManticoreIndexStorageSelectTest {
                 new long[] {
                     Long.MAX_VALUE - 1, Long.MAX_VALUE - 2, Long.MAX_VALUE - 3, Long.MAX_VALUE - 4,
                     Long.MAX_VALUE - 5, Long.MAX_VALUE - 6, Long.MAX_VALUE - 7, Long.MAX_VALUE - 8,
-                    Long.MAX_VALUE - 9
+                    Long.MAX_VALUE - 9, Long.MAX_VALUE - 10
                 }
             ),
             new Case(
@@ -1212,7 +1317,7 @@ public class SphinxQLManticoreIndexStorageSelectTest {
                     .build(),
                 new long[] {
                     Long.MAX_VALUE - 3, Long.MAX_VALUE - 4, Long.MAX_VALUE - 6, Long.MAX_VALUE - 8, Long.MAX_VALUE - 9,
-                    Long.MAX_VALUE - 5, Long.MAX_VALUE - 2, Long.MAX_VALUE
+                    Long.MAX_VALUE - 5, Long.MAX_VALUE - 2, Long.MAX_VALUE, Long.MAX_VALUE - 10
                 }
             ),
             new Case(
@@ -1249,7 +1354,7 @@ public class SphinxQLManticoreIndexStorageSelectTest {
                     .build(),
                 new long[] {
                     Long.MAX_VALUE - 3, Long.MAX_VALUE - 4, Long.MAX_VALUE - 6, Long.MAX_VALUE - 8, Long.MAX_VALUE - 9,
-                    Long.MAX_VALUE - 5, Long.MAX_VALUE - 2
+                    Long.MAX_VALUE - 5, Long.MAX_VALUE - 2, Long.MAX_VALUE - 10
                 }
             ),
             new Case(

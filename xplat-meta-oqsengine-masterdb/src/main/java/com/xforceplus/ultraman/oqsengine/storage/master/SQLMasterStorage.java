@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.master;
 
+
 import static com.xforceplus.ultraman.oqsengine.storage.master.utils.OriginalEntityUtils.attributesToMap;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -35,6 +36,7 @@ import com.xforceplus.ultraman.oqsengine.storage.master.executor.MultipleQueryEx
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.QueryExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.QueryLimitCommitidByConditionsExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.UpdateExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.master.executor.rebuild.DevOpsRebuildExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.BaseMasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.JsonAttributeMasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.MapAttributeMasterStorageEntity;
@@ -69,6 +71,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
+import javax.sql.DataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -114,6 +117,9 @@ public class SQLMasterStorage implements MasterStorage {
 
     @Resource
     private KeyValueStorage kv;
+
+    @Resource(name = "masterDataSource")
+    private DataSource masterDataSource;
 
     private String tableName;
 
@@ -169,8 +175,8 @@ public class SQLMasterStorage implements MasterStorage {
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "master", "action", "exist"})
     @Override
-    public boolean exist(long id) throws SQLException {
-        return (boolean) transactionExecutor.execute(((tx, resource, hint) ->
+    public int exist(long id) throws SQLException {
+        return (int) transactionExecutor.execute(((tx, resource, hint) ->
             ExistExecutor.build(tableName, resource, queryTimeout).execute(id)));
     }
 
@@ -400,7 +406,7 @@ public class SQLMasterStorage implements MasterStorage {
         boolean[] results = (boolean[]) transactionExecutor.execute(
             (tx, resource, hint) -> {
 
-                Map.Entry<IEntity, IEntityClass> entry;
+                Map.Entry<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity, IEntityClass> entry;
                 IEntity entity;
                 IEntityClass entityClass;
                 int size = entityPackage.size();
@@ -442,6 +448,10 @@ public class SQLMasterStorage implements MasterStorage {
     public boolean delete(IEntity entity, IEntityClass entityClass) throws SQLException {
         checkId(entity);
 
+        if (entity.isDeleted()) {
+            return true;
+        }
+
         boolean result = (boolean) transactionExecutor.execute(
             (tx, resource, hint) -> {
 
@@ -455,7 +465,6 @@ public class SQLMasterStorage implements MasterStorage {
             });
 
         if (result) {
-            entity.neat();
             entity.delete();
         }
 
@@ -484,14 +493,28 @@ public class SQLMasterStorage implements MasterStorage {
         for (int i = 0; i < results.length; i++) {
             if (results[i]) {
                 entity = entityPackage.get(i).get().getKey();
-                entity.neat();
                 entity.delete();
             }
         }
     }
 
+    @Override
+    public int rebuild(long entityClassId, long maintainId, long startTime, long endTime) throws Exception {
+
+        Optional<IEntityClass> actualEntityClassOp = metaManager.load(entityClassId, "");
+
+        if (actualEntityClassOp.isPresent()) {
+            return DevOpsRebuildExecutor
+                .build(tableName, masterDataSource, maintainId, startTime, endTime)
+                .execute(actualEntityClassOp.get());
+        }
+
+        return 0;
+    }
+
     private void checkId(EntityPackage entityPackage) throws SQLException {
-        Iterator<Map.Entry<IEntity, IEntityClass>> iter = entityPackage.iterator();
+        Iterator<Map.Entry<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity, IEntityClass>> iter =
+            entityPackage.iterator();
         while (iter.hasNext()) {
             checkId(iter.next().getKey());
         }
@@ -500,6 +523,126 @@ public class SQLMasterStorage implements MasterStorage {
     private void checkId(IEntity entity) throws SQLException {
         if (entity.id() == 0) {
             throw new SQLException("Invalid entity`s id.");
+        }
+    }
+
+    /**
+     * 数据迭代器,用以迭代出某个entity的实例列表.
+     */
+    private class EntityIterator implements DataIterator<OriginalEntity> {
+        private static final int DEFAULT_PAGE_SIZE = 100;
+
+        private final IEntityClass entityClass;
+        private long startId;
+        private final long startTime;
+        private final long endTime;
+        private final int pageSize;
+        private final List<OriginalEntity> buffer;
+
+        public EntityIterator(IEntityClass entityClass, long startId, long startTime, long endTime) {
+            this(entityClass, startId, startTime, endTime, DEFAULT_PAGE_SIZE);
+        }
+
+        public EntityIterator(IEntityClass entityClass, long startId, long startTime, long endTime, int pageSize) {
+            this.entityClass = entityClass;
+            this.startId = startId;
+            this.startTime = startTime;
+            this.endTime = endTime;
+            this.pageSize = pageSize;
+            buffer = new ArrayList<>(pageSize);
+        }
+
+        @Override
+        public boolean hasNext() {
+            try {
+                if (buffer.isEmpty()) {
+                    load();
+                }
+            } catch (Exception ex) {
+                throw new RuntimeException(ex.getMessage(), ex);
+            }
+
+            return !buffer.isEmpty();
+        }
+
+        @Override
+        public OriginalEntity next() {
+            if (hasNext()) {
+                OriginalEntity originalEntity = buffer.remove(0);
+                startId = originalEntity.getId();
+                return originalEntity;
+            } else {
+                return null;
+            }
+        }
+
+        private void load() throws Exception {
+            transactionExecutor.execute((tx, resource, hint) -> {
+                Collection<MasterStorageEntity> storageEntities =
+                    BatchQueryExecutor
+                        .build(tableName, resource, queryTimeout, entityClass, startTime, endTime, pageSize)
+                        .execute(startId);
+
+                Collection<OriginalEntity> originalEntities = new ArrayList<>();
+                for (MasterStorageEntity entity : storageEntities) {
+                    try {
+                        IEntityClass realEntityClass = entityClass;
+
+                        //  这里获取一次带有JOJO的真实entityClass
+                        if (null != entity.getAttribute() && !entity.getProfile()
+                            .equals(OqsProfile.UN_DEFINE_PROFILE)) {
+                            Optional<IEntityClass> entityClassOp =
+                                metaManager.load(entityClass.id(), entity.getProfile());
+                            if (!entityClassOp.isPresent()) {
+                                throw new SQLException(
+                                    String.format("entityClass could not be null in meta.[%d]", entityClass.id()));
+                            }
+                            realEntityClass = entityClassOp.get();
+                        }
+
+                        OriginalEntity originalEntity = OriginalEntity.Builder.anOriginalEntity()
+                            .withEntityClass(realEntityClass)
+                            .withId(entity.getId())
+                            .withCreateTime(entity.getCreateTime())
+                            .withUpdateTime(entity.getUpdateTime())
+                            .withOp(OperationType.UPDATE.getValue())
+                            .withTx(entity.getTx())
+                            .withDeleted(entity.isDeleted())
+                            .withCommitid(entity.getCommitid())
+                            .withVersion(entity.getVersion())
+                            .withOqsMajor(entity.getOqsMajor())
+                            .withAttributes(attributesToMap(entity.getAttribute()))
+                            .build();
+
+                        originalEntities.add(originalEntity);
+                    } catch (JsonProcessingException e) {
+                        throw new SQLException(
+                            String.format("to originalEntity failed. message : [%s]", e.getMessage()));
+                    }
+                }
+
+                buffer.addAll(originalEntities);
+
+                return null;
+            });
+        }
+
+        @Override
+        public long size() {
+            try {
+                return (int) transactionExecutor.execute((tx, resource, hint) -> {
+                    return BatchQueryCountExecutor
+                        .build(tableName, resource, queryTimeout, entityClass, startTime, endTime)
+                        .execute(0L);
+                });
+            } catch (SQLException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
+        }
+
+        @Override
+        public boolean provideSize() {
+            return true;
         }
     }
 
@@ -718,126 +861,6 @@ public class SQLMasterStorage implements MasterStorage {
         storageEntity.setEntityClasses(tileEntityClassesIds);
     }
 
-    /**
-     * 数据迭代器,用以迭代出某个entity的实例列表.
-     */
-    private class EntityIterator implements DataIterator<OriginalEntity> {
-        private static final int DEFAULT_PAGE_SIZE = 100;
-
-        private final IEntityClass entityClass;
-        private long startId;
-        private final long startTime;
-        private final long endTime;
-        private final int pageSize;
-        private final List<OriginalEntity> buffer;
-
-        public EntityIterator(IEntityClass entityClass, long startId, long startTime, long endTime) {
-            this(entityClass, startId, startTime, endTime, DEFAULT_PAGE_SIZE);
-        }
-
-        public EntityIterator(IEntityClass entityClass, long startId, long startTime, long endTime, int pageSize) {
-            this.entityClass = entityClass;
-            this.startId = startId;
-            this.startTime = startTime;
-            this.endTime = endTime;
-            this.pageSize = pageSize;
-            buffer = new ArrayList<>(pageSize);
-        }
-
-        @Override
-        public boolean hasNext() {
-            try {
-                if (buffer.isEmpty()) {
-                    load();
-                }
-            } catch (Exception ex) {
-                throw new RuntimeException(ex.getMessage(), ex);
-            }
-
-            return !buffer.isEmpty();
-        }
-
-        @Override
-        public OriginalEntity next() {
-            if (hasNext()) {
-                OriginalEntity originalEntity = buffer.remove(0);
-                startId = originalEntity.getId();
-                return originalEntity;
-            } else {
-                return null;
-            }
-        }
-
-        private void load() throws Exception {
-            transactionExecutor.execute((tx, resource, hint) -> {
-                Collection<MasterStorageEntity> storageEntities =
-                    BatchQueryExecutor
-                        .build(tableName, resource, queryTimeout, entityClass, startTime, endTime, pageSize)
-                        .execute(startId);
-
-                Collection<OriginalEntity> originalEntities = new ArrayList<>();
-                for (MasterStorageEntity entity : storageEntities) {
-                    try {
-                        IEntityClass realEntityClass = entityClass;
-
-                        //  这里获取一次带有JOJO的真实entityClass
-                        if (null != entity.getAttribute() && !entity.getProfile()
-                            .equals(OqsProfile.UN_DEFINE_PROFILE)) {
-                            Optional<IEntityClass> entityClassOp =
-                                metaManager.load(entityClass.id(), entity.getProfile());
-                            if (!entityClassOp.isPresent()) {
-                                throw new SQLException(
-                                    String.format("entityClass could not be null in meta.[%d]", entityClass.id()));
-                            }
-                            realEntityClass = entityClassOp.get();
-                        }
-
-                        OriginalEntity originalEntity = OriginalEntity.Builder.anOriginalEntity()
-                            .withEntityClass(realEntityClass)
-                            .withId(entity.getId())
-                            .withCreateTime(entity.getCreateTime())
-                            .withUpdateTime(entity.getUpdateTime())
-                            .withOp(OperationType.UPDATE.getValue())
-                            .withTx(entity.getTx())
-                            .withDeleted(entity.isDeleted())
-                            .withCommitid(entity.getCommitid())
-                            .withVersion(entity.getVersion())
-                            .withOqsMajor(entity.getOqsMajor())
-                            .withAttributes(attributesToMap(entity.getAttribute()))
-                            .build();
-
-                        originalEntities.add(originalEntity);
-                    } catch (JsonProcessingException e) {
-                        throw new SQLException(
-                            String.format("to originalEntity failed. message : [%s]", e.getMessage()));
-                    }
-                }
-
-                buffer.addAll(originalEntities);
-
-                return null;
-            });
-        }
-
-        @Override
-        public long size() {
-            try {
-                return (int) transactionExecutor.execute((tx, resource, hint) -> {
-                    return BatchQueryCountExecutor
-                        .build(tableName, resource, queryTimeout, entityClass, startTime, endTime)
-                        .execute(0L);
-                });
-            } catch (SQLException e) {
-                throw new RuntimeException(e.getMessage(), e);
-            }
-        }
-
-        @Override
-        public boolean provideSize() {
-            return true;
-        }
-    }
-
     // 临时解析结果.
     static class EntityValuePack {
         private final IEntityField logicField;
@@ -896,8 +919,9 @@ public class SQLMasterStorage implements MasterStorage {
     }
 
     // 更新时构造.
-    private MapAttributeMasterStorageEntity buildReplaceMasterStorageEntity(IEntity entity, IEntityClass entityClass,
-                                                                            TransactionResource resource) {
+    private MapAttributeMasterStorageEntity buildReplaceMasterStorageEntity(
+        IEntity entity, IEntityClass entityClass,
+        TransactionResource resource) {
         long updateTime = findTime(entity, FieldConfig.FieldSense.UPDATE_TIME);
         /*
          * 如果从新结果集中查询到更新时间,但是和当前最后更新时间相等那么使用系统时间.
@@ -924,7 +948,14 @@ public class SQLMasterStorage implements MasterStorage {
         IEntity entity, IEntityClass entityClass, TransactionResource resource) {
 
         long createTime = findTime(entity, FieldConfig.FieldSense.CREATE_TIME);
+        if (createTime == 0) {
+            createTime = entity.time();
+        }
+
         long updateTime = findTime(entity, FieldConfig.FieldSense.UPDATE_TIME);
+        if (updateTime == 0) {
+            updateTime = entity.time();
+        }
 
         JsonAttributeMasterStorageEntity storageEntity = new JsonAttributeMasterStorageEntity();
         storageEntity.setId(entity.id());
@@ -932,7 +963,7 @@ public class SQLMasterStorage implements MasterStorage {
         storageEntity.setUpdateTime(updateTime);
         storageEntity.setDeleted(false);
         storageEntity.setEntityClassVersion(entityClass.version());
-        storageEntity.setVersion(0);
+        storageEntity.setVersion(entity.version());
         try {
             storageEntity.setAttribute(toBuildJson(entity.entityValue()));
         } catch (Exception ex) {

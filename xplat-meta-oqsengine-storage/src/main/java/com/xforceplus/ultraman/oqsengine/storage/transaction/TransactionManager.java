@@ -57,8 +57,9 @@ public interface TransactionManager {
      * 绑定一个非受管事务.
      *
      * @param id 事务id.
+     * @return true 绑定成功,false绑定失败.
      */
-    void bind(long id);
+    boolean bind(long id);
 
     /**
      * 让事务不再绑定到当前上下文.

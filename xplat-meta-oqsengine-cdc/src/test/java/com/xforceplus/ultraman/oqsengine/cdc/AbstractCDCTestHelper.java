@@ -9,6 +9,7 @@ import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
 import com.xforceplus.ultraman.oqsengine.cdc.mock.CdcInitialization;
 import com.xforceplus.ultraman.oqsengine.common.id.node.StaticNodeIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
+import com.xforceplus.ultraman.oqsengine.devops.rebuild.mock.RebuildInitialization;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MockMetaManagerHolder;
 import com.xforceplus.ultraman.oqsengine.storage.mock.StorageInitialization;
 import com.xforceplus.ultraman.oqsengine.testcontainer.basic.AbstractContainerExtends;
@@ -34,7 +35,7 @@ public abstract class AbstractCDCTestHelper extends AbstractContainerExtends {
         }
     }
 
-    protected void destroy(boolean isStopRunner) throws Exception {
+    protected void clear(boolean isStopRunner) throws Exception {
         if (isStopRunner) {
             consumerRunner.shutdown();
         }
@@ -42,15 +43,19 @@ public abstract class AbstractCDCTestHelper extends AbstractContainerExtends {
             mockRedisCallbackService.reset();
         }
         InitializationHelper.clearAll();
+    }
+
+    public static void destroy() {
         InitializationHelper.destroy();
     }
 
-    private ConsumerRunner initConsumerRunner() throws Exception {
+    protected ConsumerRunner initConsumerRunner() throws Exception {
         cdcMetricsService = new CDCMetricsService();
         mockRedisCallbackService = new MockRedisCallbackService(StorageInitialization.getInstance().getCommitIdStatusService());
         ReflectionTestUtils.setField(cdcMetricsService, "cdcMetricsCallback", mockRedisCallbackService);
 
-        return new ConsumerRunner(CdcInitialization.getInstance().getConsumerService(), cdcMetricsService, CdcInitialization.getInstance().getSingleCDCConnector());
+        return new ConsumerRunner(CdcInitialization.getInstance().getConsumerService(), cdcMetricsService,
+            CdcInitialization.getInstance().getSingleCDCConnector(), RebuildInitialization.getInstance().getTaskExecutor());
     }
 
     protected CDCDaemonService initDaemonService() throws Exception {

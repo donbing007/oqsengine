@@ -12,7 +12,8 @@ import com.xforceplus.ultraman.oqsengine.calculation.factory.CachedEntityClass;
 public class AggregationEventExecutor extends AbstractEventExecutor {
 
     @Override
-    public boolean execute(CalculationEvent calculationEvent, CachedEntityClass cachedEntityClass, CalculationEventResource resource) {
-        return true;
+    public boolean execute(CalculationEvent calculationEvent, CachedEntityClass cachedEntityClass,
+                           CalculationEventResource resource) {
+        return kvProcess(calculationEvent, resource);
     }
 }

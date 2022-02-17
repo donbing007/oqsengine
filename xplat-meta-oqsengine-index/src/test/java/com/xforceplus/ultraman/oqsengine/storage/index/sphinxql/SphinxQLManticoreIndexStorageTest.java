@@ -4,6 +4,7 @@ import com.github.javafaker.Faker;
 import com.xforceplus.ultraman.oqsengine.common.mock.CommonInitialization;
 import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
+import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
@@ -23,7 +24,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
-import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.mock.IndexInitialization;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
@@ -412,7 +412,7 @@ public class SphinxQLManticoreIndexStorageTest {
         IndexInitialization.getInstance().getIndexStorage().saveOrDeleteOriginalEntities(Arrays.asList(target));
 
         List<String> attrs;
-        try (Connection conn = CommonInitialization.getInstance().getDataSourcePackage(true).getIndexSearch().get(0)
+        try (Connection conn = CommonInitialization.getInstance().getDataSourcePackage(false).getIndexSearch().get(0)
             .getConnection()) {
             try (Statement st = conn.createStatement()) {
                 try (ResultSet rs = st.executeQuery(
@@ -551,7 +551,7 @@ public class SphinxQLManticoreIndexStorageTest {
         initDatas.addAll(buildSyncData(OperationType.CREATE, 10, Long.MAX_VALUE));
 
         IndexInitialization.getInstance().getIndexStorage().saveOrDeleteOriginalEntities(initDatas);
-        IndexInitialization.getInstance().getIndexStorage().clean(l2EntityClass, 10, 0, Long.MAX_VALUE);
+        IndexInitialization.getInstance().getIndexStorage().clean(l2EntityClass.id(), 10, 0, Long.MAX_VALUE);
 
         Page page = Page.newSinglePage(1000);
         Collection<EntityRef> refs =
@@ -564,7 +564,7 @@ public class SphinxQLManticoreIndexStorageTest {
 
         initDatas.addAll(buildSyncData(OperationType.CREATE, 10, Long.MAX_VALUE));
         IndexInitialization.getInstance().getIndexStorage().saveOrDeleteOriginalEntities(initDatas);
-        IndexInitialization.getInstance().getIndexStorage().clean(l2EntityClass, 0, 0, Long.MAX_VALUE);
+        IndexInitialization.getInstance().getIndexStorage().clean(l2EntityClass.id(), 0, 0, Long.MAX_VALUE);
 
         page = Page.newSinglePage(1000);
         refs =

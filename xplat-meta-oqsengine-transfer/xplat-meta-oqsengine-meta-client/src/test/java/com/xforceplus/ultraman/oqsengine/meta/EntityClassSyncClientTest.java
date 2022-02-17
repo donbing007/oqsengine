@@ -22,7 +22,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 /**
  * desc :
- * name : EntityClassSyncClientTest
+ * name : EntityClassSyncClientTest.
  *
  * @author : xujia
  * date : 2021/2/22
@@ -49,6 +49,9 @@ public class EntityClassSyncClientTest extends BaseTest {
         ReflectionTestUtils.setField(entityClassSyncClient, "grpcParamsConfig", grpcParams);
     }
 
+    /**
+     * 测试之后清理.
+     */
     @AfterEach
     public void after() throws InterruptedException {
         entityClassSyncClient.stop();
@@ -72,7 +75,8 @@ public class EntityClassSyncClientTest extends BaseTest {
             Assertions.assertTrue(System.currentTimeMillis() - requestWatchExecutor.watcher().heartBeat()
                 < grpcParams.getDefaultHeartbeatTimeout());
 
-            logger.debug("current - heartBeat : {}", System.currentTimeMillis() - requestWatchExecutor.watcher().heartBeat());
+            logger.debug("current - heartBeat : {}",
+                System.currentTimeMillis() - requestWatchExecutor.watcher().heartBeat());
             i++;
             TimeWaitUtils.wakeupAfter(1, TimeUnit.SECONDS);
         }
@@ -87,8 +91,8 @@ public class EntityClassSyncClientTest extends BaseTest {
 
         boolean ret = requestHandler.register(new WatchElement(appId, env, version, Register));
         Assertions.assertTrue(ret);
-        /**
-         * 重复注册
+        /*
+         重复注册
          */
         ret = requestHandler.register(new WatchElement(appId, env, version, Register));
         Assertions.assertTrue(ret);
@@ -126,19 +130,19 @@ public class EntityClassSyncClientTest extends BaseTest {
 
         start();
 
-        /**
+        /*
          * 设置服务端onNext不可用
          */
         MockServer.isTestOk = false;
 
-        /**
+        /*
          * 模拟超时重连
          */
         int loops = 0;
         String uid = requestWatchExecutor.watcher().uid();
         while (loops < 60) {
             if (null == requestWatchExecutor.watcher().uid() ||
-                    !uid.equals(requestWatchExecutor.watcher().uid())) {
+                !uid.equals(requestWatchExecutor.watcher().uid())) {
                 break;
             }
             try {
@@ -149,7 +153,7 @@ public class EntityClassSyncClientTest extends BaseTest {
             }
         }
 
-        /**
+        /*
          * 设置服务端onNext可用
          */
         MockServer.isTestOk = true;
@@ -190,7 +194,7 @@ public class EntityClassSyncClientTest extends BaseTest {
         String appId = "registerTimeoutTest";
         String env = "test";
         int version = 1;
-        /**
+        /*
          * 设置服务端onNext不可用
          */
         MockServer.isTestOk = false;
@@ -199,13 +203,12 @@ public class EntityClassSyncClientTest extends BaseTest {
         Assertions.assertTrue(ret);
 
         Assertions.assertTrue(null != requestWatchExecutor.watcher().watches() &&
-                !requestWatchExecutor.watcher().watches().isEmpty());
+            !requestWatchExecutor.watcher().watches().isEmpty());
         requestWatchExecutor.watcher().watches().forEach(
-                (key, value) -> Assertions.assertNotEquals(Confirmed, value.getStatus())
+            (key, value) -> Assertions.assertNotEquals(Confirmed, value.getStatus())
         );
 
         String uid = requestWatchExecutor.watcher().uid();
-        StreamObserver observer = requestWatchExecutor.watcher().observer();
 
         MockServer.isTestOk = true;
 
@@ -217,13 +220,13 @@ public class EntityClassSyncClientTest extends BaseTest {
 
         MockServer.isTestOk = false;
 
-        /**
+        /*
          * 模拟超时重连
          */
         int count = 0;
         while (count < 60) {
             if (null == requestWatchExecutor.watcher().uid() ||
-                    !uid.equals(requestWatchExecutor.watcher().uid())) {
+                !uid.equals(requestWatchExecutor.watcher().uid())) {
                 break;
             }
             try {
@@ -234,7 +237,7 @@ public class EntityClassSyncClientTest extends BaseTest {
             }
         }
 
-        /**
+        /*
          * 设置服务端onNext可用
          */
         MockServer.isTestOk = true;
@@ -246,12 +249,14 @@ public class EntityClassSyncClientTest extends BaseTest {
         }
 
         Assertions.assertNotNull(requestWatchExecutor.watcher().observer());
+
+        StreamObserver observer = requestWatchExecutor.watcher().observer();
         Assertions.assertNotEquals(observer.toString(), requestWatchExecutor.watcher().observer().toString());
         Assertions.assertNotNull(requestWatchExecutor.watcher().uid());
         Assertions.assertNotEquals(uid, requestWatchExecutor.watcher().uid());
 
         Assertions.assertTrue(null != requestWatchExecutor.watcher().watches() &&
-                !requestWatchExecutor.watcher().watches().isEmpty());
+            !requestWatchExecutor.watcher().watches().isEmpty());
 
         WatchElement element = requestWatchExecutor.watcher().watches().get(appId);
         count = 0;
@@ -259,12 +264,9 @@ public class EntityClassSyncClientTest extends BaseTest {
             if (element.getStatus().equals(Confirmed)) {
                 break;
             }
-            try {
-                count++;
-                Thread.sleep(1_000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+
+            count++;
+            Thread.sleep(1_000);
         }
     }
 }

@@ -2,10 +2,12 @@ package com.xforceplus.ultraman.oqsengine.event.payload.entity;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.Objects;
 
 /**
  * 创建的负载.
+ * 记录了创建成功的新对象快照.
  *
  * @author dongbin
  * @version 0.1 2021/3/24 15:39
@@ -14,32 +16,29 @@ import java.util.Objects;
 public class BuildPayload implements Serializable {
 
     private long txId;
-    private long number;
-    private IEntity entity;
+    private IEntity[] entities;
 
     /**
      * 实例化.
      *
      * @param txId 事务id.
-     * @param number 创建的数量.
-     * @param entity 创建的目标实体.
+     * @param createdEntities 创建的目标实体.
      */
-    public BuildPayload(long txId, long number, IEntity entity) {
+    public BuildPayload(long txId, IEntity ...createdEntities) {
         this.txId = txId;
-        this.entity = entity;
-        this.number = number;
+        this.entities = createdEntities;
     }
 
     public IEntity getEntity() {
-        return entity;
+        return entities[0];
+    }
+
+    public IEntity[] getEntities() {
+        return entities;
     }
 
     public long getTxId() {
         return txId;
-    }
-
-    public long getNumber() {
-        return number;
     }
 
     @Override
@@ -47,24 +46,27 @@ public class BuildPayload implements Serializable {
         if (this == o) {
             return true;
         }
-        if (o == null || getClass() != o.getClass()) {
+        if (!(o instanceof BuildPayload)) {
             return false;
         }
         BuildPayload that = (BuildPayload) o;
-        return txId == that.txId && number == that.number && Objects.equals(entity, that.entity);
+        return getTxId() == that.getTxId() && Arrays.equals(getEntities(), that.getEntities());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(txId, number, entity);
+        int result = Objects.hash(getTxId());
+        result = 31 * result + Arrays.hashCode(getEntities());
+        return result;
     }
 
     @Override
     public String toString() {
-        return "BuildPayload{"
-            + "txId=" + txId
-            + ", number=" + number
-            + ", entity=" + entity
-            + '}';
+        final StringBuilder sb = new StringBuilder("BuildPayload{");
+        sb.append("entities=").append(Arrays.toString(entities));
+        sb.append(", txId=").append(txId);
+        sb.append('}');
+        return sb.toString();
     }
+
 }

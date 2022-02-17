@@ -68,7 +68,7 @@ public class HaveOrNoRanageConditionsBuilderTest {
                             new LongValue(EntityField.UPDATE_TIME_FILED, 200L)
                         )
                     ),
-                String.format("MATCH('((@%s 1y2p0ij10032e8e6L) | (@%s =%d @%s -1y2p0ij20032e8e5L))')",
+                String.format("MATCH('((@%s 1y2p0i100j32e8e6L) | (@%s =%d @%s -1y2p0i200j32e8e5L))')",
                     FieldDefine.ATTRIBUTEF, FieldDefine.ENTITYCLASSF, entityClass.id(), FieldDefine.ATTRIBUTEF)
             ),
             // c1 or c2 or (c3 and c4)
@@ -106,8 +106,8 @@ public class HaveOrNoRanageConditionsBuilderTest {
                     true
                 ),
                 String.format(
-                    "MATCH('((@%s 1y2p0ij10032e8e6L) | (@%s =9223372036854775807 @%s -1y2p0ij20032e8e5L)"
-                        + " | ((@%s 1y2p0ij30032e8e5L) (@%s 1y2p0ij40032e8e5L)))')",
+                    "MATCH('((@%s 1y2p0i100j32e8e6L) | (@%s =9223372036854775807 @%s -1y2p0i200j32e8e5L)"
+                        + " | ((@%s 1y2p0i300j32e8e5L) (@%s 1y2p0i400j32e8e5L)))')",
                     FieldDefine.ATTRIBUTEF, FieldDefine.ENTITYCLASSF, FieldDefine.ATTRIBUTEF,
                     FieldDefine.ATTRIBUTEF, FieldDefine.ATTRIBUTEF
                 )
@@ -136,8 +136,8 @@ public class HaveOrNoRanageConditionsBuilderTest {
                             new LongValue(EntityField.CREATE_TIME_FILED, 500L)
                         )
                     ),
-                String.format("MATCH('(((@%s 1y2p0ij10032e8e5L) (@%s 1y2p0ij30032e8e6L)) "
-                        + "| (@%s 1y2p0ij50032e8e6L))')",
+                String.format("MATCH('(((@%s 1y2p0i100j32e8e5L) (@%s 1y2p0i300j32e8e6L)) "
+                        + "| (@%s 1y2p0i500j32e8e6L))')",
                     FieldDefine.ATTRIBUTEF, FieldDefine.ATTRIBUTEF, FieldDefine.ATTRIBUTEF
                 )
             ),
@@ -175,8 +175,8 @@ public class HaveOrNoRanageConditionsBuilderTest {
                         ),
                     true
                 ),
-                String.format("MATCH('(((@%s 1y2p0ij10032e8e5L) (@%s 1y2p0ij30032e8e6L)) "
-                        + "| ((@%s 1y2p0ij50032e8e6L) (@%s 1y2p0ij60032e8e6L)))')",
+                String.format("MATCH('(((@%s 1y2p0i100j32e8e5L) (@%s 1y2p0i300j32e8e6L)) "
+                        + "| ((@%s 1y2p0i500j32e8e6L) (@%s 1y2p0i600j32e8e6L)))')",
                     FieldDefine.ATTRIBUTEF, FieldDefine.ATTRIBUTEF, FieldDefine.ATTRIBUTEF, FieldDefine.ATTRIBUTEF
                 )
             )

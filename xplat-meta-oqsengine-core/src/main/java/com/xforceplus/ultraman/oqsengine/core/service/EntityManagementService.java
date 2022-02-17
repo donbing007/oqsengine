@@ -1,9 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.core.service;
 
-import com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult;
-import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
+import com.xforceplus.ultraman.oqsengine.core.service.pojo.OqsResult;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import java.sql.SQLException;
+import java.util.Map;
 
 /**
  * entity 管理服务.
@@ -20,7 +21,7 @@ public interface EntityManagementService {
      * @param entity 目标 entity 数据.
      * @return 新对象的标识.
      */
-    OperationResult build(IEntity entity) throws SQLException;
+    OqsResult<IEntity> build(IEntity entity) throws SQLException;
 
     /**
      * 创建多个实体.
@@ -28,19 +29,7 @@ public interface EntityManagementService {
      * @param entities 目标实体列表.
      * @return 创建结果.
      */
-    default OperationResult build(IEntity[] entities) throws SQLException {
-        OperationResult result = OperationResult.success();
-        for (IEntity entity : entities) {
-            result = build(entity);
-
-            if (ResultStatus.SUCCESS != result.getResultStatus()
-                && ResultStatus.HALF_SUCCESS != result.getResultStatus()) {
-                return result;
-            }
-        }
-
-        return result;
-    }
+    OqsResult<IEntity[]> build(IEntity[] entities) throws SQLException;
 
     /**
      * 替换一个已经存在的 entity 的信息.
@@ -48,34 +37,23 @@ public interface EntityManagementService {
      *
      * @param entity 目标 entity.
      */
-    OperationResult replace(IEntity entity) throws SQLException;
+    OqsResult<Map.Entry<IEntity, IValue[]>> replace(IEntity entity) throws SQLException;
 
     /**
      * 批量更新.
+     * 同replace,每一个实体只需要包含需要更新的属性即可.
      *
      * @param entities 目标实体列表.
      * @return 创建结果.
      */
-    default OperationResult replace(IEntity[] entities) throws SQLException {
-        OperationResult result = OperationResult.success();
-        for (IEntity entity : entities) {
-            result = replace(entity);
-
-            if (ResultStatus.SUCCESS != result.getResultStatus()
-                && ResultStatus.HALF_SUCCESS != result.getResultStatus()) {
-                return result;
-            }
-        }
-
-        return result;
-    }
+    OqsResult<Map<IEntity, IValue[]>> replace(IEntity[] entities) throws SQLException;
 
     /**
      * 删除一个已经存在的 entity.
      *
      * @param entity 目标 entity.
      */
-    OperationResult delete(IEntity entity) throws SQLException;
+    OqsResult<IEntity> delete(IEntity entity) throws SQLException;
 
     /**
      * 删除多个已经存在的entity.
@@ -83,19 +61,7 @@ public interface EntityManagementService {
      * @param entities 目标 entity 列表.
      * @return 结果.
      */
-    default OperationResult delete(IEntity[] entities) throws SQLException {
-        OperationResult result = OperationResult.success();
-        for (IEntity entity : entities) {
-            result = delete(entity);
-
-            if (ResultStatus.SUCCESS != result.getResultStatus()
-                && ResultStatus.HALF_SUCCESS != result.getResultStatus()) {
-                return result;
-            }
-        }
-
-        return result;
-    }
+    OqsResult<IEntity[]> delete(IEntity[] entities) throws SQLException;
 
     /**
      * 删除一个已经存在的 entity,和delete不同的是这个优先级最高.
@@ -106,7 +72,7 @@ public interface EntityManagementService {
      * @return 操作结果.
      * @throws SQLException 操作异常.
      */
-    OperationResult deleteForce(IEntity entity) throws SQLException;
+    OqsResult<IEntity> deleteForce(IEntity entity) throws SQLException;
 
     /**
      * 删除多个已经存在的 entity,和delete不同的是这个优先级最高.
@@ -114,17 +80,5 @@ public interface EntityManagementService {
      * @param entities 目标列表.
      * @return 操作结果.
      */
-    default OperationResult deleteForce(IEntity[] entities) throws SQLException {
-        OperationResult result = OperationResult.success();
-        for (IEntity entity : entities) {
-            result = deleteForce(entity);
-
-            if (ResultStatus.SUCCESS != result.getResultStatus()
-                && ResultStatus.HALF_SUCCESS != result.getResultStatus()) {
-                return result;
-            }
-        }
-
-        return result;
-    }
+    OqsResult<IEntity[]> deleteForce(IEntity[] entities) throws SQLException;
 }

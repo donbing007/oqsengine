@@ -22,19 +22,6 @@ public class QueryExecutor extends AbstractJdbcTaskExecutor<Long, Optional<JsonA
     private boolean noDetail;
 
     /**
-     * 查询所有信息.
-     *
-     * @param tableName 表名.
-     * @param resource  事务资源.
-     * @param timeoutMs 超时毫秒.
-     * @return 执行器实例.
-     */
-    public static Executor<Long, Optional<JsonAttributeMasterStorageEntity>> buildHaveAllDetail(
-        String tableName, TransactionResource resource, long timeoutMs) {
-        return new QueryExecutor(tableName, resource, false, timeoutMs);
-    }
-
-    /**
      * 查询包含详细信息.
      *
      * @param tableName 表名.
@@ -82,10 +69,8 @@ public class QueryExecutor extends AbstractJdbcTaskExecutor<Long, Optional<JsonA
     @Override
     public Optional<JsonAttributeMasterStorageEntity> execute(Long id) throws Exception {
         String sql = buildSQL(id);
-        try (PreparedStatement st = getResource().value().prepareStatement(
-            sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)) {
+        try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
 
-            st.setFetchSize(Integer.MIN_VALUE);
             st.setLong(1, id);
             st.setBoolean(2, false);
 

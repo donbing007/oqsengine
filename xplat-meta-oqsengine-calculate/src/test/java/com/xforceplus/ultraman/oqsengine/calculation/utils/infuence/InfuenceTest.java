@@ -644,9 +644,11 @@ public class InfuenceTest {
         Collection<Participant> nextAbstractParticipants = infuence.getNextParticipants(a).get();
         Assertions.assertTrue(nextAbstractParticipants.contains(b));
         Assertions.assertTrue(nextAbstractParticipants.contains(d));
+
         Collection<Participant> nextParticipants1 = infuence.getNextParticipants(b).get();
         Assertions.assertTrue(nextParticipants1.contains(c));
-        Collection<Participant> nextParticipants2 = infuence.getNextParticipants(c).get();
+
+        Collection<Participant> nextParticipants2 = infuence.getNextParticipants(d).get();
         Assertions.assertTrue(nextParticipants2.contains(e));
     }
 }

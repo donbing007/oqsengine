@@ -54,16 +54,19 @@ public class RebuildInitialization implements BeanInitialization {
     public void init() throws Exception {
         idGenerator = new SnowflakeLongIdGenerator(new StaticNodeIdGenerator(0));
         devOpsDataSource = buildDevOpsDataSource();
+
         SQLTaskStorage sqlTaskStorage = new SQLTaskStorage();
         Collection<Field> fields = ReflectionUtils.printAllMembers(sqlTaskStorage);
         ReflectionUtils.reflectionFieldValue(fields, "devOpsDataSource", sqlTaskStorage, devOpsDataSource);
         sqlTaskStorage.setTable(DEVOPS_TABLE_NAME);
 
-        taskExecutor = new DevOpsRebuildIndexExecutor(10, 3000, 30000, 300);
+        taskExecutor = new DevOpsRebuildIndexExecutor(10, 1024);
         Collection<Field> taskFields = ReflectionUtils.printAllMembers(taskExecutor);
-        ReflectionUtils.reflectionFieldValue(taskFields, "indexStorage", taskExecutor, IndexInitialization.getInstance().getIndexStorage());
+        ReflectionUtils.reflectionFieldValue(taskFields, "indexStorage", taskExecutor,
+            IndexInitialization.getInstance().getIndexStorage());
         ReflectionUtils.reflectionFieldValue(taskFields, "sqlTaskStorage", taskExecutor, sqlTaskStorage);
-        ReflectionUtils.reflectionFieldValue(taskFields, "masterStorage", taskExecutor, MasterDBInitialization.getInstance().getMasterStorage());
+        ReflectionUtils.reflectionFieldValue(taskFields, "masterStorage", taskExecutor,
+            MasterDBInitialization.getInstance().getMasterStorage());
         ReflectionUtils.reflectionFieldValue(taskFields, "idGenerator", taskExecutor, idGenerator);
     }
 
@@ -87,7 +90,11 @@ public class RebuildInitialization implements BeanInitialization {
     }
 
     private DataSource buildDevOpsDataSource() throws IllegalAccessException {
-        return CommonInitialization.getInstance().getDataSourcePackage(true).getDevOps();
+        return CommonInitialization.getInstance().getDataSourcePackage(false).getDevOps();
+    }
+
+    private DataSource buildMasterDataSource() throws IllegalAccessException {
+        return CommonInitialization.getInstance().getDataSourcePackage(false).getMaster().get(0);
     }
 
     public DevOpsRebuildIndexExecutor getTaskExecutor() {

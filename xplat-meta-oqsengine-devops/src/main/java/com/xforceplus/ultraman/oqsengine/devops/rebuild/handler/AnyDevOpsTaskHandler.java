@@ -1,8 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.devops.rebuild.handler;
 
-import com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.BatchStatus;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.DevOpsTaskInfo;
-import java.util.Optional;
 
 /**
  * 任意任务.
@@ -22,18 +20,8 @@ public class AnyDevOpsTaskHandler implements TaskHandler {
     }
 
     @Override
-    public boolean isCancel() {
+    public boolean isError() {
         return false;
-    }
-
-    @Override
-    public void cancel() throws Exception {
-
-    }
-
-    @Override
-    public Optional<BatchStatus> batchStatus() {
-        return Optional.empty();
     }
 
     @Override

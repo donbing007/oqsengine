@@ -14,6 +14,7 @@ public class CalculationParticipant extends AbstractParticipant {
         super();
     }
 
+
     /**
      * 构造器.
      */

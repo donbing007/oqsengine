@@ -19,6 +19,13 @@ logging:
 transaction:
   timeoutMs: 3000
 
+load:
+  enabled: true
+  weight:
+    heap: 0.2
+    cpu: 0.5
+    io: 0.9
+
 threadPool:
   io:
     # 服务响应线程池.
@@ -36,6 +43,15 @@ sync:
   allowMaxLiveTimeMs: 3000
   allowMaxUnSyncCommitIdSize: 100
 
+query:
+  # 查询的最大匹配数量.
+  maxVisibleTotalCount: 10000
+  join:
+    # join查询时的驱动表匹配上限,此值不能大于 maxVisibleTotalCount
+    maxJoinEntityNumber: 1000
+    # join查询时的主表+驱动表的数量最大上限.
+    maxJoinDriverLineNumber: 2
+
 storage:
   tokenizer:
     segmentation:
@@ -43,7 +59,7 @@ storage:
         # 字典URL
         url: "-"
   debug:
-    showsql: true
+    showsql: false
   timeoutMs:
     query: 3000
   kv:
@@ -164,6 +180,8 @@ management:
       enabled: true
     prometheus:
       enabled: true
+    load:
+      enabled: true
 
 cdc:
   connect:
@@ -210,7 +228,7 @@ discover:
         expired: 60000
         duration: 5000
     agent:
-      erviceName: oqs-engine
+      serviceName: oqs-engine
       serviceGroup: ${HOSTNAME}
       serviceId: ${discover.sdk.agent.serviceGroup}.${instance.id}
     threadPool:
@@ -223,3 +241,7 @@ changelog:
 
 metadata:
   enhanced: false
+
+locker:
+  try:
+    timeoutMs: 30000

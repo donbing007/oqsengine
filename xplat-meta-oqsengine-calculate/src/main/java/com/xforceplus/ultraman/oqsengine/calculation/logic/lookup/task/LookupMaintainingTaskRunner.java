@@ -172,15 +172,17 @@ public class LookupMaintainingTaskRunner implements TaskRunner {
         Optional<IValue> targetValueOp,
         long targetEntityId) {
 
-        updateLookupEntityesValue(lookupEntities, lookupField, targetValueOp, targetEntityId);
+        List<IEntity> useLookupEntities = updateLookupEntityesValue(lookupEntities, lookupField, targetValueOp, targetEntityId);
 
-        persist(transaction, lookupEntities, lookupEntityClass);
+        persist(useLookupEntities, lookupEntityClass);
 
         long[] notSuccessIds = lookupEntities.stream().filter(e -> e.isDirty()).mapToLong(e -> e.id()).toArray();
 
         List<IEntity> needReplayEntities = null;
         // 发生错误,进入重试.
         while (notSuccessIds.length > 0) {
+
+            logger.warn("Lookup update failed. Wait 3 seconds and try again.[entityClass = {}]", lookupEntityClass.code());
 
             // 等待3秒后重试.
             LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(3000L));
@@ -197,9 +199,15 @@ public class LookupMaintainingTaskRunner implements TaskRunner {
             if (!needReplayEntities.isEmpty()) {
                 updateLookupEntityesValue(needReplayEntities, lookupField, replayTargetValueOp, targetEntityId);
 
-                persist(transaction, needReplayEntities, lookupEntityClass);
+                persist(needReplayEntities, lookupEntityClass);
 
                 notSuccessIds = needReplayEntities.stream().filter(e -> e.isDirty()).mapToLong(e -> e.id()).toArray();
+            }
+        }
+
+        if (transaction != null) {
+            for (IEntity entity : useLookupEntities) {
+                transaction.getAccumulator().accumulateReplace(entity);
             }
         }
     }
@@ -228,7 +236,11 @@ public class LookupMaintainingTaskRunner implements TaskRunner {
         return entity.entityValue().getValue(lookupMaintainingTask.getTargetFieldId());
     }
 
-    private void persist(Transaction transaction, List<IEntity> lookupEntities, IEntityClass lookupEntityClass) {
+    private void persist(List<IEntity> lookupEntities, IEntityClass lookupEntityClass) {
+        if (lookupEntities.isEmpty()) {
+            return;
+        }
+
         EntityPackage entityPackage = new EntityPackage();
         for (IEntity lookupEntity : lookupEntities) {
             entityPackage.put(lookupEntity, lookupEntityClass);
@@ -239,16 +251,9 @@ public class LookupMaintainingTaskRunner implements TaskRunner {
         } catch (SQLException e) {
             logger.error(e.getMessage(), e);
         }
-
-        if (transaction != null) {
-            if (transaction.isReadyOnly()) {
-                // 强制当前事务非只读事务.
-                transaction.focusNotReadOnly();
-            }
-        }
     }
 
-    private void updateLookupEntityesValue(
+    private List<IEntity> updateLookupEntityesValue(
         List<IEntity> lookupEntities, IEntityField lookupField, Optional<IValue> targetValueOp, long targetEntityId) {
 
         int len = lookupEntities.size();
@@ -264,6 +269,8 @@ public class LookupMaintainingTaskRunner implements TaskRunner {
                 lookupEntities.get(i).entityValue().addValue(newLookupValue);
             }
         }
+
+        return lookupEntities.stream().filter(e -> e.isDirty()).collect(Collectors.toList());
     }
 
 

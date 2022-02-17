@@ -42,6 +42,7 @@ import org.slf4j.LoggerFactory;
 public class DefaultCalculationInitLogic implements CalculationInitLogic {
     private final Logger logger = LoggerFactory.getLogger(DefaultCalculationInitLogic.class);
 
+    @Resource(name = "taskThreadPool")
     private ExecutorService worker;
 
     @Resource
@@ -87,7 +88,8 @@ public class DefaultCalculationInitLogic implements CalculationInitLogic {
     }
 
     @Override
-    public Map<String, List<InitCalculationParticipant>> accept(List<Map<IEntityClass, Collection<InitCalculationParticipant>>> run) throws InterruptedException {
+    public Map<String, List<InitCalculationParticipant>> accept(
+        List<Map<IEntityClass, Collection<InitCalculationParticipant>>> run) throws InterruptedException {
         Map<String, List<InitCalculationParticipant>> res = new HashMap<>();
         List<Future<Tuple2<Boolean, List<InitCalculationParticipant>>>> futures = new ArrayList<>();
         for (Map<IEntityClass, Collection<InitCalculationParticipant>> classCollectionMap : run) {
@@ -131,7 +133,8 @@ public class DefaultCalculationInitLogic implements CalculationInitLogic {
     }
 
     @Override
-    public Tuple2<Boolean, List<InitCalculationParticipant>> initLogic(IEntityClass entityClass, Collection<InitCalculationParticipant> participants) {
+    public Tuple2<Boolean, List<InitCalculationParticipant>> initLogic(
+        IEntityClass entityClass, Collection<InitCalculationParticipant> participants) {
         try {
             DataIterator<OriginalEntity> iterator = masterStorage.iterator(entityClass, 0, Long.MAX_VALUE, 0, 1);
             List<IEntity> failedList = new ArrayList<>();
@@ -187,7 +190,8 @@ public class DefaultCalculationInitLogic implements CalculationInitLogic {
     }
 
 
-    private IEntity initEntity(IEntity entity, Collection<InitCalculationParticipant> participants) throws SQLException {
+    private IEntity initEntity(IEntity entity, Collection<InitCalculationParticipant> participants)
+        throws SQLException {
         for (InitCalculationParticipant participant : participants) {
             initIValue(entity, participant);
         }

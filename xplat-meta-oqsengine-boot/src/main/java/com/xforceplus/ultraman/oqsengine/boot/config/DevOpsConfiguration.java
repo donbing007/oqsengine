@@ -22,13 +22,9 @@ public class DevOpsConfiguration {
 
     @Bean
     public RebuildIndexExecutor devOpsRebuildIndexExecutor(
-        @Value("${storage.devOps.task.split:10}") int splitPart,
-        @Value("${storage.devOps.task.max.queue.size:2000}") int maxQueueSize,
-        @Value("${storage.devOps.task.execution.timeout:30000}") int executionTimeout,
-        @Value("${storage.devOps.task.cache.expire:30}") long cacheExpireTime,
-        @Value("${storage.devOps.task.cache.maxsize:500}") long cacheMaxSize,
-        @Value("${storage.devOps.task.page.size:1000}") int pageSize) {
-        return new DevOpsRebuildIndexExecutor(splitPart, maxQueueSize, cacheExpireTime, cacheMaxSize);
+        @Value("${storage.devOps.task.split:30}") int taskSize,
+        @Value("${storage.devOps.task.cache.maxsize:500}") int cacheMaxSize) {
+        return new DevOpsRebuildIndexExecutor(taskSize, cacheMaxSize);
     }
 
     /**

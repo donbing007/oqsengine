@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.calculation.logic;
 
 import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationContext;
 import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationScenarios;
+import com.xforceplus.ultraman.oqsengine.calculation.dto.AffectedInfo;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationException;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
@@ -9,6 +10,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Optional;
 
 /**
@@ -48,11 +50,11 @@ public interface CalculationLogic {
      * @return 需要维护的对象实例ID.
      * @throws CalculationException 计算发生异常.
      */
-    public default long[] getMaintainTarget(
+    public default Collection<AffectedInfo> getMaintainTarget(
         CalculationContext context,
         Participant participant,
         Collection<IEntity> triggerEntities) throws CalculationException {
-        return new long[0];
+        return Collections.emptyList();
     }
 
     /**

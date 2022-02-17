@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.metadata.cache;
 
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
-import static com.xforceplus.ultraman.oqsengine.metadata.cache.DefaultCacheExecutor.OBJECT_MAPPER;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
@@ -15,7 +14,6 @@ import com.xforceplus.ultraman.oqsengine.metadata.utils.storage.CacheToStorageGe
 import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.RedisContainer;
@@ -130,15 +128,15 @@ public class CacheExecutorTest {
 
         //  写入更新对象
         entityClassStorageList.clear();
-        EntityClassStorage dOne = MetaPayLoadHelper.toBasicPrepareEntity(1);
-        dOne.getFields().add(MetaPayLoadHelper.genericEntityField(10002, FieldType.STRING, CalculationType.FORMULA, OperationType.UPDATE));
-        dOne.getFields().add(MetaPayLoadHelper.genericEntityField(10003, FieldType.STRING, CalculationType.AUTO_FILL, OperationType.CREATE));
-        entityClassStorageList.add(dOne);
+        EntityClassStorage doOne = MetaPayLoadHelper.toBasicPrepareEntity(1);
+        doOne.getFields().add(MetaPayLoadHelper.genericEntityField(10002, FieldType.STRING, CalculationType.FORMULA, OperationType.UPDATE));
+        doOne.getFields().add(MetaPayLoadHelper.genericEntityField(10003, FieldType.STRING, CalculationType.AUTO_FILL, OperationType.CREATE));
+        entityClassStorageList.add(doOne);
 
-        EntityClassStorage dTwo = MetaPayLoadHelper.toBasicPrepareEntity(2);
-        dTwo.getFields().add(MetaPayLoadHelper.genericEntityField(20002, FieldType.STRING, CalculationType.FORMULA, OperationType.UPDATE));
-        dTwo.getFields().add(MetaPayLoadHelper.genericEntityField(20003, FieldType.STRING, CalculationType.AUTO_FILL, OperationType.UPDATE));
-        entityClassStorageList.add(dTwo);
+        EntityClassStorage doTwo = MetaPayLoadHelper.toBasicPrepareEntity(2);
+        doTwo.getFields().add(MetaPayLoadHelper.genericEntityField(20002, FieldType.STRING, CalculationType.FORMULA, OperationType.UPDATE));
+        doTwo.getFields().add(MetaPayLoadHelper.genericEntityField(20003, FieldType.STRING, CalculationType.AUTO_FILL, OperationType.UPDATE));
+        entityClassStorageList.add(doTwo);
 
         metaChangePayLoad =
             cacheExecutor.save("1", 3, entityClassStorageList);
@@ -148,7 +146,7 @@ public class CacheExecutorTest {
 
 
     /**
-     * 测试版本
+     * 测试版本.
      */
     @Test
     public void prepare9to13Test() {
@@ -306,6 +304,43 @@ public class CacheExecutorTest {
          * 使用一个未关联的entityId 3 进行版本信息查询，将返回NOT_EXIST_VERSION
          */
         Assertions.assertEquals(NOT_EXIST_VERSION, cacheExecutor.version(3L));
+    }
+
+    @Test
+    public void versionsTest() {
+        Map<Long, Integer> expects = new HashMap<>();
+        List<Long> entityClassIds = new ArrayList<>();
+
+        int expectedVersion = 2;
+        entityClassIds.addAll(addAndRetEntityClassId(expects, "testApp1", expectedVersion, Arrays.asList(1L, 2L)));
+        entityClassIds.addAll(addAndRetEntityClassId(expects, "testApp2", expectedVersion + 1, Arrays.asList(3L, 4L)));
+        entityClassIds.addAll(addAndRetEntityClassId(expects, "testApp3", expectedVersion + 2, Arrays.asList(5L, 6L)));
+
+        Map<Long, Integer> res = cacheExecutor.versions(entityClassIds, false);
+
+        Assertions.assertEquals(expects.size(), res.size());
+
+        res.forEach(
+            (k,expected) -> {
+                Integer value = expects.get(k);
+                Assertions.assertEquals(expected, value);
+            }
+        );
+
+    }
+    private List<Long> addAndRetEntityClassId(Map<Long, Integer> expects, String appId, int version, List<Long> entityClassIds) {
+        boolean ret = cacheExecutor.resetVersion(appId, version, entityClassIds);
+        if (!ret) {
+            throw new RuntimeException("reset version failed.");
+        }
+
+        entityClassIds.forEach(
+            e -> {
+                expects.put(e, version);
+            }
+        );
+
+        return entityClassIds;
     }
 
     @Test

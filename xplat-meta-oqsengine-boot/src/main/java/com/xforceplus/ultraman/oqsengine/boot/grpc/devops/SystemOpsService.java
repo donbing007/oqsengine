@@ -2,12 +2,15 @@ package com.xforceplus.ultraman.oqsengine.boot.grpc.devops;
 
 import com.xforceplus.ultraman.devops.service.sdk.annotation.DiscoverAction;
 import com.xforceplus.ultraman.devops.service.sdk.annotation.MethodParam;
+import com.xforceplus.ultraman.oqsengine.boot.config.system.SystemInfoConfiguration;
+import com.xforceplus.ultraman.oqsengine.boot.grpc.devops.dto.ApplicationInfo;
 import com.xforceplus.ultraman.oqsengine.boot.grpc.utils.PrintErrorHelper;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.condition.CdcErrorQueryCondition;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.dto.ErrorType;
 import com.xforceplus.ultraman.oqsengine.core.service.DevOpsManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
+import com.xforceplus.ultraman.oqsengine.core.service.pojo.OqsResult;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.DevOpsTaskInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.monitor.dto.MetricsLog;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
@@ -59,6 +62,9 @@ public class SystemOpsService {
     @Autowired
     private CommitIdStatusService commitIdStatusService;
 
+    @Autowired
+    private SystemInfoConfiguration systemInfoConfiguration;
+
     /**
      * 导入meta信息.
      *
@@ -91,7 +97,8 @@ public class SystemOpsService {
     @DiscoverAction(describe = "查询meta信息", retClass = MetaMetrics.class)
     public MetaMetrics showMeta(@MethodParam(name = "appId", klass = String.class, required = true) String appId) {
         try {
-            return metaManager.showMeta(appId).orElse(new MetaMetrics(-1, "", appId, new ArrayList<>()));
+            return metaManager.showMeta(appId).orElseGet(() -> new MetaMetrics(-1, "", appId, new ArrayList<>()));
+
         } catch (Exception e) {
             PrintErrorHelper.exceptionHandle(String.format("showMeta exception, [%s]", appId), e);
         }
@@ -103,7 +110,8 @@ public class SystemOpsService {
      * 显示meta同步日志.
      */
     @DiscoverAction(describe = "显示meta同步日志", retClass = Collection.class, retInner = MetricsLog.class)
-    public Collection<MetricsLog> metaLogs(@MethodParam(name = "type", klass = String.class, required = true) String type) {
+    public Collection<MetricsLog> metaLogs(
+        @MethodParam(name = "type", klass = String.class, required = false) String type) {
         try {
             return metaManager.metaLogs(MetricsLog.ShowType.getInstance(type));
         } catch (Exception e) {
@@ -118,7 +126,7 @@ public class SystemOpsService {
      * 重置meta下appId的env.
      *
      * @param appId 应用id.
-     * @param env 环境标示.
+     * @param env   环境标示.
      * @return 当前同步的版本.
      */
     @DiscoverAction(describe = "刷新当前meta下appId的env", retClass = int.class)
@@ -172,7 +180,7 @@ public class SystemOpsService {
             return true;
         } catch (Exception e) {
             PrintErrorHelper.exceptionHandle(
-                    String.format("removeCommitIds exception, [%s]", Arrays.stream(ids).collect(Collectors.toList())), e);
+                String.format("removeCommitIds exception, [%s]", Arrays.stream(ids).collect(Collectors.toList())), e);
         }
         return false;
     }
@@ -187,7 +195,7 @@ public class SystemOpsService {
     @DiscoverAction(describe = "修复CDC-ERROR中错误的记录", retClass = boolean.class)
     public boolean cdcErrorRecover(@MethodParam(name = "seqNo", klass = long.class, required = true) long seqNo,
                                    @MethodParam(name = "recoverString", klass = String.class, required = true)
-                                           String recoverString) {
+                                       String recoverString) {
         try {
             if (devOpsManagementService.cdcSendErrorRecover(seqNo, recoverString)) {
                 Optional<CdcErrorTask> cdcErrorTaskOp = devOpsManagementService.queryOne(seqNo);
@@ -195,26 +203,26 @@ public class SystemOpsService {
                 if (cdcErrorTaskOp.isPresent()) {
                     CdcErrorTask task = cdcErrorTaskOp.get();
                     if (task.getErrorType() == ErrorType.DATA_FORMAT_ERROR.getType()
-                            && task.getOp() > OperationType.UNKNOWN.getValue()
-                            && task.getEntity() > CDCConstant.UN_KNOW_ID
-                            && task.getId() > CDCConstant.UN_KNOW_ID) {
+                        && task.getOp() > OperationType.UNKNOWN.getValue()
+                        && task.getEntity() > CDCConstant.UN_KNOW_ID
+                        && task.getId() > CDCConstant.UN_KNOW_ID) {
 
-                        Optional<IEntity> entityOp =
-                                entitySearchService.selectOne(task.getId(), new EntityClassRef(task.getEntity(), ""));
+                        OqsResult<IEntity> result =
+                            entitySearchService.selectOne(task.getId(), new EntityClassRef(task.getEntity(), ""));
 
-                        com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult operationResult = null;
-                        if (entityOp.isPresent()) {
-                            IEntity entity = entityOp.get();
-                            operationResult = entityManagementService.replace(entity);
+                        OqsResult oqsResult = null;
+                        if (result.getValue().isPresent()) {
+                            IEntity entity = result.getValue().get();
+                            oqsResult = entityManagementService.replace(entity);
                         } else {
-                            operationResult =
-                                    entityManagementService.delete(Entity.Builder.anEntity()
-                                            .withId(task.getId())
-                                            .withVersion(task.getVersion())
-                                            .build());
+                            oqsResult =
+                                entityManagementService.delete(Entity.Builder.anEntity()
+                                    .withId(task.getId())
+                                    .withVersion(task.getVersion())
+                                    .build());
                         }
 
-                        if (operationResult.getResultStatus().equals(ResultStatus.SUCCESS)) {
+                        if (oqsResult.getResultStatus().equals(ResultStatus.SUCCESS)) {
                             fixedStatus = FixedStatus.FIXED;
                         }
                     }
@@ -257,7 +265,7 @@ public class SystemOpsService {
      */
     @DiscoverAction(describe = "根据condition查询CDC-ERROR错误信息列表", retClass = Collection.class, retInner = CdcErrorTask.class)
     public Collection<CdcErrorTask> queryCdcErrors(
-            @MethodParam(name = "condition", klass = CdcErrorQueryCondition.class) CdcErrorQueryCondition condition) {
+        @MethodParam(name = "condition", klass = CdcErrorQueryCondition.class) CdcErrorQueryCondition condition) {
         try {
             return devOpsManagementService.queryCdcError(condition);
         } catch (Exception e) {
@@ -273,56 +281,28 @@ public class SystemOpsService {
      * @param entityClassId 目标entityClassId.
      * @param start         开始时间.
      * @param end           结束时间.
-     * @param profile       可能的替身信息.
      * @return 任务详情.
      */
     @DiscoverAction(describe = "重建索引", retClass = DevOpsTaskInfo.class)
     public DevOpsTaskInfo rebuildIndex(
-            @MethodParam(name = "entityClassId", klass = long.class, required = true) long entityClassId,
-            @MethodParam(name = "start", klass = String.class, required = true) String start,
-            @MethodParam(name = "end", klass = String.class, required = true) String end,
-            @MethodParam(name = "profile", klass = String.class, required = true) String profile) {
+        @MethodParam(name = "entityClassId", klass = long.class, required = true) long entityClassId,
+        @MethodParam(name = "start", klass = String.class, required = true) String start,
+        @MethodParam(name = "end", klass = String.class, required = true) String end) {
         try {
-            Optional<IEntityClass> entityClassOp = metaManager.load(entityClassId, profile);
+            Optional<IEntityClass> entityClassOp = metaManager.load(entityClassId, "");
             if (entityClassOp.isPresent()) {
                 return devOpsManagementService.rebuildIndex(entityClassOp.get(),
-                        LocalDateTime.parse(start, dateTimeFormatter),
-                        LocalDateTime.parse(end, dateTimeFormatter)).orElse(null);
+                    LocalDateTime.parse(start, dateTimeFormatter),
+                    LocalDateTime.parse(end, dateTimeFormatter)).orElse(null);
             }
             return null;
         } catch (Exception e) {
-            PrintErrorHelper.exceptionHandle(String.format("rebuildIndex exception, [%d-%s-%s-%s]",
-                    entityClassId, profile == null ? "" : profile, start, end), e);
+            PrintErrorHelper.exceptionHandle(String.format("rebuildIndex exception, [%d-%s-%s]",
+                entityClassId, start, end), e);
         }
         return null;
     }
 
-    /**
-     * 失败的重建索引任务在checkpoint处重试并完成余下任务.
-     *
-     * @param entityClassId 目标entityClass标识.
-     * @param taskId        任务id.
-     * @param profile       替换信息.比如租户.
-     * @return 任务详情.
-     */
-    @DiscoverAction(describe = "失败的重建索引任务在checkpoint处重试并完成余下任务", retClass = DevOpsTaskInfo.class)
-    public DevOpsTaskInfo resumeIndex(
-            @MethodParam(name = "entityClassId", klass = long.class, required = true) long entityClassId,
-            @MethodParam(name = "taskId", klass = String.class, required = true) String taskId,
-            @MethodParam(name = "profile", klass = String.class, required = true) String profile) {
-        try {
-            Optional<IEntityClass> entityClassOp = metaManager.load(entityClassId, profile);
-            if (entityClassOp.isPresent()) {
-                return devOpsManagementService.resumeRebuild(entityClassOp.get(), taskId).orElse(null);
-            }
-            return null;
-        } catch (Exception e) {
-            PrintErrorHelper.exceptionHandle(String.format("resumeIndex exception, [%d-%s-%s]",
-                    entityClassId, profile == null ? "" : profile, taskId), e);
-        }
-
-        return null;
-    }
 
     /**
      * 重建索引任务列表页查询.
@@ -334,9 +314,9 @@ public class SystemOpsService {
      */
     @DiscoverAction(describe = "重建索引任务列表页查询", retClass = Collection.class, retInner = DevOpsTaskInfo.class)
     public Collection<DevOpsTaskInfo> listActiveTasks(
-            @MethodParam(name = "pageIndex", klass = long.class, required = true) long pageIndex,
-            @MethodParam(name = "pageSize", klass = long.class, required = true) long pageSize,
-            @MethodParam(name = "isActive", klass = boolean.class) boolean isActive) {
+        @MethodParam(name = "pageIndex", klass = long.class, required = true) long pageIndex,
+        @MethodParam(name = "pageSize", klass = long.class, required = true) long pageSize,
+        @MethodParam(name = "isActive", klass = boolean.class) boolean isActive) {
         try {
             Page page = new Page(pageIndex, pageSize);
             if (isActive) {
@@ -344,7 +324,8 @@ public class SystemOpsService {
             }
             return devOpsManagementService.listAllTasks(page);
         } catch (Exception e) {
-            PrintErrorHelper.exceptionHandle(String.format("listActiveTasks exception, [%d-%d-%s]", pageIndex, pageSize, isActive), e);
+            PrintErrorHelper.exceptionHandle(
+                String.format("listActiveTasks exception, [%d-%d-%s]", pageIndex, pageSize, isActive), e);
         }
 
         return null;
@@ -359,8 +340,8 @@ public class SystemOpsService {
      */
     @DiscoverAction(describe = "查询活动任务", retClass = DevOpsTaskInfo.class)
     public DevOpsTaskInfo activeTask(
-            @MethodParam(name = "entityClassId", klass = long.class, required = true) long entityClassId,
-            @MethodParam(name = "profile", klass = String.class) String profile) {
+        @MethodParam(name = "entityClassId", klass = long.class, required = true) long entityClassId,
+        @MethodParam(name = "profile", klass = String.class) String profile) {
         try {
             Optional<IEntityClass> entityClassOp = metaManager.load(entityClassId, profile);
             if (entityClassOp.isPresent()) {
@@ -368,7 +349,8 @@ public class SystemOpsService {
             }
             return null;
         } catch (Exception e) {
-            PrintErrorHelper.exceptionHandle(String.format("query activeTask exception, [%d-%s]", entityClassId, profile), e);
+            PrintErrorHelper.exceptionHandle(
+                String.format("query activeTask exception, [%d-%s]", entityClassId, profile), e);
         }
 
         return null;
@@ -382,7 +364,7 @@ public class SystemOpsService {
      */
     @DiscoverAction(describe = "取消任务", retClass = boolean.class)
     public boolean cancel(
-            @MethodParam(name = "taskId", klass = String.class, required = true) String taskId) {
+        @MethodParam(name = "taskId", klass = String.class, required = true) String taskId) {
         try {
             devOpsManagementService.cancel(taskId);
             return true;
@@ -399,11 +381,30 @@ public class SystemOpsService {
      * @return 日志集合.
      */
     @DiscoverAction(describe = "获取meta同步日志", retClass = List.class, retInner = MetricsLog.class)
-    public Collection<MetricsLog> showMetaLogs(@MethodParam(name = "type", klass = String.class, required = false) String type) {
+    public Collection<MetricsLog> showMetaLogs(
+        @MethodParam(name = "type", klass = String.class, required = false) String type) {
         try {
             return metaManager.metaLogs(MetricsLog.ShowType.getInstance(type));
         } catch (Exception e) {
             PrintErrorHelper.exceptionHandle("show metaLogs exception.", e);
+        }
+        return null;
+    }
+
+    /**
+     * 获取当前oqs下所有的app->env.
+     *
+     * @return app->env pairs.
+     */
+    @DiscoverAction(describe = "获取当前oqs下所有的app", retClass = ApplicationInfo.class)
+    public ApplicationInfo showApplications() {
+        try {
+            ApplicationInfo applicationInfo = new ApplicationInfo();
+            applicationInfo.setApplicationEnv(metaManager.showApplications());
+            applicationInfo.setSystemInfo(systemInfoConfiguration.printSystemInfo());
+            return applicationInfo;
+        } catch (Exception e) {
+            PrintErrorHelper.exceptionHandle("show applications exception.", e);
         }
         return null;
     }

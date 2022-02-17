@@ -12,7 +12,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Aggregation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.StaticCalculation;
@@ -20,14 +19,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
-
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.Month;
@@ -39,8 +30,18 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
 
-class AggregationInitLogicTest {
+/**
+ * 聚合字段初始化测试.
+ */
+public class AggregationInitLogicTest {
     @InjectMocks
     private AggregationInitLogic aggregationInitLogic;
 
@@ -77,7 +78,7 @@ class AggregationInitLogicTest {
             .build();
 
 
-    private IEntityClass aClass = EntityClass.Builder.anEntityClass()
+    private IEntityClass aclass = EntityClass.Builder.anEntityClass()
             .withId(1)
             .withField(a1)
             .withField(a2)
@@ -90,8 +91,8 @@ class AggregationInitLogicTest {
             .withName("B1")
             .withConfig(FieldConfig.Builder.anFieldConfig()
                     .withCalculation(Aggregation.Builder.anAggregation()
-                            .withClassId(aClass.id()).withFieldId(a1.id())
-                            .withRelationId(aClass.id())
+                            .withClassId(aclass.id()).withFieldId(a1.id())
+                            .withRelationId(aclass.id())
                             .withConditions(Conditions.buildEmtpyConditions())
                             .withAggregationType(AggregationType.MAX).build())
                     .build())
@@ -103,8 +104,8 @@ class AggregationInitLogicTest {
             .withName("B2")
             .withConfig(FieldConfig.Builder.anFieldConfig()
                     .withCalculation(Aggregation.Builder.anAggregation()
-                            .withClassId(aClass.id()).withFieldId(0)
-                            .withRelationId(aClass.id())
+                            .withClassId(aclass.id()).withFieldId(0)
+                            .withRelationId(aclass.id())
                             .withConditions(Conditions.buildEmtpyConditions())
                             .withAggregationType(AggregationType.COUNT).build())
                     .build())
@@ -119,12 +120,13 @@ class AggregationInitLogicTest {
                     .build())
             .build();
 
-    private IEntityClass bClass = EntityClass.Builder.anEntityClass()
+    private IEntityClass bclass = EntityClass.Builder.anEntityClass()
             .withId(2)
             .withField(b1)
             .withField(b2)
             .withField(b3)
-            .withRelations(Stream.of(Relationship.Builder.anRelationship().withId(aClass.id()).withEntityField(a2).withId(aClass.id()).build())
+            .withRelations(Stream.of(Relationship.Builder.anRelationship().withId(aclass.id()).withEntityField(a2).withId(
+                    aclass.id()).build())
                     .collect(Collectors.toList())).build();
 
 
@@ -192,20 +194,24 @@ class AggregationInitLogicTest {
 
     @Test
     public void testInitMax() throws SQLException {
-        participant = InitCalculationParticipant.Builder.anInitCalculationParticipant().withField(b1).withEntityClass(bClass).withSourceEntityClass(aClass).withSourceFields(Stream.of(a1).collect(Collectors.toList())).build();
+        participant = InitCalculationParticipant.Builder.anInitCalculationParticipant().withField(b1).withEntityClass(
+            bclass).withSourceEntityClass(
+            aclass).withSourceFields(Stream.of(a1).collect(Collectors.toList())).build();
         IEntity init = aggregationInitLogic.init(entity, participant);
-        Long value = (Long) init.entityValue().getValue(bClass.field(201).get().id()).get().getValue();
-        Long value1 = (Long) entity.entityValue().getValue(bClass.field(201).get().id()).get().getValue();
+        Long value = (Long) init.entityValue().getValue(bclass.field(201).get().id()).get().getValue();
+        Long value1 = (Long) entity.entityValue().getValue(bclass.field(201).get().id()).get().getValue();
         Assertions.assertEquals(1999L, value);
         Assertions.assertEquals(1999L, value1);
     }
 
     @Test
     public void testInitCount() throws SQLException {
-        participant =  InitCalculationParticipant.Builder.anInitCalculationParticipant().withField(b2).withEntityClass(bClass).withSourceEntityClass(aClass).withSourceFields(Stream.of(EntityField.Builder.anEntityField().withId(0).build()).collect(Collectors.toList())).build();
+        participant =  InitCalculationParticipant.Builder.anInitCalculationParticipant().withField(b2).withEntityClass(
+            bclass).withSourceEntityClass(
+            aclass).withSourceFields(Stream.of(EntityField.Builder.anEntityField().withId(0).build()).collect(Collectors.toList())).build();
         IEntity init = aggregationInitLogic.init(entity, participant);
-        Long value = (Long) init.entityValue().getValue(bClass.field(202).get().id()).get().getValue();
-        Long value1 = (Long) entity.entityValue().getValue(bClass.field(202 ).get().id()).get().getValue();
+        Long value = (Long) init.entityValue().getValue(bclass.field(202).get().id()).get().getValue();
+        Long value1 = (Long) entity.entityValue().getValue(bclass.field(202 ).get().id()).get().getValue();
         Assertions.assertEquals(2000L, value);
         Assertions.assertEquals(2000L, value1);
     }

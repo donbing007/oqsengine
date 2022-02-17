@@ -61,9 +61,9 @@ public class DataSourceFactory {
      */
     public static final String CONFIG_FILE = "ds";
 
-    private static final String INDEX_WRITER_PATH = "dataSources.index.write";
-    private static final String INDEX_SEARCH_PATH = "dataSources.index.search";
-    private static final String MASTER_PATH = "dataSources.master";
+    public static final String INDEX_WRITER_PATH = "dataSources.index.write";
+    public static final String INDEX_SEARCH_PATH = "dataSources.index.search";
+    public static final String MASTER_PATH = "dataSources.master";
 
     private static final String CLASS_PATH_PROTOCOL = "classpath:";
 
@@ -78,24 +78,7 @@ public class DataSourceFactory {
      * @return 构造的数据源包装.
      */
     public static DataSourcePackage build(boolean showSql) {
-        String dsConfigFile = System.getProperty(CONFIG_FILE);
-
-        Config config;
-        ConfigFactory.invalidateCaches();
-        if (dsConfigFile == null) {
-
-            config = ConfigFactory.load("oqsengine-ds.conf");
-
-        } else if (dsConfigFile.startsWith(CLASS_PATH_PROTOCOL)) {
-
-            String path = dsConfigFile.substring(CLASS_PATH_PROTOCOL.length());
-
-            config = ConfigFactory.load(path);
-
-        } else {
-
-            config = ConfigFactory.load(ConfigFactory.parseFile(new File(dsConfigFile)));
-        }
+        Config config = getConfig();
 
         List<DataSource> indexWrite;
         if (config.hasPath(INDEX_WRITER_PATH)) {
@@ -192,6 +175,34 @@ public class DataSourceFactory {
         }
 
         method.invoke(hikariConfig, value.unwrapped());
+    }
+
+    /**
+     * 得到当前配置信息.
+     *
+     * @return 配置信息.
+     */
+    public static Config getConfig() {
+        String dsConfigFile = System.getProperty(DataSourceFactory.CONFIG_FILE);
+
+        Config config;
+        ConfigFactory.invalidateCaches();
+        if (dsConfigFile == null) {
+
+            config = ConfigFactory.load("oqsengine-ds.conf");
+
+        } else if (dsConfigFile.startsWith(DataSourceFactory.CLASS_PATH_PROTOCOL)) {
+
+            String path = dsConfigFile.substring(DataSourceFactory.CLASS_PATH_PROTOCOL.length());
+
+            config = ConfigFactory.load(path);
+
+        } else {
+
+            config = ConfigFactory.load(ConfigFactory.parseFile(new File(dsConfigFile)));
+        }
+
+        return config;
     }
 
 }

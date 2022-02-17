@@ -45,10 +45,10 @@ public class TaskKeyValueQueueTest {
         System.setProperty(DataSourceFactory.CONFIG_FILE, "classpath:oqsengine-ds.conf");
 
         worker = new ThreadPoolExecutor(5, 5,
-                0L, TimeUnit.MILLISECONDS,
-                new ArrayBlockingQueue(10000),
-                ExecutorHelper.buildNameThreadFactory("task", false),
-                new ThreadPoolExecutor.AbortPolicy()
+            0L, TimeUnit.MILLISECONDS,
+            new ArrayBlockingQueue(10000),
+            ExecutorHelper.buildNameThreadFactory("task", false),
+            new ThreadPoolExecutor.AbortPolicy()
         );
 
         instance = new TaskKeyValueQueue(NAME);
@@ -86,7 +86,7 @@ public class TaskKeyValueQueueTest {
     /**
      * 测试添加单个任务.
      *
-     * @throws NoSuchFieldException .
+     * @throws NoSuchFieldException   .
      * @throws IllegalAccessException .
      */
     @Test
@@ -108,7 +108,7 @@ public class TaskKeyValueQueueTest {
     /**
      * 测试添加空任务，任务队列应该为空.
      *
-     * @throws NoSuchFieldException .
+     * @throws NoSuchFieldException   .
      * @throws IllegalAccessException .
      */
     @Test
@@ -124,21 +124,18 @@ public class TaskKeyValueQueueTest {
     /**
      * 并发添加任务，断言任务队列elementKey是否符合预期，断言任务数.
      *
-     * @throws InterruptedException .
+     * @throws InterruptedException   .
      * @throws IllegalAccessException .
-     * @throws NoSuchFieldException .
+     * @throws NoSuchFieldException   .
      */
     @Test
     public void testAppend() throws InterruptedException, IllegalAccessException, NoSuchFieldException {
         int count = 10000;
         CountDownLatch latch = new CountDownLatch(count);
         for (int i = 0; i < count; i++) {
-            worker.submit(new Runnable() {
-                @Override
-                public void run() {
-                    instance.append(new MockTask());
-                    latch.countDown();
-                }
+            worker.submit(() -> {
+                instance.append(new MockTask());
+                latch.countDown();
             });
         }
         latch.await();
@@ -170,22 +167,18 @@ public class TaskKeyValueQueueTest {
         CountDownLatch latch = new CountDownLatch(count);
 
         for (int i = 0; i < 3; i++) {
-            worker.submit(new Runnable() {
-                @Override
-                public void run() {
-                    while (true) {
-                        Task task = instance.get();
-                        if (task != null) {
-                            try {
-                                lock.lock();
-                                latch.countDown();
-                                logger.info("latch = " + latch.getCount());
-                                if (latch.getCount() <= 2) {
-                                    break;
-                                }
-                            } finally {
-                                lock.unlock();
+            worker.submit(() -> {
+                while (true) {
+                    Task task = instance.get();
+                    if (task != null) {
+                        try {
+                            lock.lock();
+                            latch.countDown();
+                            if (latch.getCount() <= 2) {
+                                break;
                             }
+                        } finally {
+                            lock.unlock();
                         }
                     }
                 }
@@ -193,12 +186,7 @@ public class TaskKeyValueQueueTest {
         }
 
         for (int i = 0; i < count; i++) {
-            worker.submit(new Runnable() {
-                @Override
-                public void run() {
-                    instance.append(new MockTask());
-                }
-            });
+            worker.submit(() -> instance.append(new MockTask()));
         }
         latch.await();
 
@@ -236,22 +224,18 @@ public class TaskKeyValueQueueTest {
         CountDownLatch latch = new CountDownLatch(count);
 
         for (int i = 0; i < 3; i++) {
-            worker.submit(new Runnable() {
-                @Override
-                public void run() {
-                    while (true) {
-                        Task task = instance.get(1000L);
-                        if (task != null) {
-                            try {
-                                lock.lock();
-                                latch.countDown();
-                                logger.info("latch = " + latch.getCount());
-                                if (latch.getCount() <= 2) {
-                                    break;
-                                }
-                            } finally {
-                                lock.unlock();
+            worker.submit(() -> {
+                while (true) {
+                    Task task = instance.get(1000L);
+                    if (task != null) {
+                        try {
+                            lock.lock();
+                            latch.countDown();
+                            if (latch.getCount() <= 2) {
+                                break;
                             }
+                        } finally {
+                            lock.unlock();
                         }
                     }
                 }
@@ -259,12 +243,7 @@ public class TaskKeyValueQueueTest {
         }
 
         for (int i = 0; i < count; i++) {
-            worker.submit(new Runnable() {
-                @Override
-                public void run() {
-                    instance.append(new MockTask());
-                }
-            });
+            worker.submit(() -> instance.append(new MockTask()));
         }
         latch.await();
 
@@ -302,37 +281,28 @@ public class TaskKeyValueQueueTest {
         CountDownLatch latch = new CountDownLatch(count);
 
         for (int i = 0; i < 3; i++) {
-            worker.submit(new Runnable() {
-                @Override
-                public void run() {
-                    while (true) {
-                        Task task = instance.get();
-                        if (task != null) {
-                            instance.ack(task);
-                            try {
-                                lock.lock();
-                                latch.countDown();
-                                logger.info("latch = " + latch.getCount());
-                                if (latch.getCount() <= 2) {
-                                    break;
-                                }
-                            } finally {
-                                lock.unlock();
+            worker.submit(() -> {
+                while (true) {
+                    Task task = instance.get();
+                    if (task != null) {
+                        instance.ack(task);
+                        try {
+                            lock.lock();
+                            latch.countDown();
+                            if (latch.getCount() <= 2) {
+                                break;
                             }
+                        } finally {
+                            lock.unlock();
                         }
-
                     }
+
                 }
             });
         }
 
         for (int i = 0; i < count; i++) {
-            worker.submit(new Runnable() {
-                @Override
-                public void run() {
-                    instance.append(new MockTask());
-                }
-            });
+            worker.submit(() -> instance.append(new MockTask()));
         }
 
         latch.await();
@@ -358,7 +328,7 @@ public class TaskKeyValueQueueTest {
         Assertions.assertEquals(longMap.get(unused).get(), 0);
     }
 
-    public static class MockIdGenerator implements LongIdGenerator {
+    private static class MockIdGenerator implements LongIdGenerator {
         private AtomicLong id = new AtomicLong(0);
         private ConcurrentMap<String, AtomicLong> atomicLongConcurrentMap = new ConcurrentHashMap<>();
         private ReentrantLock lock = new ReentrantLock();

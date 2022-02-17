@@ -1,26 +1,21 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper;
 
 import com.xforceplus.ultraman.oqsengine.common.StringUtils;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.constant.SQLConstant;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLStringStorageStrategy;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.value.AnyStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.ShortStorageName;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StringStorageValue;
 import com.xforceplus.ultraman.oqsengine.tokenizer.Tokenizer;
-import java.sql.Connection;
+import io.vavr.Tuple2;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -35,7 +30,7 @@ public class SphinxQLHelper {
     /**
      * select的单个关键字最大长度.
      */
-    public static final int MAX_WORLD_SPLIT_LENGTH = 29;
+    public static final int MAX_WORLD_SPLIT_LENGTH = 25;
 
     /**
      * 标记这是一个支持模糊搜索的拆分词.
@@ -61,6 +56,16 @@ public class SphinxQLHelper {
     };
 
     protected static final Map<Character, String> REPLACE_SYMBOLS;
+
+
+    /**
+     * 多值字段起始标记.
+     */
+    private static final char START = '[';
+    /**
+     * 多值字段结束标记.
+     */
+    private static final char END = ']';
 
     static {
         Arrays.sort(IGNORE_SYMBOLS);
@@ -167,26 +172,11 @@ public class SphinxQLHelper {
     /**
      * 构造 sphinxQL 全文索引中精确查询语句.
      *
-     * @param value 目标字段.
+     * @param value        目标字段.
+     * @param useGroupName 是否userGroupName.
      * @return 结果.
      */
-    public static String buildPreciseQuery(StorageValue value, boolean useGroupName) {
-//        StringBuilder buff = new StringBuilder();
-//        ShortStorageName shortStorageName = value.shortStorageName();
-//        buff.append(shortStorageName.getPrefix())
-//            .append(filterSymbols(value.value().toString()));
-//
-//        /*
-//         * 如果使用组名的话,忽略尾部定位序号.
-//         */
-//        if (useGroupName) {
-//            buff.append(shortStorageName.getNoLocationSuffix());
-//        } else {
-//            buff.append(shortStorageName.getSuffix());
-//        }
-//
-//        return buff.toString();
-
+    public static Tuple2<String, Boolean> buildPreciseQuery(StorageValue value, boolean useGroupName) {
         return stringConditionFormat(value.value().toString(), value.shortStorageName(), useGroupName);
     }
 
@@ -271,23 +261,20 @@ public class SphinxQLHelper {
     /**
      * 计算sphinxql的查询数据总量.必须紧跟查询语句.
      *
-     * @param resource 当前资源.
+     * @param statement 当前资源.
      * @return 数量.
      * @throws SQLException 发生异常.
      */
-    public static long count(TransactionResource resource) throws SQLException {
+    public static long count(Statement statement) throws SQLException {
 
         long count = 0;
         final String targetKey = "total_found";
 
-        Connection conn = (Connection) resource.value();
-        try (Statement statement = conn.createStatement()) {
-            try (ResultSet rs = statement.executeQuery(SQLConstant.SELECT_COUNT_SQL)) {
-                while (rs.next()) {
-                    if (targetKey.equals(rs.getString("Variable_name"))) {
-                        count = rs.getLong("Value");
-                        break;
-                    }
+        try (ResultSet rs = statement.executeQuery(SQLConstant.SELECT_COUNT_SQL)) {
+            while (rs.next()) {
+                if (targetKey.equals(rs.getString("Variable_name"))) {
+                    count = rs.getLong("Value");
+                    break;
                 }
             }
         }
@@ -305,17 +292,11 @@ public class SphinxQLHelper {
         return buff.toString();
     }
 
-    private static final char START = '[';
-    private static final char END = ']';
-
     /**
      * strings value通用的转换(StorageValue)逻辑.
-     * @param storageName 字段存储名称.
-     * @param originValue 字段存储值（origin）.
-     * @param attachment 是否附件.
-     * @return 存储结构.
      */
-    public static StorageValue stringsStorageConvert(String storageName, String originValue, boolean attachment) {
+    public static StorageValue stringsStorageConvert(String storageName, String originValue, boolean attachment,
+                                                     boolean locationAppend) {
 
         String logicName = AnyStorageValue.getInstance(storageName).logicName();
 
@@ -324,7 +305,7 @@ public class SphinxQLHelper {
         }
 
         StringBuilder buff = new StringBuilder();
-        StorageValue head = null;
+        StorageValue<String> head = null;
         int location = 0;
         boolean watch = false;
         for (int i = 0; i < originValue.length(); i++) {
@@ -337,14 +318,29 @@ public class SphinxQLHelper {
             if (END == point) {
                 watch = false;
 
-                StorageValue newStorageValue = new StringStorageValue(logicName, buff.toString(), true);
-                newStorageValue.locate(location++);
+                //  处理string超长时的逻辑，将会被按照最大长度进行切分
+                String[] values = longStringWrap(buff.toString());
 
-                if (head == null) {
-                    head = newStorageValue;
-                } else {
-                    head.stick(newStorageValue);
+                int partition = values.length > 1 ? StorageValue.FIRST_PARTITION : StorageValue.NOT_PARTITION;
+
+                for (String v : values) {
+                    StorageValue<String> newStorageValue = new StringStorageValue(logicName, v, true);
+                    newStorageValue.locate(location);
+                    //  设置超长字段在整个字段中partition.
+                    newStorageValue.partition(partition++);
+
+                    if (!locationAppend) {
+                        newStorageValue.notLocationAppend();
+                    }
+
+                    if (head == null) {
+                        head = newStorageValue;
+                    } else {
+                        head.stick(newStorageValue);
+                    }
                 }
+
+                location++;
 
                 buff.delete(0, buff.length());
                 continue;
@@ -359,92 +355,94 @@ public class SphinxQLHelper {
     }
 
     /**
-     *
-     * @param word
-     * @param shortStorageName
-     * @param useGroupName
-     * @return
+     * 对condition进行超长字符处理.
      */
-    public static String stringConditionFormat(String word, ShortStorageName shortStorageName, boolean useGroupName) {
-        String[] values = longStringWrap(word, MAX_WORLD_SPLIT_LENGTH);
+    public static Tuple2<String, Boolean> stringConditionFormat(String word, ShortStorageName shortStorageName,
+                                                                boolean useGroupName) {
+        String[] values = longStringWrap(word);
 
         StringBuilder stringBuilder = new StringBuilder();
-        boolean isFirst = true;
+
+        if (values.length > 1) {
+            stringBuilder.append("(");
+        }
+
+        int partition = StorageValue.FIRST_PARTITION;
         for (String v : values) {
-            if (!isFirst) {
-                stringBuilder.append(" >> ");
+            if (partition > StorageValue.FIRST_PARTITION) {
+                stringBuilder.append(" ");
             }
-            stringBuilder.append(shortStorageName.getPrefix())
-                .append(filterSymbols(v));
+
+            String head = "";
+            if (values.length > 1) {
+                head = StorageValue.PARTITION_FLAG + partition;
+            }
+
+            stringBuilder.append(head)
+                .append(shortStorageName.getPrefix())
+                .append(filterSymbols(v))
+                .append(shortStorageName.getOriginSuffix());
 
             /*
              * 如果使用组名的话,忽略尾部定位序号.
              */
             if (useGroupName) {
-                stringBuilder.append(shortStorageName.getNoLocationSuffix());
+                stringBuilder.append(shortStorageName.getNoLocationTail());
             } else {
-                stringBuilder.append(shortStorageName.getSuffix());
+                stringBuilder.append(shortStorageName.getTail());
             }
 
-            isFirst = false;
+            partition++;
         }
-        return stringBuilder.toString();
+
+        if (values.length > 1) {
+            stringBuilder.append(")");
+        }
+        return new Tuple2<>(stringBuilder.toString(), values.length > 1);
     }
 
     /**
-     * 将超长字段拆分为固定格式, 比如ABC -> [A][B][C].
-     *
-     * @param word
-     * @return
+     * 将超长字段拆分为固定格式, 比如ABC -> [ABC].
      */
     public static String stringValueFormat(String word) {
-        String[] values = longStringWrap(word, MAX_WORLD_SPLIT_LENGTH);
 
         StringBuilder stringBuilder = new StringBuilder();
-        for (String v : values) {
-            stringBuilder.append(START)
-                .append(v)
-                .append(END);
-        }
+        stringBuilder.append(START)
+            .append(word)
+            .append(END);
         return stringBuilder.toString();
     }
 
     /**
      * 切割一个长字符串, 按照传入的长度.
-     *
-     * @param word 字符串.
-     * @param length 字符串最大允许长度.
-     * @return 切割后的字符串数组.
      */
-    private static String[] longStringWrap(String word, int length) {
-        int fullSize = word.length() / length;
-        if (0 != word.length() % length) {
+    private static String[] longStringWrap(String word) {
+        int fullSize = word.length() / MAX_WORLD_SPLIT_LENGTH;
+        if (0 != word.length() % MAX_WORLD_SPLIT_LENGTH) {
             fullSize += 1;
         }
 
         String[] res = new String[fullSize];
         for (int index = 0; index < fullSize; index++) {
-            res[index] = substring(word, index * length, (index + 1) * length);
+            res[index] = substring(word, index * MAX_WORLD_SPLIT_LENGTH, (index + 1) * MAX_WORLD_SPLIT_LENGTH);
         }
 
         return res;
     }
 
     /**
-     * 分割字符串
-     * @param str 字符串.
-     * @param f 起始位置.
-     * @param t 长度.
-     * @return 切割后的字符串.
+     * 分割字符串.
      */
     private static String substring(String str, int f, int t) {
-        if (f > str.length())
+        if (f > str.length()) {
             return null;
+        }
+
         if (t > str.length()) {
             return str.substring(f, str.length());
-        } else {
-            return str.substring(f, t);
         }
+
+        return str.substring(f, t);
     }
 
 }

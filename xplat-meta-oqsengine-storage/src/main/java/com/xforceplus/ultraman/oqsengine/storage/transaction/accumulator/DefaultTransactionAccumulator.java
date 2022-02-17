@@ -2,7 +2,6 @@ package com.xforceplus.ultraman.oqsengine.storage.transaction.accumulator;
 
 import com.alibaba.google.common.collect.Sets;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.CacheEventHandler;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -32,12 +31,10 @@ public class DefaultTransactionAccumulator implements TransactionAccumulator {
      */
     private AtomicLong opNumber = new AtomicLong(-1);
 
-    private CacheEventHandler cacheEventHandler;
     private long txId;
 
-    public DefaultTransactionAccumulator(long txId, CacheEventHandler cacheEventHandler) {
+    public DefaultTransactionAccumulator(long txId) {
         this.txId = txId;
-        this.cacheEventHandler = cacheEventHandler;
     }
 
     @Override
@@ -49,21 +46,21 @@ public class DefaultTransactionAccumulator implements TransactionAccumulator {
             logger.debug("Transaction Accumulator: create number +1.[{}]", entity.id());
         }
 
-        return cacheEventHandler.create(txId, opNumber.get(), entity);
+        return true;
     }
 
     @Override
-    public boolean accumulateReplace(IEntity newEntity, IEntity oldEntity) {
+    public boolean accumulateReplace(IEntity entity) {
         replaceNumbers.incrementAndGet();
         opNumber.incrementAndGet();
 
-        getProcessIdsIdsSet(true).add(newEntity.id());
+        getProcessIdsIdsSet(true).add(entity.id());
 
         if (logger.isDebugEnabled()) {
-            logger.debug("Transaction Accumulator: replace number +1.[{}]", newEntity.id());
+            logger.debug("Transaction Accumulator: replace number +1.[{}]", entity.id());
         }
 
-        return cacheEventHandler.replace(txId, opNumber.get(), newEntity, oldEntity);
+        return true;
     }
 
     @Override
@@ -78,7 +75,7 @@ public class DefaultTransactionAccumulator implements TransactionAccumulator {
             logger.debug("Transaction Accumulator: delete number +1.[{}]", entity.id());
         }
 
-        return cacheEventHandler.delete(txId, opNumber.get(), entity);
+        return true;
     }
 
     @Override

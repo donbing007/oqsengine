@@ -8,6 +8,7 @@ import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
 import com.xforceplus.ultraman.oqsengine.common.id.node.NodeIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.lifecycle.Lifecycle;
+import com.xforceplus.ultraman.oqsengine.devops.rebuild.RebuildIndexExecutor;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
@@ -36,6 +37,9 @@ public class CDCDaemonService implements Lifecycle {
     @Resource
     private AbstractCDCConnector abstractCdcConnector;
 
+    @Resource
+    private RebuildIndexExecutor rebuildIndexExecutor;
+
     private ConsumerRunner consumerRunner;
 
     private static boolean isStart = false;
@@ -48,7 +52,7 @@ public class CDCDaemonService implements Lifecycle {
         logger.info("[cdc-daemon] current node = {}", nodeId);
         if (nodeId == DAEMON_NODE_ID && !isStart) {
             logger.info("[cdc-daemon] node-{} start CDC daemon process thread...", nodeId);
-            consumerRunner = new ConsumerRunner(consumerService, cdcMetricsService, abstractCdcConnector);
+            consumerRunner = new ConsumerRunner(consumerService, cdcMetricsService, abstractCdcConnector, rebuildIndexExecutor);
             consumerRunner.start();
             isStart = true;
             logger.info("[cdc-daemon] node-{} start CDC daemon process thread success...", nodeId);
