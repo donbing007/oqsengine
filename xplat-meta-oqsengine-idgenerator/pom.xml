@@ -59,4 +59,8 @@
             </exclusions>
         </dependency>
     </dependencies>
+
+    <properties>
+        <test.skip>false</test.skip>
+    </properties>
 </project>
