@@ -733,6 +733,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                                 builder.addQueryResult(toEntityUp(key));
                                 Entity newEntity = Entity.Builder.anEntity()
                                     .withId(key.id())
+                                    .withEntityClassRef(key.entityClassRef())
                                     .withValues(Arrays.asList(value))
                                     .build();
                                 builder.addQueryResult(toEntityUp(newEntity));
@@ -900,6 +901,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                                         builder.addQueryResult(toEntityUp(k));
                                         Entity newEntity = Entity.Builder.anEntity()
                                             .withId(k.id())
+                                            .withEntityClassRef(k.entityClassRef())
                                             .withValues(Arrays.asList(v))
                                             .build();
                                         builder.addQueryResult(toEntityUp(newEntity));
