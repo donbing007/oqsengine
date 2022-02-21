@@ -27,6 +27,7 @@ import com.xforceplus.ultraman.oqsengine.event.EventType;
 import com.xforceplus.ultraman.oqsengine.idgenerator.client.BizIDGenerator;
 import com.xforceplus.ultraman.oqsengine.idgenerator.generator.IDGenerator;
 import com.xforceplus.ultraman.oqsengine.idgenerator.generator.IDGeneratorFactory;
+import com.xforceplus.ultraman.oqsengine.lock.LocalResourceLocker;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
@@ -73,7 +74,7 @@ public class TestInitTools {
      * 构造测试主体.
      */
     public static EntityManagementServiceImpl entityManagementService(MetaManager metaManager)
-        throws IllegalAccessException, SQLException {
+        throws IllegalAccessException {
         RedisOrderContinuousLongIdGenerator redisIDGenerator = redisIDGenerator();
 
         EntityManagementServiceImpl impl = new EntityManagementServiceImpl(true);
@@ -83,6 +84,7 @@ public class TestInitTools {
         ReflectionTestUtils.setField(impl, "bizIDGenerator", bizIDGenerator);
         ReflectionTestUtils.setField(impl, "metaManager", metaManager);
         ReflectionTestUtils.setField(impl, "calculation", new MockCalculation());
+        ReflectionTestUtils.setField(impl, "resourceLocker", new LocalResourceLocker());
 
         ReflectionTestUtils.setField(impl, "eventBus", new EventBus() {
             @Override
