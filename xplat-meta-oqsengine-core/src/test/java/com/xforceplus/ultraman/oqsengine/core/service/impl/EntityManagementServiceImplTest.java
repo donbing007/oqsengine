@@ -70,6 +70,12 @@ public class EntityManagementServiceImplTest {
 
         OqsResult result = impl.build(targetEntity);
         Assertions.assertEquals(OqsResult.notExistMeta(ref), result);
+
+        result = impl.replace(targetEntity);
+        Assertions.assertEquals(OqsResult.notExistMeta(ref), result);
+
+        result = impl.delete(targetEntity);
+        Assertions.assertEquals(OqsResult.notExistMeta(ref), result);
     }
 
     @Test

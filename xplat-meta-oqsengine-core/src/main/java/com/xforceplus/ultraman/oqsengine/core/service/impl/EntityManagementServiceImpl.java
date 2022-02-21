@@ -434,14 +434,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     public OqsResult<IEntity> build(IEntity entity) throws SQLException {
         checkReady();
 
-        if (!entity.isDirty()) {
-            return OqsResult.success();
-        }
-
-        if (entity.isDeleted()) {
-            return OqsResult.conflict("It has been deleted.");
-        }
-
         Optional<IEntityClass> entityClassOp = metaManager.load(entity.entityClassRef());
         IEntityClass entityClass;
         if (!entityClassOp.isPresent()) {
@@ -454,6 +446,14 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         OqsResult oqsResult = preview(entity, entityClass, true);
         if (!oqsResult.isSuccess()) {
             return oqsResult;
+        }
+
+        if (!entity.isDirty()) {
+            return OqsResult.success();
+        }
+
+        if (entity.isDeleted()) {
+            return OqsResult.conflict("It has been deleted.");
         }
 
         CalculationContext calculationContext = buildCalculationContext(CalculationScenarios.BUILD);
@@ -720,10 +720,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     public OqsResult<Map.Entry<IEntity, IValue[]>> replace(IEntity entity) throws SQLException {
         checkReady();
 
-        if (!entity.isDirty() || entity.isDeleted()) {
-            return OqsResult.success();
-        }
-
         Optional<IEntityClass> entityClassOp = metaManager.load(entity.entityClassRef());
         IEntityClass entityClass;
         if (!entityClassOp.isPresent()) {
@@ -736,6 +732,10 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         OqsResult oqsResult = preview(entity, entityClass, false);
         if (!oqsResult.isSuccess()) {
             return oqsResult;
+        }
+
+        if (!entity.isDirty() || entity.isDeleted()) {
+            return OqsResult.success();
         }
 
         CalculationContext calculationContext = buildCalculationContext(CalculationScenarios.REPLACE);
@@ -983,12 +983,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     public OqsResult<IEntity> delete(IEntity entity) throws SQLException {
         checkReady();
 
-        if (entity.isDeleted()) {
-            return OqsResult.success();
-        }
-
-        markTime(entity);
-
         Optional<IEntityClass> entityClassOp = metaManager.load(entity.entityClassRef());
         IEntityClass entityClass;
         if (!entityClassOp.isPresent()) {
@@ -996,6 +990,12 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         } else {
             entityClass = entityClassOp.get();
         }
+
+        if (entity.isDeleted()) {
+            return OqsResult.success();
+        }
+
+        markTime(entity);
 
         CalculationContext calculationContext = buildCalculationContext(CalculationScenarios.DELETE);
         try {
