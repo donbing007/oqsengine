@@ -93,7 +93,6 @@ public class CachedMetricsRecorder implements MetricsRecorder {
                 case ERROR:
                     return MetricsLog.toMetricsLogs(errorLogs.asMap());
                 default: {
-                    return Collections.emptyList();
                 }
             }
         }
