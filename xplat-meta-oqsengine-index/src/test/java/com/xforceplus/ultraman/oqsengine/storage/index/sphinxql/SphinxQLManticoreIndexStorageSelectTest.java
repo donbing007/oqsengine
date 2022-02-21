@@ -262,6 +262,8 @@ public class SphinxQLManticoreIndexStorageSelectTest {
         );
         config = SelectConfig.Builder.anSelectConfig()
             .withSort(Sort.buildAscSort(l2EntityClass.field("l1-long").get()))
+            // 增加一个以ID排除,因为"9223372036854775805"和"9223372036854775806" 排序依据相同,次序不可预期.
+            .withSecondarySort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD))
             .withPage(Page.newSinglePage(100)).build();
 
         refs = new ArrayList<>(storage.select(
@@ -306,6 +308,8 @@ public class SphinxQLManticoreIndexStorageSelectTest {
         );
         config = SelectConfig.Builder.anSelectConfig()
             .withSort(Sort.buildAscSort(l2EntityClass.field("l2-dec").get()))
+            // 增加一个以ID排除,因为"9223372036854775805"和"9223372036854775806" 排序依据相同,次序不可预期.
+            .withSecondarySort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD))
             .withPage(Page.newSinglePage(100)).build();
 
         refs = new ArrayList<>(storage.select(
@@ -599,8 +603,7 @@ public class SphinxQLManticoreIndexStorageSelectTest {
                     Long.MAX_VALUE - 5, Long.MAX_VALUE - 6, Long.MAX_VALUE - 7, Long.MAX_VALUE - 8,
                     Long.MAX_VALUE - 9
                 }
-            )
-            ,
+            ),
             new Case(
                 "is not null",
                 Conditions.buildEmtpyConditions()
