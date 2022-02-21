@@ -25,7 +25,7 @@ public class ManticoreContainer extends AbstractContainerExtension {
 
     @Override
     protected GenericContainer buildContainer() {
-        container = new GenericContainer<>("manticoresearch/manticore:3.5.4")
+        container = new GenericContainer<>("manticoresearch/manticore:4.2.0")
             .withNetworkAliases(buildAliase("manticore"))
             .withExposedPorts(9306)
             .withClasspathResourceMapping("manticore/manticore.conf", "/manticore.conf", BindMode.READ_ONLY)
