@@ -68,6 +68,7 @@ public class CdcErrorQueryCondition {
                 stringBuilder.append(" AND ");
             }
             stringBuilder.append(ErrorFieldDefine.ENTITY).append("=").append("?");
+            hasEnd = true;
         }
 
         //  add commitId
