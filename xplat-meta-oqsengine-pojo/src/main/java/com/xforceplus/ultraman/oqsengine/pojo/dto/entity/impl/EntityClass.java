@@ -60,7 +60,10 @@ public class EntityClass implements IEntityClass {
      * 对象属性信息
      */
     private Collection<IEntityField> fields = Collections.emptyList();
-
+    /*
+     * entityClass的类型, static/dynamic
+     */
+    private int type;
 
     private EntityClass() {
     }
@@ -97,6 +100,11 @@ public class EntityClass implements IEntityClass {
             .withEntityClassCode(code())
             .withEntityClassProfile(profile)
             .build();
+    }
+
+    @Override
+    public int type() {
+        return type;
     }
 
     @Override
@@ -269,6 +277,7 @@ public class EntityClass implements IEntityClass {
         private Collection<Relationship> relations = Collections.emptyList();
         private IEntityClass father;
         private Collection<IEntityField> fields = Collections.emptyList();
+        private int type;
 
         private Builder() {
         }
@@ -323,6 +332,11 @@ public class EntityClass implements IEntityClass {
             return this;
         }
 
+        public EntityClass.Builder withType(int type) {
+            this.type = type;
+            return this;
+        }
+
         /**
          * 增加新的字段.
          *
@@ -355,6 +369,7 @@ public class EntityClass implements IEntityClass {
             entityClass.fields = fields;
             entityClass.relations = this.relations;
             entityClass.profile = this.profile;
+            entityClass.type = type;
             return entityClass;
         }
     }

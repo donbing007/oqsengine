@@ -94,6 +94,11 @@ public class AnyEntityClass implements IEntityClass {
     }
 
     @Override
+    public int type() {
+        return 0;
+    }
+
+    @Override
     public boolean equals(Object obj) {
         return AnyEntityClass.class.isInstance(obj);
     }

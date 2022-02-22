@@ -145,5 +145,9 @@ public interface IEntityClass {
         return family().stream().filter(e -> e.id() == id).count() >= 1;
     }
 
-
+    /**
+     * 获取当前entityClass的类型，目前支持的类型包括动态、静态.
+     * @return
+     */
+    int type();
 }

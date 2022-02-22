@@ -62,7 +62,7 @@ public class CDCMetrics {
         return cdcUnCommitMetrics;
     }
 
-    public void resetStatus() {
+    public void connected() {
         this.cdcAckMetrics.setLastConnectedTime(System.currentTimeMillis());
         this.cdcAckMetrics.setCdcConsumerStatus(CDCStatus.CONNECTED);
     }
@@ -84,6 +84,8 @@ public class CDCMetrics {
      * 成功.
      */
     public void consumeSuccess(long originBatchId, CDCMetrics temp, boolean isConnectSync) {
+        cdcUnCommitMetrics = temp.getCdcUnCommitMetrics();
+
         this.batchId = originBatchId;
 
         this.cdcAckMetrics.setCdcConsumerStatus(CDCStatus.CONNECTED);
@@ -104,4 +106,9 @@ public class CDCMetrics {
             this.cdcAckMetrics.setTotalUseTime(temp.getCdcAckMetrics().getTotalUseTime());
         }
     }
+
+    public void error(CDCStatus cdcStatus) {
+        cdcAckMetrics.setCdcConsumerStatus(cdcStatus);
+    }
+
 }
