@@ -314,17 +314,11 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             return OqsResult.success();
         }
 
-        IEntity[] dirtyEntities = Arrays.stream(entities).filter(e -> e.isDirty()).toArray(IEntity[]::new);
-
-        if (dirtyEntities.length == 0) {
-            return OqsResult.success();
-        }
-
-        IEntityClass[] entityClasses = new IEntityClass[dirtyEntities.length];
+        IEntityClass[] entityClasses = new IEntityClass[entities.length];
         Optional<IEntityClass> entityClassOp;
         EntityClassRef ref;
-        for (int i = 0; i < dirtyEntities.length; i++) {
-            ref = dirtyEntities[i].entityClassRef();
+        for (int i = 0; i < entities.length; i++) {
+            ref = entities[i].entityClassRef();
             entityClassOp = metaManager.load(ref);
 
             if (!entityClassOp.isPresent()) {
@@ -337,7 +331,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             }
         }
 
-        OqsResult result = preview(dirtyEntities, entityClasses, true);
+        OqsResult result = preview(entities, entityClasses, true);
         if (!result.isSuccess()) {
             return result;
         }
@@ -357,8 +351,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 CalculationContext.destroy 进行清理.
                  */
 
-                for (int i = 0; i < dirtyEntities.length; i++) {
-                    currentEntity = dirtyEntities[i];
+                List<IEntity> dirtyEntities = new ArrayList(entities.length);
+                for (int i = 0; i < entities.length; i++) {
+                    currentEntity = entities[i];
                     currentEntityClass = entityClasses[i];
                     // 计算字段处理.
                     calculationContext.focusSourceEntity(currentEntity);
@@ -371,15 +366,22 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         return transformVerifierResultToOperationResult(verify, currentEntity);
                     }
 
-                    calculation.maintain(calculationContext);
+                    if (currentEntity.isDirty()) {
+                        dirtyEntities.add(currentEntity);
+                        calculation.maintain(calculationContext);
+                    }
 
+                }
+
+                if (dirtyEntities.isEmpty()) {
+                    return OqsResult.success();
                 }
 
                 // 开始持久化
                 EntityPackage entityPackage = new EntityPackage();
-                int len = dirtyEntities.length;
+                int len = dirtyEntities.size();
                 for (int i = 0; i < len; i++) {
-                    entityPackage.put(dirtyEntities[i], entityClasses[i]);
+                    entityPackage.put(dirtyEntities.get(i), entityClasses[i]);
                 }
 
                 masterStorage.build(entityPackage);
@@ -405,9 +407,11 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     return OqsResult.unAccumulate();
                 }
 
-                eventBus.notify(new ActualEvent(EventType.ENTITY_BUILD, new BuildPayload(tx.id(), dirtyEntities)));
+                IEntity[] actualEntities = dirtyEntities.stream().toArray(IEntity[]::new);
+                eventBus.notify(new ActualEvent(EventType.ENTITY_BUILD,
+                    new BuildPayload(tx.id(), actualEntities)));
 
-                return OqsResult.success(dirtyEntities);
+                return OqsResult.success(actualEntities);
             });
 
             return result;
@@ -448,10 +452,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             return oqsResult;
         }
 
-        if (!entity.isDirty()) {
-            return OqsResult.success();
-        }
-
         if (entity.isDeleted()) {
             return OqsResult.conflict("It has been deleted.");
         }
@@ -469,6 +469,11 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 Map.Entry<VerifierResult, IEntityField> verify = verifyFields(entityClass, currentEntity);
                 if (VerifierResult.OK != verify.getKey()) {
                     return transformVerifierResultToOperationResult(verify, entity);
+                }
+
+                // 非脏,不需要继续.
+                if (!entity.isDirty()) {
+                    return OqsResult.success();
                 }
 
                 calculation.maintain(calculationContext);
@@ -734,7 +739,11 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             return oqsResult;
         }
 
-        if (!entity.isDirty() || entity.isDeleted()) {
+        if (entity.isDeleted()) {
+            return OqsResult.notFound(entity.id());
+        }
+
+        if (!entity.isDirty()) {
             return OqsResult.success();
         }
 
@@ -948,7 +957,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     resourceLocker.unlocks(lockResource);
                 }
 
-                DeletePayload deletePayload = new DeletePayload(tx.id(), targetEntities.stream().toArray(IEntity[]::new));
+                DeletePayload deletePayload =
+                    new DeletePayload(tx.id(), targetEntities.stream().toArray(IEntity[]::new));
                 eventBus.notify(new ActualEvent(EventType.ENTITY_DELETE, deletePayload));
 
                 return OqsResult.success(deletePayload.getEntities());
