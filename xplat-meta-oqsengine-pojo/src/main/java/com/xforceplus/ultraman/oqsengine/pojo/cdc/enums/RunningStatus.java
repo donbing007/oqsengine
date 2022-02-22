@@ -8,6 +8,7 @@ package com.xforceplus.ultraman.oqsengine.pojo.cdc.enums;
  * @since : 1.8
  */
 public enum RunningStatus {
+    PENDING,
     INIT,
     RUN,
     TRY_STOP,

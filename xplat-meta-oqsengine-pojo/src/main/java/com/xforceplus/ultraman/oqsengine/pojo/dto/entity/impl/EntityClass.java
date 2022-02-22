@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import java.util.ArrayList;
@@ -63,7 +64,7 @@ public class EntityClass implements IEntityClass {
     /*
      * entityClass的类型, static/dynamic
      */
-    private int type;
+    private EntityClassType type;
 
     private EntityClass() {
     }
@@ -103,7 +104,7 @@ public class EntityClass implements IEntityClass {
     }
 
     @Override
-    public int type() {
+    public EntityClassType type() {
         return type;
     }
 
@@ -277,7 +278,7 @@ public class EntityClass implements IEntityClass {
         private Collection<Relationship> relations = Collections.emptyList();
         private IEntityClass father;
         private Collection<IEntityField> fields = Collections.emptyList();
-        private int type;
+        private EntityClassType type;
 
         private Builder() {
         }
@@ -332,7 +333,7 @@ public class EntityClass implements IEntityClass {
             return this;
         }
 
-        public EntityClass.Builder withType(int type) {
+        public EntityClass.Builder withType(EntityClassType type) {
             this.type = type;
             return this;
         }

@@ -147,7 +147,7 @@ public interface IEntityClass {
 
     /**
      * 获取当前entityClass的类型，目前支持的类型包括动态、静态.
-     * @return
+     * @return 返回entityClassType.
      */
-    int type();
+    EntityClassType type();
 }
