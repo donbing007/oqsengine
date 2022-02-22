@@ -23,14 +23,24 @@ public class EntityClassDefine {
 
     static long entityClassId = Long.MAX_VALUE;
     static long fieldId = Long.MAX_VALUE;
+    static long relationshipId = Long.MAX_VALUE;
 
     static long l0EntityClassId = entityClassId--;
     static long l1EntityClassId = entityClassId--;
     static long l2EntityClassId = entityClassId--;
     static long mustEntityClassId = entityClassId--;
     static long strongRelationshipClassId = entityClassId--;
+    static long calculationStrongRelationshipClassId = entityClassId--;
+
+    static long l2ToStrongRelationshipId = relationshipId--;
+    static long strongToL2RelationshipId = relationshipId--;
+    static long calculationToL2RelationshipId = relationshipId--;
+    static long l2ToCalculationRelationshipId = relationshipId--;
 
     public static IEntityClass strongRelationshipClass;
+    public static IEntityClass calculationStrongRelationshipClass;
+
+
 
     //-------------level 0--------------------
 
@@ -42,17 +52,31 @@ public class EntityClassDefine {
             .withId(fieldId--)
             .withFieldType(FieldType.LONG)
             .withName("l0-long")
-            .withConfig(FieldConfig.build().searchable(true)).build())
+            .withConfig(
+                FieldConfig.Builder.anFieldConfig()
+                    .withSearchable(true)
+                    .build()
+            ).build())
         .withField(EntityField.Builder.anEntityField()
             .withId(fieldId--)
             .withFieldType(FieldType.STRING)
             .withName("l0-string")
-            .withConfig(FieldConfig.build().searchable(true).fuzzyType(FieldConfig.FuzzyType.SEGMENTATION)).build())
+            .withConfig(
+                FieldConfig.Builder.anFieldConfig()
+                    .withSearchable(true)
+                    .withLen(100)
+                    .withFuzzyType(FieldConfig.FuzzyType.SEGMENTATION)
+                    .build()
+            ).build())
         .withField(EntityField.Builder.anEntityField()
             .withId(fieldId--)
             .withFieldType(FieldType.STRINGS)
             .withName("l0-strings")
-            .withConfig(FieldConfig.build().searchable(true)).build())
+            .withConfig(
+                FieldConfig.Builder.anFieldConfig()
+                    .withSearchable(true)
+                    .build()
+            ).build())
         .build();
 
     //-------------level 1--------------------
@@ -73,10 +97,12 @@ public class EntityClassDefine {
             .withId(fieldId--)
             .withFieldType(FieldType.STRING)
             .withName("l1-string")
-            .withConfig(FieldConfig.Builder.anFieldConfig()
+            .withConfig(
+                FieldConfig.Builder.anFieldConfig()
                 .withSearchable(true)
                 .withFuzzyType(FieldConfig.FuzzyType.WILDCARD)
-                .withWildcardMinWidth(3).withWildcardMaxWidth(7).build()).build())
+                .withWildcardMinWidth(3).withWildcardMaxWidth(7).build()
+            ).build())
         .withFather(l0EntityClass)
         .build();
 
@@ -89,31 +115,48 @@ public class EntityClassDefine {
             .withId(fieldId--)
             .withFieldType(FieldType.STRING)
             .withName("l2-string")
-            .withConfig(FieldConfig.build().searchable(true)).build())
+            .withConfig(
+                FieldConfig.Builder.anFieldConfig()
+                    .withSearchable(true)
+                    .build()
+            ).build())
         .withField(EntityField.Builder.anEntityField()
             .withId(fieldId--)
             .withFieldType(FieldType.DATETIME)
             .withName("l2-time")
-            .withConfig(FieldConfig.build().searchable(true)).build())
+            .withConfig(
+                FieldConfig.Builder.anFieldConfig()
+                    .withSearchable(true)
+                    .build()
+            ).build())
         .withField(EntityField.Builder.anEntityField()
             .withId(fieldId--)
             .withFieldType(FieldType.ENUM)
             .withName("l2-enum")
-            .withConfig(FieldConfig.build().searchable(true)).build())
+            .withConfig(
+                FieldConfig.Builder.anFieldConfig()
+                    .withSearchable(true)
+                    .build()
+            ).build())
         .withField(EntityField.Builder.anEntityField()
             .withId(fieldId--)
             .withFieldType(FieldType.DECIMAL)
             .withName("l2-dec")
-            .withConfig(FieldConfig.build().searchable(true)).build())
+            .withConfig(
+                FieldConfig.Builder.anFieldConfig()
+                    .withSearchable(true)
+                    .build()
+            ).build())
         .withFather(l1EntityClass)
         .withRelations(
             Arrays.asList(
                 Relationship.Builder.anRelationship()
-                    .withId(0)
+                    .withId(l2ToStrongRelationshipId)
                     .withLeftEntityClassId(l2EntityClassId)
                     .withRelationType(Relationship.RelationType.ONE_TO_MANY)
                     .withRightEntityClassId(strongRelationshipClassId)
                     .withRightEntityClassLoader((id, profile) -> Optional.of(strongRelationshipClass))
+                    .withRightFamilyEntityClassLoader((id) -> Arrays.asList(strongRelationshipClass))
                     .withBelongToOwner(true)
                     .withStrong(true)
                     .withIdentity(true)
@@ -168,7 +211,7 @@ public class EntityClassDefine {
             .withRelations(
                 Arrays.asList(
                     Relationship.Builder.anRelationship()
-                        .withId(0)
+                        .withId(strongToL2RelationshipId)
                         .withLeftEntityClassId(strongRelationshipClassId)
                         .withRelationType(Relationship.RelationType.ONE_TO_MANY)
                         .withRightEntityClassId(l2EntityClassId)
@@ -191,6 +234,7 @@ public class EntityClassDefine {
         MockMetaManager metaManager = new MockMetaManager();
         metaManager.addEntityClass(l2EntityClass);
         metaManager.addEntityClass(mustEntityClass);
+        metaManager.addEntityClass(strongRelationshipClass);
         return metaManager;
     }
 }

@@ -7,10 +7,15 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFactory;
+import com.xforceplus.ultraman.oqsengine.calculation.impl.DefaultCalculationImpl;
+import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
+import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.version.VersionHelp;
-import com.xforceplus.ultraman.oqsengine.core.service.impl.help.TestInitTools;
 import com.xforceplus.ultraman.oqsengine.core.service.impl.mock.EntityClassDefine;
 import com.xforceplus.ultraman.oqsengine.core.service.pojo.OqsResult;
+import com.xforceplus.ultraman.oqsengine.event.DoNothingEventBus;
+import com.xforceplus.ultraman.oqsengine.lock.LocalResourceLocker;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
@@ -18,9 +23,14 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EnumValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
+import com.xforceplus.ultraman.oqsengine.storage.executor.ResourceTask;
+import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.executor.hint.DefaultExecutorHint;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.EntityPackage;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.MultiLocalTransaction;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.RedisContainer;
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -49,15 +59,23 @@ public class EntityManagementServiceImplTest {
      */
     @BeforeEach
     public void before() throws Exception {
-        impl = TestInitTools.entityManagementService(EntityClassDefine.getMockMetaManager());
 
+        impl = new EntityManagementServiceImpl(true);
+        ReflectionTestUtils.setField(impl, "longContinuousPartialOrderIdGenerator",
+            new IncreasingOrderLongIdGenerator());
+        ReflectionTestUtils.setField(impl, "longNoContinuousPartialOrderIdGenerator",
+            new IncreasingOrderLongIdGenerator());
+        ReflectionTestUtils.setField(impl, "transactionExecutor", new MockTransactionExecutor());
+        ReflectionTestUtils.setField(impl, "metaManager", EntityClassDefine.getMockMetaManager());
+        ReflectionTestUtils.setField(impl, "calculation", new DefaultCalculationImpl());
+        ReflectionTestUtils.setField(impl, "resourceLocker", new LocalResourceLocker());
+        ReflectionTestUtils.setField(impl, "eventBus", DoNothingEventBus.getInstance());
+        ReflectionTestUtils.setField(impl, "calculationLogicFactory", new CalculationLogicFactory());
         impl.init();
     }
 
-
     @AfterEach
     public void after() throws Exception {
-        TestInitTools.close();
     }
 
     @Test
@@ -82,7 +100,7 @@ public class EntityManagementServiceImplTest {
     public void testBuildBatch() throws Exception {
         MasterStorage masterStorage = mock(MasterStorage.class);
 
-        com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[] targetEntities = new com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[1000];
+        IEntity[] targetEntities = new IEntity[1000];
         EntityPackage expectedEntityPackage = new EntityPackage();
         for (int i = 0; i < 1000; i++) {
 
@@ -410,5 +428,26 @@ public class EntityManagementServiceImplTest {
             ).build();
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
         Assertions.assertEquals(ResultStatus.NOT_FOUND, impl.delete(targetEntity).getResultStatus());
+    }
+
+    static class MockTransactionExecutor implements TransactionExecutor {
+
+        private LongIdGenerator idGenerator = new IncreasingOrderLongIdGenerator();
+
+        @Override
+        public Object execute(ResourceTask storageTask) throws SQLException {
+            try {
+                return storageTask.run(
+                    MultiLocalTransaction.Builder.anMultiLocalTransaction()
+                        .withId(1)
+                        .withLongIdGenerator(idGenerator)
+                        .withEventBus(DoNothingEventBus.getInstance()).build(),
+                    null,
+                    new DefaultExecutorHint()
+                );
+            } catch (Exception e) {
+                throw new SQLException(e.getMessage(), e);
+            }
+        }
     }
 } 
