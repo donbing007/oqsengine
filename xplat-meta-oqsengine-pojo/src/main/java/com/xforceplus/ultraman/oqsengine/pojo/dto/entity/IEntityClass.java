@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
-import java.io.Serializable;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -147,7 +146,10 @@ public interface IEntityClass {
 
     /**
      * 获取当前entityClass的类型，目前支持的类型包括动态、静态.
+     *
      * @return 返回entityClassType.
      */
-    EntityClassType type();
+    default EntityClassType type() {
+        return EntityClassType.UNKNOWN;
+    }
 }
