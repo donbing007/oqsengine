@@ -131,7 +131,7 @@ public interface IEntityClass {
      * 是否是一个动态的类型 默认是.
      */
     default boolean isDynamic() {
-        return true;
+        return EntityClassType.DYNAMIC == type();
     }
 
     /**
