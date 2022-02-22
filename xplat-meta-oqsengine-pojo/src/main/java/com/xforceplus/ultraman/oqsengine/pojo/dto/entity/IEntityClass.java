@@ -145,6 +145,16 @@ public interface IEntityClass {
     }
 
     /**
+     * 判断指定的元信息是否兼容当前元信息.
+     *
+     * @param entityClass 判断目标.
+     * @return true 兼容, false 不兼容.
+     */
+    default boolean isCompatibility(IEntityClass entityClass) {
+        return isCompatibility(entityClass.id());
+    }
+
+    /**
      * 获取当前entityClass的类型，目前支持的类型包括动态、静态.
      *
      * @return 返回entityClassType.
