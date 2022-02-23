@@ -159,7 +159,7 @@ public class CdcInitialization implements BeanInitialization {
     }
 
     private DataSource buildDevOpsDataSource() throws IllegalAccessException {
-        return CommonInitialization.getInstance().getDataSourcePackage(true).getDevOps();
+        return CommonInitialization.getInstance().getDataSourcePackage(false).getDevOps();
     }
 
     /**
