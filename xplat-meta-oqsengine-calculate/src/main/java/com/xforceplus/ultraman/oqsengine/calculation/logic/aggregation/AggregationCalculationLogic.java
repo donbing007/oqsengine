@@ -81,7 +81,6 @@ public class AggregationCalculationLogic implements CalculationLogic {
             return aggValue;
         }
         Aggregation aggregation = ((Aggregation) aggField.config().getCalculation());
-        long byAggEntityClassId = aggregation.getClassId();
         long byAggFieldId = aggregation.getFieldId();
         //获取被聚合的entity信息（修改后的）
         IEntity byAggEntity = null;
