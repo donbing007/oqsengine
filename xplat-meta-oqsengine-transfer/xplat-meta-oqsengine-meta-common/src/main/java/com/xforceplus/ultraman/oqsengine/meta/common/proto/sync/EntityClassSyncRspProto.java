@@ -17,6 +17,7 @@ private static final long serialVersionUID = 0L;
   }
   private EntityClassSyncRspProto() {
     entityClasses_ = java.util.Collections.emptyList();
+    appCode_ = "";
   }
 
   @java.lang.Override
@@ -59,6 +60,12 @@ private static final long serialVersionUID = 0L;
                 input.readMessage(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassInfo.parser(), extensionRegistry));
             break;
           }
+          case 18: {
+            java.lang.String s = input.readStringRequireUtf8();
+
+            appCode_ = s;
+            break;
+          }
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
@@ -86,6 +93,7 @@ private static final long serialVersionUID = 0L;
             com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto.class, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto.Builder.class);
   }
 
+  private int bitField0_;
   public static final int ENTITYCLASSES_FIELD_NUMBER = 1;
   private java.util.List<com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassInfo> entityClasses_;
   /**
@@ -121,6 +129,40 @@ private static final long serialVersionUID = 0L;
     return entityClasses_.get(index);
   }
 
+  public static final int APPCODE_FIELD_NUMBER = 2;
+  private volatile java.lang.Object appCode_;
+  /**
+   * <code>string appCode = 2;</code>
+   */
+  public java.lang.String getAppCode() {
+    java.lang.Object ref = appCode_;
+    if (ref instanceof java.lang.String) {
+      return (java.lang.String) ref;
+    } else {
+      com.google.protobuf.ByteString bs = 
+          (com.google.protobuf.ByteString) ref;
+      java.lang.String s = bs.toStringUtf8();
+      appCode_ = s;
+      return s;
+    }
+  }
+  /**
+   * <code>string appCode = 2;</code>
+   */
+  public com.google.protobuf.ByteString
+      getAppCodeBytes() {
+    java.lang.Object ref = appCode_;
+    if (ref instanceof java.lang.String) {
+      com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString.copyFromUtf8(
+              (java.lang.String) ref);
+      appCode_ = b;
+      return b;
+    } else {
+      return (com.google.protobuf.ByteString) ref;
+    }
+  }
+
   private byte memoizedIsInitialized = -1;
   public final boolean isInitialized() {
     byte isInitialized = memoizedIsInitialized;
@@ -136,6 +178,9 @@ private static final long serialVersionUID = 0L;
     for (int i = 0; i < entityClasses_.size(); i++) {
       output.writeMessage(1, entityClasses_.get(i));
     }
+    if (!getAppCodeBytes().isEmpty()) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 2, appCode_);
+    }
     unknownFields.writeTo(output);
   }
 
@@ -147,6 +192,9 @@ private static final long serialVersionUID = 0L;
     for (int i = 0; i < entityClasses_.size(); i++) {
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(1, entityClasses_.get(i));
+    }
+    if (!getAppCodeBytes().isEmpty()) {
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, appCode_);
     }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
@@ -166,6 +214,8 @@ private static final long serialVersionUID = 0L;
     boolean result = true;
     result = result && getEntityClassesList()
         .equals(other.getEntityClassesList());
+    result = result && getAppCode()
+        .equals(other.getAppCode());
     result = result && unknownFields.equals(other.unknownFields);
     return result;
   }
@@ -181,6 +231,8 @@ private static final long serialVersionUID = 0L;
       hash = (37 * hash) + ENTITYCLASSES_FIELD_NUMBER;
       hash = (53 * hash) + getEntityClassesList().hashCode();
     }
+    hash = (37 * hash) + APPCODE_FIELD_NUMBER;
+    hash = (53 * hash) + getAppCode().hashCode();
     hash = (29 * hash) + unknownFields.hashCode();
     memoizedHashCode = hash;
     return hash;
@@ -317,6 +369,8 @@ private static final long serialVersionUID = 0L;
       } else {
         entityClassesBuilder_.clear();
       }
+      appCode_ = "";
+
       return this;
     }
 
@@ -340,6 +394,7 @@ private static final long serialVersionUID = 0L;
     public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto buildPartial() {
       com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto result = new com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto(this);
       int from_bitField0_ = bitField0_;
+      int to_bitField0_ = 0;
       if (entityClassesBuilder_ == null) {
         if (((bitField0_ & 0x00000001) == 0x00000001)) {
           entityClasses_ = java.util.Collections.unmodifiableList(entityClasses_);
@@ -349,6 +404,8 @@ private static final long serialVersionUID = 0L;
       } else {
         result.entityClasses_ = entityClassesBuilder_.build();
       }
+      result.appCode_ = appCode_;
+      result.bitField0_ = to_bitField0_;
       onBuilt();
       return result;
     }
@@ -415,6 +472,10 @@ private static final long serialVersionUID = 0L;
             entityClassesBuilder_.addAllMessages(other.entityClasses_);
           }
         }
+      }
+      if (!other.getAppCode().isEmpty()) {
+        appCode_ = other.appCode_;
+        onChanged();
       }
       this.mergeUnknownFields(other.unknownFields);
       onChanged();
@@ -682,6 +743,75 @@ private static final long serialVersionUID = 0L;
         entityClasses_ = null;
       }
       return entityClassesBuilder_;
+    }
+
+    private java.lang.Object appCode_ = "";
+    /**
+     * <code>string appCode = 2;</code>
+     */
+    public java.lang.String getAppCode() {
+      java.lang.Object ref = appCode_;
+      if (!(ref instanceof java.lang.String)) {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        appCode_ = s;
+        return s;
+      } else {
+        return (java.lang.String) ref;
+      }
+    }
+    /**
+     * <code>string appCode = 2;</code>
+     */
+    public com.google.protobuf.ByteString
+        getAppCodeBytes() {
+      java.lang.Object ref = appCode_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        appCode_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+    /**
+     * <code>string appCode = 2;</code>
+     */
+    public Builder setAppCode(
+        java.lang.String value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  
+      appCode_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string appCode = 2;</code>
+     */
+    public Builder clearAppCode() {
+      
+      appCode_ = getDefaultInstance().getAppCode();
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string appCode = 2;</code>
+     */
+    public Builder setAppCodeBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+      
+      appCode_ = value;
+      onChanged();
+      return this;
     }
     public final Builder setUnknownFields(
         final com.google.protobuf.UnknownFieldSet unknownFields) {
