@@ -164,6 +164,9 @@ public class UserCaseTest {
         }
     }
 
+    /**
+     * 测试事务内统计和事务外统计的正确性.
+     */
     @Test
     public void testCount() throws Exception {
         Transaction tx = transactionManager.create(5000);
@@ -220,6 +223,9 @@ public class UserCaseTest {
         Assertions.assertEquals(targetEntities.length, count.getValue().get());
     }
 
+    /**
+     * 测试未提交数据的查询.
+     */
     @Test
     public void testUncommitSearch() throws Exception {
         Transaction tx = transactionManager.create(5000);
@@ -257,6 +263,9 @@ public class UserCaseTest {
         transactionManager.finish();
     }
 
+    /**
+     * 测试在事务内更新后马下查询.
+     */
     @Test
     public void testUpdateAfterQueryInTx() throws Exception {
         IEntity entity = Entity.Builder.anEntity()
@@ -293,6 +302,9 @@ public class UserCaseTest {
         transactionManager.finish();
     }
 
+    /**
+     * 测试事务内删除后马上查询.
+     */
     @Test
     public void testDeleteAfterQueryInTx() throws Exception {
         IEntity entity = Entity.Builder.anEntity()
@@ -328,6 +340,9 @@ public class UserCaseTest {
         transactionManager.finish();
     }
 
+    /**
+     * 测试更新父后使用子对象属性查询.
+     */
     @Test
     public void testUpdateFatherSearchChild() throws Exception {
         IEntity entity = Entity.Builder.anEntity()
@@ -434,6 +449,9 @@ public class UserCaseTest {
         }
     }
 
+    /**
+     * 创建后删除.
+     */
     @Test
     public void testBuildAfterDelete() throws Exception {
         for (int i = 0; i < TEST_LOOPS; i++) {
@@ -513,6 +531,9 @@ public class UserCaseTest {
         Assertions.assertEquals(0, commitIdStatusService.size());
     }
 
+    /**
+     * 测试单字段排序.
+     */
     @Test
     public void testOneSort() throws Exception {
         long[] fistFieldValues = new long[] {
@@ -657,6 +678,9 @@ public class UserCaseTest {
         Assertions.assertArrayEquals(expectedThridValues, thridValues);
     }
 
+    /**
+     * 测试两字段降序.
+     */
     @Test
     public void testSortTwoDec() throws Exception {
         IEntity e0 = Entity.Builder.anEntity()
@@ -699,7 +723,9 @@ public class UserCaseTest {
         Assertions.assertEquals(e0.id(), entities.getValue().get().stream().skip(1).findFirst().get().id());
     }
 
-    // 测试排序,但是记录中没有排序的值.应该使用默认值作为排序字段.
+    /**
+     * 测试排序,但是记录中没有排序的值.应该使用默认值作为排序字段.
+     */
     @Test
     public void testSortButNoValue() throws Exception {
         IEntity e0 = Entity.Builder.anEntity()
@@ -910,6 +936,9 @@ public class UserCaseTest {
         Assertions.assertEquals(1, entities.getValue().get().size());
     }
 
+    /**
+     * 测试分词模糊查询.
+     */
     @Test
     public void testLikeWithSegmentation() throws Exception {
         IEntity entity = Entity.Builder.anEntity()
@@ -974,6 +1003,9 @@ public class UserCaseTest {
         Assertions.assertEquals(1, entities.getValue().get().size());
     }
 
+    /**
+     * 测试lookup一个字符字段.
+     */
     @Test
     public void testlookupString() throws Exception {
         IEntity targetEntity = Entity.Builder.anEntity()
@@ -1080,6 +1112,9 @@ public class UserCaseTest {
         ).count());
     }
 
+    /**
+     * 测试lookup一个浮点数字.
+     */
     @Test
     public void testLookupDec() throws Exception {
         IEntity targetEntity = Entity.Builder.anEntity()
@@ -1178,6 +1213,9 @@ public class UserCaseTest {
         ).count());
     }
 
+    /**
+     * 测试分词模糊的更多场景.
+     */
     @Test
     public void testSegmentation() throws Exception {
         IEntity targetEntity = Entity.Builder.anEntity()
