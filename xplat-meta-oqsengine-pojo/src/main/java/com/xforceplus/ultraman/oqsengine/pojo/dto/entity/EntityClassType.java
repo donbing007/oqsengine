@@ -8,6 +8,7 @@ import java.sql.SQLException;
  * @since 1.8
  */
 public enum EntityClassType {
+    UNKNOWN(0),
     STATIC(1),
     DYNAMIC(2);
 

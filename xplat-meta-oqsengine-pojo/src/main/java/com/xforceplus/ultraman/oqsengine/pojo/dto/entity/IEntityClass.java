@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
-import java.io.Serializable;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -26,6 +25,11 @@ public interface IEntityClass {
      * 对象code.
      */
     String code();
+
+    /**
+     * 所属于的应用Code.
+     */
+    String appCode();
 
     /**
      * 元信息名称.
@@ -132,7 +136,7 @@ public interface IEntityClass {
      * 是否是一个动态的类型 默认是.
      */
     default boolean isDynamic() {
-        return true;
+        return EntityClassType.DYNAMIC == type();
     }
 
     /**
@@ -146,8 +150,21 @@ public interface IEntityClass {
     }
 
     /**
+     * 判断指定的元信息是否兼容当前元信息.
+     *
+     * @param entityClass 判断目标.
+     * @return true 兼容, false 不兼容.
+     */
+    default boolean isCompatibility(IEntityClass entityClass) {
+        return isCompatibility(entityClass.id());
+    }
+
+    /**
      * 获取当前entityClass的类型，目前支持的类型包括动态、静态.
+     *
      * @return 返回entityClassType.
      */
-    EntityClassType type();
+    default EntityClassType type() {
+        return EntityClassType.UNKNOWN;
+    }
 }

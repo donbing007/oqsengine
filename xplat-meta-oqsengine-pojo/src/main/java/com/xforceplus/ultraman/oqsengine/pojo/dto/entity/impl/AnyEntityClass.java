@@ -40,6 +40,11 @@ public class AnyEntityClass implements IEntityClass {
     }
 
     @Override
+    public String appCode() {
+        return "";
+    }
+
+    @Override
     public String name() {
         return "";
     }
