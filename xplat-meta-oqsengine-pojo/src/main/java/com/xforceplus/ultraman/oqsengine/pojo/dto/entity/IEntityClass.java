@@ -27,6 +27,11 @@ public interface IEntityClass {
     String code();
 
     /**
+     * 所属于的应用Code.
+     */
+    String appCode();
+
+    /**
      * 元信息名称.
      */
     String name();
