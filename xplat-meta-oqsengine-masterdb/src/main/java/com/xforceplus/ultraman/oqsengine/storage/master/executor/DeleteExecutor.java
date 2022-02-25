@@ -69,7 +69,6 @@ public class DeleteExecutor extends AbstractJdbcTaskExecutor<BaseMasterStorageEn
         st.setInt(5, entity.getOp());
         st.setInt(6, entity.getEntityClassVersion());
         st.setLong(7, entity.getId());
-        st.setInt(8, entity.getVersion());
     }
 
     private String buildSQL() {
