@@ -808,7 +808,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     masterStorage.replace(newEntity, entityClass);
                     if (newEntity.isDirty()) {
                         hint.setRollback(true);
-                        return OqsResult.conflict();
+                        return OqsResult.unReplaced(newEntity.id());
                     }
 
                     if (!calculationContext.persist()) {
