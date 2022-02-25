@@ -66,7 +66,16 @@ public enum ResultStatus {
     /**
      * 不存在的元数据.
      */
-    NOT_EXIST_META((byte) 12);
+    NOT_EXIST_META((byte) 12),
+    //============================延续基本=====================
+    /**
+     * 更新失败.
+     */
+    UNREPLACE((byte) 13),
+    /**
+     * 删除失败.
+     */
+    UNDELETED((byte) 14);
 
     private byte symbol;
 
