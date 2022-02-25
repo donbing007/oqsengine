@@ -142,7 +142,7 @@ public class DynamicUpdateExecutor extends AbstractJdbcTaskExecutor<MapAttribute
 
     private String buildSQL(MapAttributeMasterStorageEntity entity, String replaceSegment, String removeSegment) {
         //"update %s set version = version + 1, updatetime = ?, tx = ?,
-        // commitid = ?, op = ?, attribute = ?, attribute = ? where id = ? and version = ?";
+        // commitid = ?, op = ?, attribute = ?, attribute = ? where id = ?;
 
         StringBuilder sql = new StringBuilder();
         sql.append("UPDATE ").append(getTableName())
@@ -163,9 +163,7 @@ public class DynamicUpdateExecutor extends AbstractJdbcTaskExecutor<MapAttribute
             sql.append(FieldDefine.ATTRIBUTE).append("=").append(removeSegment);
         }
         sql.append(" WHERE ")
-            .append(FieldDefine.ID).append("=").append(entity.getId())
-            .append(" AND ")
-            .append(FieldDefine.VERSION).append("=").append(entity.getVersion());
+            .append(FieldDefine.ID).append("=").append(entity.getId());
         return sql.toString();
     }
 }
