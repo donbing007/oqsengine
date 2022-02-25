@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.boot.grpc.devops;
 import com.xforceplus.ultraman.devops.service.sdk.annotation.DiscoverAction;
 import com.xforceplus.ultraman.devops.service.sdk.annotation.MethodParam;
 import com.xforceplus.ultraman.oqsengine.boot.grpc.utils.PrintErrorHelper;
+import com.xforceplus.ultraman.oqsengine.calculation.logic.initcalculation.InitCalculationManager;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.core.service.pojo.OqsResult;
@@ -60,6 +61,8 @@ public class DataOpsService {
     @Autowired
     private EntitySearchService entitySearchService;
 
+    @Autowired
+    private InitCalculationManager initCalculationManager;
 
     /**
      * 统一数据运维-条件查询.
@@ -338,6 +341,17 @@ public class DataOpsService {
         }
 
         return null;
+    }
+
+
+    /**
+     * 统一数据运维-初始化计算字段.
+     * @Param appId 应用Id.
+     * @return 返回结果
+     */
+    @DiscoverAction(describe = "初始化计算字段", retClass = List.class)
+    public List<IEntityField> initAppCalculations(String appId) {
+        return initCalculationManager.initAppCalculations(appId);
     }
 
     private DevOpsDataResponse toDevOpsDataResponse(OqsResult oqsResult) {

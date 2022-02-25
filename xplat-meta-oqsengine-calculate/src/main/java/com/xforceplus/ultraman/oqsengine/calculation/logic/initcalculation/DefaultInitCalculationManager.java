@@ -337,7 +337,7 @@ public class DefaultInitCalculationManager implements InitCalculationManager {
     }
 
     @Override
-    public Either<String, List<IEntityField>> initAppCalculations(String appCode) {
+    public List<IEntityField> initAppCalculations(String appCode) {
         try {
             boolean b = false;
             try {
@@ -350,13 +350,13 @@ public class DefaultInitCalculationManager implements InitCalculationManager {
 
             }
             if (kv.exist(appCode + INITING)) {
-                return Either.left(String.format("curent app %s is initing now, please wait", appCode));
+                throw new RuntimeException(String.format("curent app %s is initing now, please wait", appCode));
             } else {
                 List<IEntityField> entityFields = generateAppInfo(appCode).getNeed().stream()
                         .map(Participant::getField).collect(Collectors.toList());
                 worker.submit(new Runner(appCode));
                 kv.save(appCode + INITING, serializeStrategy.serialize(1));
-                return Either.right(entityFields);
+                return entityFields;
             }
         } finally {
             locker.unlock(appCode);
