@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.storage.master.executor;
+package com.xforceplus.ultraman.oqsengine.storage.master.executor.dynamic;
 
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -9,7 +9,6 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 
 /**
  * 批量数量查询执行器.
@@ -17,7 +16,7 @@ import java.sql.SQLException;
  * @author xujia 2020/11/18
  * @since 1.8
  */
-public class BatchQueryCountExecutor extends AbstractJdbcTaskExecutor<Long, Integer> {
+public class DynamicBatchQueryCountExecutor extends AbstractJdbcTaskExecutor<Long, Integer> {
 
     private IEntityClass entityClass;
     private long startTime;
@@ -33,8 +32,8 @@ public class BatchQueryCountExecutor extends AbstractJdbcTaskExecutor<Long, Inte
      * @param startTime   开始时间.
      * @param endTime     结束时间.
      */
-    public BatchQueryCountExecutor(String tableName, TransactionResource<Connection> resource, long timeout,
-                                   IEntityClass entityClass, long startTime, long endTime) {
+    public DynamicBatchQueryCountExecutor(String tableName, TransactionResource<Connection> resource, long timeout,
+                                          IEntityClass entityClass, long startTime, long endTime) {
         super(tableName, resource, timeout);
         this.entityClass = entityClass;
         this.startTime = startTime;
@@ -44,7 +43,7 @@ public class BatchQueryCountExecutor extends AbstractJdbcTaskExecutor<Long, Inte
     public static Executor<Long, Integer> build(
         String tableName, TransactionResource resource, long timeout,
         IEntityClass entityClass, long startTime, long endTime) {
-        return new BatchQueryCountExecutor(tableName, resource, timeout, entityClass, startTime, endTime);
+        return new DynamicBatchQueryCountExecutor(tableName, resource, timeout, entityClass, startTime, endTime);
     }
 
     @Override

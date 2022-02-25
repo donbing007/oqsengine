@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.storage.master.executor;
+package com.xforceplus.ultraman.oqsengine.storage.master.executor.dynamic;
 
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -21,7 +21,7 @@ import java.util.List;
  * @author : xujia 2020/11/18
  * @since : 1.8
  */
-public class BatchQueryExecutor extends AbstractJdbcTaskExecutor<Long, Collection<MasterStorageEntity>> {
+public class DynamicBatchQueryExecutor extends AbstractJdbcTaskExecutor<Long, Collection<MasterStorageEntity>> {
 
     private IEntityClass entityClass;
     private long startTime;
@@ -39,8 +39,8 @@ public class BatchQueryExecutor extends AbstractJdbcTaskExecutor<Long, Collectio
      * @param endTime     结束时间.
      * @param pageSize    分页大小.
      */
-    public BatchQueryExecutor(String tableName, TransactionResource<Connection> resource, long timeout,
-                              IEntityClass entityClass, long startTime, long endTime, int pageSize) {
+    public DynamicBatchQueryExecutor(String tableName, TransactionResource<Connection> resource, long timeout,
+                                     IEntityClass entityClass, long startTime, long endTime, int pageSize) {
         super(tableName, resource, timeout);
         this.entityClass = entityClass;
         this.startTime = startTime;
@@ -51,7 +51,7 @@ public class BatchQueryExecutor extends AbstractJdbcTaskExecutor<Long, Collectio
     public static Executor<Long, Collection<MasterStorageEntity>> build(
         String tableName, TransactionResource resource, long timeout,
         IEntityClass entityClass, long startTime, long endTime, int pageSize) {
-        return new BatchQueryExecutor(tableName, resource, timeout, entityClass, startTime, endTime, pageSize);
+        return new DynamicBatchQueryExecutor(tableName, resource, timeout, entityClass, startTime, endTime, pageSize);
     }
 
     @Override

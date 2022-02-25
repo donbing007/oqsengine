@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.storage.master.executor;
+package com.xforceplus.ultraman.oqsengine.storage.master.executor.dynamic;
 
 import com.xforceplus.ultraman.oqsengine.common.StringUtils;
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
@@ -18,18 +18,18 @@ import java.util.Map;
  * @version 0.1 2020/11/2 15:44
  * @since 1.8
  */
-public class UpdateExecutor extends AbstractJdbcTaskExecutor<MapAttributeMasterStorageEntity[], boolean[]> {
+public class DynamicUpdateExecutor extends AbstractJdbcTaskExecutor<MapAttributeMasterStorageEntity[], boolean[]> {
 
     public static Executor<MapAttributeMasterStorageEntity[], boolean[]> build(
         String tableName, TransactionResource resource, long timeoutMs) {
-        return new UpdateExecutor(tableName, resource, timeoutMs);
+        return new DynamicUpdateExecutor(tableName, resource, timeoutMs);
     }
 
-    public UpdateExecutor(String tableName, TransactionResource<Connection> resource) {
+    public DynamicUpdateExecutor(String tableName, TransactionResource<Connection> resource) {
         super(tableName, resource);
     }
 
-    public UpdateExecutor(String tableName, TransactionResource<Connection> resource, long timeoutMs) {
+    public DynamicUpdateExecutor(String tableName, TransactionResource<Connection> resource, long timeoutMs) {
         super(tableName, resource, timeoutMs);
     }
 

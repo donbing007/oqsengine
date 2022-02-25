@@ -90,6 +90,11 @@ public class EntityClass implements IEntityClass {
     }
 
     @Override
+    public Optional<String> profile() {
+        return Optional.ofNullable(this.profile);
+    }
+
+    @Override
     public String name() {
         return name;
     }
@@ -107,8 +112,8 @@ public class EntityClass implements IEntityClass {
     @Override
     public EntityClassRef ref() {
         return EntityClassRef.Builder.anEntityClassRef()
-            .withEntityClassId(id())
-            .withEntityClassCode(code())
+            .withEntityClassId(id)
+            .withEntityClassCode(code)
             .withEntityClassProfile(profile)
             .build();
     }

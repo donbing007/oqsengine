@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.storage.master.executor;
+package com.xforceplus.ultraman.oqsengine.storage.master.executor.dynamic;
 
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -21,18 +21,18 @@ import java.util.List;
  * @version 0.1 2020/11/3 14:37
  * @since 1.8
  */
-public class MultipleQueryExecutor extends AbstractJdbcTaskExecutor<long[], Collection<JsonAttributeMasterStorageEntity>> {
+public class DynamicMultipleQueryExecutor extends AbstractJdbcTaskExecutor<long[], Collection<JsonAttributeMasterStorageEntity>> {
 
     public static Executor<long[], Collection<JsonAttributeMasterStorageEntity>> build(
         String tableName, TransactionResource<Connection> resource, long timeout) {
-        return new MultipleQueryExecutor(tableName, resource, timeout);
+        return new DynamicMultipleQueryExecutor(tableName, resource, timeout);
     }
 
-    public MultipleQueryExecutor(String tableName, TransactionResource<Connection> resource, IEntityClass entityClass) {
+    public DynamicMultipleQueryExecutor(String tableName, TransactionResource<Connection> resource, IEntityClass entityClass) {
         super(tableName, resource);
     }
 
-    public MultipleQueryExecutor(String tableName, TransactionResource<Connection> resource, long timeout) {
+    public DynamicMultipleQueryExecutor(String tableName, TransactionResource<Connection> resource, long timeout) {
         super(tableName, resource, timeout);
     }
 

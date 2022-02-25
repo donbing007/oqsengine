@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.storage.master.executor;
+package com.xforceplus.ultraman.oqsengine.storage.master.executor.dynamic;
 
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
@@ -29,7 +29,7 @@ import java.util.Collection;
  * @version 0.1 2020/11/4 15:36
  * @since 1.8
  */
-public class QueryLimitCommitidByConditionsExecutor
+public class DynamicQueryByConditionsExecutor
     extends AbstractJdbcTaskExecutor<Conditions, Collection<EntityRef>> {
 
     private static final String SELECT_SORT_COLUMN0 = "sort0";
@@ -61,8 +61,8 @@ public class QueryLimitCommitidByConditionsExecutor
         long timeoutMs,
         SQLJsonConditionsBuilderFactory conditionsBuilderFactory,
         StorageStrategyFactory storageStrategyFactory) {
-        QueryLimitCommitidByConditionsExecutor executor =
-            new QueryLimitCommitidByConditionsExecutor(tableName, resource, timeoutMs);
+        DynamicQueryByConditionsExecutor executor =
+            new DynamicQueryByConditionsExecutor(tableName, resource, timeoutMs);
         executor.setConfig(config);
         executor.setEntityClass(entityClass);
         executor.setConditionsBuilderFactory(conditionsBuilderFactory);
@@ -70,12 +70,12 @@ public class QueryLimitCommitidByConditionsExecutor
         return executor;
     }
 
-    public QueryLimitCommitidByConditionsExecutor(String tableName, TransactionResource<Connection> resource) {
+    public DynamicQueryByConditionsExecutor(String tableName, TransactionResource<Connection> resource) {
         super(tableName, resource);
     }
 
-    public QueryLimitCommitidByConditionsExecutor(String tableName, TransactionResource<Connection> resource,
-                                                  long timeoutMs) {
+    public DynamicQueryByConditionsExecutor(String tableName, TransactionResource<Connection> resource,
+                                            long timeoutMs) {
         super(tableName, resource, timeoutMs);
     }
 

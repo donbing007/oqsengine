@@ -29,12 +29,21 @@ public interface IEntityClass {
     /**
      * 所属于的应用Code.
      */
-    String appCode();
+    default String appCode() {
+        return "";
+    }
 
     /**
      * 元信息名称.
      */
     String name();
+
+    /**
+     * 替身.元信息特殊定制的标记.
+     */
+    default Optional<String> profile() {
+        return Optional.empty();
+    }
 
     /**
      * 元信息版本.0为初始版本号.

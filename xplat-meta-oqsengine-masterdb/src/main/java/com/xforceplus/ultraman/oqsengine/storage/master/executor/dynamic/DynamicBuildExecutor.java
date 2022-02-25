@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.storage.master.executor;
+package com.xforceplus.ultraman.oqsengine.storage.master.executor.dynamic;
 
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
 import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
@@ -18,18 +18,18 @@ import java.util.Collections;
  * @version 0.1 2020/11/2 14:41
  * @since 1.8
  */
-public class BuildExecutor extends AbstractJdbcTaskExecutor<JsonAttributeMasterStorageEntity[], boolean[]> {
+public class DynamicBuildExecutor extends AbstractJdbcTaskExecutor<JsonAttributeMasterStorageEntity[], boolean[]> {
 
     public static Executor<JsonAttributeMasterStorageEntity[], boolean[]> build(
         String tableName, TransactionResource resource, long timeout) {
-        return new BuildExecutor(tableName, resource, timeout);
+        return new DynamicBuildExecutor(tableName, resource, timeout);
     }
 
-    public BuildExecutor(String tableName, TransactionResource<Connection> resource) {
+    public DynamicBuildExecutor(String tableName, TransactionResource<Connection> resource) {
         super(tableName, resource);
     }
 
-    public BuildExecutor(String tableName, TransactionResource<Connection> resource, long timeout) {
+    public DynamicBuildExecutor(String tableName, TransactionResource<Connection> resource, long timeout) {
         super(tableName, resource, timeout);
     }
 

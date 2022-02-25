@@ -96,7 +96,7 @@ public class MasterDBInitialization implements BeanInitialization {
             CommonInitialization.getInstance().getRunner());
         ReflectionUtils.reflectionFieldValue(masterFields, "masterDataSource", masterStorage, dataSource);
 
-        masterStorage.setTableName(MASTER_STORAGE_TABLE);
+        masterStorage.setDynamicTableName(MASTER_STORAGE_TABLE);
         masterStorage.init();
     }
 

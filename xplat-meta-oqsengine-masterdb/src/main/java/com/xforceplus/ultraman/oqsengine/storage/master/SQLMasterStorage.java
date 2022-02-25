@@ -25,24 +25,22 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.ValueWithEmpty;
-import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.master.executor.BatchQueryCountExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.master.executor.BatchQueryExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.master.executor.BuildExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.master.executor.DeleteExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.master.executor.ExistExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.master.executor.MultipleQueryExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.master.executor.QueryExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.master.executor.QueryLimitCommitidByConditionsExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.master.executor.UpdateExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.master.executor.dynamic.DynamicBatchQueryCountExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.master.executor.dynamic.DynamicBatchQueryExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.master.executor.dynamic.DynamicBuildExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.master.executor.dynamic.DynamicDeleteExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.master.executor.dynamic.DynamicExistExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.master.executor.dynamic.DynamicMultipleQueryExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.master.executor.dynamic.DynamicQueryByConditionsExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.master.executor.dynamic.DynamicQueryExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.master.executor.dynamic.DynamicUpdateExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.rebuild.DevOpsRebuildExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.BaseMasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.JsonAttributeMasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.MapAttributeMasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.MasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.conditions.SQLJsonConditionsBuilderFactory;
-import com.xforceplus.ultraman.oqsengine.storage.master.unique.UniqueKeyGenerator;
 import com.xforceplus.ultraman.oqsengine.storage.master.utils.EntityClassRefHelper;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.EntityPackage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
@@ -67,7 +65,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
-import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
@@ -109,19 +106,10 @@ public class SQLMasterStorage implements MasterStorage {
     @Resource
     private MetaManager metaManager;
 
-    @Resource
-    private UniqueKeyGenerator keyGenerator;
-
-    @Resource(name = "taskThreadPool")
-    private ExecutorService asyncErrorExecutor;
-
-    @Resource
-    private KeyValueStorage kv;
-
     @Resource(name = "masterDataSource")
     private DataSource masterDataSource;
 
-    private String tableName;
+    private String dynamicTableName;
 
     private long queryTimeout;
 
@@ -129,8 +117,8 @@ public class SQLMasterStorage implements MasterStorage {
         this.queryTimeout = queryTimeout;
     }
 
-    public void setTableName(String tableName) {
-        this.tableName = tableName;
+    public void setDynamicTableName(String dynamicTableName) {
+        this.dynamicTableName = dynamicTableName;
     }
 
     @Override
@@ -162,8 +150,8 @@ public class SQLMasterStorage implements MasterStorage {
         SelectConfig useConfig = optimizeToOrder(config);
 
         return (Collection<EntityRef>) transactionExecutor.execute((tx, resource, hint) -> {
-            return QueryLimitCommitidByConditionsExecutor.build(
-                tableName,
+            return DynamicQueryByConditionsExecutor.build(
+                dynamicTableName,
                 resource,
                 entityClass,
                 useConfig,
@@ -177,7 +165,7 @@ public class SQLMasterStorage implements MasterStorage {
     @Override
     public int exist(long id) throws SQLException {
         return (int) transactionExecutor.execute(((tx, resource, hint) ->
-            ExistExecutor.build(tableName, resource, queryTimeout).execute(id)));
+            DynamicExistExecutor.build(dynamicTableName, resource, queryTimeout).execute(id)));
     }
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "master", "action", "one"})
@@ -185,7 +173,7 @@ public class SQLMasterStorage implements MasterStorage {
     public Optional<IEntity> selectOne(long id) throws SQLException {
         return (Optional<IEntity>) transactionExecutor.execute((tx, resource, hint) -> {
             Optional<JsonAttributeMasterStorageEntity> masterStorageEntityOptional =
-                QueryExecutor.buildHaveDetail(tableName, resource, queryTimeout).execute(id);
+                DynamicQueryExecutor.buildHaveDetail(dynamicTableName, resource, queryTimeout).execute(id);
             if (masterStorageEntityOptional.isPresent()) {
                 IEntity entity = buildEntityFromJsonStorageEntity(masterStorageEntityOptional.get());
                 entity.neat();
@@ -239,7 +227,7 @@ public class SQLMasterStorage implements MasterStorage {
             (Collection<JsonAttributeMasterStorageEntity>) transactionExecutor.execute(
                 (tx, resource, hint) -> {
 
-                    return MultipleQueryExecutor.build(tableName, resource, queryTimeout).execute(useIds);
+                    return DynamicMultipleQueryExecutor.build(dynamicTableName, resource, queryTimeout).execute(useIds);
                 }
             );
 
@@ -297,7 +285,7 @@ public class SQLMasterStorage implements MasterStorage {
                 JsonAttributeMasterStorageEntity
                     entityForBuild = buildNewMasterStorageEntity(entity, entityClass, resource);
 
-                boolean[] results = BuildExecutor.build(tableName, resource, queryTimeout)
+                boolean[] results = DynamicBuildExecutor.build(dynamicTableName, resource, queryTimeout)
                     .execute(new JsonAttributeMasterStorageEntity[] {entityForBuild});
 
                 final int first = 0;
@@ -343,7 +331,7 @@ public class SQLMasterStorage implements MasterStorage {
                     }
                 }
 
-                return BuildExecutor.build(tableName, resource, queryTimeout).execute(
+                return DynamicBuildExecutor.build(dynamicTableName, resource, queryTimeout).execute(
                     Arrays.stream(masterStorageEntities)
                         .filter(se -> EMPTY_JSON_STORAGE_ENTITY != se).toArray(JsonAttributeMasterStorageEntity[]::new)
                 );
@@ -378,7 +366,7 @@ public class SQLMasterStorage implements MasterStorage {
                 MapAttributeMasterStorageEntity masterStorageEntity =
                     buildReplaceMasterStorageEntity(entity, entityClass, resource);
 
-                boolean[] results = UpdateExecutor.build(tableName, resource, queryTimeout)
+                boolean[] results = DynamicUpdateExecutor.build(dynamicTableName, resource, queryTimeout)
                     .execute(new MapAttributeMasterStorageEntity[] {masterStorageEntity});
 
                 final int first = 0;
@@ -427,7 +415,7 @@ public class SQLMasterStorage implements MasterStorage {
                     }
                 }
 
-                return UpdateExecutor.build(tableName, resource, queryTimeout).execute(
+                return DynamicUpdateExecutor.build(dynamicTableName, resource, queryTimeout).execute(
                     Arrays.stream(masterStorageEntities)
                         .filter(se -> EMPTY_MAP_STORAGE_ENTITY != se).toArray(MapAttributeMasterStorageEntity[]::new)
                 );
@@ -457,7 +445,7 @@ public class SQLMasterStorage implements MasterStorage {
 
                 BaseMasterStorageEntity
                     masterStorageEntity = buildDeleteMasterStorageEntity(entity, entityClass, resource);
-                boolean[] results = DeleteExecutor.build(tableName, resource, queryTimeout)
+                boolean[] results = DynamicDeleteExecutor.build(dynamicTableName, resource, queryTimeout)
                     .execute(new BaseMasterStorageEntity[] {masterStorageEntity});
 
                 final int first = 0;
@@ -486,7 +474,7 @@ public class SQLMasterStorage implements MasterStorage {
                     .map(e -> buildDeleteMasterStorageEntity(e.getKey(), e.getValue(), resource))
                     .toArray(BaseMasterStorageEntity[]::new);
 
-                return DeleteExecutor.build(tableName, resource, queryTimeout).execute(masterStorageEntities);
+                return DynamicDeleteExecutor.build(dynamicTableName, resource, queryTimeout).execute(masterStorageEntities);
             });
 
         IEntity entity;
@@ -505,7 +493,7 @@ public class SQLMasterStorage implements MasterStorage {
 
         if (actualEntityClassOp.isPresent()) {
             return DevOpsRebuildExecutor
-                .build(tableName, masterDataSource, maintainId, startTime, endTime)
+                .build(dynamicTableName, masterDataSource, maintainId, startTime, endTime)
                 .execute(actualEntityClassOp.get());
         }
 
@@ -579,8 +567,8 @@ public class SQLMasterStorage implements MasterStorage {
         private void load() throws Exception {
             transactionExecutor.execute((tx, resource, hint) -> {
                 Collection<MasterStorageEntity> storageEntities =
-                    BatchQueryExecutor
-                        .build(tableName, resource, queryTimeout, entityClass, startTime, endTime, pageSize)
+                    DynamicBatchQueryExecutor
+                        .build(dynamicTableName, resource, queryTimeout, entityClass, startTime, endTime, pageSize)
                         .execute(startId);
 
                 Collection<OriginalEntity> originalEntities = new ArrayList<>();
@@ -631,8 +619,8 @@ public class SQLMasterStorage implements MasterStorage {
         public long size() {
             try {
                 return (int) transactionExecutor.execute((tx, resource, hint) -> {
-                    return BatchQueryCountExecutor
-                        .build(tableName, resource, queryTimeout, entityClass, startTime, endTime)
+                    return DynamicBatchQueryCountExecutor
+                        .build(dynamicTableName, resource, queryTimeout, entityClass, startTime, endTime)
                         .execute(0L);
                 });
             } catch (SQLException e) {

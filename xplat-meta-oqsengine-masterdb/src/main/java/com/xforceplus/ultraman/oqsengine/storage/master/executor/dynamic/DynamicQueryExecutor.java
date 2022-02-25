@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.storage.master.executor;
+package com.xforceplus.ultraman.oqsengine.storage.master.executor.dynamic;
 
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.jdbc.AbstractJdbcTaskExecutor;
@@ -17,7 +17,7 @@ import java.util.Optional;
  * @version 0.1 2020/11/2 16:32
  * @since 1.8
  */
-public class QueryExecutor extends AbstractJdbcTaskExecutor<Long, Optional<JsonAttributeMasterStorageEntity>> {
+public class DynamicQueryExecutor extends AbstractJdbcTaskExecutor<Long, Optional<JsonAttributeMasterStorageEntity>> {
 
     private boolean noDetail;
 
@@ -30,7 +30,7 @@ public class QueryExecutor extends AbstractJdbcTaskExecutor<Long, Optional<JsonA
      */
     public static Executor<Long, Optional<JsonAttributeMasterStorageEntity>> buildHaveDetail(
         String tableName, TransactionResource resource, long timeoutMs) {
-        return new QueryExecutor(tableName, resource, false, timeoutMs);
+        return new DynamicQueryExecutor(tableName, resource, false, timeoutMs);
     }
 
     /**
@@ -42,10 +42,10 @@ public class QueryExecutor extends AbstractJdbcTaskExecutor<Long, Optional<JsonA
      */
     public static Executor<Long, Optional<JsonAttributeMasterStorageEntity>> buildNoDetail(
         String tableName, TransactionResource resource, long timeoutMs) {
-        return new QueryExecutor(tableName, resource, true, timeoutMs);
+        return new DynamicQueryExecutor(tableName, resource, true, timeoutMs);
     }
 
-    public QueryExecutor(String tableName, TransactionResource<Connection> resource, boolean noDetail) {
+    public DynamicQueryExecutor(String tableName, TransactionResource<Connection> resource, boolean noDetail) {
         this(tableName, resource, noDetail, 0);
     }
 
@@ -57,7 +57,7 @@ public class QueryExecutor extends AbstractJdbcTaskExecutor<Long, Optional<JsonA
      * @param noDetail  true不需要详细信息, false需要详细信息.
      * @param timeoutMs 超时毫秒.
      */
-    public QueryExecutor(
+    public DynamicQueryExecutor(
         String tableName,
         TransactionResource<Connection> resource,
         boolean noDetail,

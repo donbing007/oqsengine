@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.storage.master.executor;
+package com.xforceplus.ultraman.oqsengine.storage.master.executor.dynamic;
 
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.jdbc.AbstractJdbcTaskExecutor;
@@ -15,17 +15,17 @@ import java.sql.ResultSet;
  * @version 0.1 2021/2/20 14:50
  * @since 1.8
  */
-public class ExistExecutor extends AbstractJdbcTaskExecutor<Long, Integer> {
+public class DynamicExistExecutor extends AbstractJdbcTaskExecutor<Long, Integer> {
 
     public static Executor<Long, Integer> build(String tableName, TransactionResource resource, long timeoutMs) {
-        return new ExistExecutor(tableName, resource, timeoutMs);
+        return new DynamicExistExecutor(tableName, resource, timeoutMs);
     }
 
-    public ExistExecutor(String tableName, TransactionResource<Connection> resource) {
+    public DynamicExistExecutor(String tableName, TransactionResource<Connection> resource) {
         super(tableName, resource);
     }
 
-    public ExistExecutor(String tableName, TransactionResource<Connection> resource, long timeoutMs) {
+    public DynamicExistExecutor(String tableName, TransactionResource<Connection> resource, long timeoutMs) {
         super(tableName, resource, timeoutMs);
     }
 

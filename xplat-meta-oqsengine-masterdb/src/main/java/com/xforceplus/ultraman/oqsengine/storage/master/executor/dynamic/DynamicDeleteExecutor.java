@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.storage.master.executor;
+package com.xforceplus.ultraman.oqsengine.storage.master.executor.dynamic;
 
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
 import com.xforceplus.ultraman.oqsengine.common.version.VersionHelp;
@@ -17,18 +17,18 @@ import java.sql.SQLException;
  * @version 0.1 2020/11/2 16:03
  * @since 1.8
  */
-public class DeleteExecutor extends AbstractJdbcTaskExecutor<BaseMasterStorageEntity[], boolean[]> {
+public class DynamicDeleteExecutor extends AbstractJdbcTaskExecutor<BaseMasterStorageEntity[], boolean[]> {
 
     public static Executor<BaseMasterStorageEntity[], boolean[]> build(
         String tableName, TransactionResource resource, long timeout) {
-        return new DeleteExecutor(tableName, resource, timeout);
+        return new DynamicDeleteExecutor(tableName, resource, timeout);
     }
 
-    public DeleteExecutor(String tableName, TransactionResource<Connection> resource) {
+    public DynamicDeleteExecutor(String tableName, TransactionResource<Connection> resource) {
         super(tableName, resource);
     }
 
-    public DeleteExecutor(String tableName, TransactionResource<Connection> resource, long timeout) {
+    public DynamicDeleteExecutor(String tableName, TransactionResource<Connection> resource, long timeout) {
         super(tableName, resource, timeout);
     }
 

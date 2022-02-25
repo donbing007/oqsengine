@@ -63,7 +63,7 @@ public class StorageConfiguration {
         @Value("${storage.master.name:oqsbigentity}") String tableName,
         @Value("${storage.timeoutMs.query:3000}") long timeoutMs) {
         SQLMasterStorage storage = new SQLMasterStorage();
-        storage.setTableName(tableName);
+        storage.setDynamicTableName(tableName);
         storage.setTimeoutMs(timeoutMs);
         return storage;
     }
