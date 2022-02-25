@@ -25,6 +25,7 @@ private static final long serialVersionUID = 0L;
     entityFields_ = java.util.Collections.emptyList();
     relations_ = java.util.Collections.emptyList();
     profiles_ = java.util.Collections.emptyList();
+    type_ = 0;
   }
 
   @java.lang.Override
@@ -115,6 +116,11 @@ private static final long serialVersionUID = 0L;
             }
             profiles_.add(
                 input.readMessage(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfo.parser(), extensionRegistry));
+            break;
+          }
+          case 80: {
+
+            type_ = input.readInt32();
             break;
           }
         }
@@ -360,6 +366,15 @@ private static final long serialVersionUID = 0L;
     return profiles_.get(index);
   }
 
+  public static final int TYPE_FIELD_NUMBER = 10;
+  private int type_;
+  /**
+   * <code>int32 type = 10;</code>
+   */
+  public int getType() {
+    return type_;
+  }
+
   private byte memoizedIsInitialized = -1;
   public final boolean isInitialized() {
     byte isInitialized = memoizedIsInitialized;
@@ -398,6 +413,9 @@ private static final long serialVersionUID = 0L;
     }
     for (int i = 0; i < profiles_.size(); i++) {
       output.writeMessage(9, profiles_.get(i));
+    }
+    if (type_ != 0) {
+      output.writeInt32(10, type_);
     }
     unknownFields.writeTo(output);
   }
@@ -441,6 +459,10 @@ private static final long serialVersionUID = 0L;
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(9, profiles_.get(i));
     }
+    if (type_ != 0) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeInt32Size(10, type_);
+    }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
     return size;
@@ -475,6 +497,8 @@ private static final long serialVersionUID = 0L;
         .equals(other.getRelationsList());
     result = result && getProfilesList()
         .equals(other.getProfilesList());
+    result = result && (getType()
+        == other.getType());
     result = result && unknownFields.equals(other.unknownFields);
     return result;
   }
@@ -512,6 +536,8 @@ private static final long serialVersionUID = 0L;
       hash = (37 * hash) + PROFILES_FIELD_NUMBER;
       hash = (53 * hash) + getProfilesList().hashCode();
     }
+    hash = (37 * hash) + TYPE_FIELD_NUMBER;
+    hash = (53 * hash) + getType();
     hash = (29 * hash) + unknownFields.hashCode();
     memoizedHashCode = hash;
     return hash;
@@ -674,6 +700,8 @@ private static final long serialVersionUID = 0L;
       } else {
         profilesBuilder_.clear();
       }
+      type_ = 0;
+
       return this;
     }
 
@@ -731,6 +759,7 @@ private static final long serialVersionUID = 0L;
       } else {
         result.profiles_ = profilesBuilder_.build();
       }
+      result.type_ = type_;
       result.bitField0_ = to_bitField0_;
       onBuilt();
       return result;
@@ -870,6 +899,9 @@ private static final long serialVersionUID = 0L;
             profilesBuilder_.addAllMessages(other.profiles_);
           }
         }
+      }
+      if (other.getType() != 0) {
+        setType(other.getType());
       }
       this.mergeUnknownFields(other.unknownFields);
       onChanged();
@@ -1859,6 +1891,32 @@ private static final long serialVersionUID = 0L;
         profiles_ = null;
       }
       return profilesBuilder_;
+    }
+
+    private int type_ ;
+    /**
+     * <code>int32 type = 10;</code>
+     */
+    public int getType() {
+      return type_;
+    }
+    /**
+     * <code>int32 type = 10;</code>
+     */
+    public Builder setType(int value) {
+      
+      type_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>int32 type = 10;</code>
+     */
+    public Builder clearType() {
+      
+      type_ = 0;
+      onChanged();
+      return this;
     }
     public final Builder setUnknownFields(
         final com.google.protobuf.UnknownFieldSet unknownFields) {

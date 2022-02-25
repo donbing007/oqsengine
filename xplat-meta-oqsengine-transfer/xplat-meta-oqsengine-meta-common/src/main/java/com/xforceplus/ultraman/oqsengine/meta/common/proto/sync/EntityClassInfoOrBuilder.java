@@ -118,4 +118,9 @@ public interface EntityClassInfoOrBuilder extends
    */
   com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfoOrBuilder getProfilesOrBuilder(
       int index);
+
+  /**
+   * <code>int32 type = 10;</code>
+   */
+  int getType();
 }
