@@ -97,6 +97,6 @@ public class StarterTest {
             simpleUri = SystemInfoConfigUtils.getJdbcConfigUri(indexConfigs.get(0));
         }
 
-        Assertions.assertTrue(simpleUri.startsWith("jdbc:mysql://localhost:"));
+        Assertions.assertTrue(simpleUri.startsWith("jdbc:mysql://"));
     }
 }

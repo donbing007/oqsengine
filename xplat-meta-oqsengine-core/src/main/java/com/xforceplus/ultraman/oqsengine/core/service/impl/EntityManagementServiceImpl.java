@@ -956,6 +956,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     resourceLocker.unlocks(lockResource);
                 }
 
+                Arrays.stream(entities).forEach(e -> e.delete());
+
                 DeletePayload deletePayload =
                     new DeletePayload(tx.id(), targetEntities.stream().toArray(IEntity[]::new));
                 eventBus.notify(new ActualEvent(EventType.ENTITY_DELETE, deletePayload));
@@ -1053,6 +1055,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 } finally {
                     resourceLocker.unlock(lockResource);
                 }
+
+                entity.delete();
 
                 eventBus.notify(new ActualEvent(
                     EventType.ENTITY_DELETE,
