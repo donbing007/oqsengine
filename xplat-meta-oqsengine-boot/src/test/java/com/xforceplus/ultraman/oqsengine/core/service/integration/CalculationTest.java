@@ -843,7 +843,7 @@ public class CalculationTest extends AbstractContainerExtends {
 
         MockEntityClassDefine.initMetaManager(metaManager);
 
-        Either<String, List<IEntityField>> test = initCalculationManager.initAppCalculations("test");
+        List<IEntityField> test = initCalculationManager.initAppCalculations("test");
         OqsResult<IEntity> entity1;
         while (true) {
             entity1 = entitySearchService.selectOne(entity.id(), entity.entityClassRef());
