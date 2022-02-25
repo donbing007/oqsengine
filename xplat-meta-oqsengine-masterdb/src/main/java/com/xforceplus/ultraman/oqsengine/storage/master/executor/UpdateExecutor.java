@@ -162,10 +162,7 @@ public class UpdateExecutor extends AbstractJdbcTaskExecutor<MapAttributeMasterS
             sql.append(", ");
             sql.append(FieldDefine.ATTRIBUTE).append("=").append(removeSegment);
         }
-        sql.append(" WHERE ")
-            .append(FieldDefine.ID).append("=").append(entity.getId())
-            .append(" AND ")
-            .append(FieldDefine.VERSION).append("=").append(entity.getVersion());
+        sql.append(" WHERE ").append(FieldDefine.ID).append("=").append(entity.getId());
         return sql.toString();
     }
 }
