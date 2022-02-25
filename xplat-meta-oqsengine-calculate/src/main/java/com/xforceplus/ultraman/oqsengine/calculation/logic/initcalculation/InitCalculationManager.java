@@ -70,5 +70,5 @@ public interface InitCalculationManager {
     /**
      * 如果当前app已经在队列中，无需加入.否则返回一个需要初始化的字段列表.
      */
-    public Either<String, List<IEntityField>> initAppCalculations(String appCode);
+    public List<IEntityField> initAppCalculations(String appCode);
 }
