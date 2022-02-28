@@ -334,7 +334,7 @@ public class DataOpsService {
 
         try {
             return toDevOpsDataResponse(
-                entityManagementService.build(targetEntity)
+                entityManagementService.delete(targetEntity)
             );
         } catch (SQLException e) {
             PrintErrorHelper.exceptionHandle(
