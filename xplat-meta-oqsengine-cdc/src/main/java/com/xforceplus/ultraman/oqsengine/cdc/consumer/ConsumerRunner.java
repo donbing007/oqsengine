@@ -169,6 +169,9 @@ public class ConsumerRunner extends Thread {
      */
     public void consume() throws SQLException {
         while (true) {
+
+            final long startBatch = System.currentTimeMillis();
+
             //  服务被终止
             if (runningStatus.ordinal() >= RunningStatus.TRY_STOP.ordinal()) {
                 runningStatus = RunningStatus.STOP_SUCCESS;
@@ -239,6 +242,8 @@ public class ConsumerRunner extends Thread {
                 logger.error("[cdc-runner] sync error, will reconnect..., message : {}, {}", error, e.toString());
                 throw new SQLException(error);
             }
+
+            logger.info("batchId : {}, all use times : {}", batchId, System.currentTimeMillis() - startBatch);
         }
     }
 
