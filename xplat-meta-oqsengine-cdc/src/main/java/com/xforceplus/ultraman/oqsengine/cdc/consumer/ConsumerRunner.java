@@ -177,6 +177,7 @@ public class ConsumerRunner extends Thread {
 
             Message message = null;
             long batchId;
+            long batchStart = System.currentTimeMillis();
             try {
                 long start = System.currentTimeMillis();
 
@@ -242,6 +243,8 @@ public class ConsumerRunner extends Thread {
                 logger.error("[cdc-runner] sync error, will reconnect..., message : {}, {}", error, e.toString());
                 throw new SQLException(error);
             }
+
+            logger.info("all batch use {} ms", System.currentTimeMillis() - batchStart);
         }
     }
 
