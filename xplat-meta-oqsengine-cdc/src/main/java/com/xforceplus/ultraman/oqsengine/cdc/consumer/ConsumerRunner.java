@@ -13,11 +13,14 @@ import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.ZE
 import com.alibaba.otter.canal.protocol.Message;
 import com.xforceplus.ultraman.oqsengine.cdc.connect.AbstractCDCConnector;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
+import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.RebuildIndexExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.RunningStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
+import io.micrometer.core.instrument.Metrics;
+import io.micrometer.core.instrument.Timer;
 import java.sql.SQLException;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
@@ -174,14 +177,17 @@ public class ConsumerRunner extends Thread {
 
             Message message = null;
             long batchId;
+            long batchStart = System.currentTimeMillis();
             try {
                 long start = System.currentTimeMillis();
+
                 //获取指定数量的数据
                 message = connector.getMessageWithoutAck();
                 long duration = System.currentTimeMillis() - start;
 
                 batchId = message.getId();
 
+                logger.info("get batch use : {} ms ", duration);
                 if (duration > MESSAGE_GET_WARM_INTERVAL && batchId != EMPTY_BATCH_ID) {
                     logger.info(
                         "[cdc-runner] get message from canal server use too much times, use timeMs : {}, batchId : {}",
@@ -204,11 +210,12 @@ public class ConsumerRunner extends Thread {
                     //  消费binlog
                     cdcMetrics = consumerService.consume(message.getEntries(), batchId, cdcMetricsService);
 
+                    long nowTimes = System.currentTimeMillis();
                     //  binlog处理，同步指标到cdcMetrics中
                     synced = saveMetrics(cdcMetrics);
-
                     //  canal状态确认、指标同步
                     finishAck(cdcMetrics);
+                    logger.info("ack use times : {} ms", System.currentTimeMillis() - nowTimes);
 
                     //  同步维护指标.
                     if (!cdcMetrics.getDevOpsMetrics().isEmpty()) {
@@ -236,6 +243,8 @@ public class ConsumerRunner extends Thread {
                 logger.error("[cdc-runner] sync error, will reconnect..., message : {}, {}", error, e.toString());
                 throw new SQLException(error);
             }
+
+            logger.info("all batch use {} ms", System.currentTimeMillis() - batchStart);
         }
     }
 

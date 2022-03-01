@@ -107,13 +107,17 @@ public class SphinxConsumerService implements ConsumerService {
 
         //  等待isReady
         if (!commitIDs.isEmpty()) {
+            long isReadyUseStart = System.currentTimeMillis();
             cdcMetricsService.isReadyCommit(commitIDs);
+            logger.info("is-ready use times {} ms", System.currentTimeMillis() - isReadyUseStart);
         }
 
         //  批次数据整理完毕，开始执行index写操作。
         if (!rawEntries.isEmpty()) {
+            long executeTimes = System.currentTimeMillis();
             //  通过执行器执行Sphinx同步
             syncCount += sphinxSyncExecutor.execute(rawEntries.values(), cdcMetrics);
+            logger.info("execute use times {} ms", System.currentTimeMillis() - executeTimes);
         }
 
         batchLogged(cdcMetrics);

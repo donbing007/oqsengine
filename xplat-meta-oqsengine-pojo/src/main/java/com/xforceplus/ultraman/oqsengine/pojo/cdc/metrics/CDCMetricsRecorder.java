@@ -58,6 +58,7 @@ public class CDCMetricsRecorder {
                 cdcMetrics.getBatchId(), cdcMetrics.getCdcAckMetrics().getExecuteRows(),
                 cdcMetrics.getCdcAckMetrics().getTotalUseTime());
         }
+        logger.info("consume all use time : {} ms", cdcMetrics.getCdcAckMetrics().getTotalUseTime());
 
         return this;
     }
