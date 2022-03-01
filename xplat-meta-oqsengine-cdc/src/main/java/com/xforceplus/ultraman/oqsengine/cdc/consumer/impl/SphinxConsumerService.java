@@ -23,6 +23,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetricsRecorder;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCUnCommitMetrics;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper;
 import io.micrometer.core.annotation.Timed;
+import io.micrometer.core.instrument.Metrics;
+import io.micrometer.core.instrument.Timer;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -107,13 +109,36 @@ public class SphinxConsumerService implements ConsumerService {
 
         //  等待isReady
         if (!commitIDs.isEmpty()) {
+            Timer.Sample sample = Timer.start(Metrics.globalRegistry);
             cdcMetricsService.isReadyCommit(commitIDs);
+
+            sample.stop(Timer.builder(MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS)
+                .tags(
+                    "initiator", "cdc",
+                    "action", "isReady",
+                    "exception", "none"
+                )
+                .publishPercentileHistogram(false)
+                .publishPercentiles(null)
+                .register(Metrics.globalRegistry));
+
         }
 
         //  批次数据整理完毕，开始执行index写操作。
         if (!rawEntries.isEmpty()) {
+            Timer.Sample sample = Timer.start(Metrics.globalRegistry);
             //  通过执行器执行Sphinx同步
             syncCount += sphinxSyncExecutor.execute(rawEntries.values(), cdcMetrics);
+
+            sample.stop(Timer.builder(MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS)
+                .tags(
+                    "initiator", "cdc",
+                    "action", "execute",
+                    "exception", "none"
+                )
+                .publishPercentileHistogram(false)
+                .publishPercentiles(null)
+                .register(Metrics.globalRegistry));
         }
 
         batchLogged(cdcMetrics);
