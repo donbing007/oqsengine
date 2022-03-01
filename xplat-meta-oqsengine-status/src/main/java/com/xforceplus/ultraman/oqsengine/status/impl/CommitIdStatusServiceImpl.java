@@ -384,7 +384,7 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService, Lifecyc
 
         for (long commitId : commitIds) {
             if (commitIdLife.containsKey(commitId)) {
-                logger.info("CommitId dur: %d.", System.currentTimeMillis() - commitIdLife.get(commitId));
+                logger.info("CommitId dur: {}.", System.currentTimeMillis() - commitIdLife.get(commitId));
             }
         }
 
