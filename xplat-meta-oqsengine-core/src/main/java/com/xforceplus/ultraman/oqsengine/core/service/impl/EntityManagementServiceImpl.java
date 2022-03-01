@@ -10,7 +10,6 @@ import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.common.mode.OqsMode;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
-import com.xforceplus.ultraman.oqsengine.common.version.VersionHelp;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.pojo.OqsResult;
 import com.xforceplus.ultraman.oqsengine.event.ActualEvent;
@@ -673,7 +672,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
                         if (newEntity.isDirty()) {
                             hint.setRollback(true);
-                            return OqsResult.conflict();
+                            return OqsResult.unReplaced(newEntity.id());
                         }
 
                         if (!tx.getAccumulator().accumulateReplace(newEntity)) {
@@ -809,7 +808,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     masterStorage.replace(newEntity, entityClass);
                     if (newEntity.isDirty()) {
                         hint.setRollback(true);
-                        return OqsResult.conflict();
+                        return OqsResult.unReplaced(newEntity.id());
                     }
 
                     if (!calculationContext.persist()) {
@@ -939,7 +938,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
                         if (!targetEntity.isDeleted()) {
                             hint.setRollback(true);
-                            return OqsResult.conflict();
+                            return OqsResult.unDeleted(targetEntity.id());
                         }
 
                         if (!tx.getAccumulator().accumulateBuild(targetEntity)) {
@@ -956,6 +955,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 } finally {
                     resourceLocker.unlocks(lockResource);
                 }
+
+                Arrays.stream(entities).forEach(e -> e.delete());
 
                 DeletePayload deletePayload =
                     new DeletePayload(tx.id(), targetEntities.stream().toArray(IEntity[]::new));
@@ -1037,7 +1038,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     masterStorage.delete(targetEntity, entityClass);
                     if (!targetEntity.isDeleted()) {
                         hint.setRollback(true);
-                        return OqsResult.conflict();
+                        return OqsResult.unDeleted(targetEntity.id());
                     }
 
                     if (!tx.getAccumulator().accumulateDelete(targetEntity)) {
@@ -1051,12 +1052,11 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         return OqsResult.conflict("Conflict maintenance.");
                     }
 
-                    targetEntity.delete();
-                    entity.delete();
-
                 } finally {
                     resourceLocker.unlock(lockResource);
                 }
+
+                entity.delete();
 
                 eventBus.notify(new ActualEvent(
                     EventType.ENTITY_DELETE,
@@ -1087,11 +1087,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
         extraTags = {"initiator", "all", "action", "deleteforces"}
     )
+    @Deprecated
     @Override
     public OqsResult<IEntity[]> deleteForce(IEntity[] entities) throws SQLException {
-        for (IEntity entity : entities) {
-            entity.resetVersion(VersionHelp.OMNIPOTENCE_VERSION);
-        }
 
         return delete(entities);
     }
@@ -1100,12 +1098,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
         extraTags = {"initiator", "all", "action", "deleteforce"}
     )
+    @Deprecated
     @Override
     public OqsResult<IEntity> deleteForce(IEntity entity) throws SQLException {
-        /*
-         * 设置万能版本,表示和所有的版本都匹配.
-         */
-        entity.resetVersion(VersionHelp.OMNIPOTENCE_VERSION);
 
         return delete(entity);
     }

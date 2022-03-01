@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.executor;
 
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
-import com.xforceplus.ultraman.oqsengine.common.version.VersionHelp;
 import com.xforceplus.ultraman.oqsengine.storage.executor.jdbc.AbstractJdbcTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.BaseMasterStorageEntity;
@@ -40,49 +39,26 @@ public class DeleteExecutor extends AbstractJdbcTaskExecutor<BaseMasterStorageEn
         if (single) {
             BaseMasterStorageEntity entity = masterStorageEntities[0];
 
-            if (VersionHelp.isOmnipotence(entity.getVersion())) {
+            String sql = buildSQL();
+            try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
+                checkTimeout(st);
 
-                String sql = buildForceSQL();
-                try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
-                    checkTimeout(st);
-
-                    setForceParam(entity, st);
-
-                    return executedUpdate(st, false);
-                }
-            } else {
-
-                String sql = buildSQL();
-                try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
-                    checkTimeout(st);
-
-                    setParam(entity, st);
-                    return executedUpdate(st, false);
-                }
+                setParam(entity, st);
+                return executedUpdate(st, false);
             }
+
         } else {
             // 批量全部强制删除
-            String sql = buildForceSQL();
+            String sql = buildSQL();
             try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
                 for (BaseMasterStorageEntity entity : masterStorageEntities) {
-                    setForceParam(entity, st);
+                    setParam(entity, st);
 
                     st.addBatch();
                 }
                 return executedUpdate(st, true);
             }
         }
-    }
-
-    private void setForceParam(BaseMasterStorageEntity entity, PreparedStatement st) throws SQLException {
-        st.setInt(1, VersionHelp.OMNIPOTENCE_VERSION);
-        st.setBoolean(2, true);
-        st.setLong(3, entity.getUpdateTime());
-        st.setLong(4, entity.getTx());
-        st.setLong(5, entity.getCommitid());
-        st.setInt(6, entity.getOp());
-        st.setInt(7, entity.getEntityClassVersion());
-        st.setLong(8, entity.getId());
     }
 
     private void setParam(BaseMasterStorageEntity entity, PreparedStatement st) throws SQLException {
@@ -93,29 +69,10 @@ public class DeleteExecutor extends AbstractJdbcTaskExecutor<BaseMasterStorageEn
         st.setInt(5, entity.getOp());
         st.setInt(6, entity.getEntityClassVersion());
         st.setLong(7, entity.getId());
-        st.setInt(8, entity.getVersion());
-    }
-
-    private String buildForceSQL() {
-        //"update %s set version = ?, deleted = ?, time = ?, tx = ?, commitid = ?, op = ? where id = ?";
-        StringBuilder sql = new StringBuilder();
-        sql.append("UPDATE ").append(getTableName())
-            .append(" SET ")
-            .append(FieldDefine.VERSION).append("=").append("?, ")
-            .append(FieldDefine.DELETED).append("=").append("?, ")
-            .append(FieldDefine.UPDATE_TIME).append("=").append("?, ")
-            .append(FieldDefine.TX).append("=").append("?, ")
-            .append(FieldDefine.COMMITID).append("=").append("?, ")
-            .append(FieldDefine.OP).append("=").append("?, ")
-            .append(FieldDefine.ENTITYCLASS_VERSION).append("=").append("? ")
-            .append("WHERE ")
-            .append(FieldDefine.ID).append("=").append('?');
-
-        return sql.toString();
     }
 
     private String buildSQL() {
-        //"update %s set version = version + 1, deleted = ?, time = ?, tx = ?, commitid = ?, op = ? where id = ? and version = ?";
+        //"update %s set version = version + 1, deleted = ?, time = ?, tx = ?, commitid = ?, op = ? where id = ?
         StringBuilder sql = new StringBuilder();
         sql.append("UPDATE ").append(getTableName())
             .append(" SET ")
@@ -127,9 +84,7 @@ public class DeleteExecutor extends AbstractJdbcTaskExecutor<BaseMasterStorageEn
             .append(FieldDefine.OP).append("=").append("?, ")
             .append(FieldDefine.ENTITYCLASS_VERSION).append("=").append("? ")
             .append("WHERE ")
-            .append(FieldDefine.ID).append("=").append('?')
-            .append(" AND ")
-            .append(FieldDefine.VERSION).append("=").append('?');
+            .append(FieldDefine.ID).append("=").append('?');
 
         return sql.toString();
     }

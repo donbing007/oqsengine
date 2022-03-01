@@ -273,7 +273,7 @@ public class EntityManagementServiceImplTest {
         when(masterStorage.replace(actualTargetEntity, EntityClassDefine.l2EntityClass)).thenReturn(false);
 
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
-        Assertions.assertEquals(ResultStatus.CONFLICT, impl.replace(replaceEntity).getResultStatus());
+        Assertions.assertEquals(ResultStatus.UNREPLACE, impl.replace(replaceEntity).getResultStatus());
     }
 
     @Test
@@ -409,7 +409,7 @@ public class EntityManagementServiceImplTest {
         when(masterStorage.delete(targetEntity, EntityClassDefine.l2EntityClass)).thenReturn(false);
 
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
-        Assertions.assertEquals(ResultStatus.CONFLICT, impl.delete(targetEntity).getResultStatus());
+        Assertions.assertEquals(ResultStatus.UNDELETED, impl.delete(targetEntity).getResultStatus());
     }
 
     @Test
