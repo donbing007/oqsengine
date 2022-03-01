@@ -47,7 +47,6 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService, Lifecyc
         "com.xforceplus.ultraman.oqsengine.status.commitid.";
     private static final String COMMITID_STATUS_UNKNOWN_NUMBER_PREFIX =
         "com.xforceplus.ultraman.oqsengine.status.commitid.unknown.number.";
-    private Map<Long, Long> commitIdLife = new HashMap<>();
 
     /**
      * 接收2个KEY2个参数.
@@ -222,10 +221,6 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService, Lifecyc
             Long.toString(commitId),
             ready ? CommitStatus.READY.getSymbol() : CommitStatus.NOT_READY.getSymbol());
 
-        if (result) {
-            commitIdLife.put(commitId, System.currentTimeMillis());
-        }
-
         if (logger.isDebugEnabled()) {
             CommitStatus logStatus = ready ? CommitStatus.READY : CommitStatus.NOT_READY;
             if (result) {
@@ -380,12 +375,6 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService, Lifecyc
                 logger.debug("No submission number needs to be eliminated.");
             }
             return;
-        }
-
-        for (long commitId : commitIds) {
-            if (commitIdLife.containsKey(commitId)) {
-                logger.info("CommitId dur: {}.", System.currentTimeMillis() - commitIdLife.get(commitId));
-            }
         }
 
         String[] keys = {
