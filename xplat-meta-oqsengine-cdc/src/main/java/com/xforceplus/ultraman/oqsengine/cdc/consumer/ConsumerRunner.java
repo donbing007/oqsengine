@@ -179,23 +179,12 @@ public class ConsumerRunner extends Thread {
             long batchId;
             try {
                 long start = System.currentTimeMillis();
-                Timer.Sample sample = Timer.start(Metrics.globalRegistry);
 
                 //获取指定数量的数据
                 message = connector.getMessageWithoutAck();
                 long duration = System.currentTimeMillis() - start;
 
                 batchId = message.getId();
-
-                sample.stop(Timer.builder(MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS)
-                    .tags(
-                        "initiator", "cdc",
-                        "action", "get-batch",
-                        "exception", "none"
-                    )
-                    .publishPercentileHistogram(false)
-                    .publishPercentiles(null)
-                    .register(Metrics.globalRegistry));
 
                 if (duration > MESSAGE_GET_WARM_INTERVAL && batchId != EMPTY_BATCH_ID) {
                     logger.info(
@@ -219,23 +208,13 @@ public class ConsumerRunner extends Thread {
                     //  消费binlog
                     cdcMetrics = consumerService.consume(message.getEntries(), batchId, cdcMetricsService);
 
-                    Timer.Sample sample = Timer.start(Metrics.globalRegistry);
+                    long nowTimes = System.currentTimeMillis();
 
                     //  binlog处理，同步指标到cdcMetrics中
                     synced = saveMetrics(cdcMetrics);
-
                     //  canal状态确认、指标同步
                     finishAck(cdcMetrics);
-
-                    sample.stop(Timer.builder(MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS)
-                        .tags(
-                            "initiator", "cdc",
-                            "action", "ack",
-                            "exception", "none"
-                        )
-                        .publishPercentileHistogram(false)
-                        .publishPercentiles(null)
-                        .register(Metrics.globalRegistry));
+                    logger.info("ack use times : {}", System.currentTimeMillis() - nowTimes);
 
                     //  同步维护指标.
                     if (!cdcMetrics.getDevOpsMetrics().isEmpty()) {
