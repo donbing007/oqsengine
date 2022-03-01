@@ -210,6 +210,7 @@ public class CDCMetricsService {
         cdcMetrics.getCdcAckMetrics().setLastUpdateTime(System.currentTimeMillis());
 
         try {
+            logger.info("[cdc-metrics] callback ack metrics : {}", JSON.toJSON(cdcMetrics.getCdcAckMetrics()));
             logger.debug("[cdc-metrics] callback ack metrics : {}", JSON.toJSON(cdcMetrics.getCdcAckMetrics()));
         } catch (Exception ex) {
             logger.debug("[cdc-metrics] print ack metrics error, message : {}", ex.getMessage());
