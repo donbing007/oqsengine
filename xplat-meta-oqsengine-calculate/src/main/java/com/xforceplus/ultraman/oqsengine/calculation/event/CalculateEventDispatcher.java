@@ -38,11 +38,16 @@ public class CalculateEventDispatcher {
     @Resource
     private CalculationEventFactory factory;
 
+    /**
+     * 初始化.
+     */
     @PostConstruct
     public void init() {
         eventBus.watch(EventType.META_DATA_CHANGE, event -> {
             this.dispatcher((ActualEvent<MetaChangePayLoad>) event);
         });
+
+        log.info("init calculateEventDispatcher success.");
     }
 
     private void dispatcher(ActualEvent<MetaChangePayLoad> event) throws CalculationException {
