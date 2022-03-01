@@ -169,7 +169,7 @@ public class DefaultCalculationInitLogic implements CalculationInitLogic {
                         Collection<IEntity> entities = batchEntity.get(entityClass);
                         if (entities.size() > 0) {
                             EntityPackage entityPackage = new EntityPackage();
-                            entities.forEach(e -> entityPackage.put(e, entityClass));
+                            entities.forEach(e -> entityPackage.put(e, entityClass, false));
                             masterStorage.replace(entityPackage);
                             entities.forEach(e -> {
                                 if (e.isDirty()) {
