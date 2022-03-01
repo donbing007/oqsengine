@@ -76,6 +76,11 @@ public class EntityClass implements IEntityClass {
     }
 
     @Override
+    public String profile() {
+        return profile;
+    }
+
+    @Override
     public String name() {
         return name;
     }
@@ -95,7 +100,7 @@ public class EntityClass implements IEntityClass {
         return EntityClassRef.Builder.anEntityClassRef()
             .withEntityClassId(id())
             .withEntityClassCode(code())
-            .withEntityClassProfile(profile)
+            .withEntityClassProfile(profile())
             .build();
     }
 
