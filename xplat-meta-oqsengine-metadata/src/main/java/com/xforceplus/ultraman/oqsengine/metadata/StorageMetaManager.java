@@ -563,6 +563,7 @@ public class StorageMetaManager implements MetaManager {
 
         profile = (null == profile) ? OqsProfile.UN_DEFINE_PROFILE : profile;
 
+        boolean profileFound = false;
         //  entityFields & profile
         while (iterator.hasNext()) {
             Map.Entry<String, String> entry = iterator.next();
@@ -571,12 +572,14 @@ public class StorageMetaManager implements MetaManager {
             } else if (entry.getKey().startsWith(ELEMENT_PROFILES + "." + ELEMENT_FIELDS)) {
                 String key = parseOneKeyFromProfileEntity(entry.getKey());
                 if (key.equals(profile)) {
+                    profileFound = true;
                     fields.add(CacheUtils.resetAutoFill(OBJECT_MAPPER.readValue(entry.getValue(), EntityField.class)));
                 }
             } else if (entry.getKey().startsWith(ELEMENT_PROFILES + "." + ELEMENT_RELATIONS)) {
                 if (!profile.equals(OqsProfile.UN_DEFINE_PROFILE)) {
                     String key = parseOneKeyFromProfileRelations(entry.getKey());
                     if (profile.equals(key)) {
+                        profileFound = true;
                         relationships.addAll(toQqsRelation(OBJECT_MAPPER.readValue(keyValues.get(entry.getKey()),
                             OBJECT_MAPPER.getTypeFactory().constructParametricType(
                                 List.class, RelationStorage.class)), rightEntityClassLoader, rightFamilyEntityClassLoader));
@@ -584,8 +587,12 @@ public class StorageMetaManager implements MetaManager {
                 }
             }
         }
+        if (profileFound) {
+            builder.withProfile(profile);
+        } else {
+            builder.withProfile(OqsProfile.UN_DEFINE_PROFILE);
+        }
 
-        builder.withProfile(profile);
         builder.withFields(fields);
 
         //  relations
