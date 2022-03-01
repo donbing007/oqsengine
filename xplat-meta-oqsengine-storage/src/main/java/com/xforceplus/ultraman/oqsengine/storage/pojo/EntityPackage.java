@@ -91,7 +91,8 @@ public class EntityPackage implements Serializable {
 
         if (!entity.entityClassRef().equals(entityClass.ref())) {
             throw new IllegalArgumentException(
-                "The type declared by the current instance does not match the specified type.");
+                String.format("The type declared by the current instance does not match the specified type.[%s - %s]",
+                    entity.entityClassRef(), entityClass.ref()));
         }
 
         lazyInit();
