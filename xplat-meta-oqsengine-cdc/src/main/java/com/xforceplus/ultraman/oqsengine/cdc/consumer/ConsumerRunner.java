@@ -186,6 +186,7 @@ public class ConsumerRunner extends Thread {
 
                 batchId = message.getId();
 
+                logger.info("get batch use : {} ms ", duration);
                 if (duration > MESSAGE_GET_WARM_INTERVAL && batchId != EMPTY_BATCH_ID) {
                     logger.info(
                         "[cdc-runner] get message from canal server use too much times, use timeMs : {}, batchId : {}",
@@ -209,12 +210,11 @@ public class ConsumerRunner extends Thread {
                     cdcMetrics = consumerService.consume(message.getEntries(), batchId, cdcMetricsService);
 
                     long nowTimes = System.currentTimeMillis();
-
                     //  binlog处理，同步指标到cdcMetrics中
                     synced = saveMetrics(cdcMetrics);
                     //  canal状态确认、指标同步
                     finishAck(cdcMetrics);
-                    logger.info("ack use times : {}", System.currentTimeMillis() - nowTimes);
+                    logger.info("ack use times : {} ms", System.currentTimeMillis() - nowTimes);
 
                     //  同步维护指标.
                     if (!cdcMetrics.getDevOpsMetrics().isEmpty()) {
