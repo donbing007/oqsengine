@@ -177,7 +177,6 @@ public class ConsumerRunner extends Thread {
 
             Message message = null;
             long batchId;
-            long batchStart = System.currentTimeMillis();
             try {
                 long start = System.currentTimeMillis();
 
@@ -187,7 +186,6 @@ public class ConsumerRunner extends Thread {
 
                 batchId = message.getId();
 
-                logger.info("get batch use : {} ms ", duration);
                 if (duration > MESSAGE_GET_WARM_INTERVAL && batchId != EMPTY_BATCH_ID) {
                     logger.info(
                         "[cdc-runner] get message from canal server use too much times, use timeMs : {}, batchId : {}",
@@ -210,12 +208,10 @@ public class ConsumerRunner extends Thread {
                     //  消费binlog
                     cdcMetrics = consumerService.consume(message.getEntries(), batchId, cdcMetricsService);
 
-                    long nowTimes = System.currentTimeMillis();
                     //  binlog处理，同步指标到cdcMetrics中
                     synced = saveMetrics(cdcMetrics);
                     //  canal状态确认、指标同步
                     finishAck(cdcMetrics);
-                    logger.info("ack use times : {} ms", System.currentTimeMillis() - nowTimes);
 
                     //  同步维护指标.
                     if (!cdcMetrics.getDevOpsMetrics().isEmpty()) {
@@ -243,8 +239,6 @@ public class ConsumerRunner extends Thread {
                 logger.error("[cdc-runner] sync error, will reconnect..., message : {}, {}", error, e.toString());
                 throw new SQLException(error);
             }
-
-            logger.info("all batch use {} ms", System.currentTimeMillis() - batchStart);
         }
     }
 
@@ -304,7 +298,7 @@ public class ConsumerRunner extends Thread {
         connector.ack(batchId);
 
         //  没有新的同步信息，睡眠1秒进入下次轮训
-        TimeWaitUtils.wakeupAfter(FREE_MESSAGE_WAIT_IN_SECONDS, TimeUnit.SECONDS);
+        TimeWaitUtils.wakeupAfter(FREE_MESSAGE_WAIT_IN_SECONDS, TimeUnit.MILLISECONDS);
     }
 
     /*
