@@ -54,6 +54,9 @@ public class CalculateEventDispatcher {
         Optional<MetaChangePayLoad> op = event.payload();
         CachedEntityClass cachedEntityClass = new CachedEntityClass();
         if (op.isPresent()) {
+            log.debug("dispatcher metaChangePayLoad event, appId : {}, version : {}.", op.get().getAppId(),
+                op.get().getVersion());
+
             try {
                 //  处理FieldChanges事件.
                 fieldEventDispatcher(op.get(), cachedEntityClass);
@@ -63,6 +66,8 @@ public class CalculateEventDispatcher {
             } catch (Exception e) {
                 throw new CalculationException(e.getMessage());
             }
+        } else {
+            log.warn("dispatcher metaChangePayLoad ignored because metaChangePayLoad is not exists.");
         }
     }
 
