@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.boot.grpc.devops;
 
+import com.alibaba.fastjson.JSON;
 import com.xforceplus.ultraman.devops.service.sdk.annotation.DiscoverAction;
 import com.xforceplus.ultraman.devops.service.sdk.annotation.MethodParam;
 import com.xforceplus.ultraman.oqsengine.boot.grpc.utils.PrintErrorHelper;
@@ -339,6 +340,145 @@ public class DataOpsService {
         } catch (SQLException e) {
             PrintErrorHelper.exceptionHandle(
                 String.format("devops om singleDelete exception, [%s-%s]", entityClassId, entityValueId), e);
+        }
+
+        return null;
+    }
+
+    /**
+     * 统一数据运维-批量修改.
+     *
+     * @param entityClassId 实体ID
+     * @param data          请求参数
+     * @return 返回结果
+     */
+    @DiscoverAction(describe = "批量修改", retClass = Collection.class)
+    public DevOpsDataResponse batchModify(
+            @MethodParam(name = "entityClassId", klass = long.class, required = true) long entityClassId,
+            @MethodParam(name = "data", klass = Map.class) List<Map> data) {
+        Optional<IEntityClass> entityClassOptl = metaManager.load(entityClassId, null);
+        if (!entityClassOptl.isPresent()) {
+            return null;
+        }
+
+        if (data == null || data.size() == 0) {
+            return null;
+        }
+
+        boolean illegalIdExist = false;
+        for (Map item : data) {
+            if (item.containsKey("id")) {
+                String id = (String) item.get("id");
+                if (!StringUtils.isNumeric(id)) {
+                    illegalIdExist = true;
+                }
+            } else {
+                illegalIdExist = true;
+            }
+        }
+        if (illegalIdExist) {
+            return null;
+        }
+
+        EntityClassRef entityClassRef = EntityClassRef
+                .Builder
+                .anEntityClassRef()
+                .withEntityClassId(entityClassId)
+                .withEntityClassCode(entityClassOptl.get().code())
+                .build();
+
+        List<IEntity> entityList = data.stream().map(map -> {
+            List<IValue> entityValue = new ArrayList<>();
+            entityClassOptl.get().fields().stream().forEach(field -> {
+                if ("update_time".equals(field.name())) {
+                    entityValue.add(
+                            new LongValue(field, LocalDateTime.now().toInstant(ZoneOffset.ofHours(8)).toEpochMilli()));
+                }
+            });
+            map.keySet().stream().filter(fieldCode -> !"id".equals(fieldCode)).forEach(fieldCode -> {
+                Optional<IEntityField> entityFieldOptl = entityClassOptl.get().fields()
+                        .stream().filter(field -> fieldCode.equals(field.name())).findAny();
+                if (entityFieldOptl.isPresent()) {
+                    IValue value = IValueUtils.toIValue(entityFieldOptl.get(),
+                            DevOpsOmDataUtils.convertDataObject(entityFieldOptl.get(), map.get(fieldCode)));
+                    entityValue.add(value);
+                }
+            });
+
+            long entityValueId = Long.valueOf((String) map.get("id"));
+            return Entity.Builder.anEntity()
+                    .withEntityClassRef(entityClassRef)
+                    .withId(entityValueId)
+                    .withTime(System.currentTimeMillis())
+                    .withValues(entityValue).build();
+        }).collect(Collectors.toList());
+
+        try {
+            return toDevOpsDataResponse(
+                    entityManagementService.replace(entityList.toArray(new IEntity[]{}))
+            );
+        } catch (SQLException e) {
+            String idStrs = data.stream().map(item -> String.valueOf(item.get("id"))).collect(Collectors.joining(","));
+            PrintErrorHelper.exceptionHandle(
+                    String.format("devops om batchModify exception, [%s], %s", entityClassId, idStrs), e);
+        }
+
+        return null;
+    }
+
+    /**
+     * 统一数据运维-批量删除.
+     *
+     * @param entityClassId 实体ID
+     * @param idStrs          请求参数
+     * @return 返回结果
+     */
+    @DiscoverAction(describe = "批量删除", retClass = Collection.class)
+    public DevOpsDataResponse batchDelete(
+            @MethodParam(name = "entityClassId", klass = long.class, required = true) long entityClassId,
+            @MethodParam(name = "data", klass = Map.class) List<String> idStrs) {
+        Optional<IEntityClass> entityClassOptl = metaManager.load(entityClassId, null);
+        if (!entityClassOptl.isPresent()) {
+            return null;
+        }
+
+        if (idStrs == null || idStrs.size() == 0) {
+            return null;
+        }
+
+        boolean illegalIdExist = false;
+        for (String idStr : idStrs) {
+            if (!StringUtils.isNumeric(idStr)) {
+                illegalIdExist = true;
+            }
+        }
+        if (illegalIdExist) {
+            return null;
+        }
+
+        EntityClassRef entityClassRef = EntityClassRef
+                .Builder
+                .anEntityClassRef()
+                .withEntityClassId(entityClassId)
+                .withEntityClassCode(entityClassOptl.get().code())
+                .build();
+
+        List<IEntity> entityList = idStrs.stream().map(idStr -> {
+            long entityValueId = Long.valueOf(idStr);
+            return Entity.Builder.anEntity()
+                    .withEntityClassRef(entityClassRef)
+                    .withId(entityValueId)
+                    .withTime(System.currentTimeMillis())
+                    .build();
+        }).collect(Collectors.toList());
+
+        try {
+            return toDevOpsDataResponse(
+                    entityManagementService.delete(entityList.toArray(new IEntity[]{}))
+            );
+        } catch (SQLException e) {
+            PrintErrorHelper.exceptionHandle(
+                    String.format("devops om batchDelete exception, [%s], %s", entityClassId, JSON.toJSONString(idStrs)), e);
         }
 
         return null;
