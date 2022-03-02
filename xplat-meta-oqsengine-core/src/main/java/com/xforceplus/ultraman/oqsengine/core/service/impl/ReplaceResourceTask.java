@@ -30,6 +30,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * 更新任务.
+ *
  * @author dongbin
  * @version 0.1 2022/3/2 19:27
  * @since 1.8
