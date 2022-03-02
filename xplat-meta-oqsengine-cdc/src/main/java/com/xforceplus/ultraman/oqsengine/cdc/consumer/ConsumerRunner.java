@@ -2,7 +2,7 @@ package com.xforceplus.ultraman.oqsengine.cdc.consumer;
 
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.EMPTY_BATCH_ID;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.EMPTY_BATCH_SIZE;
-import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.FREE_MESSAGE_WAIT_IN_SECONDS;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.FREE_MESSAGE_WAIT_IN_MS;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.IS_BACK_UP_ID;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.MAX_STOP_WAIT_LOOPS;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.MAX_STOP_WAIT_TIME;
@@ -13,14 +13,11 @@ import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.ZE
 import com.alibaba.otter.canal.protocol.Message;
 import com.xforceplus.ultraman.oqsengine.cdc.connect.AbstractCDCConnector;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
-import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.RebuildIndexExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.RunningStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
-import io.micrometer.core.instrument.Metrics;
-import io.micrometer.core.instrument.Timer;
 import java.sql.SQLException;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
@@ -299,7 +296,7 @@ public class ConsumerRunner extends Thread {
         connector.ack(batchId);
 
         //  没有新的同步信息，睡眠1秒进入下次轮训
-        TimeWaitUtils.wakeupAfter(FREE_MESSAGE_WAIT_IN_SECONDS, TimeUnit.MILLISECONDS);
+        TimeWaitUtils.wakeupAfter(FREE_MESSAGE_WAIT_IN_MS, TimeUnit.MILLISECONDS);
     }
 
     /*
