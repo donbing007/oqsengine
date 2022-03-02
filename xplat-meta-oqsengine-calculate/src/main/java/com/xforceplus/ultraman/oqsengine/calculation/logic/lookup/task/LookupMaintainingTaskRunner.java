@@ -243,7 +243,7 @@ public class LookupMaintainingTaskRunner implements TaskRunner {
 
         EntityPackage entityPackage = new EntityPackage();
         for (IEntity lookupEntity : lookupEntities) {
-            entityPackage.put(lookupEntity, lookupEntityClass, false);
+            entityPackage.put(lookupEntity, lookupEntityClass);
         }
 
         try {
