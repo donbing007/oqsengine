@@ -376,6 +376,7 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService, Lifecyc
             }
             return;
         }
+
         String[] keys = {
             commitidsKey,
             commitidStatusKeyPrefix,

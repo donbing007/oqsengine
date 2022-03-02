@@ -589,6 +589,8 @@ public class StorageMetaManager implements MetaManager {
         }
         if (profileFound) {
             builder.withProfile(profile);
+        } else {
+            builder.withProfile(OqsProfile.UN_DEFINE_PROFILE);
         }
 
         builder.withFields(fields);

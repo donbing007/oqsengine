@@ -1,7 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity;
 
+import com.xforceplus.ultraman.oqsengine.common.profile.OqsProfile;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
-import java.io.Serializable;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -26,6 +26,13 @@ public interface IEntityClass {
      * 对象code.
      */
     String code();
+
+    /**
+     * 替身,例如表示某个租户.
+     */
+    default String profile() {
+        return OqsProfile.UN_DEFINE_PROFILE;
+    }
 
     /**
      * 元信息名称.

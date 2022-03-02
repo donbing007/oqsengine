@@ -13,11 +13,14 @@ import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.ZE
 import com.alibaba.otter.canal.protocol.Message;
 import com.xforceplus.ultraman.oqsengine.cdc.connect.AbstractCDCConnector;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
+import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.RebuildIndexExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.RunningStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
+import io.micrometer.core.instrument.Metrics;
+import io.micrometer.core.instrument.Timer;
 import java.sql.SQLException;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
@@ -166,6 +169,9 @@ public class ConsumerRunner extends Thread {
      */
     public void consume() throws SQLException {
         while (true) {
+
+            final long startBatch = System.currentTimeMillis();
+
             //  服务被终止
             if (runningStatus.ordinal() >= RunningStatus.TRY_STOP.ordinal()) {
                 runningStatus = RunningStatus.STOP_SUCCESS;
@@ -176,6 +182,7 @@ public class ConsumerRunner extends Thread {
             long batchId;
             try {
                 long start = System.currentTimeMillis();
+
                 //获取指定数量的数据
                 message = connector.getMessageWithoutAck();
                 long duration = System.currentTimeMillis() - start;
@@ -206,7 +213,6 @@ public class ConsumerRunner extends Thread {
 
                     //  binlog处理，同步指标到cdcMetrics中
                     synced = saveMetrics(cdcMetrics);
-
                     //  canal状态确认、指标同步
                     finishAck(cdcMetrics);
 
@@ -236,6 +242,8 @@ public class ConsumerRunner extends Thread {
                 logger.error("[cdc-runner] sync error, will reconnect..., message : {}, {}", error, e.toString());
                 throw new SQLException(error);
             }
+
+            logger.info("batchId : {}, all use times : {}", batchId, System.currentTimeMillis() - startBatch);
         }
     }
 
@@ -295,7 +303,7 @@ public class ConsumerRunner extends Thread {
         connector.ack(batchId);
 
         //  没有新的同步信息，睡眠1秒进入下次轮训
-        TimeWaitUtils.wakeupAfter(FREE_MESSAGE_WAIT_IN_SECONDS, TimeUnit.SECONDS);
+        TimeWaitUtils.wakeupAfter(FREE_MESSAGE_WAIT_IN_SECONDS, TimeUnit.MILLISECONDS);
     }
 
     /*

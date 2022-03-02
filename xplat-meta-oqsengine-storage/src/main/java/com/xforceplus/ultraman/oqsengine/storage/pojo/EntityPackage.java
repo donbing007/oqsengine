@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.pojo;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import java.io.Serializable;
@@ -77,10 +78,25 @@ public class EntityPackage implements Serializable {
 
     /**
      * 包裹中增加一个新的IEntity实例.
+     * 使用严格模式,对象表示的对象元信息必须和给出的完整匹配.
      *
      * @param entity 实例.
+     * @param entityClass 对象元信息.
+     * @return 包裹实例.
      */
     public EntityPackage put(IEntity entity, IEntityClass entityClass) {
+        return put(entity, entityClass, false);
+    }
+
+    /**
+     * 包裹中增加一个新的IEntity实例.
+     *
+     * @param entity 实例.
+     * @param entityClass 对象元信息.
+     * @param strict true 严格模式, false 非严格模式.
+     * @return 包裹实例.
+     */
+    public EntityPackage put(IEntity entity, IEntityClass entityClass, boolean strict) {
         if (entity == null) {
             throw new NullPointerException("The target IEntity instance is not valid.");
         }
@@ -89,9 +105,21 @@ public class EntityPackage implements Serializable {
             throw new NullPointerException("The target EntityClass instance is not vaild.");
         }
 
-        if (!entity.entityClassRef().equals(entityClass.ref())) {
-            throw new IllegalArgumentException(
-                "The type declared by the current instance does not match the specified type.");
+        if (strict) {
+            if (!entity.entityClassRef().equals(entityClass.ref())) {
+                throw new IllegalArgumentException(
+                    String.format(
+                        "The type declared by the current instance does not match the specified type.[%s - %s]",
+                        entity.entityClassRef(), entityClass.ref()));
+            }
+        } else {
+            EntityClassRef entityClassRef = entity.entityClassRef();
+            if (entityClassRef.getId() != entityClass.id() || !entityClassRef.getCode().equals(entityClass.code())) {
+                throw new IllegalArgumentException(
+                    String.format(
+                        "The type declared by the current instance does not match the specified type.[%s - %s]",
+                        entity.entityClassRef(), entityClass.ref()));
+            }
         }
 
         lazyInit();

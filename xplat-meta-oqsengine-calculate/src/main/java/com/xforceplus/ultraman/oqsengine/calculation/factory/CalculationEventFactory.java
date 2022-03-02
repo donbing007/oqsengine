@@ -13,7 +13,9 @@ import com.xforceplus.ultraman.oqsengine.idgenerator.storage.SegmentStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
+import java.util.HashMap;
 import java.util.Map;
+import javax.annotation.Resource;
 
 /**
  * Created by justin.xu on 12/2021.
@@ -43,6 +45,8 @@ public class CalculationEventFactory {
             .withKeyValueStorage(keyValueStorage)
             .withSerializeStrategy(serializeStrategy)
             .build();
+
+        executors = new HashMap<>();
 
         executors.put(CalculationType.AUTO_FILL, new AutoFillEventExecutor());
 
