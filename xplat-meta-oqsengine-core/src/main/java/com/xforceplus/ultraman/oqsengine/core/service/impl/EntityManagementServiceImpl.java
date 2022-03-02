@@ -380,7 +380,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 EntityPackage entityPackage = new EntityPackage();
                 int len = dirtyEntities.size();
                 for (int i = 0; i < len; i++) {
-                    entityPackage.put(dirtyEntities.get(i), entityClasses[i]);
+                    entityPackage.put(dirtyEntities.get(i), entityClasses[i], false);
                 }
 
                 masterStorage.build(entityPackage);
@@ -659,7 +659,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     EntityPackage entityPackage = new EntityPackage();
                     // 忽略掉所有替换后计算后仍然是干净的对象,表示没有任何改变.
                     targetEntities.stream().filter(e -> e.isDirty()).forEach(e ->
-                        entityPackage.put(e, entityClassTable.get(e.entityClassRef().getId()))
+                        entityPackage.put(e, entityClassTable.get(e.entityClassRef().getId()), false)
                     );
 
                     if (entityPackage.isEmpty()) {
@@ -928,7 +928,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     for (int i = 0; i < targetEntities.size(); i++) {
                         targetEntity = targetEntities.get(i);
                         entityClass = entityClassTable.get(targetEntity.entityClassRef().getId());
-                        entityPackage.put(targetEntity, entityClass);
+                        entityPackage.put(targetEntity, entityClass, false);
                     }
                     masterStorage.delete(entityPackage);
 
