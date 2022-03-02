@@ -13,6 +13,8 @@ import java.util.List;
  */
 public class DevOpsQueryConfig {
 
+    private Long appId;
+
     private Long entityClassId;
     /**
      * 页面大小.
@@ -28,6 +30,14 @@ public class DevOpsQueryConfig {
     private DevOpsQueryCondition conditions;
 
     private List<DevOpsQuerySort> sort;
+
+    public Long getAppId() {
+        return appId;
+    }
+
+    public void setAppId(Long appId) {
+        this.appId = appId;
+    }
 
     public Long getEntityClassId() {
         return entityClassId;
