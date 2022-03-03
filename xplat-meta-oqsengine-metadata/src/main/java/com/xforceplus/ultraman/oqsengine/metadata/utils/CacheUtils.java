@@ -11,6 +11,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.AutoFill;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -125,8 +126,9 @@ public class CacheUtils {
      * 解析profileCode.
      */
     public static List<String> parseProfileCodes(Map<String, String> keyValues) {
-        Set<String> profiles = new HashSet<>();
+
         if (null != keyValues && !keyValues.isEmpty()) {
+            Set<String> profiles = new HashSet<>();
             for (Map.Entry<String, String> entry : keyValues.entrySet()) {
                 if (entry.getKey().startsWith(ELEMENT_PROFILES + "." + ELEMENT_FIELDS)) {
                     profiles.add(parseOneKeyFromProfileEntity(entry.getKey()));
@@ -134,7 +136,10 @@ public class CacheUtils {
                     profiles.add(parseOneKeyFromProfileRelations(entry.getKey()));
                 }
             }
+
+            return new ArrayList<>(profiles);
         }
-        return new ArrayList<>(profiles);
+
+        return Collections.emptyList();
     }
 }
