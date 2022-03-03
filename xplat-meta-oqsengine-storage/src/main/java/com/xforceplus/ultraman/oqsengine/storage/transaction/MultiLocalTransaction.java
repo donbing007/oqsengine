@@ -14,6 +14,7 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.accumulator.Default
 import com.xforceplus.ultraman.oqsengine.storage.transaction.accumulator.TransactionAccumulator;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper;
 import io.micrometer.core.instrument.Metrics;
+import io.micrometer.core.instrument.Timer;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -439,6 +440,8 @@ public class MultiLocalTransaction implements Transaction {
             maxLoop = (int) (maxWaitCommitIdSyncMs / checkCommitIdSyncMs);
         }
 
+        Timer.Sample sample = Timer.start(Metrics.globalRegistry);
+
         for (int i = 0; i < maxLoop; i++) {
 
             if (commitIdStatusService.isObsolete(commitId)) {
@@ -455,6 +458,17 @@ public class MultiLocalTransaction implements Transaction {
                 LockSupport.parkNanos(this, TimeUnit.MILLISECONDS.toNanos(checkCommitIdSyncMs));
             }
         }
+
+        sample.stop(Timer.builder(MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS)
+            .tags(
+                "logic", "commit",
+                "action", "wait",
+                "exception", "none"
+            )
+            .publishPercentileHistogram(false)
+            .publishPercentiles(null)
+            .register(Metrics.globalRegistry));
+
 
         return maxWaitCommitIdSyncMs;
     }
