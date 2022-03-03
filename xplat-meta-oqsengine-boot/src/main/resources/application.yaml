@@ -17,6 +17,7 @@ logging:
     com.xforceplus.ultraman.oqsengine.changelog: debug
 
 transaction:
+  waitCommitSync: true
   timeoutMs: 3000
 
 load:

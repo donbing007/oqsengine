@@ -13,6 +13,9 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
@@ -102,6 +105,9 @@ public class RedisResourceLocker extends AbstractResourceLocker implements Lifec
     @Resource
     private RedisLuaScriptWatchDog redisLuaScriptWatchDog;
 
+    @Resource(name = "taskThreadPool")
+    private ExecutorService worker;
+
     private ITimerWheel<String> timerWheel;
 
     private StatefulRedisConnection<String, String> connection;
@@ -173,7 +179,11 @@ public class RedisResourceLocker extends AbstractResourceLocker implements Lifec
 
         for (int i = 0; i < size; i++) {
             stateKeys.move();
-            timerWheel.add(keys[i], renewalIntervalMs);
+
+            String key = keys[i];
+            CompletableFuture.runAsync(() -> {
+                timerWheel.add(key, renewalIntervalMs);
+            }, worker);
         }
     }
 
@@ -191,7 +201,10 @@ public class RedisResourceLocker extends AbstractResourceLocker implements Lifec
         for (int i = 0; i < keys.length; i++) {
             if (Arrays.binarySearch(failKeyIndex, i) < 0) {
                 // 序号不在错误列表中,可以清理.
-                timerWheel.remove(keys[i]);
+                String key = keys[i];
+                CompletableFuture.runAsync(() -> {
+                    timerWheel.remove(key);
+                }, worker);
             }
         }
 

@@ -41,6 +41,7 @@ public class CustomTransactionConfiguration {
         LongIdGenerator longNoContinuousPartialOrderIdGenerator,
         LongIdGenerator longContinuousPartialOrderIdGenerator,
         @Value("${transaction.timeoutMs:3000}") int transactionTimeoutMs,
+        @Value("${transaction.waitCommitSync:true}")boolean waitCommitSync,
         CommitIdStatusService commitIdStatusService,
         EventBus eventBus,
         CacheEventHandler cacheEventHandler) {
@@ -49,7 +50,7 @@ public class CustomTransactionConfiguration {
             .withTxIdGenerator(longNoContinuousPartialOrderIdGenerator)
             .withCommitIdGenerator(longContinuousPartialOrderIdGenerator)
             .withCommitIdStatusService(commitIdStatusService)
-            .withWaitCommitSync(true)
+            .withWaitCommitSync(waitCommitSync)
             .withEventBus(eventBus)
             .withCacheEventHandler(cacheEventHandler)
             .build();

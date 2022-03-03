@@ -38,10 +38,14 @@ import com.xforceplus.ultraman.oqsengine.status.CDCStatusService;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.ConditionsSelectStorage;
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
+import com.xforceplus.ultraman.oqsengine.storage.executor.ResourceTask;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.EntityPackage;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import com.xforceplus.ultraman.oqsengine.task.TaskCoordinator;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.Counter;
@@ -748,90 +752,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
         CalculationContext calculationContext = buildCalculationContext(CalculationScenarios.REPLACE);
         try {
-            oqsResult = (OqsResult) transactionExecutor.execute((tx, resource, hint) -> {
-
-                String lockResource = IEntitys.resource(entity.id());
-                boolean lockResult = resourceLocker.tryLock(lockTimeoutMs, lockResource);
-                if (!lockResult) {
-                    return OqsResult.conflict();
-                }
-
-                IEntity newEntity;
-                IEntity oldEntity;
-                ReplacePayload replacePayload;
-                try {
-                    /*
-                     * 获取当前的原始版本.
-                     */
-                    Optional<IEntity> targetEntityOp = masterStorage.selectOne(entity.id(), entityClass);
-                    if (!targetEntityOp.isPresent()) {
-                        return OqsResult.notFound();
-                    }
-
-                    // 新实例.
-                    newEntity = targetEntityOp.get();
-
-                    // 保留旧实例.
-                    oldEntity = newEntity.copy();
-
-                    // 操作时间
-                    newEntity.markTime();
-
-                    // 新的字段值加入当前实例.
-                    for (IValue newValue : entity.entityValue().values()) {
-                        newEntity.entityValue().addValue(newValue);
-                    }
-
-                    // 没有任何更新.
-                    if (!newEntity.isDirty()) {
-                        return OqsResult.success();
-                    }
-
-                    calculationContext.focusTx(tx);
-                    calculationContext.focusSourceEntity(newEntity);
-                    calculationContext.focusEntity(newEntity, entityClass);
-                    newEntity = calculation.calculate(calculationContext);
-                    setValueChange(calculationContext, Optional.of(newEntity), Optional.of(oldEntity));
-
-                    Map.Entry<VerifierResult, IEntityField> verifyResult = verifyFields(entityClass, newEntity);
-                    if (VerifierResult.OK != verifyResult.getKey()) {
-                        hint.setRollback(true);
-                        return transformVerifierResultToOperationResult(verifyResult, newEntity);
-                    }
-
-                    calculation.maintain(calculationContext);
-
-                    replacePayload = new ReplacePayload(tx.id());
-                    replacePayload.addChange(oldEntity,
-                        newEntity.entityValue().values().stream().filter(v -> v.isDirty()).toArray(IValue[]::new));
-
-                    masterStorage.replace(newEntity, entityClass);
-                    if (newEntity.isDirty()) {
-                        hint.setRollback(true);
-                        return OqsResult.unReplaced(newEntity.id());
-                    }
-
-                    if (!calculationContext.persist()) {
-                        hint.setRollback(true);
-                        return OqsResult.conflict();
-                    }
-
-
-                    //  这里将版本+1，使得外部获取的版本为当前成功版本
-                    newEntity.resetVersion(newEntity.version() + ONE_INCREMENT_POS);
-
-                    if (!tx.getAccumulator().accumulateReplace(oldEntity)) {
-                        hint.setRollback(true);
-                        return OqsResult.unAccumulate();
-                    }
-                } finally {
-                    resourceLocker.unlock(lockResource);
-                }
-
-                eventBus.notify(new ActualEvent(EventType.ENTITY_REPLACE, replacePayload));
-
-                return OqsResult.success(replacePayload.getChanage(oldEntity).get());
-            });
+            oqsResult = (OqsResult) transactionExecutor.execute(
+                new ReplaceResourceTask(entity, entityClass, calculationContext));
 
             if (calculationContext.hasHint()) {
                 oqsResult.addHints(calculationContext.getHints());
@@ -1339,6 +1261,108 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     private void markTime(IEntity entity) {
         if (entity.time() <= 0) {
             entity.markTime(System.currentTimeMillis());
+        }
+    }
+
+    /**
+     * 更新任务.
+     */
+    private class ReplaceResourceTask implements ResourceTask<OqsResult> {
+
+        private IEntity entity;
+        private IEntityClass entityClass;
+        private CalculationContext calculationContext;
+
+        public ReplaceResourceTask(IEntity entity, IEntityClass entityClass,
+                                   CalculationContext calculationContext) {
+            this.entity = entity;
+            this.entityClass = entityClass;
+            this.calculationContext = calculationContext;
+        }
+
+        @Override
+        public OqsResult run(Transaction tx, TransactionResource resource, ExecutorHint hint) throws Exception {
+            String lockResource = IEntitys.resource(entity.id());
+            boolean lockResult = resourceLocker.tryLock(lockTimeoutMs, lockResource);
+            if (!lockResult) {
+                return OqsResult.conflict();
+            }
+
+            IEntity newEntity;
+            IEntity oldEntity;
+            ReplacePayload replacePayload;
+            try {
+                /*
+                 * 获取当前的原始版本.
+                 */
+                Optional<IEntity> targetEntityOp = masterStorage.selectOne(entity.id(), entityClass);
+                if (!targetEntityOp.isPresent()) {
+                    return OqsResult.notFound();
+                }
+
+                // 新实例.
+                newEntity = targetEntityOp.get();
+
+                // 保留旧实例.
+                oldEntity = newEntity.copy();
+
+                // 操作时间
+                newEntity.markTime();
+
+                // 新的字段值加入当前实例.
+                for (IValue newValue : entity.entityValue().values()) {
+                    newEntity.entityValue().addValue(newValue);
+                }
+
+                // 没有任何更新.
+                if (!newEntity.isDirty()) {
+                    return OqsResult.success();
+                }
+
+                calculationContext.focusTx(tx);
+                calculationContext.focusSourceEntity(newEntity);
+                calculationContext.focusEntity(newEntity, entityClass);
+                newEntity = calculation.calculate(calculationContext);
+                setValueChange(calculationContext, Optional.of(newEntity), Optional.of(oldEntity));
+
+                Map.Entry<VerifierResult, IEntityField> verifyResult = verifyFields(entityClass, newEntity);
+                if (VerifierResult.OK != verifyResult.getKey()) {
+                    hint.setRollback(true);
+                    return transformVerifierResultToOperationResult(verifyResult, newEntity);
+                }
+
+                calculation.maintain(calculationContext);
+
+                replacePayload = new ReplacePayload(tx.id());
+                replacePayload.addChange(oldEntity,
+                    newEntity.entityValue().values().stream().filter(v -> v.isDirty()).toArray(IValue[]::new));
+
+                masterStorage.replace(newEntity, entityClass);
+                if (newEntity.isDirty()) {
+                    hint.setRollback(true);
+                    return OqsResult.unReplaced(newEntity.id());
+                }
+
+                if (!calculationContext.persist()) {
+                    hint.setRollback(true);
+                    return OqsResult.conflict();
+                }
+
+
+                //  这里将版本+1，使得外部获取的版本为当前成功版本
+                newEntity.resetVersion(newEntity.version() + ONE_INCREMENT_POS);
+
+                if (!tx.getAccumulator().accumulateReplace(oldEntity)) {
+                    hint.setRollback(true);
+                    return OqsResult.unAccumulate();
+                }
+            } finally {
+                resourceLocker.unlock(lockResource);
+            }
+
+            eventBus.notify(new ActualEvent(EventType.ENTITY_REPLACE, replacePayload));
+
+            return OqsResult.success(replacePayload.getChanage(oldEntity).get());
         }
     }
 
