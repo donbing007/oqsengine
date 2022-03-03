@@ -1267,7 +1267,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     /**
      * 更新任务.
      */
-    private class ReplaceResourceTask implements ResourceTask {
+    private class ReplaceResourceTask implements ResourceTask<OqsResult> {
 
         private IEntity entity;
         private IEntityClass entityClass;
@@ -1281,7 +1281,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         }
 
         @Override
-        public Object run(Transaction tx, TransactionResource resource, ExecutorHint hint) throws Exception {
+        public OqsResult run(Transaction tx, TransactionResource resource, ExecutorHint hint) throws Exception {
             String lockResource = IEntitys.resource(entity.id());
             boolean lockResult = resourceLocker.tryLock(lockTimeoutMs, lockResource);
             if (!lockResult) {
