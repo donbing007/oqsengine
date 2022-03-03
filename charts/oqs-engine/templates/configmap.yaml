@@ -51,6 +51,7 @@ data:
           application:
             name: "oqsengine"
         transaction:
+          waitCommitSync: {{ .Values.storage.transaction.waitCommitSync | default "true" }}
           timeoutMs: {{ .Values.storage.transaction.timeoutMs | default "2000" }}
         threadPool:
           io:

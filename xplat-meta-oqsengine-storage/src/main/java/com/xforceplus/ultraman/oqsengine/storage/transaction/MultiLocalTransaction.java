@@ -461,7 +461,7 @@ public class MultiLocalTransaction implements Transaction {
 
         sample.stop(Timer.builder(MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS)
             .tags(
-                "logic", "commit",
+                "initiator", "commit",
                 "action", "wait",
                 "exception", "none"
             )
