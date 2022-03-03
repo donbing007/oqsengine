@@ -5,18 +5,15 @@ import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationScenario
 import com.xforceplus.ultraman.oqsengine.calculation.dto.AffectedInfo;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationException;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.CalculationLogic;
+import com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.infuence.LookupInfuenceConsumer;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.task.LookupMaintainingTask;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.utils.LookupEntityRefIterator;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.CalculationParticipant;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Lookup;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LookupValue;
@@ -52,6 +49,12 @@ public class LookupCalculationLogic implements CalculationLogic {
      * 单个任务处理的实例上限.
      */
     private static final int TASK_LIMIT_NUMBER = 10000;
+
+    private LookupInfuenceConsumer infuenceConsumer;
+
+    public LookupCalculationLogic() {
+        this.infuenceConsumer = new LookupInfuenceConsumer();
+    }
 
     @Override
     public Optional<IValue> calculate(CalculationContext context) throws CalculationException {
@@ -102,7 +105,7 @@ public class LookupCalculationLogic implements CalculationLogic {
     @Override
     public void scope(CalculationContext context, Infuence infuence) {
 
-        infuence.scan(new LookupInfuenceConsumer());
+        infuence.scan(this.infuenceConsumer);
     }
 
     /**
