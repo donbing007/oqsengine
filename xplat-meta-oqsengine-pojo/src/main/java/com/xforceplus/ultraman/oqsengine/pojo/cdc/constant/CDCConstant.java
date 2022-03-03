@@ -28,8 +28,8 @@ public class CDCConstant {
     //  当前CDC connection连接失败后的重连间隔 (默认3S)
     public static final int RECONNECT_WAIT_IN_SECONDS = 3;
 
-    //  当前CDC 中没有同步message时的休眠间隔 (默认1S)
-    public static final int FREE_MESSAGE_WAIT_IN_SECONDS = 5;
+    //  当前CDC 中没有同步message时的休眠间隔 (默认5毫秒)
+    public static final int FREE_MESSAGE_WAIT_IN_MS = 5;
 
     //  当前CDC 中错误的同步message时的休眠间隔 (默认1S)
     public static final int ERROR_MESSAGE_WAIT_IN_SECONDS = 1;

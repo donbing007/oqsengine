@@ -749,7 +749,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         CalculationContext calculationContext = buildCalculationContext(CalculationScenarios.REPLACE);
         try {
             oqsResult = (OqsResult) transactionExecutor.execute((tx, resource, hint) -> {
-
                 String lockResource = IEntitys.resource(entity.id());
                 boolean lockResult = resourceLocker.tryLock(lockTimeoutMs, lockResource);
                 if (!lockResult) {

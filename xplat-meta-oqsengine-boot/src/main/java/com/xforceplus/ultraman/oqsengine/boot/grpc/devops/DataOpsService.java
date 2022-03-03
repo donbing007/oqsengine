@@ -15,6 +15,8 @@ import com.xforceplus.ultraman.oqsengine.devops.om.model.DevOpsQueryResponse;
 import com.xforceplus.ultraman.oqsengine.devops.om.model.DevOpsQuerySummary;
 import com.xforceplus.ultraman.oqsengine.devops.om.util.DevOpsOmDataUtils;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
@@ -28,6 +30,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.pojo.utils.IValueUtils;
 import java.sql.SQLException;
@@ -42,6 +45,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -52,6 +57,8 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class DataOpsService {
+
+    private final Logger logger = LoggerFactory.getLogger(DataOpsService.class);
 
     @Autowired
     private MetaManager metaManager;
@@ -65,6 +72,10 @@ public class DataOpsService {
     @Autowired
     private InitCalculationManager initCalculationManager;
 
+
+    private final int batchLimit = 1000;
+
+    private final String operateSysBo = "oqsengineSdkOmAuditLog";
 
     /**
      * 统一数据运维-条件查询.
@@ -199,18 +210,14 @@ public class DataOpsService {
      */
     @DiscoverAction(describe = "新增", retClass = Collection.class)
     public DevOpsDataResponse singleCreate(
+        @MethodParam(name = "appId", klass = long.class, required = true) long appId,
         @MethodParam(name = "entityClassId", klass = long.class, required = true) long entityClassId,
         @MethodParam(name = "data", klass = Map.class) Map data) {
         Optional<IEntityClass> entityClassOptl = metaManager.load(entityClassId, null);
         if (!entityClassOptl.isPresent()) {
-            return null;
+            return DevOpsDataResponse.fail(String.format("根据对象ID（%d）找不到对象元数据信息", entityClassId));
         }
-        EntityClassRef entityClassRef = EntityClassRef
-            .Builder
-            .anEntityClassRef()
-            .withEntityClassId(entityClassId)
-            .withEntityClassCode(entityClassOptl.get().code())
-            .build();
+
         List<IValue> entityValue = new ArrayList<>();
         entityClassOptl.get().fields().stream().forEach(field -> {
             if ("create_time".equals(field.name())) {
@@ -232,19 +239,21 @@ public class DataOpsService {
             }
         });
         IEntity targetEntity = Entity.Builder.anEntity()
-            .withEntityClassRef(entityClassRef)
+            .withEntityClassRef(entityClassOptl.get().ref())
             .withTime(System.currentTimeMillis())
             .withValues(entityValue).build();
 
+        OqsResult<IEntity> oqsResult = OqsResult.unknown();
         try {
-            return toDevOpsDataResponse(
-                entityManagementService.build(targetEntity)
-            );
+            oqsResult = entityManagementService.build(targetEntity);
         } catch (SQLException e) {
             PrintErrorHelper.exceptionHandle(String.format("devops om singleCreate exception, [%s]", entityClassId), e);
+        } finally {
+            // TODO 操作日志
+            saveOperate(appId, entityClassId, null, OperateType.SINGLE_CREATE, data, oqsResult);
         }
 
-        return null;
+        return toDevOpsDataResponse(oqsResult);
     }
 
     /**
@@ -257,19 +266,15 @@ public class DataOpsService {
      */
     @DiscoverAction(describe = "修改", retClass = Collection.class)
     public DevOpsDataResponse singleModify(
+        @MethodParam(name = "appId", klass = long.class, required = true) long appId,
         @MethodParam(name = "entityClassId", klass = long.class, required = true) long entityClassId,
         @MethodParam(name = "entityValueId", klass = long.class, required = true) long entityValueId,
         @MethodParam(name = "data", klass = Map.class) Map data) {
         Optional<IEntityClass> entityClassOptl = metaManager.load(entityClassId, null);
         if (!entityClassOptl.isPresent()) {
-            return null;
+            return DevOpsDataResponse.fail(String.format("根据对象ID（%d）找不到对象元数据信息", entityClassId));
         }
-        EntityClassRef entityClassRef = EntityClassRef
-            .Builder
-            .anEntityClassRef()
-            .withEntityClassId(entityClassId)
-            .withEntityClassCode(entityClassOptl.get().code())
-            .build();
+
         List<IValue> entityValue = new ArrayList<>();
         entityClassOptl.get().fields().stream().forEach(field -> {
             if ("update_time".equals(field.name())) {
@@ -287,21 +292,23 @@ public class DataOpsService {
             }
         });
         IEntity targetEntity = Entity.Builder.anEntity()
-            .withEntityClassRef(entityClassRef)
+            .withEntityClassRef(entityClassOptl.get().ref())
             .withId(entityValueId)
             .withTime(System.currentTimeMillis())
             .withValues(entityValue).build();
 
+        OqsResult<Map.Entry<IEntity, IValue[]>> oqsResult = OqsResult.unknown();
         try {
-            return toDevOpsDataResponse(
-                entityManagementService.replace(targetEntity)
-            );
+            oqsResult = entityManagementService.replace(targetEntity);
         } catch (SQLException e) {
             PrintErrorHelper.exceptionHandle(
                 String.format("devops om singleModify exception, [%s-%s]", entityClassId, entityValueId), e);
+        } finally {
+            // TODO 操作日志
+            saveOperate(appId, entityClassId, null, OperateType.SINGLE_MODIFY, data, oqsResult);
         }
 
-        return null;
+        return toDevOpsDataResponse(oqsResult);
     }
 
     /**
@@ -313,36 +320,106 @@ public class DataOpsService {
      */
     @DiscoverAction(describe = "删除", retClass = Collection.class)
     public DevOpsDataResponse singleDelete(
+        @MethodParam(name = "appId", klass = long.class, required = true) long appId,
         @MethodParam(name = "entityClassId", klass = long.class, required = true) long entityClassId,
         @MethodParam(name = "entityValueId", klass = long.class, required = true) long entityValueId) {
         Optional<IEntityClass> entityClassOptl = metaManager.load(entityClassId, null);
         if (!entityClassOptl.isPresent()) {
-            return null;
+            return DevOpsDataResponse.fail(String.format("根据对象ID（%d）找不到对象元数据信息", entityClassId));
         }
 
-        EntityClassRef entityClassRef = EntityClassRef
-            .Builder
-            .anEntityClassRef()
-            .withEntityClassId(entityClassId)
-            .withEntityClassCode(entityClassOptl.get().code())
-            .build();
-
         IEntity targetEntity = Entity.Builder.anEntity()
-            .withEntityClassRef(entityClassRef)
+            .withEntityClassRef(entityClassOptl.get().ref())
             .withId(entityValueId)
             .withTime(System.currentTimeMillis())
             .build();
 
+        OqsResult<IEntity> oqsResult = OqsResult.unknown();
         try {
-            return toDevOpsDataResponse(
-                entityManagementService.delete(targetEntity)
-            );
+            oqsResult = entityManagementService.delete(targetEntity);
         } catch (SQLException e) {
             PrintErrorHelper.exceptionHandle(
                 String.format("devops om singleDelete exception, [%s-%s]", entityClassId, entityValueId), e);
+        } finally {
+            // TODO 操作日志
+            saveOperate(appId, entityClassId, null, OperateType.SINGLE_DELETE, null, oqsResult);
         }
 
-        return null;
+        return toDevOpsDataResponse(oqsResult);
+    }
+
+    /**
+     * 统一数据运维-批量新增.
+     *
+     * @param entityClassId 实体ID
+     * @param data          请求参数
+     * @return 返回结果
+     */
+    @DiscoverAction(describe = "批量新增", retClass = Collection.class)
+    public DevOpsDataResponse batchCreate(
+            @MethodParam(name = "appId", klass = long.class, required = true) long appId,
+            @MethodParam(name = "entityClassId", klass = long.class, required = true) long entityClassId,
+            @MethodParam(name = "data", klass = Map.class) List<Map> data) {
+        Optional<IEntityClass> entityClassOptl = metaManager.load(entityClassId, null);
+        if (!entityClassOptl.isPresent()) {
+            return DevOpsDataResponse.fail(String.format("根据对象ID（%d）找不到对象元数据信息", entityClassId));
+        }
+
+        if (data == null || data.size() == 0) {
+            return DevOpsDataResponse.fail("没有可新增的数据");
+        }
+
+        if (data.size() > batchLimit) {
+            return new DevOpsDataResponse(String.format("批量新增的数据超过上限（%d）", batchLimit));
+        }
+
+        boolean idExist = false;
+        for (Map item : data) {
+            if (item.containsKey("id")) {
+                idExist = true;
+            }
+        }
+        if (idExist) {
+            return DevOpsDataResponse.fail("新增的批量数据不能存在Id值");
+        }
+
+        List<IEntity> entityList = data.stream().map(map -> {
+            List<IValue> entityValue = new ArrayList<>();
+            entityClassOptl.get().fields().stream().forEach(field -> {
+                if ("create_time".equals(field.name())) {
+                    entityValue.add(
+                            new LongValue(field, LocalDateTime.now().toInstant(ZoneOffset.ofHours(8)).toEpochMilli()));
+                }
+            });
+            map.keySet().forEach(fieldCode -> {
+                Optional<IEntityField> entityFieldOptl = entityClassOptl.get().fields()
+                        .stream().filter(field -> fieldCode.equals(field.name())).findAny();
+                if (entityFieldOptl.isPresent()) {
+                    IValue value = IValueUtils.toIValue(entityFieldOptl.get(),
+                            DevOpsOmDataUtils.convertDataObject(entityFieldOptl.get(), map.get(fieldCode)));
+                    entityValue.add(value);
+                }
+            });
+
+            return Entity.Builder.anEntity()
+                    .withEntityClassRef(entityClassOptl.get().ref())
+                    .withTime(System.currentTimeMillis())
+                    .withValues(entityValue).build();
+        }).collect(Collectors.toList());
+
+        OqsResult<IEntity[]> oqsResult = OqsResult.unknown();
+        try {
+            oqsResult = entityManagementService.build(entityList.toArray(new IEntity[]{}));
+        } catch (SQLException e) {
+            String idStrs = data.stream().map(item -> String.valueOf(item.get("id"))).collect(Collectors.joining(","));
+            PrintErrorHelper.exceptionHandle(
+                    String.format("devops om batchCreate exception, [%s], %s", entityClassId, idStrs), e);
+        } finally {
+            // TODO 操作日志
+            saveOperate(appId, entityClassId, null, OperateType.BATCH_CREATE, data, oqsResult);
+        }
+
+        return toDevOpsDataResponse(oqsResult);
     }
 
     /**
@@ -354,15 +431,20 @@ public class DataOpsService {
      */
     @DiscoverAction(describe = "批量修改", retClass = Collection.class)
     public DevOpsDataResponse batchModify(
+            @MethodParam(name = "appId", klass = long.class, required = true) long appId,
             @MethodParam(name = "entityClassId", klass = long.class, required = true) long entityClassId,
             @MethodParam(name = "data", klass = Map.class) List<Map> data) {
         Optional<IEntityClass> entityClassOptl = metaManager.load(entityClassId, null);
         if (!entityClassOptl.isPresent()) {
-            return null;
+            return DevOpsDataResponse.fail(String.format("根据对象ID（%d）找不到对象元数据信息", entityClassId));
         }
 
         if (data == null || data.size() == 0) {
-            return null;
+            return DevOpsDataResponse.fail("没有可修改的数据");
+        }
+
+        if (data.size() > batchLimit) {
+            return new DevOpsDataResponse(String.format("批量修改的数据超过上限（%d）", batchLimit));
         }
 
         boolean illegalIdExist = false;
@@ -377,15 +459,8 @@ public class DataOpsService {
             }
         }
         if (illegalIdExist) {
-            return null;
+            return DevOpsDataResponse.fail("数据存在不合法的Id");
         }
-
-        EntityClassRef entityClassRef = EntityClassRef
-                .Builder
-                .anEntityClassRef()
-                .withEntityClassId(entityClassId)
-                .withEntityClassCode(entityClassOptl.get().code())
-                .build();
 
         List<IEntity> entityList = data.stream().map(map -> {
             List<IValue> entityValue = new ArrayList<>();
@@ -407,23 +482,25 @@ public class DataOpsService {
 
             long entityValueId = Long.valueOf((String) map.get("id"));
             return Entity.Builder.anEntity()
-                    .withEntityClassRef(entityClassRef)
+                    .withEntityClassRef(entityClassOptl.get().ref())
                     .withId(entityValueId)
                     .withTime(System.currentTimeMillis())
                     .withValues(entityValue).build();
         }).collect(Collectors.toList());
 
+        OqsResult<Map<IEntity, IValue[]>> oqsResult = OqsResult.unknown();
         try {
-            return toDevOpsDataResponse(
-                    entityManagementService.replace(entityList.toArray(new IEntity[]{}))
-            );
+            oqsResult = entityManagementService.replace(entityList.toArray(new IEntity[]{}));
         } catch (SQLException e) {
             String idStrs = data.stream().map(item -> String.valueOf(item.get("id"))).collect(Collectors.joining(","));
             PrintErrorHelper.exceptionHandle(
                     String.format("devops om batchModify exception, [%s], %s", entityClassId, idStrs), e);
+        } finally {
+            // TODO 操作日志
+            saveOperate(appId, entityClassId, null, OperateType.BATCH_MODIFY, data, oqsResult);
         }
 
-        return null;
+        return toDevOpsDataResponse(oqsResult);
     }
 
     /**
@@ -435,15 +512,20 @@ public class DataOpsService {
      */
     @DiscoverAction(describe = "批量删除", retClass = Collection.class)
     public DevOpsDataResponse batchDelete(
+            @MethodParam(name = "appId", klass = long.class, required = true) long appId,
             @MethodParam(name = "entityClassId", klass = long.class, required = true) long entityClassId,
             @MethodParam(name = "data", klass = Map.class) List<String> idStrs) {
         Optional<IEntityClass> entityClassOptl = metaManager.load(entityClassId, null);
         if (!entityClassOptl.isPresent()) {
-            return null;
+            return DevOpsDataResponse.fail(String.format("根据对象ID（%d）找不到对象元数据信息", entityClassId));
         }
 
         if (idStrs == null || idStrs.size() == 0) {
-            return null;
+            return DevOpsDataResponse.fail("没有可修改的数据");
+        }
+
+        if (idStrs.size() > batchLimit) {
+            return DevOpsDataResponse.fail(String.format("批量删除的数据超过上限（%d）", batchLimit));
         }
 
         boolean illegalIdExist = false;
@@ -453,35 +535,29 @@ public class DataOpsService {
             }
         }
         if (illegalIdExist) {
-            return null;
+            return DevOpsDataResponse.fail("数据存在不合法的Id");
         }
 
-        EntityClassRef entityClassRef = EntityClassRef
-                .Builder
-                .anEntityClassRef()
-                .withEntityClassId(entityClassId)
-                .withEntityClassCode(entityClassOptl.get().code())
-                .build();
-
-        List<IEntity> entityList = idStrs.stream().map(idStr -> {
-            long entityValueId = Long.valueOf(idStr);
-            return Entity.Builder.anEntity()
-                    .withEntityClassRef(entityClassRef)
-                    .withId(entityValueId)
+        List<IEntity> entityList = idStrs.stream().map(idStr ->
+            Entity.Builder.anEntity()
+                    .withEntityClassRef(entityClassOptl.get().ref())
+                    .withId(Long.valueOf(idStr))
                     .withTime(System.currentTimeMillis())
-                    .build();
-        }).collect(Collectors.toList());
+                    .build()
+        ).collect(Collectors.toList());
 
+        OqsResult<IEntity[]> oqsResult = OqsResult.unknown();
         try {
-            return toDevOpsDataResponse(
-                    entityManagementService.delete(entityList.toArray(new IEntity[]{}))
-            );
+            oqsResult = entityManagementService.delete(entityList.toArray(new IEntity[]{}));
         } catch (SQLException e) {
             PrintErrorHelper.exceptionHandle(
                     String.format("devops om batchDelete exception, [%s], %s", entityClassId, JSON.toJSONString(idStrs)), e);
+        } finally {
+            // TODO 操作日志
+            saveOperate(appId, entityClassId, null, OperateType.BATCH_DELETE, idStrs, oqsResult);
         }
 
-        return null;
+        return toDevOpsDataResponse(oqsResult);
     }
 
     /**
@@ -491,12 +567,137 @@ public class DataOpsService {
      * @return 返回结果
      */
     @DiscoverAction(describe = "初始化计算字段", retClass = List.class)
-    public List<IEntityField> initAppCalculations(String appId) {
-        return initCalculationManager.initAppCalculations(appId);
+    public List<IEntityField> initAppCalculations(@MethodParam(name = "appId", klass = long.class, required = true) long appId) {
+        return initCalculationManager.initAppCalculations(Long.valueOf(appId).toString());
     }
 
     private DevOpsDataResponse toDevOpsDataResponse(OqsResult oqsResult) {
-        return new DevOpsDataResponse(oqsResult.getMessage());
+        return DevOpsDataResponse.ok(oqsResult.getMessage());
+    }
+
+    private void saveOperate(long appId, long entityClassId, Long entityValueId, OperateType operateType, Object reqData, Object respData) {
+        try {
+            Optional<MetaMetrics> metaMetricsOptl = metaManager.showMeta(Long.valueOf(appId).toString());
+            if (!metaMetricsOptl.isPresent()) {
+                logger.warn("应用[{}]找不到", appId);
+            }
+            Optional<EntityClassStorage> entityClassStorageOptl = metaMetricsOptl.get().getMetas().stream()
+                    .filter(entityClassStorage -> operateSysBo.equals(entityClassStorage.getCode())).findAny();
+            if (!entityClassStorageOptl.isPresent()) {
+                logger.warn("应用[{}]找不到记录操作日志对象[{}]", appId, entityClassStorageOptl.get().getId());
+            }
+            Optional<IEntityClass> entityClassOptl = metaManager.load(entityClassStorageOptl.get().getId(), null);
+            if (!entityClassOptl.isPresent()) {
+                logger.warn("应用[{}]找不到记录操作日志对象[{}]", appId, entityClassOptl.get().id());
+            }
+            List<IValue> entityValue = new ArrayList<>();
+            entityClassOptl.get().fields().stream().forEach(field -> {
+                if ("create_time".equals(field.name())) {
+                    entityValue.add(
+                            new LongValue(field, LocalDateTime.now().toInstant(ZoneOffset.ofHours(8)).toEpochMilli()));
+                } else if ("app_id".equals(field.name())) {
+                    entityValue.add(
+                            new LongValue(field, appId));
+                } else if ("bo_id".equals(field.name())) {
+                    entityValue.add(
+                            new LongValue(field, entityClassId));
+                } else if ("entity_id".equals(field.name())) {
+                    entityValue.add(
+                            new LongValue(field, entityValueId));
+                } else if ("request_data".equals(field.name())) {
+                    entityValue.add(
+                            new StringValue(field, JSON.toJSONString(reqData)));
+                } else if ("response_data".equals(field.name())) {
+                    entityValue.add(
+                            new StringValue(field, JSON.toJSONString(convertOqsResult(operateType, respData))));
+                //} else if ("operator_id".equals(field.name())) {
+                //} else if ("operator_code".equals(field.name())) {
+                //} else if ("operator_name".equals(field.name())) {
+                } else if ("operate_type".equals(field.name())) {
+                    entityValue.add(
+                            new StringValue(field, operateType.name()));
+                } else if ("operate_time".equals(field.name())) {
+                    entityValue.add(
+                            new LongValue(field, LocalDateTime.now().toInstant(ZoneOffset.ofHours(8)).toEpochMilli()));
+                }
+            });
+
+            IEntity targetEntity = Entity.Builder.anEntity()
+                    .withEntityClassRef(entityClassOptl.get().ref())
+                    .withTime(System.currentTimeMillis())
+                    .withValues(entityValue)
+                    .build();
+            try {
+                entityManagementService.build(targetEntity);
+            } catch (SQLException e) {
+                logger.warn("应用[{}]记录操作日志对象[{}]保存数据失败", appId, entityClassOptl.get().id());
+            }
+        } catch (Exception e) {
+            logger.error("save operation info fail");
+        }
+    }
+
+    private Map convertOqsResult(OperateType operateType, Object respData) {
+        Map respMap = new HashMap();
+        if (OperateType.SINGLE_CREATE.equals(operateType)
+                || OperateType.SINGLE_DELETE.equals(operateType)) {
+            OqsResult<IEntity> oqsResult = (OqsResult<IEntity>) respData;
+            respMap.put("status", oqsResult.getResultStatus().name());
+            if (oqsResult.getValue().isPresent()) {
+                respMap.put("data", oqsResult.getValue().get().entityValue().values().stream().collect(Collectors.toMap(v -> v.getField().name(), v -> v.getValue())));
+            }
+        } else if (OperateType.SINGLE_MODIFY.equals(operateType)) {
+            OqsResult<Map.Entry<IEntity, IValue[]>> oqsResult = (OqsResult<Map.Entry<IEntity, IValue[]>>) respData;
+            respMap.put("status", oqsResult.getResultStatus().name());
+            if (oqsResult.getValue().isPresent()) {
+                respMap.put("data", Arrays.stream(oqsResult.getValue().get().getValue()).collect(Collectors.toMap(v -> v.getField().name(), v -> v.getValue())));
+            }
+        } else if (OperateType.BATCH_CREATE.equals(operateType)
+                || OperateType.BATCH_DELETE.equals(operateType)) {
+            OqsResult<IEntity[]> oqsResult = (OqsResult<IEntity[]>) respData;
+            respMap.put("status", oqsResult.getResultStatus().name());
+            if (oqsResult.getValue().isPresent()) {
+                IEntity[] data = oqsResult.getValue().get();
+                Map dataMap = new HashMap();
+                Arrays.stream(data).map(entity ->
+                    dataMap.put(entity.id(), entity.entityValue().values().stream().collect(Collectors.toMap(v -> v.getField().name(), v -> v.getValue())))
+                );
+                respMap.put("data", Arrays.stream(data).map(item -> item.entityValue().values()).collect(Collectors.toList()));
+            }
+        } else if (OperateType.BATCH_MODIFY.equals(operateType)) {
+            OqsResult<Map<IEntity, IValue[]>> oqsResult = (OqsResult<Map<IEntity, IValue[]>>) respData;
+            respMap.put("status", oqsResult.getResultStatus().name());
+            if (oqsResult.getValue().isPresent()) {
+                Map<IEntity, IValue[]> data = oqsResult.getValue().get();
+                Map dataMap = new HashMap();
+                data.keySet().forEach(key ->
+                    dataMap.put(key.id(), Arrays.stream(data.get(key)).collect(Collectors.toMap(v -> v.getField().name(), v -> v.getValue())))
+                );
+                respMap.put("data", dataMap);
+            }
+        }
+
+        return respMap;
+    }
+
+    private enum OperateType {
+        SINGLE_DELETE("单个删除"),
+        SINGLE_MODIFY("单个修改"),
+        SINGLE_CREATE("单个创建"),
+        IMPORT("导入"),
+        BATCH_DELETE("批量删除"),
+        BATCH_MODIFY("批量修改"),
+        BATCH_CREATE("批量新增");
+
+        private String desc;
+
+        OperateType(String desc) {
+            this.desc = desc;
+        }
+
+        public String desc() {
+            return desc;
+        }
     }
 
 }

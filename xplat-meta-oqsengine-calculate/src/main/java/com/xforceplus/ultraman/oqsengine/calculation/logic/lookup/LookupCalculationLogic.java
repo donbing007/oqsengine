@@ -102,37 +102,7 @@ public class LookupCalculationLogic implements CalculationLogic {
     @Override
     public void scope(CalculationContext context, Infuence infuence) {
 
-        infuence.scan((parentParticipant, participant, infuenceInner) -> {
-
-            IEntityClass participantClass = participant.getEntityClass();
-            IEntityField participantField = participant.getField();
-
-            /*
-            迭代所有关系中的字段,判断是否有可能会对当前参与者发起lookup.
-             */
-            for (Relationship r : participantClass.relationship()) {
-                // 应该包含所有定制的元信息.
-                Collection<IEntityClass> relationshipClasss = r.getRightFamilyEntityClasses();
-
-                for (IEntityClass relationshipClass : relationshipClasss) {
-                    relationshipClass.fields().stream()
-                        .filter(f -> f.calculationType() == CalculationType.LOOKUP)
-                        .filter(f -> ((Lookup) f.config().getCalculation()).getFieldId() == participantField.id())
-                        .forEach(f -> {
-                            infuenceInner.impact(
-                                participant,
-                                    CalculationParticipant.Builder.anParticipant()
-                                    .withEntityClass(relationshipClass)
-                                    .withField(f)
-                                    .withAttachment(r.isStrong())
-                                    .build()
-                            );
-                        });
-                }
-            }
-
-            return InfuenceConsumer.Action.CONTINUE;
-        });
+        infuence.scan(new LookupInfuenceConsumer());
     }
 
     /**
