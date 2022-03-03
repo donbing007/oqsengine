@@ -279,11 +279,11 @@ public class SphinxSyncExecutor implements SyncExecutor {
     private IEntityClass getEntityClass(
         long id, Map<String, IEntityClass> entityClassMap, List<CanalEntry.Column> columns) throws SQLException {
 
-        long entityId = getEntity(columns);
+        long entityClassId = getEntity(columns);
 
-        if (entityId > ZERO) {
+        if (entityClassId > ZERO) {
             String profile = getStringWithoutNullCheck(columns, PROFILE);
-            String key = toClassKeyWithProfile(id, profile);
+            String key = toClassKeyWithProfile(entityClassId, profile);
 
             //  读取当前批次cache
             IEntityClass entityClass = entityClassMap.get(key);
@@ -293,7 +293,7 @@ public class SphinxSyncExecutor implements SyncExecutor {
 
             //  当前批次cache不存在
 
-            Optional<IEntityClass> entityClassOptional = metaManager.load(entityId, profile);
+            Optional<IEntityClass> entityClassOptional = metaManager.load(entityClassId, profile);
 
             if (entityClassOptional.isPresent()) {
                 IEntityClass finalClass = entityClassOptional.get();
@@ -305,7 +305,7 @@ public class SphinxSyncExecutor implements SyncExecutor {
 
             if (logger.isDebugEnabled()) {
                 logger.debug(
-                    "[cdc-sync-executor] id [{}], entityClassId [{}] has no entityClass in meta.", id, entityId);
+                    "[cdc-sync-executor] id [{}], entityClassId [{}] has no entityClass in meta.", id, entityClassId);
             }
         }
 
@@ -333,6 +333,9 @@ public class SphinxSyncExecutor implements SyncExecutor {
     private OriginalEntity prepareForUpdateDelete(
         List<CanalEntry.Column> columns, long id, long commitId, Map<String, IEntityClass> entityClassMap)
         throws SQLException {
+
+
+
         //  通过解析binlog获取
         IEntityClass entityClass = getEntityClass(id, entityClassMap, columns);
         if (null == entityClass) {
