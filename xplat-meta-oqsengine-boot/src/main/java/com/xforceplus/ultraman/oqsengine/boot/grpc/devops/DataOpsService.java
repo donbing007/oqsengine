@@ -305,7 +305,7 @@ public class DataOpsService {
                 String.format("devops om singleModify exception, [%s-%s]", entityClassId, entityValueId), e);
         } finally {
             // TODO 操作日志
-            saveOperate(appId, entityClassId, null, OperateType.SINGLE_MODIFY, data, oqsResult);
+            saveOperate(appId, entityClassId, entityValueId, OperateType.SINGLE_MODIFY, data, oqsResult);
         }
 
         return toDevOpsDataResponse(oqsResult);
@@ -342,7 +342,7 @@ public class DataOpsService {
                 String.format("devops om singleDelete exception, [%s-%s]", entityClassId, entityValueId), e);
         } finally {
             // TODO 操作日志
-            saveOperate(appId, entityClassId, null, OperateType.SINGLE_DELETE, null, oqsResult);
+            saveOperate(appId, entityClassId, entityValueId, OperateType.SINGLE_DELETE, null, oqsResult);
         }
 
         return toDevOpsDataResponse(oqsResult);
@@ -535,7 +535,7 @@ public class DataOpsService {
             }
         }
         if (illegalIdExist) {
-            return DevOpsDataResponse.fail("数据存在不合法的Id");
+            return DevOpsDataResponse.fail("数据存在不合法的ID");
         }
 
         List<IEntity> entityList = idStrs.stream().map(idStr ->
@@ -577,16 +577,12 @@ public class DataOpsService {
 
     private void saveOperate(long appId, long entityClassId, Long entityValueId, OperateType operateType, Object reqData, Object respData) {
         try {
-            Optional<MetaMetrics> metaMetricsOptl = metaManager.showMeta(Long.valueOf(appId).toString());
-            if (!metaMetricsOptl.isPresent()) {
-                logger.warn("应用[{}]找不到", appId);
+            Collection<IEntityClass> entityClasses = metaManager.appLoad(Long.valueOf(appId).toString());
+            if (entityClasses.isEmpty()) {
+                logger.warn("应用[{}]找不到对象列表", appId);
             }
-            Optional<EntityClassStorage> entityClassStorageOptl = metaMetricsOptl.get().getMetas().stream()
-                    .filter(entityClassStorage -> operateSysBo.equals(entityClassStorage.getCode())).findAny();
-            if (!entityClassStorageOptl.isPresent()) {
-                logger.warn("应用[{}]找不到记录操作日志对象[{}]", appId, entityClassStorageOptl.get().getId());
-            }
-            Optional<IEntityClass> entityClassOptl = metaManager.load(entityClassStorageOptl.get().getId(), null);
+            Optional<IEntityClass> entityClassOptl = entityClasses.stream()
+                    .filter(entityClass -> operateSysBo.equals(entityClass.code())).findAny();
             if (!entityClassOptl.isPresent()) {
                 logger.warn("应用[{}]找不到记录操作日志对象[{}]", appId, entityClassOptl.get().id());
             }
@@ -602,8 +598,10 @@ public class DataOpsService {
                     entityValue.add(
                             new LongValue(field, entityClassId));
                 } else if ("entity_id".equals(field.name())) {
-                    entityValue.add(
-                            new LongValue(field, entityValueId));
+                    if (entityValueId != null) {
+                        entityValue.add(
+                                new LongValue(field, entityValueId));
+                    }
                 } else if ("request_data".equals(field.name())) {
                     entityValue.add(
                             new StringValue(field, JSON.toJSONString(reqData)));
