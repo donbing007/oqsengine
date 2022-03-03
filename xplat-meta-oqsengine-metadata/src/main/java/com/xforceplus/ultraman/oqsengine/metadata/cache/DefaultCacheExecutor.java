@@ -721,13 +721,11 @@ public class DefaultCacheExecutor implements CacheExecutor {
         String key = generateEntityCacheKey(entityClassId, version);
         //  从本地cache读取
         List<String> profiles = profileCache.getIfPresent(key);
-        if (null == profiles || profiles.isEmpty()) {
+        if (null == profiles) {
             try {
                 profiles = CacheUtils.parseProfileCodes(remoteRead(entityClassId, version));
-                if (!profiles.isEmpty()) {
-                    //  从remoteCache读取,并写入本地cache
-                    profileCache.put(key, profiles);
-                }
+                //  从remoteCache读取,并写入本地cache
+                profileCache.put(key, profiles);
             } catch (Exception e) {
                 throw new RuntimeException(
                     String.format("entityId : %d, version : %d, read profiles failed, message : %s",
