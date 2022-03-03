@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.calculation.logic.lookup;
+package com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.infuence;
 
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.CalculationParticipant;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
