@@ -99,18 +99,33 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
                     masterStorage.rebuild(devOpsTaskInfo.getEntity(), devOpsTaskInfo.getMaintainid(),
                         devOpsTaskInfo.getStarts(), devOpsTaskInfo.getEnds());
 
-                if (rebuildCount > 0) {
-                    devOpsTaskInfo.setBatchSize(rebuildCount);
-                    devOpsTaskInfo.resetStatus(RUNNING.getCode());
-                    devOpsTaskInfo.resetMessage("TASK PROCESSING");
+                Optional<DevOpsTaskInfo> devOp =
+                    sqlTaskStorage.selectUnique(devOpsTaskInfo.getMaintainid());
 
-                    sqlTaskStorage.update(devOpsTaskInfo);
+                DevOpsTaskInfo dev = devOpsTaskInfo;
+                if (devOp.isPresent()) {
+                    dev = devOp.get();
+                }
+
+                if (rebuildCount > 0) {
+                    dev.setBatchSize(rebuildCount);
+
+                    if (dev.getFinishSize() == rebuildCount) {
+                        dev.resetStatus(DONE.getCode());
+                        dev.resetMessage("TASK END");
+                    } else {
+                        dev.resetStatus(RUNNING.getCode());
+                        dev.resetMessage("TASK PROCESSING");
+                    }
                 } else {
-                    devOpsTaskInfo.setBatchSize(0);
-                    devOpsTaskInfo.resetMessage("TASK END");
+                    dev.setBatchSize(0);
+                    dev.resetStatus(DONE.getCode());
+                    dev.resetMessage("TASK END");
 
                     sqlTaskStorage.done(devOpsTaskInfo);
                 }
+
+                sqlTaskStorage.update(dev);
             } catch (Exception e) {
                 devOpsTaskInfo.resetMessage(e.getMessage());
                 try {
