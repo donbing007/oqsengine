@@ -187,6 +187,9 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
 
                         if (devOpsMetrics.getSuccess() > 0) {
                             needUpdate = true;
+                            dt.resetIncrementSize(devOpsMetrics.getSuccess());
+
+                            //  完成数量
                             dt.addFinishSize(devOpsMetrics.getSuccess());
                         }
 
