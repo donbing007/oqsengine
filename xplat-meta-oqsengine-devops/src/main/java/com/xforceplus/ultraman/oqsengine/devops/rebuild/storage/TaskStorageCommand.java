@@ -236,8 +236,6 @@ public class TaskStorageCommand {
                 logger.debug(st.toString());
             }
 
-            logger.debug(st.toString());
-
             return st.executeUpdate();
         }
     }
