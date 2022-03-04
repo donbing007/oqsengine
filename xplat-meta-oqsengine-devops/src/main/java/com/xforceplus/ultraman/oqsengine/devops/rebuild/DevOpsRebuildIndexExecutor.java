@@ -197,7 +197,7 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
 
                         if (needUpdate) {
                             //  任务已完成.
-                            if (dt.getErrorSize() == 0 && dt.getFinishSize() >= dt.getBatchSize()) {
+                            if (dt.getBatchSize() > 0 && dt.getErrorSize() == 0 && dt.getFinishSize() >= dt.getBatchSize()) {
                                 try {
                                     done(dt);
                                 } catch (SQLException ex) {
