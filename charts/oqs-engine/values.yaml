@@ -137,6 +137,7 @@ storage:
       worker: 64
       queue: 1000
   transaction:
+    waitCommitSync: true
     # The transaction is valid for a period of time that will be rollback.
     timeoutMs: 3000
   timeoutMs:

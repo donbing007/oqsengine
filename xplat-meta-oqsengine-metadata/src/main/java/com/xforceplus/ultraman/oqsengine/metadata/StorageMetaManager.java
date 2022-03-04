@@ -176,7 +176,7 @@ public class StorageMetaManager implements MetaManager {
                     throw new RuntimeException("entityClassStorage is null, may be delete.");
                 }
 
-                entityClass = classLoad(entityClassId, profile, keyValues);
+                entityClass = classLoad(entityClassId, profile, version, keyValues);
 
                 //  加入本地cache
                 if (null != entityClass) {
@@ -490,7 +490,7 @@ public class StorageMetaManager implements MetaManager {
     /**
      * 获取一个完整的EntityClass.
      */
-    public IEntityClass classLoad(long entityClassId, String profile, Map<String, String> keyValues) {
+    public IEntityClass classLoad(long entityClassId, String profile, int version, Map<String, String> keyValues) {
         try {
             EntityClass.Builder builder = EntityClass.Builder.anEntityClass();
 
@@ -522,7 +522,7 @@ public class StorageMetaManager implements MetaManager {
             }
             builder.withLevel(Integer.parseInt(level));
 
-            //  version
+            //  e-version
             String vn = keyValues.remove(ELEMENT_VERSION);
             if (null == vn || vn.isEmpty()) {
                 throw new RuntimeException(String.format("id : %s, version is null from cache.", id));
@@ -535,7 +535,7 @@ public class StorageMetaManager implements MetaManager {
             //  father
             String father = keyValues.remove(ELEMENT_FATHER);
             if (CacheUtils.validBusinessId(father)) {
-                Optional<IEntityClass> fatherEntityClassOp = load(Long.parseLong(father), profile);
+                Optional<IEntityClass> fatherEntityClassOp = load(Long.parseLong(father), version, profile);
                 if (fatherEntityClassOp.isPresent()) {
                     builder.withFather(fatherEntityClassOp.get());
                 } else {
@@ -589,6 +589,8 @@ public class StorageMetaManager implements MetaManager {
         }
         if (profileFound) {
             builder.withProfile(profile);
+        } else {
+            builder.withProfile(OqsProfile.UN_DEFINE_PROFILE);
         }
 
         builder.withFields(fields);

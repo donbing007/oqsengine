@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity;
 
+import com.xforceplus.ultraman.oqsengine.common.profile.OqsProfile;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import java.util.Collection;
 import java.util.Optional;
@@ -41,8 +42,8 @@ public interface IEntityClass {
     /**
      * 替身.元信息特殊定制的标记.
      */
-    default Optional<String> profile() {
-        return Optional.empty();
+    default String profile() {
+        return OqsProfile.UN_DEFINE_PROFILE;
     }
 
     /**
@@ -145,7 +146,7 @@ public interface IEntityClass {
      * 是否是一个动态的类型 默认是.
      */
     default boolean isDynamic() {
-        return EntityClassType.DYNAMIC == type();
+        return true;
     }
 
     /**

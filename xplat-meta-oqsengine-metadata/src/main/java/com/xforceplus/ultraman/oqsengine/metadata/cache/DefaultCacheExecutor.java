@@ -717,17 +717,15 @@ public class DefaultCacheExecutor implements CacheExecutor {
     }
 
     @Override
-    public synchronized List<String> readProfileCodes(long entityClassId, int version) {
+    public List<String> readProfileCodes(long entityClassId, int version) {
         String key = generateEntityCacheKey(entityClassId, version);
         //  从本地cache读取
         List<String> profiles = profileCache.getIfPresent(key);
-        if (null == profiles || profiles.isEmpty()) {
+        if (null == profiles) {
             try {
                 profiles = CacheUtils.parseProfileCodes(remoteRead(entityClassId, version));
-                if (!profiles.isEmpty()) {
-                    //  从remoteCache读取,并写入本地cache
-                    profileCache.put(key, profiles);
-                }
+                //  从remoteCache读取,并写入本地cache
+                profileCache.put(key, profiles);
             } catch (Exception e) {
                 throw new RuntimeException(
                     String.format("entityId : %d, version : %d, read profiles failed, message : %s",
@@ -739,7 +737,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
     }
 
     @Override
-    public synchronized void localAdd(long entityClassId, int version, String profile, IEntityClass entityClass) {
+    public void localAdd(long entityClassId, int version, String profile, IEntityClass entityClass) {
         String key = generateEntityCacheKey(entityClassId, version);
         Map<String, IEntityClass> e = entityClassStorageCache.getIfPresent(key);
         if (null == e) {

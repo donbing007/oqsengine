@@ -21,9 +21,7 @@ public class EntityClassRef implements Serializable, Comparable<EntityClassRef> 
      * EntityClassRef.
      */
     public EntityClassRef(long id, String code) {
-        this.id = id;
-        this.code = code;
-        this.profile = OqsProfile.UN_DEFINE_PROFILE;
+        this(id, code, OqsProfile.UN_DEFINE_PROFILE);
     }
 
     /**
@@ -32,7 +30,11 @@ public class EntityClassRef implements Serializable, Comparable<EntityClassRef> 
     public EntityClassRef(long id, String code, String profile) {
         this.id = id;
         this.code = code;
-        this.profile = profile;
+        if (profile == null || profile.isEmpty()) {
+            this.profile = OqsProfile.UN_DEFINE_PROFILE;
+        } else {
+            this.profile = profile;
+        }
     }
 
     /**
@@ -81,7 +83,7 @@ public class EntityClassRef implements Serializable, Comparable<EntityClassRef> 
         final StringBuilder sb = new StringBuilder("EntityClassRef{");
         sb.append("code='").append(code).append('\'');
         sb.append(", id=").append(id);
-        sb.append(", profile='").append(profile).append('\'');
+        sb.append(", profile='").append(profile == null ? "NULL" : profile).append('\'');
         sb.append('}');
         return sb.toString();
     }

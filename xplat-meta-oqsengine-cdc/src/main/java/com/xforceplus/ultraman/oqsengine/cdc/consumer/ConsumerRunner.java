@@ -2,7 +2,7 @@ package com.xforceplus.ultraman.oqsengine.cdc.consumer;
 
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.EMPTY_BATCH_ID;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.EMPTY_BATCH_SIZE;
-import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.FREE_MESSAGE_WAIT_IN_SECONDS;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.FREE_MESSAGE_WAIT_IN_MS;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.IS_BACK_UP_ID;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.MAX_STOP_WAIT_LOOPS;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.MAX_STOP_WAIT_TIME;
@@ -166,6 +166,7 @@ public class ConsumerRunner extends Thread {
      */
     public void consume() throws SQLException {
         while (true) {
+
             //  服务被终止
             if (runningStatus.ordinal() >= RunningStatus.TRY_STOP.ordinal()) {
                 runningStatus = RunningStatus.STOP_SUCCESS;
@@ -176,6 +177,7 @@ public class ConsumerRunner extends Thread {
             long batchId;
             try {
                 long start = System.currentTimeMillis();
+
                 //获取指定数量的数据
                 message = connector.getMessageWithoutAck();
                 long duration = System.currentTimeMillis() - start;
@@ -206,7 +208,6 @@ public class ConsumerRunner extends Thread {
 
                     //  binlog处理，同步指标到cdcMetrics中
                     synced = saveMetrics(cdcMetrics);
-
                     //  canal状态确认、指标同步
                     finishAck(cdcMetrics);
 
@@ -295,7 +296,7 @@ public class ConsumerRunner extends Thread {
         connector.ack(batchId);
 
         //  没有新的同步信息，睡眠1秒进入下次轮训
-        TimeWaitUtils.wakeupAfter(FREE_MESSAGE_WAIT_IN_SECONDS, TimeUnit.SECONDS);
+        TimeWaitUtils.wakeupAfter(FREE_MESSAGE_WAIT_IN_MS, TimeUnit.MILLISECONDS);
     }
 
     /*

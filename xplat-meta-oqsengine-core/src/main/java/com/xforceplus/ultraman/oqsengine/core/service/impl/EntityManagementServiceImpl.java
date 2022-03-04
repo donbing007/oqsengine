@@ -38,10 +38,14 @@ import com.xforceplus.ultraman.oqsengine.status.CDCStatusService;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.ConditionsSelectStorage;
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
+import com.xforceplus.ultraman.oqsengine.storage.executor.ResourceTask;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.EntityPackage;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import com.xforceplus.ultraman.oqsengine.task.TaskCoordinator;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.Counter;
@@ -749,7 +753,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         CalculationContext calculationContext = buildCalculationContext(CalculationScenarios.REPLACE);
         try {
             oqsResult = (OqsResult) transactionExecutor.execute((tx, resource, hint) -> {
-
                 String lockResource = IEntitys.resource(entity.id());
                 boolean lockResult = resourceLocker.tryLock(lockTimeoutMs, lockResource);
                 if (!lockResult) {
@@ -1341,5 +1344,4 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             entity.markTime(System.currentTimeMillis());
         }
     }
-
 }

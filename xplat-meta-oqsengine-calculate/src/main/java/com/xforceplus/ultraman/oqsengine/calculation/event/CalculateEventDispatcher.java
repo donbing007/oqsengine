@@ -38,17 +38,25 @@ public class CalculateEventDispatcher {
     @Resource
     private CalculationEventFactory factory;
 
+    /**
+     * 初始化.
+     */
     @PostConstruct
     public void init() {
         eventBus.watch(EventType.META_DATA_CHANGE, event -> {
             this.dispatcher((ActualEvent<MetaChangePayLoad>) event);
         });
+
+        log.info("init calculateEventDispatcher success.");
     }
 
     private void dispatcher(ActualEvent<MetaChangePayLoad> event) throws CalculationException {
         Optional<MetaChangePayLoad> op = event.payload();
         CachedEntityClass cachedEntityClass = new CachedEntityClass();
         if (op.isPresent()) {
+            log.debug("dispatcher metaChangePayLoad event, appId : {}, version : {}.", op.get().getAppId(),
+                op.get().getVersion());
+
             try {
                 //  处理FieldChanges事件.
                 fieldEventDispatcher(op.get(), cachedEntityClass);
@@ -58,6 +66,8 @@ public class CalculateEventDispatcher {
             } catch (Exception e) {
                 throw new CalculationException(e.getMessage());
             }
+        } else {
+            log.warn("dispatcher metaChangePayLoad ignored because metaChangePayLoad is not exists.");
         }
     }
 
