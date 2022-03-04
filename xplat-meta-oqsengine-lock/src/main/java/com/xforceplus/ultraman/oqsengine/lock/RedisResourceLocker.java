@@ -96,8 +96,6 @@ public class RedisResourceLocker extends AbstractResourceLocker implements Lifec
             + "end;"
             + "return failKeyIndex;";
 
-    private final Logger logger = LoggerFactory.getLogger(RedisResourceLocker.class);
-
 
     @Resource(name = "redisClient")
     private RedisClient redisClient;
@@ -113,9 +111,12 @@ public class RedisResourceLocker extends AbstractResourceLocker implements Lifec
     private String lockScriptSha;
     private String unLockScriptSha;
 
+    /*
+     * 锁存在时间.
+     */
     private long ttlMs = 1000 * 30;
     /*
-     * 默认的锁存在时间.
+     * 存在时间的字符串表示.
      */
     private String ttlMsString;
 
