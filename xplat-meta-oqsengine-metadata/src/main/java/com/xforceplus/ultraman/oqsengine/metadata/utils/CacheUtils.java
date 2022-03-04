@@ -1,10 +1,22 @@
 package com.xforceplus.ultraman.oqsengine.metadata.utils;
 
+import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.MIN_ID;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_FIELDS;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_PROFILES;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_RELATIONS;
+import static com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.StaticCalculation.DEFAULT_LEVEL;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.AutoFill;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * 缓存帮助工具.
@@ -14,10 +26,36 @@ import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientExc
  */
 public class CacheUtils {
     private static final String ENTITY_STORAGE_LOCAL_CACHE_KEY = "entityStorageLocal";
+    private static final String ENTITY_STORAGE_LOCAL_CACHE_INTERNAL_KEY = ".";
 
     private static final int PROFILE_ENTITY_KEY_PARTS = 4;
     private static final int PROFILE_RELATION_KEY_PARTS = 3;
     private static final int PROFILE_CODE_POS = 2;
+
+    /**
+     * 检查业务ID是否合法(EntityClassId, FieldId, RelationId, FatherId)等.
+     */
+    public static boolean validBusinessId(String id) {
+        try {
+            return null != id && !id.isEmpty() && Long.parseLong(id) >= MIN_ID;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+    /**
+     * 检查业务ID是否合法(EntityClassId, FieldId, RelationId, FatherId)等.
+     */
+    public static boolean validBusinessId(Long id) {
+        return null != id && id >= MIN_ID;
+    }
+
+    /**
+     * 生成Internal-KEY.
+     */
+    public static String generateEntityCacheInternalKey(String profile) {
+        return ENTITY_STORAGE_LOCAL_CACHE_INTERNAL_KEY + (null == profile ? "" : profile);
+    }
 
     /**
      * 生成KEY.
@@ -64,5 +102,44 @@ public class CacheUtils {
         }
 
         return parts[PROFILE_CODE_POS];
+    }
+
+    /**
+     * 为了兼容目前redis中的结构不抛NullPointException，需要对某些自增编号字段设默认值.
+     */
+    public static EntityField resetAutoFill(EntityField entityField) {
+        if (entityField.calculationType().equals(CalculationType.AUTO_FILL)) {
+            AutoFill autoFill = (AutoFill) entityField.config().getCalculation();
+            if (autoFill.getDomainNoType() == null) {
+                autoFill.setDomainNoType(AutoFill.DomainNoType.NORMAL);
+            }
+
+            if (autoFill.getLevel() == 0) {
+                autoFill.setLevel(DEFAULT_LEVEL);
+            }
+        }
+
+        return entityField;
+    }
+
+    /**
+     * 解析profileCode.
+     */
+    public static List<String> parseProfileCodes(Map<String, String> keyValues) {
+
+        if (null != keyValues && !keyValues.isEmpty()) {
+            Set<String> profiles = new HashSet<>();
+            for (Map.Entry<String, String> entry : keyValues.entrySet()) {
+                if (entry.getKey().startsWith(ELEMENT_PROFILES + "." + ELEMENT_FIELDS)) {
+                    profiles.add(parseOneKeyFromProfileEntity(entry.getKey()));
+                } else if (entry.getKey().startsWith(ELEMENT_PROFILES + "." + ELEMENT_RELATIONS)) {
+                    profiles.add(parseOneKeyFromProfileRelations(entry.getKey()));
+                }
+            }
+
+            return new ArrayList<>(profiles);
+        }
+
+        return Collections.emptyList();
     }
 }

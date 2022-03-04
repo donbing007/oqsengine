@@ -2,12 +2,14 @@ package com.xforceplus.ultraman.oqsengine.metadata;
 
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.MIN_ID;
 import static com.xforceplus.ultraman.oqsengine.metadata.mock.MockRequestHandler.EXIST_MIN_VERSION;
-import static com.xforceplus.ultraman.oqsengine.metadata.mock.generator.EntityClassSyncProtoBufMocker.EXPECTED_PROFILE_FOUR_TA;
-import static com.xforceplus.ultraman.oqsengine.metadata.utils.EntityClassStorageBuilderUtils.toFieldTypeValue;
+import static com.xforceplus.ultraman.oqsengine.metadata.mock.generator.EntityClassSyncProtoBufMocker.EXPECTED_PROFILE_FOUR_GEN;
+import static com.xforceplus.ultraman.oqsengine.metadata.utils.storage.EntityClassStorageBuilderUtils.toFieldTypeValue;
 
+import com.xforceplus.ultraman.oqsengine.common.profile.OqsProfile;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MetaInitialization;
@@ -15,7 +17,7 @@ import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.EntityClassSync
 import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.ExpectedEntityStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.GeneralConstant;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.GeneralEntityUtils;
-import com.xforceplus.ultraman.oqsengine.metadata.utils.EntityClassStorageHelper;
+import com.xforceplus.ultraman.oqsengine.metadata.utils.offline.OffLineMetaHelper;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -70,6 +72,25 @@ public class StorageMetaManagerTest extends AbstractMetaTestHelper {
     }
 
     @Test
+    public void needChangeEnvTest() throws IllegalAccessException {
+        MetaManager metaManager = MetaInitialization.getInstance().getMetaManager();
+        for (int j = 0; j < NEED_CONCURRENT_APP_ENV_LIST.length; j++) {
+            String env = NEED_CONCURRENT_APP_ENV_LIST[j];
+
+            metaManager.reset(NEED_CONCURRENT_APP_ID, env);
+            Assertions.assertEquals(env, MetaInitialization.getInstance().getCacheExecutor().appEnvGet(NEED_CONCURRENT_APP_ID));
+        }
+
+        Assertions.assertThrows(RuntimeException.class, () -> {
+            metaManager.need(NEED_CONCURRENT_APP_ID, NEED_CONCURRENT_APP_ENV_LIST[0]);
+        });
+
+        Assertions.assertThrows(RuntimeException.class, () -> {
+            metaManager.need(NEED_CONCURRENT_APP_ID, NEED_CONCURRENT_APP_ENV_LIST[1]);
+        });
+    }
+
+    @Test
     public void needConcurrentTest() throws InterruptedException {
         AtomicInteger successCount = new AtomicInteger(0);
         AtomicInteger failCount = new AtomicInteger(0);
@@ -117,7 +138,7 @@ public class StorageMetaManagerTest extends AbstractMetaTestHelper {
     @Test
     public void showMeta() throws Exception {
 
-        dataImportTest();
+        metaImportTest();
 
         Optional<MetaMetrics> result =
             MetaInitialization.getInstance().getMetaManager().showMeta(defaultTestAppId);
@@ -131,17 +152,18 @@ public class StorageMetaManagerTest extends AbstractMetaTestHelper {
     }
 
     @Test
-    public void dataImportTest() throws IOException, IllegalAccessException {
+    public void metaImportTest() throws IOException, IllegalAccessException {
 
-        Boolean result = false;
         InputStream in = null;
         try {
             StorageMetaManager storageMetaManager = (StorageMetaManager) MetaInitialization.getInstance().getMetaManager();
             storageMetaManager.init();
             in = initInputStreamByResource(defaultTestAppId, defaultTestVersion, env);
 
-            result = MetaInitialization.getInstance().getMetaManager().dataImport(defaultTestAppId, env, defaultTestVersion,
-                EntityClassStorageHelper.initDataFromInputStream(defaultTestAppId, env, defaultTestVersion, in));
+            boolean result = MetaInitialization.getInstance()
+                .getMetaManager()
+                .metaImport(defaultTestAppId, env, defaultTestVersion,
+                    OffLineMetaHelper.initDataFromInputStream(defaultTestAppId, env, defaultTestVersion, in));
             Assertions.assertTrue(result);
         } catch (Exception e) {
             Assertions.fail(e.getMessage());
@@ -151,7 +173,8 @@ public class StorageMetaManagerTest extends AbstractMetaTestHelper {
             }
         }
 
-        Optional<IEntityClass> op =  MetaInitialization.getInstance().getMetaManager().load(1251658380868685825L, "");
+        Optional<IEntityClass> op =
+            MetaInitialization.getInstance().getMetaManager().load(1251658380868685825L, "");
 
         Assertions.assertTrue(op.isPresent());
 
@@ -161,8 +184,8 @@ public class StorageMetaManagerTest extends AbstractMetaTestHelper {
 
             int failTestVersion = 1;
 
-            result = MetaInitialization.getInstance().getMetaManager().dataImport(defaultTestAppId, env, failTestVersion,
-                EntityClassStorageHelper.initDataFromInputStream(defaultTestAppId, env, failTestVersion, in));
+            boolean result = MetaInitialization.getInstance().getMetaManager().metaImport(defaultTestAppId, env, failTestVersion,
+                OffLineMetaHelper.initDataFromInputStream(defaultTestAppId, env, failTestVersion, in));
             Assertions.assertFalse(result);
         } catch (Exception e) {
             Assertions.fail();
@@ -183,18 +206,33 @@ public class StorageMetaManagerTest extends AbstractMetaTestHelper {
     }
 
     @Test
+    public void resetTest() throws IllegalAccessException {
+        String appId = "testNeed";
+        String env = "test";
+        int expectedVersion = EXIST_MIN_VERSION + 1;
+        int version = MetaInitialization.getInstance().getMetaManager().need(appId, env);
+        Assertions.assertEquals(expectedVersion, version);
+
+        env = "fat";
+        version = MetaInitialization.getInstance().getMetaManager().reset(appId, env);
+        Assertions.assertEquals(expectedVersion, version);
+    }
+
+    @Test
     public void loadByEntityRefTest() throws IllegalAccessException {
         String expectedAppId = "testLoad";
         int expectedVersion = 1;
         long expectedId = System.currentTimeMillis() + 3600_000;
         List<ExpectedEntityStorage> expectedEntityStorageList =
             EntityClassSyncProtoBufMocker.mockSelfFatherAncestorsGenerate(expectedId);
+
+        Optional<IEntityClass> entityClassOp = Optional.empty();
         try {
-            MetaInitialization.getInstance().getMetaManager().load(expectedId, "");
+            entityClassOp = MetaInitialization.getInstance().getMetaManager().load(expectedId, "");
         } catch (Exception e) {
-            Assertions.assertTrue(
-                e.getMessage().startsWith(String.format("load entityClass [%d] error, message", expectedId)));
+            //  ignore
         }
+        Assertions.assertFalse(entityClassOp.isPresent());
 
         EntityClassSyncResponse entityClassSyncResponse =
             EntityClassSyncProtoBufMocker.Response
@@ -202,19 +240,19 @@ public class StorageMetaManagerTest extends AbstractMetaTestHelper {
         mockRequestHandler.invoke(entityClassSyncResponse, null);
 
         //  测试替身1
-        Optional<IEntityClass> entityClassOp =
+        entityClassOp =
             MetaInitialization.getInstance().getMetaManager().load(expectedId, GeneralConstant.PROFILE_CODE_1.getKey());
         Assertions.assertTrue(entityClassOp.isPresent());
 
         Optional<IEntityField> fieldOp = entityClassOp.get().field(
             GeneralEntityUtils.EntityFieldHelper
-                .id(GeneralConstant.PROFILE_CODE_1.getValue() * expectedId + EXPECTED_PROFILE_FOUR_TA.getA(), true));
+                .id(GeneralConstant.PROFILE_CODE_1.getValue() * expectedId + EXPECTED_PROFILE_FOUR_GEN.getA(), true));
         Assertions.assertTrue(fieldOp.isPresent());
 
         //  不包含替身2
         Assertions.assertFalse(entityClassOp.get().field(
             GeneralEntityUtils.EntityFieldHelper
-                .id(GeneralConstant.PROFILE_CODE_2.getValue() * expectedId + EXPECTED_PROFILE_FOUR_TA.getA(), true))
+                .id(GeneralConstant.PROFILE_CODE_2.getValue() * expectedId + EXPECTED_PROFILE_FOUR_GEN.getA(), true))
             .isPresent()
         );
 
@@ -224,13 +262,13 @@ public class StorageMetaManagerTest extends AbstractMetaTestHelper {
 
         fieldOp = entityClassOp.get().field(
             GeneralEntityUtils.EntityFieldHelper
-                .id(GeneralConstant.PROFILE_CODE_2.getValue() * expectedId + EXPECTED_PROFILE_FOUR_TA.getA(), true)
+                .id(GeneralConstant.PROFILE_CODE_2.getValue() * expectedId + EXPECTED_PROFILE_FOUR_GEN.getA(), true)
         );
         Assertions.assertTrue(fieldOp.isPresent());
         //  不包含替身1
         Assertions.assertFalse(entityClassOp.get().field(
             GeneralEntityUtils.EntityFieldHelper
-                .id(GeneralConstant.PROFILE_CODE_1.getValue() * expectedId + EXPECTED_PROFILE_FOUR_TA.getA(), true))
+                .id(GeneralConstant.PROFILE_CODE_1.getValue() * expectedId + EXPECTED_PROFILE_FOUR_GEN.getA(), true))
             .isPresent()
         );
 
@@ -239,37 +277,38 @@ public class StorageMetaManagerTest extends AbstractMetaTestHelper {
         Assertions.assertTrue(entityClassOp.isPresent());
         Assertions.assertFalse(entityClassOp.get().field(
             GeneralEntityUtils.EntityFieldHelper
-                .id(GeneralConstant.PROFILE_CODE_1.getValue() * expectedId + EXPECTED_PROFILE_FOUR_TA.getA(), true))
+                .id(GeneralConstant.PROFILE_CODE_1.getValue() * expectedId + EXPECTED_PROFILE_FOUR_GEN.getA(), true))
             .isPresent()
         );
         Assertions.assertFalse(entityClassOp.get().field(
             GeneralEntityUtils.EntityFieldHelper
-                .id(GeneralConstant.PROFILE_CODE_2.getValue() * expectedId + EXPECTED_PROFILE_FOUR_TA.getA(), true))
+                .id(GeneralConstant.PROFILE_CODE_2.getValue() * expectedId + EXPECTED_PROFILE_FOUR_GEN.getA(), true))
             .isPresent()
         );
     }
 
     @Test
-    public void loadTest() throws InterruptedException, IllegalAccessException {
+    public void loadTest() throws IllegalAccessException {
         String expectedAppId = "testLoad";
         int expectedVersion = 1;
         long expectedId = 1 + 3600;
         List<ExpectedEntityStorage> expectedEntityStorageList =
             EntityClassSyncProtoBufMocker.mockSelfFatherAncestorsGenerate(expectedId);
 
+        Optional<IEntityClass> entityClassOp = Optional.empty();
         try {
-            MetaInitialization.getInstance().getMetaManager().load(expectedId, "");
+            entityClassOp = MetaInitialization.getInstance().getMetaManager().load(expectedId, "");
         } catch (Exception e) {
-            Assertions.assertTrue(
-                e.getMessage().startsWith(String.format("load entityClass [%d] error, message", expectedId)));
+            //  ignore
         }
+        Assertions.assertFalse(entityClassOp.isPresent());
 
         EntityClassSyncResponse entityClassSyncResponse =
             EntityClassSyncProtoBufMocker.Response
                 .entityClassSyncResponseGenerator(expectedAppId, expectedVersion, expectedEntityStorageList);
         mockRequestHandler.invoke(entityClassSyncResponse, null);
 
-        Optional<IEntityClass> entityClassOp = MetaInitialization.getInstance().getMetaManager().load(expectedId, "");
+        entityClassOp = MetaInitialization.getInstance().getMetaManager().load(expectedId, "");
         Assertions.assertTrue(entityClassOp.isPresent());
 
         List<EntityClassInfo> entityClassInfo =
@@ -313,6 +352,65 @@ public class StorageMetaManagerTest extends AbstractMetaTestHelper {
 
             );
         }
+    }
+
+    @Test
+    public void multiReadTest() throws IllegalAccessException {
+        String appId = "testLoad";
+        int expectedVersion = 1;
+        long expectedId = 1 + 7200;
+
+        List<ExpectedEntityStorage> expectedEntityStorageList =
+            EntityClassSyncProtoBufMocker.mockSelfFatherAncestorsGenerate(expectedId);
+
+        EntityClassSyncResponse entityClassSyncResponse =
+            EntityClassSyncProtoBufMocker.Response
+                .entityClassSyncResponseGenerator(appId, expectedVersion, expectedEntityStorageList);
+        mockRequestHandler.invoke(entityClassSyncResponse, null);
+
+        Collection<IEntityClass> entityClasses =
+            MetaInitialization.getInstance().getMetaManager().appLoad(appId);
+
+        Assertions.assertEquals(9, entityClasses.size());
+
+        //  本层
+        Assertions.assertTrue(entityClasses.stream().
+            anyMatch(k -> k.id() == expectedId &&
+                k.ref().getProfile().isEmpty()));
+
+        Assertions.assertTrue(entityClasses.stream().
+            anyMatch(k -> k.id() == expectedId &&
+                k.ref().getProfile().equals(GeneralConstant.PROFILE_CODE_1.getKey())));
+
+        Assertions.assertTrue(entityClasses.stream().
+            anyMatch(k -> k.id() == expectedId &&
+                k.ref().getProfile().equals(GeneralConstant.PROFILE_CODE_2.getKey())));
+
+        // 父亲
+        Assertions.assertTrue(entityClasses.stream().
+            anyMatch(k -> k.id() == GeneralEntityUtils.EntityClassHelper.fatherId(expectedId)  &&
+                k.ref().getProfile().isEmpty()));
+
+        Assertions.assertTrue(entityClasses.stream().
+            anyMatch(k -> k.id() == GeneralEntityUtils.EntityClassHelper.fatherId(expectedId) &&
+                k.ref().getProfile().equals(GeneralConstant.PROFILE_CODE_1.getKey())));
+
+        Assertions.assertTrue(entityClasses.stream().
+            anyMatch(k -> k.id() == GeneralEntityUtils.EntityClassHelper.fatherId(expectedId) &&
+                k.ref().getProfile().equals(GeneralConstant.PROFILE_CODE_2.getKey())));
+
+        // 祖先
+        Assertions.assertTrue(entityClasses.stream().
+            anyMatch(k -> k.id() == GeneralEntityUtils.EntityClassHelper.ancId(expectedId)  &&
+                k.ref().getProfile().isEmpty()));
+
+        Assertions.assertTrue(entityClasses.stream().
+            anyMatch(k -> k.id() == GeneralEntityUtils.EntityClassHelper.ancId(expectedId) &&
+                k.ref().getProfile().equals(GeneralConstant.PROFILE_CODE_1.getKey())));
+
+        Assertions.assertTrue(entityClasses.stream().
+            anyMatch(k -> k.id() == GeneralEntityUtils.EntityClassHelper.ancId(expectedId) &&
+                k.ref().getProfile().equals(GeneralConstant.PROFILE_CODE_2.getKey())));
     }
 
     /**
@@ -375,6 +473,12 @@ public class StorageMetaManagerTest extends AbstractMetaTestHelper {
             Assertions.assertNotNull(actual.father());
             Assertions.assertEquals(expected.getFather(), actual.father().get().id());
         }
+
+        Assertions.assertTrue(actual.ref().getProfile().equals(OqsProfile.UN_DEFINE_PROFILE) || expected.getProfilesList().stream().map(
+            ProfileInfo::getCode).anyMatch(c -> {
+                return c.equals(actual.ref().getProfile());
+        }));
+
         Assertions.assertEquals(expected.getLevel(), actual.level());
 
         //  relations
@@ -479,6 +583,6 @@ public class StorageMetaManagerTest extends AbstractMetaTestHelper {
      */
     private InputStream initInputStreamByResource(String appId, Integer version, String env) {
         String path = String.format("/%s_%d_%s.json", appId, version, env);
-        return EntityClassStorageHelper.class.getResourceAsStream(path);
+        return OffLineMetaHelper.class.getResourceAsStream(path);
     }
 }

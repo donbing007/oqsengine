@@ -17,31 +17,29 @@ import java.util.Map;
 public interface Storage {
 
     /**
-     * Create a new Entity.
+     * 创建一个新的实体.
+     * 创建成功后保证目标实体从"脏"恢复成"干净".
      *
      * @param entity target entity.
      * @throws SQLException Storage error.
      */
-    default int build(IEntity entity, IEntityClass entityClass) throws SQLException {
-        return 0;
+    default boolean build(IEntity entity, IEntityClass entityClass) throws SQLException {
+        return false;
     }
 
     /**
-     * Batch creation.
+     * 批量创建实体.
+     * 只有脏实体才会被创建.
      *
      * @param entityPackage entity package.
-     * @return create results.
      * @throws SQLException Storage error.
      */
-    default int[] build(EntityPackage entityPackage) throws SQLException {
-        int[] results = new int[entityPackage.size()];
+    default void build(EntityPackage entityPackage) throws SQLException {
         Iterator<Map.Entry<IEntity, IEntityClass>> iter = entityPackage.iterator();
-        int index = 0;
         while (iter.hasNext()) {
             Map.Entry<IEntity, IEntityClass> entry = iter.next();
-            results[index++] = build(entry.getKey(), entry.getValue());
+            build(entry.getKey(), entry.getValue());
         }
-        return results;
     }
 
     /**
@@ -50,26 +48,22 @@ public interface Storage {
      * @param entity target entity.
      * @throws SQLException Storage error.
      */
-    default int replace(IEntity entity, IEntityClass entityClass) throws SQLException {
-        return 0;
+    default boolean replace(IEntity entity, IEntityClass entityClass) throws SQLException {
+        return false;
     }
 
     /**
      * Batch replace.
      *
      * @param entityPackage entity package.
-     * @return replace results.
      * @throws SQLException Storage error.
      */
-    default int[] replace(EntityPackage entityPackage) throws SQLException {
-        int[] results = new int[entityPackage.size()];
+    default void replace(EntityPackage entityPackage) throws SQLException {
         Iterator<Map.Entry<IEntity, IEntityClass>> iter = entityPackage.iterator();
-        int index = 0;
         while (iter.hasNext()) {
             Map.Entry<IEntity, IEntityClass> entry = iter.next();
-            results[index++] = replace(entry.getKey(), entry.getValue());
+            replace(entry.getKey(), entry.getValue());
         }
-        return results;
     }
 
     /**
@@ -78,25 +72,21 @@ public interface Storage {
      * @param entity target entity.
      * @throws SQLException Storage error.
      */
-    default int delete(IEntity entity, IEntityClass entityClass) throws SQLException {
-        return 0;
+    default boolean delete(IEntity entity, IEntityClass entityClass) throws SQLException {
+        return false;
     }
 
     /**
      * Batch delete.
      *
      * @param entityPackage entity package.
-     * @return delete results.
      * @throws SQLException Storage error.
      */
-    default int[] delete(EntityPackage entityPackage) throws SQLException {
-        int[] results = new int[entityPackage.size()];
+    default void delete(EntityPackage entityPackage) throws SQLException {
         Iterator<Map.Entry<IEntity, IEntityClass>> iter = entityPackage.iterator();
-        int index = 0;
         while (iter.hasNext()) {
             Map.Entry<IEntity, IEntityClass> entry = iter.next();
-            results[index++] = delete(entry.getKey(), entry.getValue());
+            delete(entry.getKey(), entry.getValue());
         }
-        return results;
     }
 }

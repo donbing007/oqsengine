@@ -2,19 +2,26 @@ package com.xforceplus.ultraman.oqsengine.core.service.integration.grpc.devops;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xforceplus.ultraman.oqsengine.boot.OqsengineBootApplication;
-import com.xforceplus.ultraman.oqsengine.boot.grpc.devops.DiscoverDevOpsService;
+import com.xforceplus.ultraman.oqsengine.boot.grpc.devops.SystemOpsService;
+import com.xforceplus.ultraman.oqsengine.boot.grpc.devops.dto.ApplicationInfo;
 import com.xforceplus.ultraman.oqsengine.common.mock.CommonInitialization;
 import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.common.mock.ReflectionUtils;
 import com.xforceplus.ultraman.oqsengine.core.service.integration.grpc.devops.mock.MockedCache;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.StorageMetaManager;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.model.ClientModel;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MetaInitialization;
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
-import com.xforceplus.ultraman.oqsengine.testcontainer.basic.AbstractContainerExtends;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.CanalContainer;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.ManticoreContainer;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.MysqlContainer;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.RedisContainer;
 import java.lang.reflect.Field;
 import java.util.Collection;
-import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -22,6 +29,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -30,78 +38,79 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
  *
  * @since 1.8
  */
+
+@ExtendWith({
+    RedisContainer.class,
+    MysqlContainer.class,
+    ManticoreContainer.class,
+    CanalContainer.class,
+    SpringExtension.class
+})
 @ActiveProfiles("discover")
-@ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = OqsengineBootApplication.class, webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
-@Disabled("不是常用的测试,平时忽略.")
-public class DiscoverDevOpsServiceTest extends AbstractContainerExtends {
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
+public class DiscoverDevOpsServiceTest {
 
     @Autowired
-    private DiscoverDevOpsService discoverDevOpsService;
+    private SystemOpsService discoverDevOpsService;
 
     @MockBean(name = "keyValueStorage")
     private KeyValueStorage keyValueStorage;
-
-    @MockBean(name = "metaManager")
-    private MetaManager metaManager;
-
-//    // mockBean below need to delete
-//    @MockBean(name = "longContinuousPartialOrderIdGenerator")
-//    private LongIdGenerator longIdGenerator;
-//
-//    @MockBean(name = "longNoContinuousPartialOrderIdGenerator")
-//    private LongIdGenerator longPartitionIdGenerator;
-//
-//    @MockBean
-//    private EntitySearchService entitySearchService;
-//
-//    @MockBean
-//    private TransactionManager transactionManager;
-//
-//    @MockBean
-//    private IndexStorage indexStorage;
-//
-//    @MockBean
-//    private MasterStorage masterStorage;
-//
-//    @MockBean
-//    private TaskQueue taskQueue;
-//
-//    @MockBean
-//    private TaskCoordinator taskCoordinator;
 
     private boolean waitForDebug = false;
 
     private static String expectedAppId = "discover-test";
     private static int expectedVersion = Integer.MAX_VALUE;
 
+    private static boolean isInit = false;
     /**
      * 每个测试前初始化.
      */
     @BeforeEach
-    public void before() throws IllegalAccessException {
-        MetaManager metaManager = new StorageMetaManager();
+    public void before() throws IllegalAccessException, JsonProcessingException {
+        if (!isInit) {
+            MetaManager metaManager = new StorageMetaManager(new ClientModel());
 
-        Collection<Field> cacheFields = ReflectionUtils.printAllMembers(metaManager);
-        ReflectionUtils.reflectionFieldValue(cacheFields, "cacheExecutor", metaManager,
-            MetaInitialization.getInstance().getCacheExecutor());
-        ReflectionUtils.reflectionFieldValue(cacheFields, "syncExecutor", metaManager,
-            MetaInitialization.getInstance().getEntityClassSyncExecutor());
-        ReflectionUtils.reflectionFieldValue(cacheFields, "asyncDispatcher", metaManager,
-            CommonInitialization.getInstance().getRunner());
+            Collection<Field> cacheFields = ReflectionUtils.printAllMembers(metaManager);
+            ReflectionUtils.reflectionFieldValue(cacheFields, "cacheExecutor", metaManager,
+                MetaInitialization.getInstance().getCacheExecutor());
+            ReflectionUtils.reflectionFieldValue(cacheFields, "syncExecutor", metaManager,
+                MetaInitialization.getInstance().getEntityClassSyncExecutor());
+            ReflectionUtils.reflectionFieldValue(cacheFields, "asyncDispatcher", metaManager,
+                CommonInitialization.getInstance().getRunner());
 
-        Collection<Field> discoverFields = ReflectionUtils.printAllMembers(discoverDevOpsService);
-        ReflectionUtils.reflectionFieldValue(discoverFields, "metaManager", discoverDevOpsService, metaManager);
+            Collection<Field> discoverFields = ReflectionUtils.printAllMembers(discoverDevOpsService);
+            ReflectionUtils.reflectionFieldValue(discoverFields, "metaManager", discoverDevOpsService, metaManager);
+
+            MockedCache.entityClassStorageSave(expectedAppId, expectedVersion);
+
+            isInit = true;
+        }
     }
 
-    @AfterEach
-    public void after() throws Exception {
+    @AfterAll
+    public static void afterAll() throws Exception {
         InitializationHelper.clearAll();
+        InitializationHelper.destroy();
     }
 
     @Test
+    public void showMetaTest() {
+        MetaMetrics metaMetrics = discoverDevOpsService.showMeta(expectedAppId);
+
+        Assertions.assertTrue(metaMetrics.getMetas().size() > 0);
+    }
+
+    @Test
+    public void showApplicationTest() {
+        ApplicationInfo applicationInfo = discoverDevOpsService.showApplications();
+        Assertions.assertTrue(applicationInfo.getSystemInfo().size() > 0);
+        Assertions.assertEquals(1, applicationInfo.getApplicationEnv().size());
+    }
+
+    @Test
+    @Disabled("不是常用的测试,平时忽略.")
     public void test() throws InterruptedException, JsonProcessingException {
-        MockedCache.entityClassStorageSave(expectedAppId, expectedVersion);
         if (waitForDebug) {
             Thread.sleep(10000_000);
         } else {

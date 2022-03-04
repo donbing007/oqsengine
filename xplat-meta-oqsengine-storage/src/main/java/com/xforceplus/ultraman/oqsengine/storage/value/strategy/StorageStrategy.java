@@ -67,6 +67,14 @@ public interface StorageStrategy {
     StorageValue toStorageValue(IValue value);
 
     /**
+     * 获得一个指定字段的空表示.
+     *
+     * @param field 目标字段.
+     * @return 空表示实例.
+     */
+    StorageValue toEmptyStorageValue(IEntityField field);
+
+    /**
      * 将逻辑类型的附件转换成储存类型.
      *
      * @param value 目标逻辑值逻辑类型.

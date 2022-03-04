@@ -24,6 +24,7 @@ import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.micrometer.core.instrument.Metrics;
@@ -162,11 +163,29 @@ public class RedisEventLifecycleHandler implements EventLifecycleAware {
             long txId = updatePayload.getTxId();
             QueueFlow<Void> flow = flowRegistry.flow(Long.toString(txId));
             CompletableFuture<Void> future = new CompletableFuture<>();
-            flow.feed(Tuple.of(future, () -> {
-                pushQueue(txId, entityToChangedEvent(updatePayload.getEntity()));
-                return null;
-            }));
+
+            updatePayload.getChanges().forEach((k, v) -> {
+                combineEntityFromEntry(k, v);
+                flow.feed(Tuple.of(future, () -> {
+                    pushQueue(txId, entityToChangedEvent(k));
+                    return null;
+                }));
+            });
         });
+    }
+
+    /**
+     * combine change to the raw entity to generate a new entity
+     * side-effect
+     *
+     * @param rawEntity
+     * @param changes
+     * @return
+     */
+    private void combineEntityFromEntry(IEntity rawEntity, IValue[] changes) {
+        for (IValue value : changes) {
+            rawEntity.entityValue().addValue(value);
+        }
     }
 
     /**

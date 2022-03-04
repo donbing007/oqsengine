@@ -54,7 +54,7 @@ public class TestServerStart {
     private EntityClassGeneratorTestImpl entityClassGeneratorTest;
 
     @Resource
-    private GRpcServer gRpcServer;
+    private GRpcServer grpcServer;
 
     @Resource
     private ResponseWatchExecutor responseWatchExecutor;

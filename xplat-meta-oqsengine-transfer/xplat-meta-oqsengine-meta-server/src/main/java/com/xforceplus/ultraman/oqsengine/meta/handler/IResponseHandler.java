@@ -18,7 +18,7 @@ public interface IResponseHandler extends IObserverHandler<EntityClassSyncReques
     /**
      * 拉取.
      */
-    void pull(String uid, boolean force, WatchElement watchElement, RequestStatus requestStatus);
+    void pull(String clientId, String uid, boolean force, WatchElement watchElement, RequestStatus requestStatus);
 
     /**
      * 推送.

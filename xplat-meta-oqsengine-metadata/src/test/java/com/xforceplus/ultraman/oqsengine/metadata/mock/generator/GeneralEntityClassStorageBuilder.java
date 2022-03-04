@@ -1,7 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.metadata.mock.generator;
 
 import static com.xforceplus.ultraman.oqsengine.metadata.mock.generator.EntityClassSyncProtoBufMocker.EXPECTED_ENTITY_INFO_LIST;
-import static com.xforceplus.ultraman.oqsengine.metadata.mock.generator.EntityClassSyncProtoBufMocker.EXPECTED_PROFILE_FOUR_TA;
+import static com.xforceplus.ultraman.oqsengine.metadata.mock.generator.EntityClassSyncProtoBufMocker.EXPECTED_PROFILE_FOUR_GEN;
 import static com.xforceplus.ultraman.oqsengine.metadata.mock.generator.GeneralConstant.DEFAULT_ARGS;
 import static com.xforceplus.ultraman.oqsengine.metadata.mock.generator.GeneralConstant.PROFILE_CODE_1;
 import static com.xforceplus.ultraman.oqsengine.metadata.mock.generator.GeneralConstant.PROFILE_CODE_2;
@@ -29,7 +29,6 @@ import java.util.Map;
  * @since 1.8
  */
 public class GeneralEntityClassStorageBuilder {
-
 
     /**
      * 生成.
@@ -109,7 +108,7 @@ public class GeneralEntityClassStorageBuilder {
     }
 
     public static EntityField genericEntityField(long id,
-                                                 GeneralConstant.FourTa<Integer, String, CalculationType, Boolean> fourTa) {
+                                                 GeneralConstant.FourGeneric<Integer, String, CalculationType, Boolean> fourTa) {
 
         FieldType fieldType = FieldType.fromRawType(fourTa.getB());
 
@@ -205,7 +204,7 @@ public class GeneralEntityClassStorageBuilder {
 
     public static ProfileStorage toProfile(long id, String code) {
         RelationStorage relationStorage = relationLong(id, id + GeneralConstant.MOCK_PROFILE_E_DISTANCE, id);
-        EntityField entityField = genericEntityField(id, EXPECTED_PROFILE_FOUR_TA);
+        EntityField entityField = genericEntityField(id, EXPECTED_PROFILE_FOUR_GEN);
 
         return new ProfileStorage(code, Collections.singletonList(entityField), Collections.singletonList(relationStorage));
     }

@@ -4,7 +4,7 @@ import com.google.common.util.concurrent.Uninterruptibles;
 import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
 import com.xforceplus.ultraman.oqsengine.meta.common.executor.IBasicSyncExecutor;
-import com.xforceplus.ultraman.oqsengine.meta.common.metrics.ConnectorMetricsDefine;
+import com.xforceplus.ultraman.oqsengine.meta.common.monitor.dto.SyncCode;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.ThreadUtils;
@@ -13,11 +13,9 @@ import com.xforceplus.ultraman.oqsengine.meta.connect.GRpcClient;
 import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
 import com.xforceplus.ultraman.oqsengine.meta.utils.ClientIdUtils;
 import io.grpc.stub.StreamObserver;
-import io.micrometer.core.instrument.Metrics;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import org.slf4j.Logger;
@@ -45,9 +43,6 @@ public class EntityClassSyncClient implements IBasicSyncExecutor {
 
     private Thread observerStreamMonitorThread;
 
-    private AtomicInteger clientRebuildStreamCounter =
-        Metrics.gauge(ConnectorMetricsDefine.CLIENT_CONTINUES_REBUILD_STREAM, new AtomicInteger(0));
-
     private static String CLIENT_ID = ClientIdUtils.generate();
 
     @Override
@@ -66,11 +61,7 @@ public class EntityClassSyncClient implements IBasicSyncExecutor {
 
         requestHandler.start();
 
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        TimeWaitUtils.wakeupAfter(1, TimeUnit.SECONDS);
 
         logger.info("entityClassSyncClient start.");
     }
@@ -100,8 +91,9 @@ public class EntityClassSyncClient implements IBasicSyncExecutor {
                 //  初始化observer，如果失败，说明当前连接不可用，将等待5秒后重试
                 streamObserver = responseEvent(countDownLatch);
             } catch (Exception e) {
-                logger.warn("observer init error, message : {}, retry after ({})ms",
-                    e.getMessage(), grpcParamsConfig.getReconnectDuration());
+                requestHandler.metricsRecorder().error(CLIENT_ID, SyncCode.INIT_OBSERVER_ERROR.name(),
+                    String.format("observer init error, message : %s", e.getMessage()));
+
                 TimeWaitUtils.wakeupAfter(grpcParamsConfig.getReconnectDuration(), TimeUnit.MILLISECONDS);
                 continue;
             }
@@ -127,12 +119,6 @@ public class EntityClassSyncClient implements IBasicSyncExecutor {
 
             //  设置服务不可用
             requestHandler.notReady();
-
-            if (!requestHandler.isShutDown()) {
-
-                //  断线统计 metrics + 1
-                clientRebuildStreamCounter.incrementAndGet();
-            }
         }
 
         return true;
@@ -151,7 +137,6 @@ public class EntityClassSyncClient implements IBasicSyncExecutor {
                  */
                 if (requestHandler.watchExecutor().isAlive(entityClassSyncResponse.getUid())) {
                     //  当接收到服务端事件，且当前watchExecutor处于活动状态，重置Metrics指标
-                    clientRebuildStreamCounter.set(0);
                     //  执行response处理
                     requestHandler.invoke(entityClassSyncResponse, null);
                 }

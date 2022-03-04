@@ -4,6 +4,7 @@ import static com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
+import java.util.StringJoiner;
 
 /**
  * Created by justin.xu on 07/2021.
@@ -66,6 +67,15 @@ public class Lookup extends AbstractCalculation {
         lookup.relationId = this.relationId;
         lookup.level = this.level;
         return lookup;
+    }
+
+    @Override
+    public String toString() {
+        return new StringJoiner(", ", Lookup.class.getSimpleName() + "[", "]")
+            .add("classId=" + classId)
+            .add("fieldId=" + fieldId)
+            .add("relationId=" + relationId)
+            .toString();
     }
 
     /**

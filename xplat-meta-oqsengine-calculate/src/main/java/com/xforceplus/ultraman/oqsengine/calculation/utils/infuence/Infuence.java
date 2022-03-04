@@ -3,14 +3,17 @@ package com.xforceplus.ultraman.oqsengine.calculation.utils.infuence;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 /**
  * 一个影响树,表示目标源的改动造成的影响范围.
@@ -23,9 +26,25 @@ public class Infuence {
 
     private RootNode rootNode;
     private int size;
+    /*
+    KEY: 参与者
+    VALUE: 参与者绑定的结点.
+     */
+    private Map<Participant, Node> participantNodeSearchHelper;
 
+    /**
+     * 构造一个新的影响树.
+     *
+     * @param entity 起源对象实例.
+     * @param participant 参与者.
+     * @param change 值改变.
+     */
     public Infuence(IEntity entity, Participant participant, ValueChange change) {
         rootNode = new RootNode(entity, participant, change);
+
+        participantNodeSearchHelper = new HashMap<>();
+        participantNodeSearchHelper.put(participant, rootNode);
+
         size++;
     }
 
@@ -49,25 +68,96 @@ public class Infuence {
     /**
      * 增加影响.
      *
-     * @param parent      传递影响的参与者.
-     * @param participant 新的参与者.
+     * @param parentParticipant      传递影响的参与者.
+     * @param newParticipant 新的参与者.
      * @return true 成功,false失败.
      */
-    public boolean impact(Participant parent, Participant participant) {
-        if (rootNode.getParticipant().equals(parent)) {
-            insert(rootNode, participant);
+    public boolean impact(Participant parentParticipant, Participant newParticipant) {
+        if (rootNode.getParticipant().equals(parentParticipant)) {
+            insert(rootNode, newParticipant);
             return true;
         }
 
-        Optional<ChildNode> childOp = searchChild(parent);
+        Optional<Node> childOp = searchChild(parentParticipant);
         if (childOp.isPresent()) {
-            ChildNode childNode = childOp.get();
-            insert(childNode, participant);
+            ChildNode childNode = (ChildNode) childOp.get();
+            insert(childNode, newParticipant);
             return true;
         }
 
         return false;
     }
+
+
+    /**
+     * 获取前一个参与者.
+     *
+     * @param participant 当前参与者.
+     */
+    public Optional<Participant> getPre(Participant participant) {
+        Optional<Node> node = searchChild(participant);
+        if (node.isPresent()) {
+            if (node.get().getParent().isPresent()) {
+                return Optional.of(node.get().getParent().get().getParticipant());
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * 获取影响的参与者结果集.
+     *
+     * @param participant 当前参与者.
+     */
+    public Optional<Collection<Participant>> getNextParticipants(Participant participant) {
+        Optional<Node> node = searchChild(participant);
+        if (node.isPresent()) {
+            List<Node> children = node.get().getChildren();
+            if (!children.isEmpty()) {
+                List<Participant> participants = children.stream().map(Node::getParticipant).collect(Collectors.toList());
+                return Optional.of(participants);
+            }
+        }
+        return Optional.empty();
+    }
+
+    public int getLevel(Participant participant) {
+        Optional<Node> node = searchChild(participant);
+        return node.map(Node::getLevel).orElse(-1);
+    }
+
+    /**
+     * 剪枝、删除参与者影响列表中指定参与者.
+     */
+    public boolean pruning(Participant parent, Participant participant) {
+        if (parent.equals(rootNode.getParticipant())) {
+            pruning(rootNode, participant);
+            return true;
+        }
+        Optional<Node> childOp = searchChild(parent);
+        if (childOp.isPresent()) {
+            Node childNode = childOp.get();
+            pruning(childNode, participant);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 剪枝、指定节点删除指定孩子参与者.
+     */
+    private void pruning(Node point, Participant participant) {
+        for (Node n : point.getChildren()) {
+            ChildNode c = (ChildNode) n;
+            if (c.getParticipant().equals(participant)) {
+                // 这里找到表示已经存在.
+                point.getChildren().remove(c);
+                this.size--;
+                return;
+            }
+        }
+    }
+
 
     /**
      * 获取影响的大小. 这个大小包含了最初的触发者,所以最小数量一定为1.
@@ -92,9 +182,22 @@ public class Infuence {
     /**
      * 以广度优先的方式遍历整个影响树.
      *
-     * @param consumer 对于每一个结点(不包含根结点)调用的消费实现.
+     * @param consumer 对于每一个结点调用的消费实现.
      */
     public void scan(InfuenceConsumer consumer) {
+        scan(consumer, rootNode.getParticipant());
+    }
+
+
+    /**
+     * 指定参与者所在节点开始遍历.
+     */
+    public void scan(InfuenceConsumer consumer, Participant participant) {
+        Optional<Node> startNodeOp = searchChild(participant);
+        if (!startNodeOp.isPresent()) {
+            return;
+        }
+
         bfsIter((node, level) -> {
             if (RootNode.class.isInstance(node)) {
                 RootNode rootNode = (RootNode) node;
@@ -112,7 +215,7 @@ public class Infuence {
                     this
                 );
             }
-        });
+        }, startNodeOp.get());
     }
 
     @Override
@@ -208,49 +311,42 @@ public class Infuence {
     }
 
     // 插入影响
-    private void insert(Node point, Participant participant) {
+    private void insert(Node point, Participant newParticipant) {
         for (Node n : point.getChildren()) {
             ChildNode c = (ChildNode) n;
-            if (c.getParticipant().equals(participant)) {
-                // 这里找到表示已经存在.
+            if (c.getParticipant().equals(newParticipant)) {
+                // 这里找到表示已经存在,同层不允许增加相同的参与者.
                 return;
             }
         }
 
-        point.addChild(new ChildNode(participant));
+        Node newChildNode = new ChildNode(newParticipant);
+        point.addChild(newChildNode);
+        newChildNode.setLevel(point.getLevel() + 1);
+        participantNodeSearchHelper.put(newParticipant, newChildNode);
+
         size++;
     }
 
-    // 搜索子类结点.
-    private Optional<ChildNode> searchChild(Participant participant) {
-
-        AtomicReference<ChildNode> ref = new AtomicReference<>();
-        bfsIter((node, level) -> {
-            if (RootNode.class.isInstance(node)) {
-                return InfuenceConsumer.Action.CONTINUE;
-            } else {
-
-                ChildNode childNode = (ChildNode) node;
-                if (childNode.getParticipant().equals(participant)) {
-
-                    ref.set((ChildNode) node);
-
-                    return InfuenceConsumer.Action.OVER;
-
-                } else {
-                    return InfuenceConsumer.Action.CONTINUE;
-                }
-            }
-        });
-
-        return Optional.ofNullable(ref.get());
+    public boolean contains(Participant participant) {
+        return searchChild(participant).isPresent() || rootNode.getParticipant().equals(participant);
     }
 
-    // 广度优先方式迭代.
-    private void bfsIter(BfsIterNodeConsumer bfsIterNodeConsumer) {
+    // 搜索子类结点.
+    private Optional<Node> searchChild(Participant participant) {
+
+        Node node = participantNodeSearchHelper.get(participant);
+        return Optional.ofNullable(node);
+    }
+
+    private void bfsIter(BfsIterNodeConsumer consumer) {
+        bfsIter(consumer, this.rootNode);
+    }
+
+    private void bfsIter(BfsIterNodeConsumer bfsIterNodeConsumer, Node startNode) {
         Queue<Node> stack = new LinkedList<>();
-        int level = 0;
-        stack.add(rootNode);
+        int level = startNode.getLevel();
+        stack.add(startNode);
         stack.add(LevelNode.getInstance());
         Node node;
         InfuenceConsumer.Action action;
@@ -337,11 +433,14 @@ public class Infuence {
     }
 
 
-    // 树的结点.
+    /**
+     * 表示一个影响结点.
+     */
     private static class Node {
         private Participant participant;
         private Node parent;
         private List<Node> children;
+        private int level;
 
         public Node(Participant participant) {
             this.participant = participant;
@@ -374,6 +473,14 @@ public class Infuence {
 
             child.setParent(this);
             this.children.add(child);
+        }
+
+        public int getLevel() {
+            return level;
+        }
+
+        public void setLevel(int level) {
+            this.level = level;
         }
     }
 

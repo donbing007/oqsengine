@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.cdc.consumer.tools;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.ZERO;
 
 import com.alibaba.otter.canal.protocol.CanalEntry;
+import com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns;
 import java.sql.SQLException;
 import java.util.List;
@@ -63,23 +64,18 @@ public class BinLogParseUtils {
     /**
      * 获取bool类型字段值.
      */
-    public static boolean getBooleanFromColumn(List<CanalEntry.Column> columns, OqsBigEntityColumns oqsBigEntityColumns)
-        throws SQLException {
+    public static boolean getBooleanFromColumn(List<CanalEntry.Column> columns, OqsBigEntityColumns oqsBigEntityColumns) {
         String booleanValue = getColumnWithoutNull(columns, oqsBigEntityColumns).getValue();
 
-        return convertStringToBoolean(booleanValue);
+        return stringToBoolean(booleanValue);
     }
 
     /**
      * 转换字符串为布尔.
      */
-    public static boolean convertStringToBoolean(String str) {
-        try {
-            return str.equalsIgnoreCase("true")
-                || (StringUtils.isNumeric(str) && Integer.parseInt(str) > ZERO);
-        } catch (Exception e) {
-            throw e;
-        }
+    public static boolean stringToBoolean(String str) {
+        return str.equalsIgnoreCase("true")
+            || (StringUtils.isNumeric(str) && Integer.parseInt(str) > ZERO);
     }
 
     /**
@@ -94,7 +90,8 @@ public class BinLogParseUtils {
      * 获取字段表示.
      */
     public static CanalEntry.Column getColumnWithoutNull(List<CanalEntry.Column> columns,
-                                                         OqsBigEntityColumns oqsBigEntityColumns) throws SQLException {
+                                                         OqsBigEntityColumns oqsBigEntityColumns) {
         return columns.get(oqsBigEntityColumns.ordinal());
     }
+
 }

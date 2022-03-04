@@ -5,17 +5,19 @@ import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.AutoFill;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Formula;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.StaticCalculation;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
 
 /**
+ * 测试用mock.
+ *
  * @author j.xu
  * @version 0.1 2021/05/2021/5/18
  * @since 1.8
@@ -216,12 +218,22 @@ public class MockCalculatorMetaManager implements MetaManager {
     }
 
     @Override
-    public Optional<IEntityClass> loadHistory(long id, int version) {
+    public Optional<IEntityClass> load(long entityClassId, int version, String profile) {
         return Optional.empty();
     }
 
     @Override
+    public Collection<IEntityClass> withProfilesLoad(long entityClassId) {
+        return null;
+    }
+
+    @Override
     public int need(String appId, String env) {
+        return 0;
+    }
+
+    @Override
+    public int need(String appId, String env, boolean overWrite) {
         return 0;
     }
 
@@ -231,12 +243,22 @@ public class MockCalculatorMetaManager implements MetaManager {
     }
 
     @Override
-    public boolean dataImport(String appId, String env, int version, String content) {
+    public boolean metaImport(String appId, String env, int version, String content) {
         return true;
     }
 
     @Override
     public Optional<MetaMetrics> showMeta(String appId) throws Exception {
         return Optional.empty();
+    }
+
+    @Override
+    public int reset(String appId, String env) {
+        return 0;
+    }
+
+    @Override
+    public boolean remove(String appId) {
+        return true;
     }
 }

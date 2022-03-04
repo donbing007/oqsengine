@@ -4,9 +4,9 @@ import static com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams.SH
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.POLL_TIME_OUT_SECONDS;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.DATA_ERROR;
-import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.HEARTBEAT;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.REGISTER;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.REGISTER_OK;
+import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.RESET;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.SYNC_FAIL;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.SYNC_OK;
 import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.ElementStatus.Confirmed;
@@ -20,7 +20,9 @@ import com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncServerException;
 import com.xforceplus.ultraman.oqsengine.meta.common.executor.IDelayTaskExecutor;
-import com.xforceplus.ultraman.oqsengine.meta.common.metrics.ConnectorMetricsDefine;
+import com.xforceplus.ultraman.oqsengine.meta.common.monitor.MetricsRecorder;
+import com.xforceplus.ultraman.oqsengine.meta.common.monitor.dto.MetricsLog;
+import com.xforceplus.ultraman.oqsengine.meta.common.monitor.dto.SyncCode;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
@@ -33,12 +35,10 @@ import com.xforceplus.ultraman.oqsengine.meta.executor.IResponseWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.executor.RetryExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.EntityClassGenerator;
 import io.grpc.stub.StreamObserver;
-import io.micrometer.core.instrument.Metrics;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,15 +69,12 @@ public class SyncResponseHandler implements IResponseHandler {
     @Resource
     private GRpcParams grpcParams;
 
+    @Resource
+    private MetricsRecorder metricsRecorder;
+
     private final List<Thread> longRunTasks = new ArrayList<>(SERVER_TASK_COUNT);
 
     private volatile boolean isShutdown = false;
-
-    private final AtomicInteger dataHandleFailedCounter =
-        Metrics.gauge(ConnectorMetricsDefine.SERVER_RESPONSE_HANDLE_FAILED_ERROR, new AtomicInteger(0));
-
-    private final AtomicInteger dataFormatErrorCounter =
-        Metrics.gauge(ConnectorMetricsDefine.SERVER_RESPONSE_DATA_FORMAT_ERROR, new AtomicInteger(0));
 
     @Override
     public void start() {
@@ -137,19 +134,31 @@ public class SyncResponseHandler implements IResponseHandler {
             confirmHeartBeat(uid, responseStreamObserver);
         }
 
-        if (entityClassSyncRequest.getStatus() == REGISTER.ordinal()) {
+        if (entityClassSyncRequest.getStatus() == REGISTER.ordinal() || entityClassSyncRequest.getStatus() ==
+            RESET.ordinal()) {
             //  处理注册
             WatchElement w =
                     new WatchElement(entityClassSyncRequest.getAppId(), entityClassSyncRequest.getEnv(),
                             entityClassSyncRequest.getVersion(), Register);
 
-            responseWatchExecutor.add(entityClassSyncRequest.getClientId(), entityClassSyncRequest.getUid(), responseStreamObserver, w);
-            if (entityClassSyncRequest.getForce()) {
-                pull(entityClassSyncRequest.getUid(), entityClassSyncRequest.getForce(), w, SYNC_OK);
+            boolean isForce = entityClassSyncRequest.getForce();
+            if (entityClassSyncRequest.getStatus() == RESET.ordinal()) {
+                isForce = true;
+            }
 
-                logger.debug("force pull uid [{}], appId [{}], env [{}]...",
-                        entityClassSyncRequest.getUid(), entityClassSyncRequest.getAppId(),
-                        entityClassSyncRequest.getEnv());
+            responseWatchExecutor.add(entityClassSyncRequest.getClientId(), entityClassSyncRequest.getUid()
+                , responseStreamObserver, w, isForce);
+
+            //  强制刷新
+            if (entityClassSyncRequest.getForce() || entityClassSyncRequest.getStatus() == RESET.ordinal()) {
+
+                //  强制刷新ENV
+                if (entityClassSyncRequest.getStatus() == RESET.ordinal()) {
+                    confirmRegister(entityClassSyncRequest.getAppId(), entityClassSyncRequest.getEnv(),
+                        entityClassSyncRequest.getVersion(), entityClassSyncRequest.getUid());
+                }
+
+                pull(entityClassSyncRequest.getClientId(), entityClassSyncRequest.getUid(), entityClassSyncRequest.getForce(), w, SYNC_OK);
 
             } else if (confirmRegister(entityClassSyncRequest.getAppId(), entityClassSyncRequest.getEnv(),
                     entityClassSyncRequest.getVersion(), entityClassSyncRequest.getUid())) {
@@ -165,46 +174,35 @@ public class SyncResponseHandler implements IResponseHandler {
                 if (null == currentVersion
                     || NOT_EXIST_VERSION == entityClassSyncRequest.getVersion()
                     || entityClassSyncRequest.getVersion() != currentVersion) {
-                    pull(entityClassSyncRequest.getUid(), entityClassSyncRequest.getForce(), w, SYNC_OK);
-                    logger.debug("pull data success on SYNC_OK, uid [{}], appId [{}], env [{}], version [{}]",
-                        entityClassSyncRequest.getUid(), entityClassSyncRequest.getAppId(),
-                        entityClassSyncRequest.getEnv(), entityClassSyncRequest.getVersion());
+                    pull(entityClassSyncRequest.getClientId(), entityClassSyncRequest.getUid(), entityClassSyncRequest.getForce(), w, SYNC_OK);
                 }
             }
             logger.debug("register uid [{}], appId [{}], env [{}], version [{}] success.",
                     entityClassSyncRequest.getUid(), entityClassSyncRequest.getAppId(),
                     entityClassSyncRequest.getEnv(), entityClassSyncRequest.getVersion());
         } else if (entityClassSyncRequest.getStatus() == SYNC_OK.ordinal()) {
-            try {
-                //  处理返回结果成功
-                WatchElement w =
-                        new WatchElement(entityClassSyncRequest.getAppId(), entityClassSyncRequest.getEnv(),
-                                entityClassSyncRequest.getVersion(), Confirmed);
+            //  处理返回结果成功
+            WatchElement w =
+                new WatchElement(entityClassSyncRequest.getAppId(), entityClassSyncRequest.getEnv(),
+                    entityClassSyncRequest.getVersion(), Confirmed);
 
-                boolean ret = responseWatchExecutor.update(entityClassSyncRequest.getUid(), w);
-                if (ret) {
-                    logger.info("sync data success, uid [{}], appId [{}], env [{}], version [{}] success.",
-                            entityClassSyncRequest.getUid(), entityClassSyncRequest.getAppId(),
-                            entityClassSyncRequest.getEnv(), entityClassSyncRequest.getVersion());
-                }
-            } finally {
-                dataHandleFailedCounter.set(0);
-                dataFormatErrorCounter.set(0);
+            boolean ret = responseWatchExecutor.update(entityClassSyncRequest.getUid(), w);
+            if (ret) {
+                metricsRecorder.info(entityClassSyncRequest.getAppId(),
+                    MetricsLog.linkKey(entityClassSyncRequest.getClientId(), SyncCode.SYNC_DATA_OK.name()),
+                    String.format("sync data success, clientId : %s, env : %s, version : %d.",
+                        entityClassSyncRequest.getClientId(), entityClassSyncRequest.getEnv(), entityClassSyncRequest.getVersion()));
             }
         } else if (entityClassSyncRequest.getStatus() == SYNC_FAIL.ordinal()) {
-            dataHandleFailedCounter.incrementAndGet();
-
-            logger.warn("sync data handle failed, uid [{}], appId [{}], env [{}], version [{}] success.",
-                    entityClassSyncRequest.getUid(), entityClassSyncRequest.getAppId(),
-                    entityClassSyncRequest.getEnv(), entityClassSyncRequest.getVersion());
-
+            metricsRecorder.error(entityClassSyncRequest.getAppId(),
+                MetricsLog.linkKey(entityClassSyncRequest.getClientId(), SyncCode.SYNC_DATA_ERROR.name()),
+                String.format("sync data failed, clientId : %s, env : %s, version : %d.",
+                    entityClassSyncRequest.getClientId(), entityClassSyncRequest.getEnv(), entityClassSyncRequest.getVersion()));
         } else if (entityClassSyncRequest.getStatus() == DATA_ERROR.ordinal()) {
-            dataFormatErrorCounter.incrementAndGet();
-
-            logger.warn("sync data format error, uid [{}], appId [{}], env [{}], version [{}] success.",
-                    entityClassSyncRequest.getUid(), entityClassSyncRequest.getAppId(),
-                    entityClassSyncRequest.getEnv(), entityClassSyncRequest.getVersion());
-
+            metricsRecorder.error(entityClassSyncRequest.getAppId(),
+                MetricsLog.linkKey(entityClassSyncRequest.getClientId(), SyncCode.SYNC_DATA_ERROR.name()),
+                String.format("sync data format error, clientId : %s, env : %s, version : %d.",
+                    entityClassSyncRequest.getClientId(), entityClassSyncRequest.getEnv(), entityClassSyncRequest.getVersion()));
         }
     }
 
@@ -217,10 +215,28 @@ public class SyncResponseHandler implements IResponseHandler {
      * 主动拉取EntityClass(用于推送失败或超时).
      */
     @Override
-    public void pull(String uid, boolean force, WatchElement watchElement, RequestStatus requestStatus) {
+    public void pull(String clientId, String uid, boolean force, WatchElement watchElement, RequestStatus requestStatus) {
 
         taskExecutor.submit(() -> {
-            internalPull(uid, force, watchElement, requestStatus);
+            try {
+                internalPull(uid, force, watchElement, requestStatus);
+            } catch (Exception e) {
+                //  当元数据告知失败将在一分钟后进行重试
+                if (e instanceof MetaSyncServerException
+                    && e.getMessage().equalsIgnoreCase(APP_UPDATE_PULL_ERROR.name())) {
+                    retryExecutor.offer(
+                        new RetryExecutor.DelayTask(grpcParams.getDefaultDelayTaskDuration(),
+                            new RetryExecutor.Element(
+                                new WatchElement(watchElement.getAppId(), watchElement.getEnv(),
+                                    watchElement.getVersion(), watchElement.getStatus()),
+                                uid, clientId)));
+                }
+
+                metricsRecorder.info(watchElement.getAppId(),
+                    MetricsLog.linkKey(clientId, SyncCode.PULL_DATA_FAILED.name()),
+                    String.format("pull data failed, clientId : %s, env : %s, version : %d, message : %s",
+                        clientId, watchElement.getEnv(), watchElement.getVersion(), e.getMessage()));
+            }
         });
     }
 
@@ -237,8 +253,11 @@ public class SyncResponseHandler implements IResponseHandler {
             try {
                 needList = responseWatchExecutor.need(new WatchElement(event.appId(), event.env(), event.version(), Notice));
             } catch (Exception e) {
-                logger.warn("push event failed...event [{}-{}-{}], message [{}]",
-                            event.appId(), event.env(), event.version(), e.getMessage());
+                metricsRecorder.error(event.appId(),
+                    MetricsLog.linkKey(event.appId(), SyncCode.PUSH_DATA_CHECK_FAILED.name()),
+                    String.format("check needList failed, env : %s, version : %d, message : %s",
+                        event.env(), event.version(), e.getMessage()));
+
                 return false;
             }
 
@@ -250,8 +269,10 @@ public class SyncResponseHandler implements IResponseHandler {
                                     RequestStatus.SYNC, event.entityClassSyncRspProto(), false);
                             responseByWatch(event.appId(), event.env(), event.version(), response, r, false);
                         } catch (Exception e) {
-                            logger.warn("push event failed..., uid [{}], event [{}], message [{}]", r.uid(), event,
-                                e.getMessage());
+                            metricsRecorder.error(event.appId(),
+                                MetricsLog.linkKey(r.clientId(), SyncCode.SEND_PUSH_DATA_FAILED.name()),
+                                String.format("send push data failed, env : %s, version : %d, message : %s",
+                                    event.env(), event.version(), e.getMessage()));
                         }
                     });
                 }
@@ -292,18 +313,7 @@ public class SyncResponseHandler implements IResponseHandler {
                     watchElement.getVersion(), appUpdateEvent.version());
                 return true;
             } catch (Exception e) {
-                //  当元数据告知失败将在一分钟后进行重试
-                if (e instanceof MetaSyncServerException
-                    && e.getMessage().equalsIgnoreCase(APP_UPDATE_PULL_ERROR.name())) {
-                    retryExecutor.offer(
-                        new RetryExecutor.DelayTask(grpcParams.getDefaultDelayTaskDuration(),
-                            new RetryExecutor.Element(
-                                new WatchElement(watchElement.getAppId(), watchElement.getEnv(),
-                                    watchElement.getVersion(), watchElement.getStatus()),
-                                watcher.uid())));
-                }
-                logger.warn(e.getMessage());
-                return false;
+                throw e;
             }
         } else {
             logger.warn("not exist watcher to handle data sync response, appId [{}], version [{}], uid [{}]...",
@@ -408,7 +418,7 @@ public class SyncResponseHandler implements IResponseHandler {
                 "UID:" + response.getUid());
             retryExecutor.offer(
                 new RetryExecutor.DelayTask(grpcParams.getDefaultDelayTaskDuration(),
-                    new RetryExecutor.Element(new WatchElement(appId, env, version, Notice), watcher.uid())));
+                    new RetryExecutor.Element(new WatchElement(appId, env, version, Notice), watcher.uid(), watcher.clientId())));
         }
         return ret;
     }
@@ -471,7 +481,7 @@ public class SyncResponseHandler implements IResponseHandler {
                 WatchElement w = task.element().getElement();
                 if (watcher.isActive() && watcher.onWatch(w)) {
                     //  直接拉取
-                    pull(task.element().getUid(), false, w, SYNC_FAIL);
+                    pull(null, task.element().getUid(), false, w, SYNC_FAIL);
                     logger.debug("delay task re-pull success, uid [{}], appId [{}], env [{}], version [{}] success.",
                         watcher.uid(), w.getAppId(), w.getEnv(), w.getVersion());
                 }
@@ -495,5 +505,4 @@ public class SyncResponseHandler implements IResponseHandler {
         logger.info("keepAlive check has quited due to server shutdown...");
         return true;
     }
-
 }

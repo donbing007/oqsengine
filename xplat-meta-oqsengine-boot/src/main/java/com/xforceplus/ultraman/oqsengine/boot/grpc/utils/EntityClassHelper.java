@@ -16,19 +16,15 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.FormulaTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.sdk.EntityMultiUp;
 import com.xforceplus.ultraman.oqsengine.sdk.EntityUp;
 import com.xforceplus.ultraman.oqsengine.sdk.FieldUp;
 import com.xforceplus.ultraman.oqsengine.sdk.OperationResult;
 import com.xforceplus.ultraman.oqsengine.sdk.ValueUp;
 import io.vavr.API;
-import io.vavr.Tuple2;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -88,7 +84,7 @@ public class EntityClassHelper {
         return Entity.Builder.anEntity()
             .withId(in.getObjId())
             .withEntityClassRef(entityClassRef)
-            .withEntityValue(toEntityValue(entityClass, in))
+            .withValues(toValues(entityClass, in))
             .build();
     }
 
@@ -96,17 +92,11 @@ public class EntityClassHelper {
      * 构造实体实例.
      */
     public static List<IEntity> toEntity(EntityClassRef entityClassRef, IEntityClass entityClass, EntityMultiUp in) {
-        return in.getValuesList().stream().map(value -> {
-            return Entity.Builder.anEntity()
-                .withId(value.getObjId())
-                .withEntityClassRef(entityClassRef)
-                .withEntityValue(toEntityValue(entityClass, value.getValuesList()))
-                .build();
-        }).collect(Collectors.toList());
-    }
-
-    public static boolean isRelatedField(Tuple2<Relationship, IEntityField> tuple) {
-        return tuple._1 != null;
+        return in.getValuesList().stream().map(value -> Entity.Builder.anEntity()
+            .withId(value.getObjId())
+            .withEntityClassRef(entityClassRef)
+            .withValues(toValues(entityClass, value.getValuesList()))
+            .build()).collect(Collectors.toList());
     }
 
     /**
@@ -162,7 +152,7 @@ public class EntityClassHelper {
     /**
      * 构造实体字段值实例.
      */
-    private static EntityValue toEntityValue(IEntityClass entityClass, List<ValueUp> valueUpList) {
+    private static List<IValue> toValues(IEntityClass entityClass, List<ValueUp> valueUpList) {
         List<IValue> valueList = valueUpList.stream()
             .flatMap(y -> {
                 //TODO cannot find field like this
@@ -199,27 +189,26 @@ public class EntityClassHelper {
 
         //  add auto_fill.
         List<IValue> autoFilled =
-            entityClass.fields().stream().filter(x -> x.calculationType() == CalculationType.AUTO_FILL).map(x -> {
-                return x.type().toTypedValue(x, "");
-            }).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
+            entityClass.fields().stream()
+                .filter(x -> x.calculationType() == CalculationType.AUTO_FILL)
+                .map(x -> x.type().toTypedValue(x, ""))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toList());
 
 
-        EntityValue entityValue = new EntityValue();
-        List<IValue> values = new LinkedList<>();
-
+        List<IValue> values = new ArrayList<>(valueList.size() + autoFilled.size());
         values.addAll(valueList);
         values.addAll(autoFilled);
-        entityValue.addValues(values);
-
-        return entityValue;
+        return values;
     }
 
 
     /**
      * 构造实体字段值实例.
      */
-    private static EntityValue toEntityValue(IEntityClass entityClass, EntityUp entityUp) {
-        return EntityClassHelper.toEntityValue(entityClass, entityUp.getValuesList());
+    private static List<IValue> toValues(IEntityClass entityClass, EntityUp entityUp) {
+        return EntityClassHelper.toValues(entityClass, entityUp.getValuesList());
     }
 
     /**

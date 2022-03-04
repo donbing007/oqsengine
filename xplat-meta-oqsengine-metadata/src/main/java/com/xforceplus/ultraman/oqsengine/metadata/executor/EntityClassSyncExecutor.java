@@ -4,10 +4,12 @@ import static com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams.SH
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.POLL_TIME_OUT_SECONDS;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.COMMON_WAIT_TIME_OUT;
-import static com.xforceplus.ultraman.oqsengine.metadata.utils.EntityClassStorageBuilderUtils.protoToStorageList;
+import static com.xforceplus.ultraman.oqsengine.metadata.utils.storage.EntityClassStorageBuilderUtils.protoToStorageList;
 
-import com.xforceplus.ultraman.oqsengine.event.Event;
+import com.xforceplus.ultraman.oqsengine.event.ActualEvent;
 import com.xforceplus.ultraman.oqsengine.event.EventBus;
+import com.xforceplus.ultraman.oqsengine.event.EventType;
+import com.xforceplus.ultraman.oqsengine.event.payload.meta.MetaChangePayLoad;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
 import com.xforceplus.ultraman.oqsengine.meta.common.executor.IDelayTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
@@ -17,7 +19,6 @@ import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.CacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.SyncStep;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.PostConstruct;
@@ -78,10 +79,9 @@ public class EntityClassSyncExecutor implements SyncExecutor {
      * 同步appId对应的EntityClass package.
      */
     @Override
-    public boolean sync(String appId, int version, EntityClassSyncRspProto entityClassSyncRspProto) {
+    public void sync(String appId, int version, EntityClassSyncRspProto entityClassSyncRspProto) {
         int expiredVersion = -1;
-        List<Event<?>> payloads = new ArrayList<>();
-        List<Event<?>> aggPayloads = new ArrayList<>();
+        MetaChangePayLoad metaChangePayLoad = null;
 
         //  初始化SyncStep
         SyncStep step = SyncStep.failed(SyncStep.StepDefinition.UNKNOWN, "");
@@ -93,14 +93,14 @@ public class EntityClassSyncExecutor implements SyncExecutor {
             //  准备,是否可以加锁更新，不成功直接返回失败
             step = prepared(appId, version);
             if (!step.getStepDefinition().equals(SyncStep.StepDefinition.SUCCESS)) {
-                return false;
+                throw new MetaSyncClientException(step.messageFormat(), false);
             }
             openPrepare = true;
 
             //  查询当前版本
             step = querySyncVersion(appId);
             if (!step.getStepDefinition().equals(SyncStep.StepDefinition.SUCCESS)) {
-                return false;
+                throw new MetaSyncClientException(step.messageFormat(), false);
             }
             expiredVersion = (int) step.getData();
 
@@ -108,18 +108,16 @@ public class EntityClassSyncExecutor implements SyncExecutor {
             step = parserProto(entityClassSyncRspProto);
             //  同步数据失败的情况下需要抛出异常，而不是直接返回false.
             if (!step.getStepDefinition().equals(SyncStep.StepDefinition.SUCCESS)) {
-                throw new MetaSyncClientException(step.getMessage(), false);
+                throw new MetaSyncClientException(step.messageFormat(), false);
             }
 
             // step3 update new Hash in redis
-            List<EntityClassStorage> data = (List<EntityClassStorage>) step.getData();
-            step = save(appId, version, data, payloads);
+            step = save(appId, version, (List<EntityClassStorage>) step.getData());
             if (!step.getStepDefinition().equals(SyncStep.StepDefinition.SUCCESS)) {
-                return false;
+                throw new MetaSyncClientException(step.messageFormat(), false);
             }
 
-            step = SyncStep.ok();
-
+            metaChangePayLoad = (MetaChangePayLoad) step.getData();
         } finally {
             //  如果成功、执行publish
             if (step.getStepDefinition().equals(SyncStep.StepDefinition.SUCCESS)) {
@@ -129,30 +127,14 @@ public class EntityClassSyncExecutor implements SyncExecutor {
                     expireExecutor.offer(new ExpireExecutor.DelayCleanEntity(COMMON_WAIT_TIME_OUT,
                         new ExpireExecutor.Expired(appId, expiredVersion)));
                 }
-
-                publish(payloads);
-                publish(aggPayloads);
-            } else {
-                payloads.clear();
-                aggPayloads.clear();
+                eventPublish(metaChangePayLoad);
             }
 
             if (openPrepare) {
                 cacheExecutor.endPrepare(appId);
             }
-
-            //  record sync logs to redis
-            cacheExecutor.addSyncLog(appId, version, step.toPersistentMessage());
         }
-
-        return step.getStepDefinition().equals(SyncStep.StepDefinition.SUCCESS);
     }
-
-    @Override
-    public void recordSyncFailed(String appId, Integer version, String message) {
-        cacheExecutor.addSyncLog(appId, version,  SyncStep.StepDefinition.SYNC_CLIENT_FAILED + ":" + message);
-    }
-
 
     private SyncStep<Boolean> prepared(String appId, int version) {
         return cacheExecutor.prepare(appId, version) ? SyncStep.ok(true) : SyncStep.failed(SyncStep.StepDefinition.DUPLICATE_PREPARE_FAILED,
@@ -163,7 +145,7 @@ public class EntityClassSyncExecutor implements SyncExecutor {
         try {
             return SyncStep.ok(version(appId));
         } catch (Exception e) {
-            String message = String.format("query expiredVersion failed, [%s]", e.getMessage());
+            String message = String.format("query expiredVersion failed, appId : %s, %s", appId, e.getMessage());
             return SyncStep.failed(SyncStep.StepDefinition.QUERY_VERSION_FAILED, message);
         }
     }
@@ -177,18 +159,16 @@ public class EntityClassSyncExecutor implements SyncExecutor {
         }
     }
 
-    private SyncStep<Boolean> save(String appId, int version, List<EntityClassStorage> entityClassStorages, List<Event<?>> payloads) {
+    private SyncStep<MetaChangePayLoad> save(String appId, int version, List<EntityClassStorage> entityClassStorages) {
         try {
-            return cacheExecutor.save(appId, version, entityClassStorages, payloads) ? SyncStep.ok(true)
-                : SyncStep.failed(SyncStep.StepDefinition.SAVE_ENTITY_CLASS_STORAGE_FAILED, "storage entity class failed.");
-
+            MetaChangePayLoad metaChangePayLoad =
+                cacheExecutor.save(appId, version, entityClassStorages);
+            return SyncStep.ok(metaChangePayLoad);
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
             return SyncStep.failed(SyncStep.StepDefinition.SAVE_ENTITY_CLASS_STORAGE_FAILED, e.getMessage());
         }
     }
-
-
 
     /**
      * 获取当前meta的版本信息.
@@ -224,11 +204,16 @@ public class EntityClassSyncExecutor implements SyncExecutor {
         }
     }
 
-    private void publish(List<Event<?>> payloads) {
-        payloads.forEach(
-            payload -> {
-                eventBus.notify(payload);
+    private void eventPublish(MetaChangePayLoad metaChangePayLoad) {
+        if (null != metaChangePayLoad) {
+            logger.info("ready for publish event on appId:[{}]", metaChangePayLoad.getAppId());
+            //  publish event
+            if (!metaChangePayLoad.getEntityChanges().isEmpty()) {
+                eventBus.notify(new ActualEvent<>(EventType.META_DATA_CHANGE, metaChangePayLoad));
+                logger.info("publish event ok.");
+            } else {
+                logger.info("empty event change, nothing to publish.");
             }
-        );
+        }
     }
 }

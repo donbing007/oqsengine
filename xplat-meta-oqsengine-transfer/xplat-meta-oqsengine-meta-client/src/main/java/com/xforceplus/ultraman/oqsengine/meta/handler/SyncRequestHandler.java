@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.meta.handler;
 
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
-import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.DATA_ERROR;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.HEARTBEAT;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.SYNC_FAIL;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.SYNC_OK;
@@ -9,14 +8,13 @@ import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.Ele
 import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.ElementStatus.Init;
 import static com.xforceplus.ultraman.oqsengine.meta.common.utils.MD5Utils.getMD5;
 import static com.xforceplus.ultraman.oqsengine.meta.constant.ClientConstant.CLIENT_TASK_COUNT;
-import static com.xforceplus.ultraman.oqsengine.meta.utils.SendUtils.sendRequest;
-import static com.xforceplus.ultraman.oqsengine.meta.utils.SendUtils.sendRequestWithALiveCheck;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams;
 import com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
-import com.xforceplus.ultraman.oqsengine.meta.common.metrics.ConnectorMetricsDefine;
+import com.xforceplus.ultraman.oqsengine.meta.common.monitor.MetricsRecorder;
+import com.xforceplus.ultraman.oqsengine.meta.common.monitor.dto.SyncCode;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
@@ -25,8 +23,8 @@ import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
 import com.xforceplus.ultraman.oqsengine.meta.dto.RequestWatcher;
 import com.xforceplus.ultraman.oqsengine.meta.executor.IRequestWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
+import com.xforceplus.ultraman.oqsengine.meta.utils.SendUtils;
 import io.grpc.stub.StreamObserver;
-import io.micrometer.core.instrument.Metrics;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -34,8 +32,6 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,17 +55,14 @@ public class SyncRequestHandler implements IRequestHandler {
     @Resource(name = "grpcTaskExecutor")
     private ExecutorService executorService;
 
+    @Resource
+    private MetricsRecorder metricsRecorder;
+
     private Queue<WatchElement> forgotQueue = new ConcurrentLinkedDeque<>();
     private List<Thread> longRunTasks = new ArrayList<>(CLIENT_TASK_COUNT);
 
     private volatile boolean isShutdown = false;
     private static final int PRINT_CHECK_DURATION = 10;
-
-    private AtomicInteger acceptDataHandleErrorCounter =
-        Metrics.gauge(ConnectorMetricsDefine.CLIENT_ACCEPT_DATA_HANDLER_ERROR, new AtomicInteger(0));
-
-    private AtomicInteger acceptDataFormatCounter =
-        Metrics.gauge(ConnectorMetricsDefine.CLIENT_ACCEPT_DATA_FORMAT_ERROR, new AtomicInteger(0));
 
     @Override
     public void start() {
@@ -91,79 +84,72 @@ public class SyncRequestHandler implements IRequestHandler {
 
     @Override
     public void stop() {
-
         isShutdown = true;
-
         requestWatchExecutor.stop();
     }
 
     @Override
     public synchronized boolean register(WatchElement watchElement) {
         RequestWatcher watcher = requestWatchExecutor.watcher();
+
         //  这里只判断是否watcher为空，如果服务watcher不为空
         if (null == watcher) {
             logger.warn("current gRpc-client is not init, can't offer appIds:{}.", watchElement);
             forgotQueue.add(watchElement);
-
             return false;
         }
-
-        AtomicBoolean ret = new AtomicBoolean(true);
 
         WatchElement w = watcher.watches().get(watchElement.getAppId());
         if (null != w) {
             if (!w.getEnv().equals(watchElement.getEnv())) {
-                logger.warn("can't register same appId [{}] with another env [{}], env [{}] already registered.",
-                    w.getAppId(), watchElement.getEnv(), w.getEnv());
+                metricsRecorder.error(
+                    w.getAppId(), SyncCode.REGISTER_ERROR.name(), String.format(
+                        "can't register same appId [%s] with another env [%s], env [%s] already registered.",
+                        w.getAppId(), watchElement.getEnv(), w.getEnv())
+                );
+                return false;
             }
 
             if (watchElement.getVersion() == NOT_EXIST_VERSION || watchElement.getVersion() > w.getVersion()) {
-                return sendRegister(watcher.clientId(), watcher.uid(), true, w);
-            }
+                if (!send(watcher.clientId(), watcher.uid(), true, true, RequestStatus.REGISTER, w)) {
+                    metricsRecorder.error(
+                        w.getAppId(), SyncCode.REGISTER_ERROR.name(),
+                        String.format("send register failed, env %s", w.getEnv())
+                    );
 
-            logger.info("current watchList has this watchElement, appId [{}], ignore register...",
-                watchElement.getAppId());
-            return true;
+                    return false;
+                }
+            } else {
+                //  ignore register
+                if (logger.isDebugEnabled()) {
+                    logger.debug("current watchList has this watchElement, appId [{}], ignore register...",
+                        watchElement.getAppId());
+                }
+            }
         } else {
+            //  watchExecutor not ready
             if (!requestWatchExecutor.isAlive(watcher.uid())) {
                 forgotQueue.add(watchElement);
             } else {
-                return sendRegister(watcher.clientId(), watcher.uid(), false, watchElement);
+                if (!send(
+                    watcher.clientId(),
+                    watcher.uid(),
+                    false,
+                    true,
+                    RequestStatus.REGISTER,
+                    watchElement)) {
+
+                    metricsRecorder.error(
+                        w.getAppId(), SyncCode.REGISTER_ERROR.name(),
+                        String.format("send register failed, env %s", w.getEnv())
+                    );
+
+                    return false;
+                }
             }
         }
 
-        return ret.get();
-    }
-
-    /**
-     * 发送register.
-     */
-    private boolean sendRegister(String clientId, String uid, boolean force, WatchElement v) {
-        EntityClassSyncRequest.Builder builder = EntityClassSyncRequest.newBuilder();
-
-        EntityClassSyncRequest entityClassSyncRequest =
-            builder.setUid(uid)
-                .setAppId(v.getAppId())
-                .setEnv(v.getEnv())
-                .setVersion(v.getVersion())
-                .setForce(force)
-                .setStatus(RequestStatus.REGISTER.ordinal())
-                .setClientId(clientId)
-                .build();
-
-        requestWatchExecutor.add(v);
-
-        try {
-            sendRequestWithALiveCheck(requestWatchExecutor.watcher(), entityClassSyncRequest);
-
-            logger.info("register success uid [{}], appId [{}], env [{}], version [{}].",
-                uid, v.getAppId(), v.getEnv(), v.getVersion());
-
-            return true;
-        } catch (Exception e) {
-            v.setStatus(Init);
-            return false;
-        }
+        return true;
     }
 
     //  当发生断线时，需要重新连接，每次重新连接后，需要将当前OQS的WatchList重新注册到元数据中
@@ -171,37 +157,26 @@ public class SyncRequestHandler implements IRequestHandler {
     public boolean reRegister() {
         //  当开启reRegister操作时，所有的register操作将被中断
         RequestWatcher requestWatcher = requestWatchExecutor.watcher();
-        boolean isOperationOK = true;
+
         if (null != requestWatcher && requestWatcher.watches().size() > 0) {
             for (Map.Entry<String, WatchElement> e : requestWatcher.watches().entrySet()) {
-                try {
-                    EntityClassSyncRequest.Builder builder = EntityClassSyncRequest.newBuilder();
+                if (!send(requestWatcher.clientId(), requestWatcher.uid(),
+                    false, false, RequestStatus.REGISTER, e.getValue())) {
 
-                    EntityClassSyncRequest entityClassSyncRequest =
-                        builder.setAppId(e.getKey())
-                            .setEnv(e.getValue().getEnv())
-                            .setVersion(e.getValue().getVersion())
-                            .setUid(requestWatcher.uid())
-                            .setForce(false)
-                            .setStatus(RequestStatus.REGISTER.ordinal())
-                            .setClientId(requestWatcher.clientId())
-                            .build();
+                    String error = String.format("reRegister failed, env : %s", e.getValue().getEnv());
+                    metricsRecorder.error(e.getValue().getAppId(), SyncCode.REGISTER_ERROR.name(), error);
 
-                    sendRequest(requestWatcher, entityClassSyncRequest);
-                    //  刷新注册时间
-                    e.getValue().setRegisterTime(System.currentTimeMillis());
-                    logger.info("reRegister success uid [{}], appId [{}], env [{}], version [{}].",
-                        requestWatcher.uid(), e.getKey(), e.getValue().getEnv(), e.getValue().getVersion());
-                } catch (Exception ex) {
-                    isOperationOK = false;
-                    logger.warn("reRegister watcherElement-[{}] failed, message : {}", e.getValue().toString(),
-                        ex.getMessage());
-                    requestWatcher.observer().onError(ex);
-                    break;
+                    requestWatcher.observer().onError(new Throwable(error));
+                    return false;
                 }
+
+                //  刷新注册时间
+                e.getValue().setRegisterTime(System.currentTimeMillis());
+                logger.info("reRegister success uid [{}], appId [{}], env [{}], version [{}].",
+                    requestWatcher.uid(), e.getKey(), e.getValue().getEnv(), e.getValue().getVersion());
             }
         }
-        return isOperationOK;
+        return true;
     }
 
     @Override
@@ -225,9 +200,10 @@ public class SyncRequestHandler implements IRequestHandler {
                     entityClassSyncResponse.getVersion(), Confirmed));
 
             if (ret) {
-                logger.info("register success, uid [{}], appId [{}], env [{}], version [{}] success.",
-                    entityClassSyncResponse.getUid(), entityClassSyncResponse.getAppId(),
-                    entityClassSyncResponse.getEnv(), entityClassSyncResponse.getVersion());
+                metricsRecorder.info(entityClassSyncResponse.getAppId(), SyncCode.REGISTER_OK.name(),
+                    String.format("register success, uid : %s, env : %s, version : %s success.",
+                        entityClassSyncResponse.getUid(), entityClassSyncResponse.getEnv(),
+                        entityClassSyncResponse.getVersion()));
             }
 
         } else if (entityClassSyncResponse.getStatus() == RequestStatus.SYNC.ordinal()) {
@@ -236,13 +212,17 @@ public class SyncRequestHandler implements IRequestHandler {
                 try {
                     accept(entityClassSyncResponse);
                 } catch (Exception e) {
-                    logger.warn(e.getMessage());
                     if (requestWatchExecutor.watcher().isActive()) {
                         requestWatchExecutor.watcher().observer().onError(e);
                     }
                 }
             });
         }
+    }
+
+    @Override
+    public MetricsRecorder metricsRecorder() {
+        return metricsRecorder;
     }
 
     @Override
@@ -281,33 +261,102 @@ public class SyncRequestHandler implements IRequestHandler {
         requestWatchExecutor.active();
     }
 
+
+    @Override
+    public boolean reset(WatchElement watchElement) {
+        WatchElement old = requestWatchExecutor.watcher().watches().get(watchElement.getAppId());
+        try {
+            watchElement.setStatus(WatchElement.ElementStatus.Register);
+
+            requestWatchExecutor.add(watchElement, true);
+
+            return send(
+                requestWatchExecutor.watcher().clientId(),
+                requestWatchExecutor.watcher().uid(),
+                false,
+                true,
+                RequestStatus.RESET,
+                watchElement);
+
+        } catch (Exception e) {
+            //  失败则重新将old写回
+            requestWatchExecutor.add(old, true);
+
+            metricsRecorder.error(watchElement.getAppId(), SyncCode.RESET_ENV_ERROR.name(),
+                String.format("reset failed, env : %s, cause : %s", watchElement.getEnv(), e.getMessage()));
+        }
+
+        return false;
+    }
+
+    /**
+     * 发送register.
+     */
+    private boolean send(String clientId, String uid, boolean force, boolean checkActive, RequestStatus requestStatus,
+                         WatchElement v) {
+        EntityClassSyncRequest.Builder builder = EntityClassSyncRequest.newBuilder();
+
+        EntityClassSyncRequest entityClassSyncRequest =
+            builder.setUid(uid)
+                .setAppId(v.getAppId())
+                .setEnv(v.getEnv())
+                .setVersion(v.getVersion())
+                .setForce(force)
+                .setStatus(requestStatus.ordinal())
+                .setClientId(clientId)
+                .build();
+
+        requestWatchExecutor.add(v, false);
+
+        try {
+            SendUtils.sendRequest(requestWatchExecutor.watcher(), entityClassSyncRequest, checkActive);
+
+            logger.info("register success uid [{}], appId [{}], env [{}], version [{}].",
+                uid, v.getAppId(), v.getEnv(), v.getVersion());
+
+            return true;
+        } catch (Exception e) {
+            v.setStatus(Init);
+            return false;
+        }
+    }
+
     private void accept(EntityClassSyncResponse entityClassSyncResponse) {
-
-        logger.debug("getSync response, uid [{}], appId [{}], env [{}], version [{}].",
-            entityClassSyncResponse.getUid(), entityClassSyncResponse.getAppId(),
-            entityClassSyncResponse.getEnv(), entityClassSyncResponse.getVersion());
-
         //  执行OQS更新EntityClass
-        EntityClassSyncRequest.Builder entityClassSyncRequestBuilder = execute(entityClassSyncResponse);
-        if (entityClassSyncRequestBuilder.getStatus() != SYNC_OK.ordinal()) {
-            logger.warn("execute data sync fail, [{}]", entityClassSyncRequestBuilder.build().toString());
-            return;
+        EntityClassSyncRequest.Builder entityClassSyncRequestBuilder;
+        try {
+            entityClassSyncRequestBuilder = execute(entityClassSyncResponse);
+        } catch (Exception e) {
+            entityClassSyncRequestBuilder = EntityClassSyncRequest.newBuilder().setStatus(SYNC_FAIL.ordinal());
+            metricsRecorder.error(entityClassSyncResponse.getAppId(), SyncCode.SYNC_DATA_ERROR.name(),
+                String.format("parse sync-data failed, env :%s, version : %s, cause : %s",
+                    entityClassSyncResponse.getEnv(), entityClassSyncResponse.getVersion(), e.getMessage()));
         }
 
         if (!entityClassSyncResponse.getForce()) {
-            //  回写处理结果, entityClassSyncRequest为空则代表传输存在问题.
-            sendRequestWithALiveCheck(requestWatchExecutor.watcher(),
-                entityClassSyncRequestBuilder
-                    .setClientId(requestWatchExecutor.watcher().clientId())
-                    .setUid(entityClassSyncResponse.getUid())
-                    .build()
-            );
+            EntityClassSyncRequest entityClassSyncRequest = entityClassSyncRequestBuilder
+                .setClientId(requestWatchExecutor.watcher().clientId())
+                .setUid(entityClassSyncResponse.getUid())
+                .build();
+            try {
+                //  回写处理结果, entityClassSyncRequest为空则代表传输存在问题.
+                SendUtils.sendRequest(requestWatchExecutor.watcher(),
+                    entityClassSyncRequest,
+                    true
+                );
+            } catch (Exception e) {
+                metricsRecorder.error(entityClassSyncRequest.getAppId(), SyncCode.SEND_REQUEST_ERROR.name(),
+                    String.format("send sync result failed, env :%s, version : %s, cause : %s",
+                        entityClassSyncResponse.getEnv(), entityClassSyncResponse.getVersion(), e.getMessage()));
+                throw e;
+            }
         }
 
-        logger.debug("sync data fin, uid [{}], appId [{}], env [{}], version [{}], status[{}].",
-            entityClassSyncResponse.getUid(), entityClassSyncResponse.getAppId(),
-            entityClassSyncResponse.getEnv(), entityClassSyncResponse.getVersion(),
-            entityClassSyncRequestBuilder.getStatus());
+        if (entityClassSyncRequestBuilder.getStatus() == SYNC_OK.ordinal()) {
+            metricsRecorder.info(entityClassSyncResponse.getAppId(), SyncCode.SYNC_DATA_OK.name(),
+                String.format("sync-data ok, uid : %s, env : %s, version : %s", entityClassSyncResponse.getUid(),
+                    entityClassSyncResponse.getEnv(), entityClassSyncResponse.getVersion()));
+        }
     }
 
     /**
@@ -315,85 +364,51 @@ public class SyncRequestHandler implements IRequestHandler {
      */
     @SuppressWarnings("unchecked")
     private EntityClassSyncRequest.Builder execute(EntityClassSyncResponse entityClassSyncResponse) {
-        RequestStatus status = SYNC_FAIL;
+
         EntityClassSyncRequest.Builder builder = EntityClassSyncRequest.newBuilder();
 
-        try {
-            if (entityClassSyncResponse.getAppId().isEmpty()
-                || entityClassSyncResponse.getAppId().isEmpty()
-                || NOT_EXIST_VERSION == entityClassSyncResponse.getVersion()) {
+        if (entityClassSyncResponse.getAppId().isEmpty()
+            || entityClassSyncResponse.getAppId().isEmpty()
+            || NOT_EXIST_VERSION == entityClassSyncResponse.getVersion()) {
 
-                throw new MetaSyncClientException("sync appId/version/env could not be null...", false);
-            }
-
-            builder.setAppId(entityClassSyncResponse.getAppId())
-                .setVersion(entityClassSyncResponse.getVersion())
-                .setEnv(entityClassSyncResponse.getEnv());
-        } catch (Exception e) {
-            logger.warn("entityClassSyncResponse is invalidate, , message : {}", e.getMessage());
-            return builder.setStatus(status.ordinal());
-        } finally {
-            metrics(status);
+            throw new MetaSyncClientException("appId/version/env could not be null...", false);
         }
+
+        builder.setAppId(entityClassSyncResponse.getAppId())
+            .setVersion(entityClassSyncResponse.getVersion())
+            .setEnv(entityClassSyncResponse.getEnv());
 
         //  该方法返回的错误不会导致重新连接、但会通知服务端本次推送更新失败
-        try {
-            //  md5 check && 是否已存在版本判断.
-            EntityClassSyncRspProto result = entityClassSyncResponse.getEntityClassSyncRspProto();
-            if (md5Check(entityClassSyncResponse.getMd5(), result)) {
-                WatchElement w =
-                    new WatchElement(entityClassSyncResponse.getAppId(), entityClassSyncResponse.getEnv(),
-                        entityClassSyncResponse.getVersion(), Confirmed);
-                //  当前关注此版本
-                if (entityClassSyncResponse.getForce() || requestWatchExecutor.watcher().onWatch(w)) {
-                    //  执行外部传入的执行器
-                    try {
-                        status = syncExecutor
-                            .sync(entityClassSyncResponse.getAppId(), entityClassSyncResponse.getVersion(),
-                                result) ? RequestStatus.SYNC_OK : SYNC_FAIL;
-                    } catch (Exception e) {
-                        status = DATA_ERROR;
-                        logger.warn(e.getMessage());
-                    }
+        //  md5 check && 是否已存在版本判断.
+        EntityClassSyncRspProto result = entityClassSyncResponse.getEntityClassSyncRspProto();
 
-                    if (status == RequestStatus.SYNC_OK) {
-                        requestWatchExecutor.update(w);
-                    }
-                } else {
-                    logger.warn("current oqs-version bigger than sync-version : {}, will ignore...",
-                        entityClassSyncResponse.getVersion());
-                    status = RequestStatus.SYNC_OK;
+        if (md5Check(entityClassSyncResponse.getMd5(), result)) {
+            WatchElement w =
+                new WatchElement(entityClassSyncResponse.getAppId(), entityClassSyncResponse.getEnv(),
+                    entityClassSyncResponse.getVersion(), Confirmed);
+
+            //  当前关注此版本
+            if (entityClassSyncResponse.getForce() || requestWatchExecutor.watcher().onWatch(w)) {
+                //  执行外部传入的执行器
+                try {
+                    syncExecutor
+                        .sync(entityClassSyncResponse.getAppId(), entityClassSyncResponse.getVersion(),
+                            result);
+                } catch (Exception e) {
+                    throw new MetaSyncClientException(e.getMessage(), false);
                 }
+                requestWatchExecutor.update(w);
+
             } else {
-                syncExecutor.recordSyncFailed(entityClassSyncResponse.getAppId(), entityClassSyncResponse.getVersion(), "check md5 failed.");
+                logger.debug(String.format(
+                    "sync data error, current oqs not watch this version or sync version is less than service-version, env : %s, version : %s",
+                    entityClassSyncResponse.getEnv(), entityClassSyncResponse.getVersion()));
             }
-        } catch (Exception e) {
-            String error = String.format("handle entityClassSyncResponse failed, message : [%s]", e.getMessage());
-            syncExecutor.recordSyncFailed(entityClassSyncResponse.getAppId(),
-                entityClassSyncResponse.getVersion(), error);
-            logger.warn(error);
-        } finally {
-            metrics(status);
+        } else {
+            throw new MetaSyncClientException("checkMD5 failed.", false);
         }
 
-        return builder.setStatus(status.ordinal());
-    }
-
-    private void metrics(RequestStatus status) {
-        switch (status) {
-            case SYNC_OK:
-                acceptDataHandleErrorCounter.set(0);
-                acceptDataFormatCounter.set(0);
-                break;
-            case SYNC_FAIL:
-                acceptDataHandleErrorCounter.incrementAndGet();
-                break;
-            case DATA_ERROR:
-                acceptDataFormatCounter.incrementAndGet();
-                break;
-            default:
-                break;
-        }
+        return builder.setStatus(SYNC_OK.ordinal());
     }
 
     private boolean md5Check(String md5, EntityClassSyncRspProto entityClassSyncRspProto) {
@@ -428,17 +443,22 @@ public class SyncRequestHandler implements IRequestHandler {
                         .setStatus(HEARTBEAT.ordinal())
                         .build();
 
-                    sendRequestWithALiveCheck(requestWatcher, request);
+                    SendUtils.sendRequest(requestWatcher, request, true);
                 } catch (Exception e) {
                     //  ignore
                     logger.warn("send keepAlive failed, message [{}], but exception will ignore due to retry...",
                         e.getMessage());
                 }
-                logger.debug("keepAlive ok, print next check after ({})ms...", grpcParams.getKeepAliveSendDuration());
+                if (logger.isDebugEnabled()) {
+                    logger.debug("keepAlive ok, print next check after ({})ms...",
+                        grpcParams.getKeepAliveSendDuration());
+                }
             }
             TimeWaitUtils.wakeupAfter(grpcParams.getKeepAliveSendDuration(), TimeUnit.MILLISECONDS);
         }
-        logger.debug("keepAlive task has quited due to sync-client shutdown...");
+        if (logger.isDebugEnabled()) {
+            logger.debug("keepAlive task has quited due to sync-client shutdown...");
+        }
         return true;
     }
 
@@ -447,7 +467,9 @@ public class SyncRequestHandler implements IRequestHandler {
      * 检查当前APP的注册状态，处于INIT、REGISTER的APP将被重新注册到服务端.
      */
     private boolean watchElementCheck() {
-        logger.debug("start appCheck task ok...");
+        if (logger.isDebugEnabled()) {
+            logger.debug("start appCheck task ok...");
+        }
         long counter = 0;
         while (!isShutDown()) {
             RequestWatcher requestWatcher = requestWatchExecutor.watcher();
@@ -486,7 +508,7 @@ public class SyncRequestHandler implements IRequestHandler {
                                 .setStatus(RequestStatus.REGISTER.ordinal())
                                 .build();
                         try {
-                            sendRequestWithALiveCheck(requestWatcher, entityClassSyncRequest);
+                            SendUtils.sendRequest(requestWatcher, entityClassSyncRequest, true);
                             k.setRegisterTime(System.currentTimeMillis());
                         } catch (Exception e) {
                             k.setStatus(Init);
@@ -494,14 +516,18 @@ public class SyncRequestHandler implements IRequestHandler {
                     }
                 );
                 if (counter % PRINT_CHECK_DURATION == 0) {
-                    logger.debug("app check ok, print next check after ({})ms...",
-                        grpcParams.getMonitorSleepDuration() * PRINT_CHECK_DURATION);
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("app check ok, print next check after ({})ms...",
+                            grpcParams.getMonitorSleepDuration() * PRINT_CHECK_DURATION);
+                    }
                 }
                 counter++;
             }
             TimeWaitUtils.wakeupAfter(grpcParams.getMonitorSleepDuration(), TimeUnit.MILLISECONDS);
         }
-        logger.debug("appCheck task has quited due to sync-client shutdown...");
+        if (logger.isDebugEnabled()) {
+            logger.debug("appCheck task has quited due to sync-client shutdown...");
+        }
 
         return true;
     }

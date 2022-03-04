@@ -1,8 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.metadata.dto;
 
-import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.HEALTH_CHECK_ENTITY_CODE;
-import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.HEALTH_CHECK_ENTITY_ID;
-
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
@@ -17,6 +14,10 @@ import java.util.Optional;
  * @since 1.8
  */
 public class HealthCheckEntityClass implements IEntityClass {
+
+    private static final long HEALTH_CHECK_ENTITY_ID = 0;
+
+    private static final String HEALTH_CHECK_ENTITY_CODE = "healthCheck";
 
     private static HealthCheckEntityClass instance = new HealthCheckEntityClass();
 

@@ -1,27 +1,40 @@
 package com.xforceplus.ultraman.oqsengine.core.service.impl;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFactory;
+import com.xforceplus.ultraman.oqsengine.calculation.impl.DefaultCalculationImpl;
+import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
+import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.version.VersionHelp;
 import com.xforceplus.ultraman.oqsengine.core.service.impl.mock.EntityClassDefine;
-import com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult;
+import com.xforceplus.ultraman.oqsengine.core.service.pojo.OqsResult;
+import com.xforceplus.ultraman.oqsengine.event.DoNothingEventBus;
+import com.xforceplus.ultraman.oqsengine.lock.LocalResourceLocker;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EnumValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
+import com.xforceplus.ultraman.oqsengine.storage.executor.ResourceTask;
+import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.executor.hint.DefaultExecutorHint;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.EntityPackage;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.MultiLocalTransaction;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.RedisContainer;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -46,62 +59,41 @@ public class EntityManagementServiceImplTest {
      */
     @BeforeEach
     public void before() throws Exception {
-        impl = TestInitTools.entityManagementService(EntityClassDefine.getMockMetaManager());
 
+        impl = new EntityManagementServiceImpl(true);
+        ReflectionTestUtils.setField(impl, "longContinuousPartialOrderIdGenerator",
+            new IncreasingOrderLongIdGenerator());
+        ReflectionTestUtils.setField(impl, "longNoContinuousPartialOrderIdGenerator",
+            new IncreasingOrderLongIdGenerator());
+        ReflectionTestUtils.setField(impl, "transactionExecutor", new MockTransactionExecutor());
+        ReflectionTestUtils.setField(impl, "metaManager", EntityClassDefine.getMockMetaManager());
+        ReflectionTestUtils.setField(impl, "calculation", new DefaultCalculationImpl());
+        ReflectionTestUtils.setField(impl, "resourceLocker", new LocalResourceLocker());
+        ReflectionTestUtils.setField(impl, "eventBus", DoNothingEventBus.getInstance());
+        ReflectionTestUtils.setField(impl, "calculationLogicFactory", new CalculationLogicFactory());
         impl.init();
     }
 
-
     @AfterEach
     public void after() throws Exception {
-        TestInitTools.close();
     }
 
     @Test
     public void testPreview() throws Exception {
+        EntityClassRef ref = EntityClassRef.Builder.anEntityClassRef()
+            .withEntityClassId(0).withEntityClassCode("test").build();
         IEntity targetEntity = Entity.Builder.anEntity()
-            .withEntityClassRef(
-                new EntityClassRef(EntityClassDefine.l2EntityClass.id(), EntityClassDefine.l2EntityClass.code()))
-            .withId(1)
-            .withTime(System.currentTimeMillis())
-            .withEntityValue(EntityValue.build()).build();
+            .withEntityClassRef(ref)
+            .build();
 
-        try {
-            impl.build(targetEntity);
-            Assertions.fail("The SQLException was expected to be thrown, but it was not.");
-        } catch (SQLException ex) {
-            Assertions.assertEquals(String.format("Entity(%d-%s) does not have any attributes.",
-                targetEntity.id(), targetEntity.entityClassRef().getCode()), ex.getMessage());
-        }
+        OqsResult result = impl.build(targetEntity);
+        Assertions.assertEquals(OqsResult.notExistMeta(ref), result);
 
-        try {
-            impl.replace(targetEntity);
-            Assertions.fail("The SQLException was expected to be thrown, but it was not.");
-        } catch (SQLException ex) {
-            Assertions.assertEquals(String.format("Entity(%d-%s) does not have any attributes.",
-                targetEntity.id(), targetEntity.entityClassRef().getCode()), ex.getMessage());
-        }
+        result = impl.replace(targetEntity);
+        Assertions.assertEquals(OqsResult.notExistMeta(ref), result);
 
-        targetEntity = Entity.Builder.anEntity()
-            .withEntityClassRef(
-                new EntityClassRef(EntityClassDefine.l2EntityClass.id(), EntityClassDefine.l2EntityClass.code()))
-            .withId(1)
-            .withTime(System.currentTimeMillis()).build();
-        try {
-            impl.build(targetEntity);
-            Assertions.fail("The SQLException was expected to be thrown, but it was not.");
-        } catch (SQLException ex) {
-            Assertions.assertEquals(String.format("Entity(%d-%s) does not have any attributes.",
-                targetEntity.id(), targetEntity.entityClassRef().getCode()), ex.getMessage());
-        }
-        try {
-            impl.replace(targetEntity);
-            Assertions.fail("The SQLException was expected to be thrown, but it was not.");
-        } catch (SQLException ex) {
-            Assertions.assertEquals(String.format("Entity(%d-%s) does not have any attributes.",
-                targetEntity.id(), targetEntity.entityClassRef().getCode()), ex.getMessage());
-        }
-
+        result = impl.delete(targetEntity);
+        Assertions.assertEquals(OqsResult.notExistMeta(ref), result);
     }
 
     @Test
@@ -109,6 +101,7 @@ public class EntityManagementServiceImplTest {
         MasterStorage masterStorage = mock(MasterStorage.class);
 
         IEntity[] targetEntities = new IEntity[1000];
+        EntityPackage expectedEntityPackage = new EntityPackage();
         for (int i = 0; i < 1000; i++) {
 
             targetEntities[i] = Entity.Builder.anEntity()
@@ -116,28 +109,29 @@ public class EntityManagementServiceImplTest {
                     new EntityClassRef(EntityClassDefine.l2EntityClass.id(), EntityClassDefine.l2EntityClass.code()))
                 .withId(i + 1)
                 .withTime(System.currentTimeMillis())
-                .withEntityValue(EntityValue.build()
-                    .addValue(
-                        new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), i))
-                    .addValue(
-                        new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"))
-                    .addValue(
-                        new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")
-                    )
+                .withValues(Stream.of(new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), i),
+                        new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"),
+                        new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E"))
+                    .collect(Collectors.toList())
                 )
                 .build();
 
-            when(masterStorage.build(targetEntities[i], EntityClassDefine.l2EntityClass)).thenReturn(1);
-
+            expectedEntityPackage.put(targetEntities[i], EntityClassDefine.l2EntityClass);
         }
+
+
+        doAnswer(invocation -> {
+            EntityPackage entityPackage = invocation.getArgument(0);
+            entityPackage.stream().forEach(ek -> ek.getKey().neat());
+            return null;
+        }).when(masterStorage).build(any(EntityPackage.class));
 
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
-        OperationResult[] results = impl.build(targetEntities);
-        for (OperationResult r : results) {
-            Assertions.assertEquals(ResultStatus.SUCCESS, r.getResultStatus());
-        }
+        OqsResult<IEntity[]> results = impl.build(targetEntities);
+        Assertions.assertEquals(ResultStatus.SUCCESS, results.getResultStatus());
+        Assertions.assertEquals(targetEntities.length, results.getValue().get().length);
 
-        verify(masterStorage, times(1000)).build(any(IEntity.class), eq(EntityClassDefine.l2EntityClass));
+        verify(masterStorage, times(1)).build(expectedEntityPackage);
     }
 
     @Test
@@ -149,21 +143,24 @@ public class EntityManagementServiceImplTest {
                 new EntityClassRef(EntityClassDefine.l2EntityClass.id(), EntityClassDefine.l2EntityClass.code()))
             .withId(1)
             .withTime(System.currentTimeMillis())
-            .withEntityValue(EntityValue.build()
-                .addValue(
-                    new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L))
-                .addValue(
-                    new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"))
-                .addValue(
-                    new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")
-                )
+            .withValues(Stream.of(new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L),
+                new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"),
+                new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")).collect(Collectors.toList())
             )
             .build();
-        when(masterStorage.build(targetEntity, EntityClassDefine.l2EntityClass)).thenReturn(1);
+        when(masterStorage.build(targetEntity, EntityClassDefine.l2EntityClass)).thenAnswer(inv -> {
+
+            IEntity entity = inv.getArgument(0);
+            entity.neat();
+
+            return true;
+        });
 
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
 
-        Assertions.assertEquals(ResultStatus.SUCCESS, impl.build(targetEntity).getResultStatus());
+        OqsResult<IEntity> result = impl.build(targetEntity);
+        Assertions.assertEquals(ResultStatus.SUCCESS, result.getResultStatus());
+        Assertions.assertEquals(targetEntity.id(), result.getValue().get().id());
     }
 
     @Test
@@ -175,17 +172,12 @@ public class EntityManagementServiceImplTest {
                 new EntityClassRef(EntityClassDefine.l2EntityClass.id(), EntityClassDefine.l2EntityClass.code()))
             .withId(1)
             .withTime(System.currentTimeMillis())
-            .withEntityValue(EntityValue.build()
-                .addValue(
-                    new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L))
-                .addValue(
-                    new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"))
-                .addValue(
-                    new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")
-                )
+            .withValues(Stream.of(new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L),
+                new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"),
+                new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")).collect(Collectors.toList())
             )
             .build();
-        when(masterStorage.build(targetEntity, EntityClassDefine.l2EntityClass)).thenReturn(0);
+        when(masterStorage.build(targetEntity, EntityClassDefine.l2EntityClass)).thenReturn(false);
 
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
 
@@ -199,8 +191,7 @@ public class EntityManagementServiceImplTest {
             .withEntityClassRef(EntityClassDefine.l2EntityClass.ref())
             .withId(1)
             .withTime(System.currentTimeMillis())
-            .withEntityValue(EntityValue.build()
-                .addValue(
+            .withValues(Arrays.asList(
                     new LongValue(EntityClassDefine.l2EntityClass.field("l1-long").get(), 1000L)
                 )
             )
@@ -214,8 +205,7 @@ public class EntityManagementServiceImplTest {
             .withEntityClassRef(EntityClassDefine.mustEntityClass.ref())
             .withId(1)
             .withTime(System.currentTimeMillis())
-            .withEntityValue(EntityValue.build()
-                .addValue(
+            .withValues(Arrays.asList(
                     new StringValue(EntityClassDefine.mustEntityClass.field("not-must-field").get(), "test")
                 )
             )
@@ -237,16 +227,10 @@ public class EntityManagementServiceImplTest {
                 new EntityClassRef(EntityClassDefine.l2EntityClass.id(), EntityClassDefine.l2EntityClass.code()))
             .withId(1)
             .withTime(System.currentTimeMillis())
-            .withEntityValue(EntityValue.build()
-                .addValue(
-                    new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L))
-                .addValue(
-                    new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"))
-                .addValue(
-                    new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")
-                )
-            )
-            .build();
+            .withValues(Stream.of(new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L),
+                new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"),
+                new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")).collect(Collectors.toList())
+            ).build();
 
         Assertions.assertEquals(ResultStatus.NOT_FOUND, impl.replace(targetEntity).getResultStatus());
     }
@@ -260,14 +244,9 @@ public class EntityManagementServiceImplTest {
                 new EntityClassRef(EntityClassDefine.l2EntityClass.id(), EntityClassDefine.l2EntityClass.code()))
             .withId(1)
             .withTime(System.currentTimeMillis())
-            .withEntityValue(EntityValue.build()
-                .addValue(
-                    new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L))
-                .addValue(
-                    new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"))
-                .addValue(
-                    new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")
-                )
+            .withValues(Stream.of(new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L),
+                new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"),
+                new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")).collect(Collectors.toList())
             )
             .build();
         when(masterStorage.selectOne(1, EntityClassDefine.l2EntityClass)).thenReturn(Optional.of(targetEntity));
@@ -278,9 +257,8 @@ public class EntityManagementServiceImplTest {
                 new EntityClassRef(EntityClassDefine.l2EntityClass.id(), EntityClassDefine.l2EntityClass.code()))
             .withId(1)
             .withTime(System.currentTimeMillis())
-            .withEntityValue(EntityValue.build()
-                .addValue(
-                    new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 20000L)))
+            .withValues(Arrays.asList(
+                new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 20000L)))
             .build();
         // 这是实际被发送的
         IEntity actualTargetEntity = Entity.Builder.anEntity()
@@ -288,20 +266,14 @@ public class EntityManagementServiceImplTest {
                 new EntityClassRef(EntityClassDefine.l2EntityClass.id(), EntityClassDefine.l2EntityClass.code()))
             .withId(1)
             .withTime(replaceEntity.time())
-            .withEntityValue(EntityValue.build()
-                .addValue(
-                    new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 20000L))
-                .addValue(
-                    new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"))
-                .addValue(
-                    new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")
-                )
-            )
-            .build();
-        when(masterStorage.replace(actualTargetEntity, EntityClassDefine.l2EntityClass)).thenReturn(0);
+            .withValues(Stream.of(new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L),
+                new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"),
+                new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")).collect(Collectors.toList())
+            ).build();
+        when(masterStorage.replace(actualTargetEntity, EntityClassDefine.l2EntityClass)).thenReturn(false);
 
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
-        Assertions.assertEquals(ResultStatus.CONFLICT, impl.replace(replaceEntity).getResultStatus());
+        Assertions.assertEquals(ResultStatus.UNREPLACE, impl.replace(replaceEntity).getResultStatus());
     }
 
     @Test
@@ -313,16 +285,10 @@ public class EntityManagementServiceImplTest {
                 new EntityClassRef(EntityClassDefine.l2EntityClass.id(), EntityClassDefine.l2EntityClass.code()))
             .withId(1)
             .withTime(System.currentTimeMillis())
-            .withEntityValue(EntityValue.build()
-                .addValue(
-                    new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L))
-                .addValue(
-                    new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"))
-                .addValue(
-                    new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")
-                )
-            )
-            .build();
+            .withValues(Stream.of(new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L),
+                new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"),
+                new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")).collect(Collectors.toList())
+            ).build();
         when(masterStorage.selectOne(1, EntityClassDefine.l2EntityClass)).thenReturn(Optional.of(targetEntity));
 
         // 这是请求的.
@@ -331,9 +297,8 @@ public class EntityManagementServiceImplTest {
                 new EntityClassRef(EntityClassDefine.l2EntityClass.id(), EntityClassDefine.l2EntityClass.code()))
             .withId(1)
             .withTime(System.currentTimeMillis())
-            .withEntityValue(EntityValue.build()
-                .addValue(
-                    new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 20000L)))
+            .withValues(Arrays.asList(
+                new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 20000L)))
             .build();
         // 这是实际被发送的
         IEntity actualTargetEntity = Entity.Builder.anEntity()
@@ -341,17 +306,15 @@ public class EntityManagementServiceImplTest {
                 new EntityClassRef(EntityClassDefine.l2EntityClass.id(), EntityClassDefine.l2EntityClass.code()))
             .withId(1)
             .withTime(replaceEntity.time())
-            .withEntityValue(EntityValue.build()
-                .addValue(
-                    new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 20000L))
-                .addValue(
-                    new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"))
-                .addValue(
-                    new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")
-                )
-            )
-            .build();
-        when(masterStorage.replace(actualTargetEntity, EntityClassDefine.l2EntityClass)).thenReturn(1);
+            .withValues(Stream.of(new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L),
+                new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"),
+                new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")).collect(Collectors.toList())
+            ).build();
+        when(masterStorage.replace(actualTargetEntity, EntityClassDefine.l2EntityClass)).thenAnswer(inv -> {
+            IEntity entity = inv.getArgument(0);
+            entity.neat();
+            return true;
+        });
 
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
         Assertions.assertEquals(ResultStatus.SUCCESS, impl.replace(replaceEntity).getResultStatus());
@@ -367,19 +330,18 @@ public class EntityManagementServiceImplTest {
                 new EntityClassRef(EntityClassDefine.l2EntityClass.id(), EntityClassDefine.l2EntityClass.code()))
             .withId(1)
             .withTime(System.currentTimeMillis())
-            .withEntityValue(EntityValue.build()
-                .addValue(
-                    new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L))
-                .addValue(
-                    new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"))
-                .addValue(
-                    new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")
-                )
+            .withValues(Stream.of(new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L),
+                new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"),
+                new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")).collect(Collectors.toList())
             )
             .build();
 
         when(masterStorage.selectOne(1, EntityClassDefine.l2EntityClass)).thenReturn(Optional.of(targetEntity));
-        when(masterStorage.delete(targetEntity, EntityClassDefine.l2EntityClass)).thenReturn(1);
+        when(masterStorage.delete(targetEntity, EntityClassDefine.l2EntityClass)).thenAnswer(inv -> {
+            IEntity entity = inv.getArgument(0);
+            entity.delete();
+            return true;
+        });
 
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
         Assertions.assertEquals(ResultStatus.SUCCESS, impl.delete(targetEntity).getResultStatus());
@@ -396,19 +358,19 @@ public class EntityManagementServiceImplTest {
             .withId(1)
             .withVersion(200)
             .withTime(System.currentTimeMillis())
-            .withEntityValue(EntityValue.build()
-                .addValue(
-                    new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L))
-                .addValue(
-                    new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"))
-                .addValue(
-                    new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")
-                )
-            )
-            .build();
+            .withValues(Stream.of(new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L),
+                new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"),
+                new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")).collect(Collectors.toList())
+            ).build();
+        targetEntity.neat();
 
         when(masterStorage.selectOne(1, EntityClassDefine.l2EntityClass)).thenReturn(Optional.of(targetEntity));
-        when(masterStorage.delete(targetEntity, EntityClassDefine.l2EntityClass)).thenReturn(1);
+        when(masterStorage.delete(targetEntity, EntityClassDefine.l2EntityClass)).thenAnswer(inv -> {
+            IEntity entity = inv.getArgument(0);
+            entity.resetVersion(VersionHelp.OMNIPOTENCE_VERSION);
+            entity.delete();
+            return true;
+        });
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
 
         // 删除目标
@@ -418,16 +380,10 @@ public class EntityManagementServiceImplTest {
             .withId(1)
             .withVersion(200)
             .withTime(System.currentTimeMillis())
-            .withEntityValue(EntityValue.build()
-                .addValue(
-                    new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L))
-                .addValue(
-                    new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"))
-                .addValue(
-                    new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")
-                )
-            )
-            .build();
+            .withValues(Stream.of(new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L),
+                new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"),
+                new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")).collect(Collectors.toList())
+            ).build();
 
         Assertions.assertEquals(ResultStatus.SUCCESS, impl.deleteForce(deletedEntity).getResultStatus());
         Assertions.assertEquals(VersionHelp.OMNIPOTENCE_VERSION, targetEntity.version());
@@ -444,46 +400,54 @@ public class EntityManagementServiceImplTest {
                 new EntityClassRef(EntityClassDefine.l2EntityClass.id(), EntityClassDefine.l2EntityClass.code()))
             .withId(1)
             .withTime(System.currentTimeMillis())
-            .withEntityValue(EntityValue.build()
-                .addValue(
-                    new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L))
-                .addValue(
-                    new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"))
-                .addValue(
-                    new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")
-                )
-            )
-            .build();
+            .withValues(Stream.of(new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L),
+                new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"),
+                new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")).collect(Collectors.toList())
+            ).build();
 
         when(masterStorage.selectOne(1, EntityClassDefine.l2EntityClass)).thenReturn(Optional.of(targetEntity));
-        when(masterStorage.delete(targetEntity, EntityClassDefine.l2EntityClass)).thenReturn(0);
+        when(masterStorage.delete(targetEntity, EntityClassDefine.l2EntityClass)).thenReturn(false);
 
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
-        Assertions.assertEquals(ResultStatus.CONFLICT, impl.delete(targetEntity).getResultStatus());
+        Assertions.assertEquals(ResultStatus.UNDELETED, impl.delete(targetEntity).getResultStatus());
     }
 
     @Test
     public void testDeleteNotFound() throws Exception {
         MasterStorage masterStorage = mock(MasterStorage.class);
-        when(masterStorage.exist(1)).thenReturn(false);
+        when(masterStorage.exist(1)).thenReturn(-1);
 
         IEntity targetEntity = Entity.Builder.anEntity()
             .withEntityClassRef(
                 new EntityClassRef(EntityClassDefine.l2EntityClass.id(), EntityClassDefine.l2EntityClass.code()))
             .withId(1)
             .withTime(System.currentTimeMillis())
-            .withEntityValue(EntityValue.build()
-                .addValue(
-                    new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L))
-                .addValue(
-                    new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"))
-                .addValue(
-                    new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")
-                )
-            )
-            .build();
+            .withValues(Stream.of(new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L),
+                new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"),
+                new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")).collect(Collectors.toList())
+            ).build();
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
         Assertions.assertEquals(ResultStatus.NOT_FOUND, impl.delete(targetEntity).getResultStatus());
     }
 
+    static class MockTransactionExecutor implements TransactionExecutor {
+
+        private LongIdGenerator idGenerator = new IncreasingOrderLongIdGenerator();
+
+        @Override
+        public Object execute(ResourceTask storageTask) throws SQLException {
+            try {
+                return storageTask.run(
+                    MultiLocalTransaction.Builder.anMultiLocalTransaction()
+                        .withId(1)
+                        .withLongIdGenerator(idGenerator)
+                        .withEventBus(DoNothingEventBus.getInstance()).build(),
+                    null,
+                    new DefaultExecutorHint()
+                );
+            } catch (Exception e) {
+                throw new SQLException(e.getMessage(), e);
+            }
+        }
+    }
 } 

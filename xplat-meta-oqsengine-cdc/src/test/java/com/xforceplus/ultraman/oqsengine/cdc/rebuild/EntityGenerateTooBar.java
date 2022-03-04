@@ -10,9 +10,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.BooleanValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
@@ -72,6 +71,7 @@ public class EntityGenerateTooBar {
             .withFields(
                 Arrays.asList(BOOL_FIELD, DATE_TIME_FIELD)
             ).build();
+
     // level 3
     public static final IEntityClass ENTITY_CLASS_2 =
         EntityClass.Builder.anEntityClass()
@@ -113,11 +113,9 @@ public class EntityGenerateTooBar {
                     .withEntityClassCode(LONG_STRING_ENTITY_CLASS.code())
                     .build()
                 )
-                .withEntityValue(EntityValue.build()
-                    .addValue(new LongValue(LONG_FIELD, startPos))
-                    .addValue(new StringValue(STRING_FIELD, "prepareLongString" + startPos))
-                    .addValue(new BooleanValue(BOOL_FIELD, startPos % 2 == 0))
-                )
+                .withValues(Arrays.asList(new LongValue(LONG_FIELD, startPos),
+                        new StringValue(STRING_FIELD, "prepareLongString" + startPos),
+                        new BooleanValue(BOOL_FIELD, startPos % 2 == 0)))
                 .withVersion(testVersion)
                 .withMajor(OqsVersion.MAJOR)
                 .withTime(defaultTime + startPos * SECOND)
@@ -152,13 +150,12 @@ public class EntityGenerateTooBar {
                     .withEntityClassCode(SUR_PLUS_ENTITY_CLASS.code())
                     .build()
                 )
-                .withEntityValue(EntityValue.build().addValue(new LongValue(LONG_FIELD, startPos))
-                    .addValue(new StringValue(STRING_FIELD, "surPlus" + startPos))
-                    .addValue(new BooleanValue(BOOL_FIELD, startPos % 2 == 0))
-                    .addValue(new DateTimeValue(
-                        DATE_TIME_FIELD,
-                        LocalDateTime.of(2021, 3, 1, (int) startPos % 24, (int) startPos % 60, (int) startPos % 60)))
-                )
+                .withValues(Arrays.asList(new LongValue(LONG_FIELD, startPos),
+                        new StringValue(STRING_FIELD, "surPlus" + startPos),
+                        new BooleanValue(BOOL_FIELD, startPos % 2 == 0),
+                        new DateTimeValue(
+                                DATE_TIME_FIELD,
+                                LocalDateTime.of(2021, 3, 1, (int) startPos % 24, (int) startPos % 60, (int) startPos % 60))))
                 .withVersion(testVersion)
                 .withMajor(OqsVersion.MAJOR)
                 .withTime(defaultTime + startPos * SECOND)
@@ -190,15 +187,14 @@ public class EntityGenerateTooBar {
                     .withEntityClassCode(PREPARE_PAUSE_RESUME_ENTITY_CLASS.code())
                     .build()
                 )
-                .withEntityValue(EntityValue.build()
-                    .addValue(new LongValue(LONG_FIELD, Long.MAX_VALUE - startPos))
-                    .addValue(new StringValue(STRING_FIELD, "preparePauseResume" + startPos))
-                    .addValue(new BooleanValue(BOOL_FIELD, startPos % 3 == 0))
-                    .addValue(new DateTimeValue(DATE_TIME_FIELD,
-                        LocalDateTime.of(2022, 3, 1, (int) startPos % 24, (int) startPos % 60, (int) startPos % 60)))
-                    .addValue(new DecimalValue(DECIMAL_FIELD, new BigDecimal(i + ".0")))
-                    .addValue(new StringsValue(STRINGS_FIELD, "value" + i, "value" + i + 1, "value" + i + 2))
-                )
+                .withValues(Arrays.asList(new LongValue(LONG_FIELD, Long.MAX_VALUE - startPos),
+                        new StringValue(STRING_FIELD, "preparePauseResume" + startPos),
+                        new BooleanValue(BOOL_FIELD, startPos % 3 == 0),
+                        new DateTimeValue(DATE_TIME_FIELD,
+                                LocalDateTime.of(2022, 3, 1, (int) startPos % 24, (int) startPos % 60, (int) startPos % 60)),
+                        new DecimalValue(DECIMAL_FIELD, new BigDecimal(i + ".0")),
+                        new StringsValue(STRINGS_FIELD, "value" + i, "value" + i + 1, "value" + i + 2)
+                ))
                 .withVersion(testVersion)
                 .withMajor(OqsVersion.MAJOR)
                 .withTime(defaultTime + startPos * SECOND)

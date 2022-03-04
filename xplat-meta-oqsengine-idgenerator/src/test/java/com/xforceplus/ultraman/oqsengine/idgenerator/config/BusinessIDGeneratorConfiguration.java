@@ -9,8 +9,6 @@ import com.xforceplus.ultraman.oqsengine.event.storage.MemoryEventStorage;
 import com.xforceplus.ultraman.oqsengine.idgenerator.client.BizIDGenerator;
 import com.xforceplus.ultraman.oqsengine.idgenerator.generator.IDGeneratorFactory;
 import com.xforceplus.ultraman.oqsengine.idgenerator.generator.IDGeneratorFactoryImpl;
-import com.xforceplus.ultraman.oqsengine.idgenerator.listener.AutoFillUpgradeListener;
-import com.xforceplus.ultraman.oqsengine.idgenerator.mock.IdGenerateDbScript;
 import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PatternParser;
 import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PatternParserManager;
 import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PatternParserUtil;
@@ -137,17 +135,6 @@ public class BusinessIDGeneratorConfiguration {
     public SegmentService segmentService() {
         SegmentService segmentService = new SegmentServiceImpl();
         return segmentService;
-    }
-
-    /**
-     * autoFillUpgradeListener.
-     *
-     * @return AutoFillUpgradeListener
-     */
-    @Bean
-    public AutoFillUpgradeListener autoFillUpgradeListener() {
-        AutoFillUpgradeListener autoFillUpgradeListener = new AutoFillUpgradeListener();
-        return autoFillUpgradeListener;
     }
 
     /**

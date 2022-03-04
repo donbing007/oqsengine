@@ -19,6 +19,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
@@ -74,17 +75,17 @@ public class SphinxQLManticoreIndexStorageSelectTest {
 
     //-------------level 0--------------------
     private IEntityField l0LongField = EntityField.Builder.anEntityField()
-        .withId(Long.MAX_VALUE)
+        .withId(9223372036854775807L)
         .withFieldType(FieldType.LONG)
         .withName("l0-long")
         .withConfig(FieldConfig.build().searchable(true)).build();
     private IEntityField l0StringField = EntityField.Builder.anEntityField()
-        .withId(Long.MAX_VALUE - 1)
+        .withId(9223372036854775806L)
         .withFieldType(FieldType.STRING)
         .withName("l0-string")
         .withConfig(FieldConfig.build().searchable(true).fuzzyType(FieldConfig.FuzzyType.SEGMENTATION)).build();
     private IEntityField l0StringsField = EntityField.Builder.anEntityField()
-        .withId(Long.MAX_VALUE - 2)
+        .withId(9223372036854775805L)
         .withFieldType(FieldType.STRINGS)
         .withName("l0-strings")
         .withConfig(FieldConfig.build().searchable(true)).build();
@@ -99,12 +100,12 @@ public class SphinxQLManticoreIndexStorageSelectTest {
 
     //-------------level 1--------------------
     private IEntityField l1LongField = EntityField.Builder.anEntityField()
-        .withId(Long.MAX_VALUE - 3)
+        .withId(9223372036854775804L)
         .withFieldType(FieldType.LONG)
         .withName("l1-long")
         .withConfig(FieldConfig.build().searchable(true)).build();
     private IEntityField l1StringField = EntityField.Builder.anEntityField()
-        .withId(Long.MAX_VALUE - 4)
+        .withId(9223372036854775803L)
         .withFieldType(FieldType.STRING)
         .withName("l1-string")
         .withConfig(FieldConfig.Builder.anFieldConfig()
@@ -112,7 +113,7 @@ public class SphinxQLManticoreIndexStorageSelectTest {
             .withFuzzyType(FieldConfig.FuzzyType.WILDCARD)
             .withWildcardMinWidth(3).withWildcardMaxWidth(7).build()).build();
     private IEntityField l1DecField = EntityField.Builder.anEntityField()
-        .withId(Long.MAX_VALUE - 9)
+        .withId(9223372036854775798L)
         .withFieldType(FieldType.DECIMAL)
         .withName("l1-dec")
         .withConfig(FieldConfig.build().searchable(true)).build();
@@ -128,24 +129,29 @@ public class SphinxQLManticoreIndexStorageSelectTest {
 
     //-------------level 2--------------------
     private IEntityField l2StringField = EntityField.Builder.anEntityField()
-        .withId(Long.MAX_VALUE - 5)
+        .withId(9223372036854775802L)
         .withFieldType(FieldType.STRING)
         .withName("l2-string")
         .withConfig(FieldConfig.build().searchable(true)).build();
     private IEntityField l2TimeField = EntityField.Builder.anEntityField()
-        .withId(Long.MAX_VALUE - 6)
+        .withId(9223372036854775801L)
         .withFieldType(FieldType.DATETIME)
         .withName("l2-time")
         .withConfig(FieldConfig.build().searchable(true)).build();
     private IEntityField l2EnumField = EntityField.Builder.anEntityField()
-        .withId(Long.MAX_VALUE - 7)
+        .withId(9223372036854775800L)
         .withFieldType(FieldType.ENUM)
         .withName("l2-enum")
         .withConfig(FieldConfig.build().searchable(true)).build();
     private IEntityField l2DecField = EntityField.Builder.anEntityField()
-        .withId(Long.MAX_VALUE - 8)
+        .withId(9223372036854775799L)
         .withFieldType(FieldType.DECIMAL)
         .withName("l2-dec")
+        .withConfig(FieldConfig.build().searchable(true)).build();
+    private IEntityField l2NullField = EntityField.Builder.anEntityField()
+        .withId(9223372036854775797L)
+        .withFieldType(FieldType.LONG)
+        .withName("l2-null")
         .withConfig(FieldConfig.build().searchable(true)).build();
     private IEntityClass l2EntityClass = EntityClass.Builder.anEntityClass()
         .withId(Long.MAX_VALUE - 2)
@@ -155,6 +161,7 @@ public class SphinxQLManticoreIndexStorageSelectTest {
         .withField(l2TimeField)
         .withField(l2EnumField)
         .withField(l2DecField)
+        .withField(l2NullField)
         .withFather(l1EntityClass)
         .build();
 
@@ -255,6 +262,8 @@ public class SphinxQLManticoreIndexStorageSelectTest {
         );
         config = SelectConfig.Builder.anSelectConfig()
             .withSort(Sort.buildAscSort(l2EntityClass.field("l1-long").get()))
+            // 增加一个以ID排除,因为"9223372036854775805"和"9223372036854775806" 排序依据相同,次序不可预期.
+            .withSecondarySort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD))
             .withPage(Page.newSinglePage(100)).build();
 
         refs = new ArrayList<>(storage.select(
@@ -299,6 +308,8 @@ public class SphinxQLManticoreIndexStorageSelectTest {
         );
         config = SelectConfig.Builder.anSelectConfig()
             .withSort(Sort.buildAscSort(l2EntityClass.field("l2-dec").get()))
+            // 增加一个以ID排除,因为"9223372036854775805"和"9223372036854775806" 排序依据相同,次序不可预期.
+            .withSecondarySort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD))
             .withPage(Page.newSinglePage(100)).build();
 
         refs = new ArrayList<>(storage.select(
@@ -315,12 +326,6 @@ public class SphinxQLManticoreIndexStorageSelectTest {
             Assertions.assertEquals(expectedRef.getId(), ref.getId());
             Assertions.assertEquals(expectedRef.getOrderValue(), ref.getOrderValue());
         }
-
-        // 多个多值字段.
-        config = SelectConfig.Builder.anSelectConfig()
-            .withSort(Sort.buildAscSort(l1DecField))
-            .withSecondarySort(Sort.buildAscSort(l2DecField))
-            .withPage(Page.newSinglePage(100)).build();
     }
 
     /**
@@ -598,8 +603,22 @@ public class SphinxQLManticoreIndexStorageSelectTest {
                     Long.MAX_VALUE - 5, Long.MAX_VALUE - 6, Long.MAX_VALUE - 7, Long.MAX_VALUE - 8,
                     Long.MAX_VALUE - 9
                 }
-            )
-            ,
+            ),
+            new Case(
+                "is not null",
+                Conditions.buildEmtpyConditions()
+                    .addAnd(
+                        new Condition(
+                            l2EntityClass.field("l2-null").get(),
+                            ConditionOperator.IS_NOT_NULL,
+                            new EmptyTypedValue(l2EntityClass.field("l2-null").get())
+                        )
+                    ),
+                l2EntityClass,
+                SelectConfig.Builder.anSelectConfig()
+                    .withPage(Page.newSinglePage(20)).build(),
+                new long[0]
+            ),
             new Case(
                 "eq dec or eq dec",
                 Conditions.buildEmtpyConditions()

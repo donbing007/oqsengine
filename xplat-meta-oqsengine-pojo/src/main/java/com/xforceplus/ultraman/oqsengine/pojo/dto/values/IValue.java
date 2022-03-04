@@ -97,6 +97,23 @@ public interface IValue<T> {
     public Optional<String> getAttachment();
 
     /**
+     * 判断是否"脏",表示修改但未持久.
+     *
+     * @return true 脏, false 干净.
+     */
+    public boolean isDirty();
+
+    /**
+     * 设置为脏对象.表示修改没有持久化.
+     */
+    public void dirty();
+
+    /**
+     * 设置为非脏对象.表示修改已经持久化了.
+     */
+    public void neat();
+
+    /**
      * 是否可能转型成字符串表示.
      *
      * @return true可以, false不可以..

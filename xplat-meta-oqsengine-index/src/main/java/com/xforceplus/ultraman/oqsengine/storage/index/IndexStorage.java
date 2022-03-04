@@ -1,8 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.index;
 
 import com.xforceplus.ultraman.oqsengine.common.lifecycle.Lifecycle;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.ConditionsSearchStorage;
 import com.xforceplus.ultraman.oqsengine.storage.ConditionsSelectStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
@@ -21,7 +19,7 @@ public interface IndexStorage extends ConditionsSelectStorage, ConditionsSearchS
     /**
      * 维护接口,时间范围清理.
      *
-     * @param entityClassId 目标类型.
+     * @param entityClassId 目标Id.
      * @param maintainId  搜索目标的 taskId.
      * @param start       开始时间.
      * @param end         结束时间.

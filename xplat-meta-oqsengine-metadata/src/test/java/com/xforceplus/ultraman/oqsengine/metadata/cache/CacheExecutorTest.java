@@ -4,15 +4,23 @@ import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NO
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
+import com.xforceplus.ultraman.oqsengine.event.payload.meta.MetaChangePayLoad;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.ProfileStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MetaInitialization;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.ExpectedEntityStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.GeneralEntityClassStorageBuilder;
+import com.xforceplus.ultraman.oqsengine.metadata.utils.storage.CacheToStorageGenerator;
+import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.RedisContainer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -31,10 +39,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 @ExtendWith({RedisContainer.class})
 public class CacheExecutorTest {
 
-    private CacheExecutor cacheExecutor = MetaInitialization.getInstance().getCacheExecutor();
-
-    public CacheExecutorTest() throws IllegalAccessException {
-    }
+    private CacheExecutor cacheExecutor;
 
     @BeforeEach
     public void before() throws Exception {
@@ -47,6 +52,102 @@ public class CacheExecutorTest {
         InitializationHelper.destroy();
     }
 
+    @Test
+    public void batchVersionsTest() {
+        Map<Long, Integer> expectedVersions = new HashMap<>();
+        List<Long> testEntityClassId = new ArrayList<>();
+
+        String appId = "testAppId_1";
+        int version = 1;
+        long entityClassId = 10001;
+        cacheExecutor.resetVersion(appId, version, Collections.singletonList(entityClassId));
+        expectedVersions.put(entityClassId, version);
+        testEntityClassId.add(entityClassId);
+
+        appId = "testAppId_2";
+        version = 2;
+        entityClassId = 10002;
+        cacheExecutor.resetVersion(appId, version, Collections.singletonList(entityClassId));
+        expectedVersions.put(entityClassId, version);
+        testEntityClassId.add(entityClassId);
+
+        appId = "testAppId_3";
+        version = 3;
+        entityClassId = 10003;
+        cacheExecutor.resetVersion(appId, version, Collections.singletonList(entityClassId));
+        expectedVersions.put(entityClassId, version);
+        testEntityClassId.add(entityClassId);
+
+        Map<Long, Integer> result = cacheExecutor.versions(testEntityClassId, false);
+
+        Assertions.assertEquals(expectedVersions.size(), result.size());
+
+        result.forEach(
+            (k, v) -> {
+                Integer vExpected = expectedVersions.get(k);
+                Assertions.assertEquals(vExpected, v);
+            }
+        );
+    }
+
+    @Test
+    public void saveTestPayloadCheck() throws JsonProcessingException {
+
+        // 纯粹测试新增.
+        List<EntityClassStorage> entityClassStorageList = new ArrayList<>();
+        EntityClassStorage one = MetaPayLoadHelper.toBasicPrepareEntity(1);
+        one.getFields().add(MetaPayLoadHelper.genericEntityField(10001, FieldType.STRING, CalculationType.STATIC, OperationType.CREATE));
+        one.getFields().add(MetaPayLoadHelper.genericEntityField(10002, FieldType.STRING, CalculationType.FORMULA, OperationType.CREATE));
+        one.getFields().add(MetaPayLoadHelper.genericEntityField(10003, FieldType.STRING, CalculationType.AUTO_FILL, OperationType.CREATE));
+
+        entityClassStorageList.add(one);
+        EntityClassStorage two = MetaPayLoadHelper.toBasicPrepareEntity(2);
+        two.getFields().add(MetaPayLoadHelper.genericEntityField(20001, FieldType.STRING, CalculationType.STATIC, OperationType.CREATE));
+        two.getFields().add(MetaPayLoadHelper.genericEntityField(20002, FieldType.STRING, CalculationType.FORMULA, OperationType.CREATE));
+        two.getFields().add(MetaPayLoadHelper.genericEntityField(20003, FieldType.STRING, CalculationType.AUTO_FILL, OperationType.CREATE));
+        entityClassStorageList.add(two);
+
+        MetaChangePayLoad metaChangePayLoad =
+            cacheExecutor.save("1", 1, entityClassStorageList);
+
+        checkMetaPayLoad(metaChangePayLoad, "1", 1, entityClassStorageList);
+
+
+        //  这里是预期需要修改的Field
+        List<EntityClassStorage> mixedUpdateDeletes = new ArrayList<>();
+        EntityClassStorage oldOne = MetaPayLoadHelper.toBasicPrepareEntity(1);
+        oldOne.getFields().add(MetaPayLoadHelper.genericEntityField(10001, FieldType.STRING, CalculationType.STATIC, OperationType.DELETE));
+        oldOne.getFields().add(MetaPayLoadHelper.genericEntityField(10002, FieldType.STRING, CalculationType.FORMULA, OperationType.UPDATE));
+
+        mixedUpdateDeletes.add(oldOne);
+        EntityClassStorage oldTwo = MetaPayLoadHelper.toBasicPrepareEntity(2);
+        oldTwo.getFields().add(MetaPayLoadHelper.genericEntityField(20001, FieldType.STRING, CalculationType.STATIC, OperationType.DELETE));
+        oldTwo.getFields().add(MetaPayLoadHelper.genericEntityField(20002, FieldType.STRING, CalculationType.FORMULA, OperationType.UPDATE));
+        oldTwo.getFields().add(MetaPayLoadHelper.genericEntityField(20003, FieldType.STRING, CalculationType.AUTO_FILL, OperationType.UPDATE));
+        mixedUpdateDeletes.add(oldTwo);
+
+        //  写入更新对象
+        entityClassStorageList.clear();
+        EntityClassStorage doOne = MetaPayLoadHelper.toBasicPrepareEntity(1);
+        doOne.getFields().add(MetaPayLoadHelper.genericEntityField(10002, FieldType.STRING, CalculationType.FORMULA, OperationType.UPDATE));
+        doOne.getFields().add(MetaPayLoadHelper.genericEntityField(10003, FieldType.STRING, CalculationType.AUTO_FILL, OperationType.CREATE));
+        entityClassStorageList.add(doOne);
+
+        EntityClassStorage doTwo = MetaPayLoadHelper.toBasicPrepareEntity(2);
+        doTwo.getFields().add(MetaPayLoadHelper.genericEntityField(20002, FieldType.STRING, CalculationType.FORMULA, OperationType.UPDATE));
+        doTwo.getFields().add(MetaPayLoadHelper.genericEntityField(20003, FieldType.STRING, CalculationType.AUTO_FILL, OperationType.UPDATE));
+        entityClassStorageList.add(doTwo);
+
+        metaChangePayLoad =
+            cacheExecutor.save("1", 3, entityClassStorageList);
+
+        checkMetaPayLoad(metaChangePayLoad, "1", 3, mixedUpdateDeletes);
+    }
+
+
+    /**
+     * 测试版本.
+     */
     @Test
     public void prepare9to13Test() {
         /*
@@ -206,6 +307,43 @@ public class CacheExecutorTest {
     }
 
     @Test
+    public void versionsTest() {
+        Map<Long, Integer> expects = new HashMap<>();
+        List<Long> entityClassIds = new ArrayList<>();
+
+        int expectedVersion = 2;
+        entityClassIds.addAll(addAndRetEntityClassId(expects, "testApp1", expectedVersion, Arrays.asList(1L, 2L)));
+        entityClassIds.addAll(addAndRetEntityClassId(expects, "testApp2", expectedVersion + 1, Arrays.asList(3L, 4L)));
+        entityClassIds.addAll(addAndRetEntityClassId(expects, "testApp3", expectedVersion + 2, Arrays.asList(5L, 6L)));
+
+        Map<Long, Integer> res = cacheExecutor.versions(entityClassIds, false);
+
+        Assertions.assertEquals(expects.size(), res.size());
+
+        res.forEach(
+            (k,expected) -> {
+                Integer value = expects.get(k);
+                Assertions.assertEquals(expected, value);
+            }
+        );
+
+    }
+    private List<Long> addAndRetEntityClassId(Map<Long, Integer> expects, String appId, int version, List<Long> entityClassIds) {
+        boolean ret = cacheExecutor.resetVersion(appId, version, entityClassIds);
+        if (!ret) {
+            throw new RuntimeException("reset version failed.");
+        }
+
+        entityClassIds.forEach(
+            e -> {
+                expects.put(e, version);
+            }
+        );
+
+        return entityClassIds;
+    }
+
+    @Test
     public void entityClassStorageQueryTest() throws JsonProcessingException {
 
         List<EntityClassStorage> entityClassStorageList = new ArrayList<>();
@@ -217,9 +355,7 @@ public class CacheExecutorTest {
         int expectedVersion = Integer.MAX_VALUE;
 
         //  set storage
-        if (!cacheExecutor.save(expectedAppId, expectedVersion, entityClassStorageList, new ArrayList<>())) {
-            throw new RuntimeException("save error.");
-        }
+        cacheExecutor.save(expectedAppId, expectedVersion, entityClassStorageList);
 
         check(expectedVersion, expectedEntityStorageList, entityClassStorageList);
 
@@ -237,9 +373,7 @@ public class CacheExecutorTest {
         int expectedVersion = Integer.MAX_VALUE - 1;
 
         //  set storage
-        if (!cacheExecutor.save(expectedAppId, expectedVersion, entityClassStorageList, new ArrayList<>())) {
-            throw new RuntimeException("save error.");
-        }
+        cacheExecutor.save(expectedAppId, expectedVersion, entityClassStorageList);
 
         check(expectedVersion, expectedEntityStorageList, null);
 
@@ -253,7 +387,7 @@ public class CacheExecutorTest {
 
     private void invalid(Long id, String message) {
         try {
-            cacheExecutor.read(id);
+            cacheExecutor.remoteRead(id);
         } catch (Exception e) {
             Assertions.assertEquals(message, e.getMessage());
         }
@@ -273,22 +407,20 @@ public class CacheExecutorTest {
 
         for (ExpectedEntityStorage e : expectedEntityStorageList) {
             Assertions.assertEquals(expectedVersion, cacheExecutor.version(e.getSelf()));
-            Map<Long, EntityClassStorage> results = cacheExecutor.read(e.getSelf());
+            Map<String, String> results = cacheExecutor.remoteRead(e.getSelf());
 
-            Assertions.assertNotNull(results.remove(e.getSelf()));
+            Assertions.assertTrue(null != results && !results.isEmpty());
 
             if (null != e.getAncestors()) {
                 for (Long id : e.getAncestors()) {
-                    EntityClassStorage r = results.remove(id);
+                    Map<String, String> r = cacheExecutor.remoteRead(id);
                     Assertions.assertNotNull(r);
 
                     if (null != fullCheckMaps) {
-                        checkEntity(fullCheckMaps.get(id), r);
+                        checkEntity(fullCheckMaps.get(id), CacheToStorageGenerator.toEntityClassStorage(DefaultCacheExecutor.OBJECT_MAPPER, r));
                     }
                 }
             }
-
-            Assertions.assertEquals(0, results.size());
         }
     }
 
@@ -339,7 +471,7 @@ public class CacheExecutorTest {
          * set self
          */
         ExpectedEntityStorage self =
-            new ExpectedEntityStorage(5L, 10L, Arrays.asList(10L, 20L), Arrays.asList(10L));
+            new ExpectedEntityStorage(5L, 10L, Arrays.asList(10L, 20L), Collections.singletonList(10L));
         entityClassStorageList.add(GeneralEntityClassStorageBuilder.prepareEntity(self));
         expectedEntityStorageList.add(self);
 
@@ -348,7 +480,7 @@ public class CacheExecutorTest {
          */
         ExpectedEntityStorage father =
             new ExpectedEntityStorage(10L, 20L, Collections.singletonList(20L),
-                Arrays.asList(20L));
+                Collections.singletonList(20L));
         entityClassStorageList.add(GeneralEntityClassStorageBuilder.prepareEntity(father));
         expectedEntityStorageList.add(father);
 
@@ -377,5 +509,45 @@ public class CacheExecutorTest {
                 Arrays.asList(4L, 20L));
         entityClassStorageList.add(GeneralEntityClassStorageBuilder.prepareEntity(brother));
         expectedEntityStorageList.add(brother);
+    }
+
+
+    private void checkMetaPayLoad(MetaChangePayLoad metaChangePayLoad, String appId, int version, List<EntityClassStorage> entityClassStorageList)  {
+        Assertions.assertEquals(appId, metaChangePayLoad.getAppId());
+
+        Assertions.assertEquals(version, metaChangePayLoad.getVersion());
+
+        Assertions.assertEquals(entityClassStorageList.size(), metaChangePayLoad.getEntityChanges().size());
+
+        metaChangePayLoad.getEntityChanges().forEach(
+            entityChange -> {
+                EntityClassStorage entityClass = entityClassStorageList.stream().filter(k -> {
+                    return k.getId() == entityChange.getEntityClassId();
+                }).findFirst().orElse(null);
+
+                Assertions.assertNotNull(entityClass);
+
+                entityChange.getFieldChanges().forEach(
+                    fieldChange -> {
+                        EntityField entityField = null;
+                        if (null == fieldChange.getProfile()) {
+                            entityField =
+                                entityClass.getFields().stream().filter(s -> {
+                                    return s.id() == fieldChange.getFieldId();
+                                }).findFirst().orElse(null);
+                        } else {
+                            ProfileStorage profileStorage =
+                                entityClass.getProfileStorageMap().get(fieldChange.getProfile());
+                            Assertions.assertNotNull(profileStorage);
+                            entityField = profileStorage.getEntityFieldList().stream().filter(s -> {
+                                return s.id() == fieldChange.getFieldId();
+                            }).findFirst().orElse(null);
+                        }
+
+                        Assertions.assertNotNull(entityField);
+                    }
+                );
+            }
+        );
     }
 }

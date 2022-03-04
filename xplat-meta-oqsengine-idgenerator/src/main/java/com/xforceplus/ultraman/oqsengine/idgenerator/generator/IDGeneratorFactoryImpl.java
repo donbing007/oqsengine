@@ -6,6 +6,9 @@ import com.xforceplus.ultraman.oqsengine.idgenerator.common.constant.IDModel;
 import com.xforceplus.ultraman.oqsengine.idgenerator.exception.IDGeneratorException;
 import com.xforceplus.ultraman.oqsengine.idgenerator.generator.impl.LocalCacheGenerator;
 import com.xforceplus.ultraman.oqsengine.idgenerator.generator.impl.RedisCacheGenerator;
+import com.xforceplus.ultraman.oqsengine.idgenerator.generator.impl.RedisCacheImpl;
+import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PatternParserManager;
+import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PatternParserUtil;
 import com.xforceplus.ultraman.oqsengine.idgenerator.service.SegmentService;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -30,8 +33,10 @@ public class IDGeneratorFactoryImpl implements IDGeneratorFactory {
     private Map<String, IDGenerator> generators;
     private Map<String, IDGenerator> distributeGenerators;
 
-    @Resource(name = "redissonClientAutoId")
+    @Resource
     private RedissonClient redissonClient;
+    @Resource
+    private PatternParserManager patternParserManager;
 
     /**
      * Constructor.
@@ -63,6 +68,7 @@ public class IDGeneratorFactoryImpl implements IDGeneratorFactory {
     }
 
     protected IDGenerator createDistributeGenerator(String bizType) {
-        return new RedisCacheGenerator(bizType, segmentService, executorService, redissonClient);
+        //return new RedisCacheGenerator(bizType, segmentService, executorService, redissonClient);
+        return new RedisCacheImpl(segmentService, redissonClient, bizType, PatternParserUtil.getInstance());
     }
 }

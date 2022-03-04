@@ -19,8 +19,7 @@ import org.testcontainers.containers.wait.strategy.Wait;
 public class MysqlContainer extends AbstractContainerExtension {
 
     private static final String MYSQL_USER_PASS = "root";
-    private static final Logger
-        LOGGER = LoggerFactory.getLogger(MysqlContainer.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(MysqlContainer.class);
 
     private GenericContainer container;
 

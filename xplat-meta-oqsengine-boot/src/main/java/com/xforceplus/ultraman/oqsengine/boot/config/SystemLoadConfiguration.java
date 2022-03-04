@@ -3,9 +3,11 @@ package com.xforceplus.ultraman.oqsengine.boot.config;
 import com.xforceplus.ultraman.oqsengine.common.load.DefaultSystemLoadEvaluator;
 import com.xforceplus.ultraman.oqsengine.common.load.SystemLoadEvaluator;
 import com.xforceplus.ultraman.oqsengine.common.load.loadfactor.CpuLoadFactor;
+import com.xforceplus.ultraman.oqsengine.common.load.loadfactor.FakeLoadLoadFactor;
 import com.xforceplus.ultraman.oqsengine.common.load.loadfactor.HeapMemoryLoadFactory;
 import com.xforceplus.ultraman.oqsengine.common.load.loadfactor.LoadFactor;
 import com.xforceplus.ultraman.oqsengine.common.load.loadfactor.ThreadPoolExecutorLoadFactor;
+import java.util.Collection;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import org.slf4j.Logger;
@@ -67,7 +69,19 @@ public class SystemLoadConfiguration {
     }
 
     @Bean
-    public SystemLoadEvaluator systemLoadEvaluator() {
-        return new DefaultSystemLoadEvaluator();
+    public LoadFactor fakeLoadFactor() {
+        return new FakeLoadLoadFactor();
+    }
+
+    /**
+     * 系统负载.
+     *
+     * @param loadFactors 负载因子列表.
+     */
+    @Bean
+    public SystemLoadEvaluator systemLoadEvaluator(Collection<LoadFactor> loadFactors) {
+        DefaultSystemLoadEvaluator evaluator = new DefaultSystemLoadEvaluator();
+        evaluator.setLoadFactors(loadFactors);
+        return evaluator;
     }
 }

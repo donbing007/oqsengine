@@ -21,7 +21,7 @@ import org.junit.jupiter.api.Test;
  * @version 0.1 2021/05/2021/5/17
  * @since 1.8
  */
-@Disabled
+@Disabled("非常用测试.")
 public class SyncReadTest extends MockerRequestClientHelper {
 
     @BeforeEach
@@ -39,8 +39,8 @@ public class SyncReadTest extends MockerRequestClientHelper {
         try {
             MetaInitialization.getInstance().getMetaManager().need(TEST_APP_ID, TEST_ENV);
         } catch (Exception e) {
+            // do nothing.
         }
-
         int count = 0;
         Optional<IEntityClass> entityClassOptional = null;
         while (count < 500) {
@@ -53,9 +53,9 @@ public class SyncReadTest extends MockerRequestClientHelper {
         }
         Assertions.assertTrue(entityClassOptional.isPresent());
 
-        IEntityClass iEntityClass = entityClassOptional.get();
+        IEntityClass entityClass = entityClassOptional.get();
 
-        Assertions.assertEquals(TEST_ENTITY_CLASS_ID, iEntityClass.id());
+        Assertions.assertEquals(TEST_ENTITY_CLASS_ID, entityClass.id());
     }
 }
 

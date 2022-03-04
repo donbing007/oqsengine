@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.common.timerwheel;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -15,7 +16,21 @@ import org.junit.jupiter.api.Test;
  */
 public class TimerWheelTest {
 
+    private TimerWheel wheel;
+
     public TimerWheelTest() {
+    }
+
+    /**
+     * 清理.
+     */
+    @AfterEach
+    public void tearDown() throws Exception {
+        if (wheel != null) {
+            wheel.destroy();
+        }
+
+        wheel = null;
     }
 
     /**
@@ -24,7 +39,7 @@ public class TimerWheelTest {
     @Test
     public void testCleanExpire() throws Exception {
         final CountDownLatch latch = new CountDownLatch(1);
-        TimerWheel<String> wheel = new TimerWheel((TimeoutNotification<String>) text -> {
+        wheel = new TimerWheel((TimeoutNotification<String>) text -> {
             try {
                 return 0;
             } finally {
@@ -40,7 +55,6 @@ public class TimerWheelTest {
 
         Assertions.assertEquals(0, wheel.size());
         Assertions.assertFalse(wheel.exist("test"));
-
     }
 
     /**
@@ -50,23 +64,20 @@ public class TimerWheelTest {
     public void testAddValue() throws Exception {
         final CountDownLatch latch = new CountDownLatch(1);
         final AtomicInteger result = new AtomicInteger(0);
-        TimerWheel wheel = new TimerWheel(new TimeoutNotification<Long>() {
-            @Override
-            public long notice(Long addTime) {
-                try {
-                    long expireTime = System.currentTimeMillis();
+        wheel = new TimerWheel((TimeoutNotification<Long>) addTime -> {
+            try {
+                long expireTime = System.currentTimeMillis();
 
-                    long space = expireTime - addTime;
-                    //6000是因为wheel不是一个绝对准确的实现,所以终止时间会有误差.
-                    if (space <= 6000) {
-                        result.incrementAndGet();
-                    }
-
-                    return 0;
-
-                } finally {
-                    latch.countDown();
+                long space = expireTime - addTime;
+                //6000是因为wheel不是一个绝对准确的实现,所以终止时间会有误差.
+                if (space <= 6000) {
+                    result.incrementAndGet();
                 }
+
+                return 0;
+
+            } finally {
+                latch.countDown();
             }
         });
 
@@ -83,30 +94,27 @@ public class TimerWheelTest {
     public void testExpireAddValue() throws Exception {
         final CountDownLatch latch = new CountDownLatch(1);
         final AtomicInteger result = new AtomicInteger(0);
-        TimerWheel wheel = new TimerWheel(new TimeoutNotification<Long>() {
-            @Override
-            public long notice(Long addTime) {
-                try {
-                    long expireTime = System.currentTimeMillis();
+        wheel = new TimerWheel((TimeoutNotification<Long>) addTime -> {
+            try {
+                long expireTime = System.currentTimeMillis();
 
-                    long space = expireTime - addTime;
-                    //6000是因为wheel不是一个绝对准确的实现,所以终止时间会有误差.
-                    if (result.get() == 0 && space <= 6000) {
-                        result.incrementAndGet();
-                    } else if (result.get() == 1 && space <= 12000) {
-                        result.incrementAndGet();
-                    }
+                long space = expireTime - addTime;
+                //6000是因为wheel不是一个绝对准确的实现,所以终止时间会有误差.
+                if (result.get() == 0 && space <= 6000) {
+                    result.incrementAndGet();
+                } else if (result.get() == 1 && space <= 12000) {
+                    result.incrementAndGet();
+                }
 
-                    if (result.get() == 1) {
-                        return 5000;
-                    } else {
-                        return 0;
-                    }
+                if (result.get() == 1) {
+                    return 5000;
+                } else {
+                    return 0;
+                }
 
-                } finally {
-                    if (result.get() == 2) {
-                        latch.countDown();
-                    }
+            } finally {
+                if (result.get() == 2) {
+                    latch.countDown();
                 }
             }
         });
@@ -122,13 +130,10 @@ public class TimerWheelTest {
      */
     @Test
     public void testRemoveValue() throws Exception {
-        TimerWheel wheel = new TimerWheel(new TimeoutNotification() {
-            @Override
-            public long notice(Object t) {
-                Assertions.fail("Unexpected elimination can be known.");
+        wheel = new TimerWheel(t -> {
+            Assertions.fail("Unexpected elimination can be known.");
 
-                return 0;
-            }
+            return 0;
         });
 
         Object target = new Object();

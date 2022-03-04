@@ -6,6 +6,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Abstra
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.StaticCalculation;
 import java.io.Serializable;
 import java.util.Objects;
+import java.util.StringJoiner;
 
 /**
  * 字段配置信息.
@@ -531,25 +532,27 @@ public class FieldConfig implements Serializable {
 
     @Override
     public String toString() {
-        final StringBuffer sb = new StringBuffer("FieldConfig{");
-        sb.append("searchable=").append(searchable);
-        sb.append(", len=").append(len);
-        sb.append(", precision=").append(precision);
-        sb.append(", scale=").append(scale);
-        sb.append(", identifie=").append(identifie);
-        sb.append(", required=").append(required);
-        sb.append(", fieldSense=").append(fieldSense);
-        sb.append(", crossSearch=").append(crossSearch);
-        sb.append(", validateRegexString='").append(validateRegexString).append('\'');
-        sb.append(", splittable=").append(splittable);
-        sb.append(", delimiter='").append(delimiter).append('\'');
-        sb.append(", displayType='").append(displayType).append('\'');
-        sb.append(", fuzzyType=").append(fuzzyType);
-        sb.append(", wildcardMinWidth=").append(wildcardMinWidth);
-        sb.append(", wildcardMaxWidth=").append(wildcardMaxWidth);
-        sb.append(", uniqueName='").append(uniqueName).append('\'');
-        sb.append('}');
-        return sb.toString();
+        return new StringJoiner(", ", FieldConfig.class.getSimpleName() + "[", "]")
+            .add("searchable=" + searchable)
+            .add("max=" + max)
+            .add("min=" + min)
+            .add("len=" + len)
+            .add("precision=" + precision)
+            .add("scale=" + scale)
+            .add("identifie=" + identifie)
+            .add("required=" + required)
+            .add("fieldSense=" + fieldSense)
+            .add("crossSearch=" + crossSearch)
+            .add("validateRegexString='" + validateRegexString + "'")
+            .add("splittable=" + splittable)
+            .add("delimiter='" + delimiter + "'")
+            .add("displayType='" + displayType + "'")
+            .add("fuzzyType=" + fuzzyType)
+            .add("wildcardMinWidth=" + wildcardMinWidth)
+            .add("wildcardMaxWidth=" + wildcardMaxWidth)
+            .add("uniqueName='" + uniqueName + "'")
+            .add("calculation=" + calculation)
+            .toString();
     }
 
     /**

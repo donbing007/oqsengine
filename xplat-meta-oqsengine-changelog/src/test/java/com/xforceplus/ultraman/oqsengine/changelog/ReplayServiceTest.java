@@ -8,7 +8,7 @@ import com.xforceplus.ultraman.oqsengine.changelog.entity.ChangelogStatefulEntit
 import com.xforceplus.ultraman.oqsengine.changelog.event.ChangelogEvent;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
+import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.RedisContainer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

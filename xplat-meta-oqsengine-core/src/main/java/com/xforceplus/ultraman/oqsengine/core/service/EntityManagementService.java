@@ -1,8 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.core.service;
 
-import com.xforceplus.ultraman.oqsengine.core.service.pojo.OperationResult;
+import com.xforceplus.ultraman.oqsengine.core.service.pojo.OqsResult;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import java.sql.SQLException;
+import java.util.Map;
 
 /**
  * entity 管理服务.
@@ -19,7 +21,7 @@ public interface EntityManagementService {
      * @param entity 目标 entity 数据.
      * @return 新对象的标识.
      */
-    OperationResult build(IEntity entity) throws SQLException;
+    OqsResult<IEntity> build(IEntity entity) throws SQLException;
 
     /**
      * 创建多个实体.
@@ -27,13 +29,7 @@ public interface EntityManagementService {
      * @param entities 目标实体列表.
      * @return 创建结果.
      */
-    default OperationResult[] build(IEntity[] entities) throws SQLException {
-        OperationResult[] results = new OperationResult[entities.length];
-        for (int i = 0; i < results.length; i++) {
-            results[i] = build(entities[i]);
-        }
-        return results;
-    }
+    OqsResult<IEntity[]> build(IEntity[] entities) throws SQLException;
 
     /**
      * 替换一个已经存在的 entity 的信息.
@@ -41,28 +37,23 @@ public interface EntityManagementService {
      *
      * @param entity 目标 entity.
      */
-    OperationResult replace(IEntity entity) throws SQLException;
+    OqsResult<Map.Entry<IEntity, IValue[]>> replace(IEntity entity) throws SQLException;
 
     /**
      * 批量更新.
+     * 同replace,每一个实体只需要包含需要更新的属性即可.
      *
      * @param entities 目标实体列表.
      * @return 创建结果.
      */
-    default OperationResult[] replace(IEntity[] entities) throws SQLException {
-        OperationResult[] results = new OperationResult[entities.length];
-        for (int i = 0; i < results.length; i++) {
-            results[i] = replace(entities[i]);
-        }
-        return results;
-    }
+    OqsResult<Map<IEntity, IValue[]>> replace(IEntity[] entities) throws SQLException;
 
     /**
      * 删除一个已经存在的 entity.
      *
      * @param entity 目标 entity.
      */
-    OperationResult delete(IEntity entity) throws SQLException;
+    OqsResult<IEntity> delete(IEntity entity) throws SQLException;
 
     /**
      * 删除多个已经存在的entity.
@@ -70,13 +61,7 @@ public interface EntityManagementService {
      * @param entities 目标 entity 列表.
      * @return 结果.
      */
-    default OperationResult[] delete(IEntity[] entities) throws SQLException {
-        OperationResult[] results = new OperationResult[entities.length];
-        for (int i = 0; i < results.length; i++) {
-            results[i] = delete(entities[i]);
-        }
-        return results;
-    }
+    OqsResult<IEntity[]> delete(IEntity[] entities) throws SQLException;
 
     /**
      * 删除一个已经存在的 entity,和delete不同的是这个优先级最高.
@@ -86,20 +71,18 @@ public interface EntityManagementService {
      * @param entity 目标entity.
      * @return 操作结果.
      * @throws SQLException 操作异常.
+     * @deprecated 已经废弃,直接使用delete.
      */
-    OperationResult deleteForce(IEntity entity) throws SQLException;
+    @Deprecated
+    OqsResult<IEntity> deleteForce(IEntity entity) throws SQLException;
 
     /**
      * 删除多个已经存在的 entity,和delete不同的是这个优先级最高.
      *
      * @param entities 目标列表.
      * @return 操作结果.
+     * @deprecated 已经废弃, 请使用delete.
      */
-    default OperationResult[] deleteForce(IEntity[] entities) throws SQLException {
-        OperationResult[] results = new OperationResult[entities.length];
-        for (int i = 0; i < results.length; i++) {
-            results[i] = deleteForce(entities[i]);
-        }
-        return results;
-    }
+    @Deprecated
+    OqsResult<IEntity[]> deleteForce(IEntity[] entities) throws SQLException;
 }

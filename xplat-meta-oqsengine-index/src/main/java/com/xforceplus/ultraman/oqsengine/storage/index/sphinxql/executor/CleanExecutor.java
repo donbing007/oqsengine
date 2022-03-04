@@ -83,7 +83,7 @@ public class CleanExecutor implements Executor<Long, Long> {
             return new Builder();
         }
 
-        public Builder withEntityClass(long entityClassId) {
+        public Builder withEntityClassId(long entityClassId) {
             this.entityClassId = entityClassId;
             return this;
         }

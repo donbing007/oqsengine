@@ -11,10 +11,15 @@ import java.net.InetSocketAddress;
  */
 public class SingleCDCConnector extends AbstractCDCConnector {
 
-    /**
-     * init.
-     */
-    public void init(String connectString, int port, String destination, String userName, String password) {
+    private int port;
+
+    public SingleCDCConnector(String connectString, String destination, String userName, String password, int port) {
+        super(connectString, destination, userName, password);
+        this.port = port;
+    }
+
+    @Override
+    public void init() {
         canalConnector = CanalConnectors.newSingleConnector(new InetSocketAddress(connectString,
             port), destination, userName, password);
     }

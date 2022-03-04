@@ -46,9 +46,7 @@ public class ServerConfiguration implements ApplicationContextAware {
     private ApplicationContext applicationContext;
 
     @Bean
-    public GRpcServer grpcServer(
-        @Value("${meta.grpc.port}") Integer port
-    ) {
+    public GRpcServer grpcServer(@Value("${meta.grpc.port}") Integer port) {
         return new GRpcServer(port);
     }
 

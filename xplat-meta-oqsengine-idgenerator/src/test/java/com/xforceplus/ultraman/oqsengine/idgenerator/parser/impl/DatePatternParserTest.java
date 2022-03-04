@@ -1,10 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.idgenerator.parser.impl;
 
 import com.xforceplus.ultraman.oqsengine.idgenerator.parser.PatternParserManager;
-import java.time.format.DateTimeFormatter;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -31,7 +30,7 @@ public class DatePatternParserTest {
         DatePatternParser parser = new DatePatternParser();
         boolean need = parser.needHandle(expression);
         Assertions.assertTrue(need);
-        String formatStr = parser.parse(expression, 1001l);
+        String formatStr = parser.parse(expression, 1001L);
         Assertions.assertEquals(LocalDateTime.now().toLocalDate().getYear() + ":mm:dd{}", formatStr);
     }
 
@@ -41,7 +40,7 @@ public class DatePatternParserTest {
         DatePatternParser parser = new DatePatternParser();
         boolean need = parser.needHandle(expression);
         Assertions.assertTrue(need);
-        String formatStr = parser.parse(expression, 1001l);
+        String formatStr = parser.parse(expression, 1001L);
         LocalDate date = LocalDateTime.now().toLocalDate();
         Assertions.assertEquals(date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), formatStr);
     }
@@ -51,11 +50,11 @@ public class DatePatternParserTest {
         String expression = "{yyyy}-{MM}-{dd}-{HH}";
         DatePatternParser parser = new DatePatternParser();
         boolean need = parser.needHandle(expression);
-        Assertions.assertEquals(need,true);
-        String formatStr = parser.parse(expression,1001l);
+        Assertions.assertEquals(need, true);
+        String formatStr = parser.parse(expression, 1001L);
         LocalDateTime dateTime = LocalDateTime.now();
         String pre = dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH"));
-        Assertions.assertEquals(pre,formatStr);
+        Assertions.assertEquals(pre, formatStr);
     }
 
     @Test
@@ -64,9 +63,9 @@ public class DatePatternParserTest {
         NumberPatternParser parser = new NumberPatternParser();
         boolean need = parser.needHandle(expression);
         Assertions.assertTrue(need);
-        String ret = parser.parse(expression, 1234l);
+        String ret = parser.parse(expression, 1234L);
         Assertions.assertEquals(ret, "AP-SAP-01234");
-        String ret2 = parser.parse(expression, 109989898l);
+        String ret2 = parser.parse(expression, 109989898L);
         Assertions.assertEquals(ret2, "AP-SAP-109989898");
         String exp = "{yyyy}-{MM}-{dd}-{00000}";
         boolean result = parser.needHandle(exp);
@@ -82,7 +81,7 @@ public class DatePatternParserTest {
         DatePatternParser datePattenParser = new DatePatternParser();
         manager.registVariableParser(parser);
         manager.registVariableParser(datePattenParser);
-        String ret = manager.parse(expression, 123l);
+        String ret = manager.parse(expression, 123L);
         LocalDateTime date = LocalDateTime.now();
         String expect = date.getYear() + "-" + String.format("%02d", date.getMonthValue())
             + "-" + String.format("%02d", date.getDayOfMonth()) + "-" + "00123";

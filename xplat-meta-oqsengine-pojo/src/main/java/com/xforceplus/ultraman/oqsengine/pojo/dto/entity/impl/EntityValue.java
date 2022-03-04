@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
@@ -20,18 +21,14 @@ import java.util.function.Predicate;
  */
 public class EntityValue implements IEntityValue, Cloneable, Serializable {
 
+    private IEntity entity;
     /*
      * Entity的值集合
      */
     private Map<Long, IValue> values;
 
-    /**
-     * 获得值实例.
-     *
-     * @return 实例.
-     */
-    public static IEntityValue build() {
-        return new EntityValue();
+    public EntityValue(IEntity entity) {
+        this.entity = entity;
     }
 
     @Override
@@ -62,7 +59,11 @@ public class EntityValue implements IEntityValue, Cloneable, Serializable {
     public IEntityValue addValue(IValue value) {
         lazyInit();
 
-        values.put(value.getField().id(), value);
+        IValue oldValue = values.get(value.getField().id());
+        if (oldValue == null || !oldValue.equals(value)) {
+            values.put(value.getField().id(), value);
+        }
+
         return this;
     }
 
@@ -79,8 +80,9 @@ public class EntityValue implements IEntityValue, Cloneable, Serializable {
         lazyInit();
 
         values.stream().forEach(v -> {
-            this.values.put(v.getField().id(), v);
+            addValue(v);
         });
+
         return this;
     }
 
@@ -90,7 +92,16 @@ public class EntityValue implements IEntityValue, Cloneable, Serializable {
             return Optional.empty();
         }
 
-        return Optional.ofNullable(values.remove(field.id()));
+        IValue oldValue = values.remove(field.id());
+        if (oldValue != null) {
+
+            return Optional.of(oldValue);
+
+        } else {
+
+            return Optional.empty();
+
+        }
     }
 
     @Override
@@ -109,8 +120,18 @@ public class EntityValue implements IEntityValue, Cloneable, Serializable {
     }
 
     @Override
+    public boolean isDirty() {
+        if (this.values == null || this.values.isEmpty()) {
+            return false;
+        } else {
+            return this.values.values().stream().filter(v -> v.isDirty()).count() > 0;
+        }
+    }
+
+    @Override
     public Object clone() throws CloneNotSupportedException {
-        EntityValue cloneValue = (EntityValue) EntityValue.build().addValues(values());
+        EntityValue cloneValue = new EntityValue(entity);
+        cloneValue.values = new HashMap<>(values);
         return cloneValue;
     }
 

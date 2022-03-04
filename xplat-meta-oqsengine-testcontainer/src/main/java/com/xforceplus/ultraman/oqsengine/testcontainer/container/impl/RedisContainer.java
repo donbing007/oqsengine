@@ -16,8 +16,7 @@ import org.testcontainers.containers.wait.strategy.Wait;
  */
 public class RedisContainer extends AbstractContainerExtension {
 
-    private static final Logger
-        LOGGER = LoggerFactory.getLogger(RedisContainer.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(RedisContainer.class);
 
     private GenericContainer container;
 

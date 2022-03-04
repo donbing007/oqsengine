@@ -56,9 +56,9 @@ public class TransactionManagementServiceImpl implements TransactionManagementSe
     }
 
     @Override
-    public void restore(long id) throws SQLException {
+    public boolean restore(long id) throws SQLException {
         try {
-            transactionManager.bind(id);
+            return transactionManager.bind(id);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
             throw ex;

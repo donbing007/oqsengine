@@ -22,10 +22,10 @@ import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassEle
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_NAME;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_RELATIONS;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_VERSION;
+import static com.xforceplus.ultraman.oqsengine.metadata.utils.CacheUtils.generateEntityCacheInternalKey;
 import static com.xforceplus.ultraman.oqsengine.metadata.utils.CacheUtils.generateEntityCacheKey;
 import static com.xforceplus.ultraman.oqsengine.metadata.utils.CacheUtils.generateProfileEntity;
 import static com.xforceplus.ultraman.oqsengine.metadata.utils.CacheUtils.generateProfileRelations;
-import static com.xforceplus.ultraman.oqsengine.metadata.utils.EntityClassStorageConvert.redisValuesToLocalStorage;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -34,16 +34,16 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.xforceplus.ultraman.oqsengine.common.watch.RedisLuaScriptWatchDog;
-import com.xforceplus.ultraman.oqsengine.event.ActualEvent;
-import com.xforceplus.ultraman.oqsengine.event.Event;
-import com.xforceplus.ultraman.oqsengine.event.EventType;
-import com.xforceplus.ultraman.oqsengine.event.payload.calculator.AutoFillUpgradePayload;
+import com.xforceplus.ultraman.oqsengine.event.payload.meta.MetaChangePayLoad;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.ProfileStorage;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
+import com.xforceplus.ultraman.oqsengine.metadata.utils.CacheUtils;
+import com.xforceplus.ultraman.oqsengine.metadata.utils.storage.CacheToStorageGenerator;
+import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.AutoFill;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.ScriptOutputType;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -52,12 +52,10 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
@@ -87,21 +85,26 @@ public class DefaultCacheExecutor implements CacheExecutor {
         .enable(DeserializationFeature.USE_LONG_FOR_INTS)
         .build();
 
-    private final Cache<String, EntityClassStorage> entityClassStorageCache;
 
     private StatefulRedisConnection<String, String> syncConnect;
 
     private RedisCommands<String, String> syncCommands;
 
     /*
-     * 默认存放在cache中的最大数量为1024
-     */
-    private int maxCacheSize = 1024;
-
-    /*
      * prepare的超时时间
      */
     private int prepareExpire = 60;
+
+    /*
+     * 默认7天过期
+     */
+    private int logExpire = 7;
+
+
+    /*
+     * 默认存放在cache中的最大数量为1024
+     */
+    private int maxCacheSize = 1024;
 
     /*
      * fixed固定1天
@@ -112,11 +115,6 @@ public class DefaultCacheExecutor implements CacheExecutor {
      * 默认一年过期
      */
     private int cacheExpire = 12 * 30 * fixedDayExpire;
-
-    /*
-     * 默认7天过期
-     */
-    private int logExpire = 7;
 
     /*
      * script
@@ -191,6 +189,19 @@ public class DefaultCacheExecutor implements CacheExecutor {
      * value - entityStroage elements value
      */
     private final String entityStorageKeys;
+
+    /**
+     * cache key entityClass.version
+     * value key profile
+     * is not have profile, value key will be defaultKey '-'getFromLocal
+     */
+    private final Cache<String, Map<String, IEntityClass>> entityClassStorageCache;
+
+    /**
+     * cache key entityClass.version
+     * value profile list
+     */
+    private final Cache<String, List<String>> profileCache;
 
     /**
      * 默认实例化.
@@ -283,6 +294,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
         }
 
         entityClassStorageCache = initCache();
+        profileCache = initCache();
     }
 
     public void setMaxCacheSize(int maxCacheSize) {
@@ -297,7 +309,10 @@ public class DefaultCacheExecutor implements CacheExecutor {
         this.prepareExpire = prepareExpire;
     }
 
-    private <V> Cache<String, V> initCache() {
+    /**
+     * 初始化cache.
+     */
+    public <V> Cache<String, V> initCache() {
         return CacheBuilder.newBuilder()
             .maximumSize(maxCacheSize)
             .expireAfterAccess(cacheExpire, TimeUnit.SECONDS)
@@ -341,202 +356,96 @@ public class DefaultCacheExecutor implements CacheExecutor {
      * 存储appId级别的所有EntityClassStorage对象.
      */
     @Override
-    public boolean save(String appId, int version, List<EntityClassStorage> storageList,
-                        List<Event<?>> payLoads) {
+    public MetaChangePayLoad save(String appId, int version, List<EntityClassStorage> storageList)
+        throws JsonProcessingException {
+
+        MetaChangePayLoad appMetaChangePayLoad = new MetaChangePayLoad(appId, version);
+
+        //  获取旧版本.
+        int oldVersion = version(appId);
+        Map<Long, EntityClassStorage> oldMetas = null;
+        //  当存在旧版本时，获取旧版本信息.
+        if (oldVersion > NOT_EXIST_VERSION) {
+            oldMetas = CacheToStorageGenerator
+                .toEntityClassStorages(OBJECT_MAPPER,
+                    remoteMultiplyLoading(appEntityIdList(appId, oldVersion), oldVersion));
+        }
+
         //  set data
-        for (EntityClassStorage storage : storageList) {
-            String key = entityStorageKeys + "." + version + "." + storage.getId();
+        for (EntityClassStorage newStorage : storageList) {
 
-            //  basic elements
-            syncCommands.hset(key, ELEMENT_ID, Long.toString(storage.getId()));
-            syncCommands.hset(key, ELEMENT_CODE, storage.getCode());
-            syncCommands.hset(key, ELEMENT_NAME, storage.getName());
-            syncCommands.hset(key, ELEMENT_LEVEL, Integer.toString(storage.getLevel()));
-            syncCommands.hset(key, ELEMENT_VERSION, Integer.toString(storage.getVersion()));
+            //  存入到cache中，并获得entityClass的变更事件
+            EntityClassStorage old = null != oldMetas ? oldMetas.remove(newStorage.getId()) : null;
+            MetaChangePayLoad.EntityChange entityChange =
+                saveToCache(toCacheSetKey(version, newStorage.getId()), old, newStorage);
 
-            //  father & ancestors
-            if (null != storage.getFatherId()) {
-                syncCommands.hset(key, ELEMENT_FATHER, Long.toString(storage.getFatherId()));
-                if (null != storage.getAncestors() && storage.getAncestors().size() > 0) {
-                    try {
-                        String ancestorStr = OBJECT_MAPPER.writeValueAsString(storage.getAncestors());
-                        syncCommands.hset(key, ELEMENT_ANCESTORS, ancestorStr);
-                    } catch (JsonProcessingException e) {
-                        throw new MetaSyncClientException("parse ancestors failed.", false);
-                    }
-                }
+            if (null != entityChange) {
+                appMetaChangePayLoad.getEntityChanges().add(entityChange);
             }
+        }
 
-            //  relations
-            if (null != storage.getRelations() && storage.getRelations().size() > 0) {
-                try {
-                    String relationStr = OBJECT_MAPPER.writeValueAsString(storage.getRelations());
-                    syncCommands.hset(key, ELEMENT_RELATIONS, relationStr);
-                } catch (JsonProcessingException e) {
-                    throw new MetaSyncClientException("parse relations failed.", false);
+        //  还剩余的oldMetas表明有删除的EntityClass,需要反查一次oldMeta确定删除事件
+        if (null != oldMetas) {
+            oldMetas.forEach(
+                (k, v) -> {
+                    MetaChangePayLoad.EntityChange entityChange = new MetaChangePayLoad.EntityChange(k);
+                    reverseEventCheck(v, null, null, entityChange);
+
+                    appMetaChangePayLoad.getEntityChanges().add(entityChange);
                 }
-            }
-
-            //  fields
-            if (null != storage.getFields()) {
-                for (IEntityField entityField : storage.getFields()) {
-                    try {
-                        String entityFieldStr = OBJECT_MAPPER.writeValueAsString(entityField);
-                        // TODO avg init.
-                        syncCommands.hset(key, ELEMENT_FIELDS + "." + entityField.id(), entityFieldStr);
-                    } catch (JsonProcessingException e) {
-                        throw new MetaSyncClientException("parse entityField failed.", false);
-                    }
-
-                    if (entityField.calculationType().equals(CalculationType.AUTO_FILL)) {
-                        AutoFill.DomainNoType domainNoType =
-                            ((AutoFill) entityField.config().getCalculation()).getDomainNoType();
-                        if (domainNoType.equals(AutoFill.DomainNoType.NORMAL)) {
-                            payLoads.add(
-                                new ActualEvent<>(EventType.AUTO_FILL_UPGRADE,
-                                        new AutoFillUpgradePayload(entityField))
-                            );
-                        }
-                    }
-                }
-            }
-
-            //  profiles
-            if (null != storage.getProfileStorageMap() && !storage.getProfileStorageMap().isEmpty()) {
-                for (ProfileStorage ps : storage.getProfileStorageMap().values()) {
-                    if (null != ps.getEntityFieldList() && !ps.getEntityFieldList().isEmpty()) {
-                        for (IEntityField entityField : ps.getEntityFieldList()) {
-                            try {
-                                String entityFieldStr = OBJECT_MAPPER.writeValueAsString(entityField);
-                                syncCommands
-                                    .hset(key, generateProfileEntity(ps.getCode(), entityField.id()), entityFieldStr);
-                            } catch (JsonProcessingException e) {
-                                throw new MetaSyncClientException("parse profile-entityFields failed.", false);
-                            }
-
-                            if (entityField.calculationType().equals(CalculationType.AUTO_FILL)) {
-                                payLoads.add(
-                                    new ActualEvent<>(EventType.AUTO_FILL_UPGRADE,
-                                        new AutoFillUpgradePayload(entityField))
-                                );
-                            }
-                        }
-                    }
-
-                    if (null != ps.getRelationStorageList() && !ps.getRelationStorageList().isEmpty()) {
-                        try {
-                            String relationStr = OBJECT_MAPPER.writeValueAsString(ps.getRelationStorageList());
-                            syncCommands.hset(key, generateProfileRelations(ps.getCode()), relationStr);
-                        } catch (JsonProcessingException e) {
-                            throw new MetaSyncClientException("parse profile-relations failed.", false);
-                        }
-                    }
-                }
-            }
+            );
         }
 
         //  reset version
-        return resetVersion(appId, version,
-            storageList.stream().map(EntityClassStorage::getId).collect(Collectors.toList()));
-    }
-
-    @Override
-    public List<EntityClassStorage> read(String appId) {
-        int version = version(appId);
-        if (version == NOT_EXIST_VERSION) {
-            return Collections.emptyList();
+        if (!resetVersion(appId, version,
+            storageList.stream().map(EntityClassStorage::getId).collect(Collectors.toList()))) {
+            throw new RuntimeException(String.format("reset version failed, appId : %s, %d", appId, version));
         }
 
-        Collection<Long> ids = appEntityIdList(appId, version);
-        List<EntityClassStorage> entityClass = new ArrayList<>();
-        try {
-            for (Long id : ids) {
-                EntityClassStorage entityClassStorage = entityClassStorageCache.getIfPresent(generateEntityCacheKey(id, version));
-                entityClass.add(entityClassStorage);
-            }
-        } catch (Exception e) {
-            logger.warn("{}", e.toString());
-        }
-
-        return entityClass;
+        return appMetaChangePayLoad;
     }
 
     /**
      * 读取当前版本entityClassId所对应的EntityClass及所有父对象、子对象.
      */
     @Override
-    public Map<Long, EntityClassStorage> read(long entityClassId) throws JsonProcessingException {
+    public Map<String, String> remoteRead(long entityClassId) throws JsonProcessingException {
+        //  这里是一次IO操作REDIS获取当前的版本, 并组装结构
         int version = version(entityClassId);
-        /*
-         * 不存在时抛出异常
-         */
-        if (NOT_EXIST_VERSION == version) {
-            throw new RuntimeException(String.format("invalid entityClassId : [%d], no version pair", entityClassId));
-        }
 
-        EntityClassStorage entityClassStorage = getFromLocal(entityClassId, version);
-        Map<Long, EntityClassStorage> entityClassStorageMap = null;
-        if (null == entityClassStorage) {
-            entityClassStorageMap = getFromRemote(entityClassId, version);
-            entityClassStorageMap.forEach(
-                (k, v) -> {
-                    addToLocal(generateEntityCacheKey(k, version), v);
-                }
-            );
-        } else {
-            entityClassStorageMap = new HashMap<>();
-            entityClassStorageMap.put(entityClassStorage.getId(), entityClassStorage);
-            List<Long> ids = new ArrayList<>();
-
-            if (null != entityClassStorage.getAncestors()) {
-                ids.addAll(entityClassStorage.getAncestors());
-            }
-
-            for (Long r : ids) {
-                EntityClassStorage e = getFromLocal(r, version);
-                /*
-                 * 当缓存中没有该EntityClass时,从Redis中获取并写入缓存中
-                 */
-                if (null == e) {
-                    e = getOneFromRemote(r, version);
-
-                    addToLocal(generateEntityCacheKey(r, version), e);
-                }
-
-                entityClassStorageMap.put(r, e);
-            }
-        }
-
-        return entityClassStorageMap;
+        return remoteRead(entityClassId, version);
     }
+
+    /**
+     * 读取当前版本entityClassId, version所对应的EntityClass及所有父对象、子对象.
+     */
+    @Override
+    public Map<String, String> remoteRead(long entityClassId, int version) throws JsonProcessingException {
+        String[] keys = {
+            entityStorageKeys
+        };
+
+        //  get from redis
+        String redisValue = syncCommands.evalsha(
+            entityClassStorageScriptSha,
+            ScriptOutputType.VALUE,
+            keys, version + "", Long.toString(entityClassId));
+
+        //  get self
+        return OBJECT_MAPPER.readValue(redisValue, Map.class);
+    }
+
 
     /**
      * 根据Ids读取EntityStorage列表.
      */
     @Override
-    public Map<Long, EntityClassStorage> multiplyRead(Collection<Long> ids, int version, boolean useLocalCache)
+    public Map<String, Map<String, String>> multiRemoteRead(Collection<Long> ids, int version)
         throws JsonProcessingException {
-        Map<Long, EntityClassStorage> entityClassStorageMap = new HashMap<>();
         if (null != ids && ids.size() > 0) {
-            List<Long> remoteFilters = new ArrayList<>();
-
-            ids.forEach(
-                id -> {
-                    if (!useLocalCache) {
-                        remoteFilters.add(id);
-                    } else {
-                        EntityClassStorage entityClassStorage = getFromLocal(id, version);
-                        if (null == entityClassStorage) {
-                            remoteFilters.add(id);
-                        } else {
-                            entityClassStorageMap.put(id, entityClassStorage);
-                        }
-                    }
-                }
-            );
-            remoteMultiplyLoading(remoteFilters, version, entityClassStorageMap);
+            return remoteMultiplyLoading(ids, version);
         }
-        return entityClassStorageMap;
+        return null;
     }
 
     /**
@@ -572,6 +481,56 @@ public class DefaultCacheExecutor implements CacheExecutor {
             keys, Long.toString(entityClassId));
 
         return null != v ? Integer.parseInt(v) : NOT_EXIST_VERSION;
+    }
+
+    @Override
+    public Map<Long, Integer> versions(List<Long> entityClassIds, boolean errorContinue) {
+
+        Map<Long, Integer> vs = new HashMap<>();
+
+        //  获取所有entity->app mapping
+        Map<String, String> entityAppRelations = syncCommands.hgetall(appEntityMappingKey);
+        //  获取所有的app->version mapping
+        Map<String, String> appVersionRelations = syncCommands.hgetall(appVersionKeys);
+
+        String error = "";
+
+        if (null != appVersionRelations && !appVersionRelations.isEmpty()
+                && null != entityAppRelations && !entityAppRelations.isEmpty()) {
+
+            for (Long entityClassId : entityClassIds) {
+                String appId = entityAppRelations.get(String.valueOf(entityClassId));
+
+                if (null != appId) {
+                    String version = appVersionRelations.get(appId);
+                    if (null != version) {
+                        vs.put(entityClassId, Integer.parseInt(version));
+                    } else {
+                        error = String.format("version not found, appId : %s failed, entityClassId : %s", appId, entityClassId);
+                    }
+                } else {
+                    error = String.format("appId not found, entityClassId : %s", entityClassId);
+                }
+
+                if (!error.isEmpty()) {
+                    //  存在错误且继续标志为false
+                    if (!errorContinue) {
+                        break;
+                    }
+                    logger.warn(error);
+                    error = "";
+                }
+            }
+        } else {
+            error = "query entityClassIds->versions failed, no mapping in cache.";
+            logger.warn(error);
+        }
+
+        if (!error.isEmpty() && !errorContinue) {
+            throw new RuntimeException(error);
+        }
+
+        return vs;
     }
 
     /**
@@ -693,6 +652,12 @@ public class DefaultCacheExecutor implements CacheExecutor {
         return syncCommands.hdel(appEnvKeys, appId) == 1;
     }
 
+    @Override
+    public void invalidateLocal() {
+        entityClassStorageCache.invalidateAll();
+        profileCache.invalidateAll();
+    }
+
     /**
      * 删除已经过期AppId版本.
      * 删除只能进行一次，当删除进行中由于某些原因导致redis删除失败时，需要手动进入redis清理过期信息.
@@ -722,39 +687,6 @@ public class DefaultCacheExecutor implements CacheExecutor {
     }
 
     @Override
-    public void addSyncLog(String appId, Integer version, String message) {
-        String key = String.format("%s.%s", "SyncLogs", toNowDateString(LocalDate.now()));
-        String fieldName = String.format("%s.%d.%d", appId, version, System.currentTimeMillis());
-
-        try {
-            syncCommands.expire(key, logExpire * logExpire);
-            syncCommands.hset(key, fieldName, message);
-        } catch (Exception e) {
-            //  失败时什么都不做
-            //  ignore
-        }
-    }
-
-    @Override
-    public Map<String, String> getSyncLog() {
-        Map<String, String> logs = new LinkedHashMap<>();
-        for (int i = 0; i < logExpire; i++) {
-            String key = String.format("%s.%s", "SyncLogs", toNowDateString(LocalDate.now().minusDays(i)));
-            Map<String, String> part = syncCommands.hgetall(key);
-            if (!part.isEmpty()) {
-                logs.putAll(part);
-            }
-        }
-
-        return logs;
-    }
-
-    private String toNowDateString(LocalDate date) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
-        return formatter.format(date);
-    }
-
-    @Override
     public Collection<Long> appEntityIdList(String appId, Integer version) {
         String fieldName = String.format("%s.%d", appId, version);
 
@@ -774,13 +706,57 @@ public class DefaultCacheExecutor implements CacheExecutor {
     }
 
     @Override
-    public void invalidateLocal() {
-        entityClassStorageCache.invalidateAll();
+    public Optional<IEntityClass> localRead(long entityClassId, int version, String profile) {
+        Map<String, IEntityClass> entityClassMap =
+            entityClassStorageCache.getIfPresent(generateEntityCacheKey(entityClassId, version));
+
+        if (null != entityClassMap) {
+            return Optional.ofNullable(entityClassMap.get(generateEntityCacheInternalKey(profile)));
+        }
+        return Optional.empty();
+    }
+
+    @Override
+    public List<String> readProfileCodes(long entityClassId, int version) {
+        String key = generateEntityCacheKey(entityClassId, version);
+        //  从本地cache读取
+        List<String> profiles = profileCache.getIfPresent(key);
+        if (null == profiles) {
+            try {
+                profiles = CacheUtils.parseProfileCodes(remoteRead(entityClassId, version));
+                //  从remoteCache读取,并写入本地cache
+                profileCache.put(key, profiles);
+            } catch (Exception e) {
+                throw new RuntimeException(
+                    String.format("entityId : %d, version : %d, read profiles failed, message : %s",
+                        entityClassId, version, e.getMessage())
+                );
+            }
+        }
+        return profiles;
+    }
+
+    @Override
+    public void localAdd(long entityClassId, int version, String profile, IEntityClass entityClass) {
+        String key = generateEntityCacheKey(entityClassId, version);
+        Map<String, IEntityClass> e = entityClassStorageCache.getIfPresent(key);
+        if (null == e) {
+            Map<String, IEntityClass> internals = new HashMap<>();
+            internals.put(generateEntityCacheInternalKey(profile), entityClass);
+            entityClassStorageCache.put(key, internals);
+        } else {
+            e.putIfAbsent(generateEntityCacheInternalKey(profile), entityClass);
+        }
     }
 
     @Override
     public Map<String, String> showAppEnv() {
         return syncCommands.hgetall(appEnvKeys);
+    }
+
+    private String toNowDateString(LocalDate date) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+        return formatter.format(date);
     }
 
     /**
@@ -795,19 +771,17 @@ public class DefaultCacheExecutor implements CacheExecutor {
             return false;
         }
 
-        //  删除本地
-        invalidateFromLocal(entityId, version);
+        localInvalidate(entityId, version);
 
         //  删除redis
-        boolean isDelete = invalidateFromRemote(entityId, version);
+        boolean isDelete = remoteInvalidate(entityId, version);
         if (!isDelete) {
             logger.warn("delete remote failed, entityId:[{}], version:[{}]", entityId, version);
         }
         return true;
     }
 
-    private boolean invalidateFromRemote(Long entityId, int version) {
-
+    private boolean remoteInvalidate(Long entityId, int version) {
         /*
          * 获取当前的Key.
          */
@@ -827,57 +801,18 @@ public class DefaultCacheExecutor implements CacheExecutor {
         }
     }
 
-    private Map<Long, EntityClassStorage> getFromRemote(long entityClassId, int version) {
-        try {
-            Map<Long, EntityClassStorage> entityClassStorageMap = new HashMap<>();
-            //  self
-            EntityClassStorage entityClassStorage = getOneFromRemote(entityClassId, version);
-
-            entityClassStorageMap.put(entityClassStorage.getId(), entityClassStorage);
-
-            //  get ancestors
-            if (entityClassStorage.getAncestors().size() > 0) {
-                remoteMultiplyLoading(entityClassStorage.getAncestors(), version, entityClassStorageMap);
-            }
-
-            return entityClassStorageMap;
-        } catch (JsonProcessingException e) {
-            logger.warn("{}", e.toString());
-            throw new RuntimeException(e.getMessage());
-        }
-    }
-
-    private EntityClassStorage getOneFromRemote(long entityClassId, int version) throws JsonProcessingException {
-        String[] keys = {
-            entityStorageKeys
-        };
-
-        //  get from redis
-        String redisValue = syncCommands.evalsha(
-            entityClassStorageScriptSha,
-            ScriptOutputType.VALUE,
-            keys, version + "", Long.toString(entityClassId));
-
-        //  get self
-        Map<String, String> keyValues = OBJECT_MAPPER.readValue(redisValue, Map.class);
-
-        return redisValuesToLocalStorage(OBJECT_MAPPER, keyValues);
-    }
-
-    private void remoteMultiplyLoading(List<Long> ids, int version, Map<Long, EntityClassStorage> entityClassStorageMap)
+    private Map<String, Map<String, String>> remoteMultiplyLoading(Collection<Long> ids, int version)
         throws JsonProcessingException {
 
         int extraSize = ids.size();
         String[] extraEntityIds = new String[extraSize + 1];
         extraEntityIds[0] = version + "";
         int j = 1;
-
         /*
          * set ancestors
          */
-        for (int i = 0; i < ids.size(); i++) {
-            extraEntityIds[j] = Long.toString(ids.get(i));
-            j++;
+        for (Long id : ids) {
+            extraEntityIds[j++] = Long.toString(id);
         }
 
         String[] keys = {
@@ -899,32 +834,186 @@ public class DefaultCacheExecutor implements CacheExecutor {
                     extraSize, valuePairs.size()));
         }
 
-        for (Map.Entry<String, Map<String, String>> value : valuePairs.entrySet()) {
-            EntityClassStorage storage =
-                redisValuesToLocalStorage(OBJECT_MAPPER, value.getValue());
-
-            entityClassStorageMap.put(storage.getId(), storage);
-        }
+        return valuePairs;
     }
 
-    private EntityClassStorage getFromLocal(long entityClassId, int version) {
-        return entityClassStorageCache.getIfPresent(generateEntityCacheKey(entityClassId, version));
-    }
-
-    private synchronized void addToLocal(String key, EntityClassStorage entityClassStorage) {
-        EntityClassStorage e = entityClassStorageCache.getIfPresent(key);
-        if (null == e) {
-            entityClassStorageCache.put(key, entityClassStorage);
-        }
-    }
-
-
-    private void invalidateFromLocal(long entityId, int version) {
+    private void localInvalidate(long entityId, int version) {
         try {
             entityClassStorageCache.invalidate(generateEntityCacheKey(entityId, version));
+            profileCache.invalidate(generateEntityCacheKey(entityId, version));
         } catch (Exception e) {
             logger.warn("delete local failed, entityId:[{}], version:[{}], message:[{}]", entityId, version,
                 e.getMessage());
         }
+    }
+
+    private MetaChangePayLoad.FieldChange toFieldChange(IEntityField oldOne, IEntityField newOne, String profile) {
+        if (null == oldOne && null == newOne) {
+            throw new RuntimeException("add event could not handle IEntityField oldOne & newOne all empty.");
+        }
+
+        if (null == oldOne) {
+            return new MetaChangePayLoad.FieldChange(newOne.id(), OperationType.CREATE, profile);
+        } else if (null == newOne) {
+            return new MetaChangePayLoad.FieldChange(oldOne.id(), OperationType.DELETE, profile);
+        } else if (!oldOne.toString().equals(newOne.toString())) {
+            //  entityField变更的标准为toString后两边不一致
+            return new MetaChangePayLoad.FieldChange(newOne.id(), OperationType.UPDATE, profile);
+        }
+        return null;
+    }
+
+    private MetaChangePayLoad.EntityChange saveToCache(String key, EntityClassStorage oldStorage,
+                                                          EntityClassStorage newStorage) {
+
+        MetaChangePayLoad.EntityChange entityChange = null;
+
+        //  basic elements
+        syncCommands.hset(key, ELEMENT_ID, Long.toString(newStorage.getId()));
+        syncCommands.hset(key, ELEMENT_CODE, newStorage.getCode());
+        syncCommands.hset(key, ELEMENT_NAME, newStorage.getName());
+        syncCommands.hset(key, ELEMENT_LEVEL, Integer.toString(newStorage.getLevel()));
+        syncCommands.hset(key, ELEMENT_VERSION, Integer.toString(newStorage.getVersion()));
+
+        //  father & ancestors
+        if (null != newStorage.getFatherId()) {
+            syncCommands.hset(key, ELEMENT_FATHER, Long.toString(newStorage.getFatherId()));
+            if (null != newStorage.getAncestors() && newStorage.getAncestors().size() > 0) {
+                try {
+                    String ancestorStr = OBJECT_MAPPER.writeValueAsString(newStorage.getAncestors());
+                    syncCommands.hset(key, ELEMENT_ANCESTORS, ancestorStr);
+                } catch (JsonProcessingException e) {
+                    throw new MetaSyncClientException("parse ancestors failed.", false);
+                }
+            }
+        }
+
+        //  relations
+        if (null != newStorage.getRelations() && newStorage.getRelations().size() > 0) {
+            try {
+                String relationStr = OBJECT_MAPPER.writeValueAsString(newStorage.getRelations());
+                syncCommands.hset(key, ELEMENT_RELATIONS, relationStr);
+            } catch (JsonProcessingException e) {
+                throw new MetaSyncClientException("parse relations failed.", false);
+            }
+        }
+
+        //  fields
+        if (null != newStorage.getFields()) {
+            for (IEntityField entityField : newStorage.getFields()) {
+                try {
+                    IEntityField oldField = (null == oldStorage) ? null : oldStorage.find(entityField.id(), null);
+                    MetaChangePayLoad.FieldChange change = toFieldChange(oldField, entityField, null);
+                    if (null != change) {
+                        if (null == entityChange) {
+                            entityChange = new MetaChangePayLoad.EntityChange(newStorage.getId());
+                        }
+                        entityChange.getFieldChanges().add(change);
+                    }
+
+                    String entityFieldStr = OBJECT_MAPPER.writeValueAsString(entityField);
+                    syncCommands.hset(key, ELEMENT_FIELDS + "." + entityField.id(), entityFieldStr);
+                } catch (JsonProcessingException e) {
+                    throw new MetaSyncClientException("parse entityField failed.", false);
+                }
+            }
+        }
+
+        //  profiles
+        if (null != newStorage.getProfileStorageMap() && !newStorage.getProfileStorageMap().isEmpty()) {
+            for (ProfileStorage ps : newStorage.getProfileStorageMap().values()) {
+                if (null != ps.getEntityFieldList() && !ps.getEntityFieldList().isEmpty()) {
+                    for (IEntityField entityField : ps.getEntityFieldList()) {
+                        try {
+                            String entityFieldStr = OBJECT_MAPPER.writeValueAsString(entityField);
+                            syncCommands
+                                .hset(key, generateProfileEntity(ps.getCode(), entityField.id()), entityFieldStr);
+
+                            IEntityField oldField =
+                                (null == oldStorage) ? null : oldStorage.find(entityField.id(), ps.getCode());
+                            MetaChangePayLoad.FieldChange change = toFieldChange(oldField, entityField, ps.getCode());
+
+                            if (null != change) {
+                                if (null == entityChange) {
+                                    entityChange = new MetaChangePayLoad.EntityChange(newStorage.getId());
+                                }
+                                entityChange.getFieldChanges().add(change);
+                            }
+                        } catch (JsonProcessingException e) {
+                            throw new MetaSyncClientException("parse profile-entityFields failed.", false);
+                        }
+                    }
+                }
+
+                if (null != ps.getRelationStorageList() && !ps.getRelationStorageList().isEmpty()) {
+                    try {
+                        String relationStr = OBJECT_MAPPER.writeValueAsString(ps.getRelationStorageList());
+                        syncCommands.hset(key, generateProfileRelations(ps.getCode()), relationStr);
+                    } catch (JsonProcessingException e) {
+                        throw new MetaSyncClientException("parse profile-relations failed.", false);
+                    }
+                }
+            }
+        }
+
+        //  反向检查 DELETE事件
+        if (null != oldStorage) {
+            if (null == entityChange) {
+                entityChange = new MetaChangePayLoad.EntityChange(oldStorage.getId());
+            }
+            reverseEventCheck(oldStorage, newStorage.getFields(), newStorage.getProfileStorageMap(), entityChange);
+        }
+
+        return entityChange;
+    }
+
+    /**
+     * 反向寻找已被删除的字段, 查找范围包括EntityField, Profile->EntityField.
+     */
+    private void reverseEventCheck(EntityClassStorage oldStorage, List<EntityField> newFields,
+                                   Map<String, ProfileStorage> newProfiles,
+                                   MetaChangePayLoad.EntityChange entityChange) {
+        //  普通field删除事件
+        oldStorage.getFields().forEach(
+            f -> {
+                findAndAddEvent(f, newFields, null, entityChange);
+            }
+        );
+
+        //  profile-field删除事件
+        oldStorage.getProfileStorageMap().forEach(
+            (k, v) -> {
+                ProfileStorage newProfile = null != newProfiles ? newProfiles.get(k) : null;
+
+                v.getEntityFieldList().forEach(
+                    e -> {
+                        findAndAddEvent(e, null != newProfile ? newProfile.getEntityFieldList() : null, k,
+                            entityChange);
+                    }
+                );
+            }
+        );
+    }
+
+    /**
+     * 寻找并加入event.
+     */
+    private void findAndAddEvent(IEntityField origin, List<EntityField> newFields, String profile,
+                                 MetaChangePayLoad.EntityChange entityChange) {
+        IEntityField findEntityField = null;
+
+        if (null != newFields) {
+            findEntityField = newFields.stream().filter(n -> n.id() == origin.id()).findFirst().orElse(null);
+        }
+
+        if (null == findEntityField) {
+            MetaChangePayLoad.FieldChange change =
+                toFieldChange(origin, null, profile);
+            entityChange.getFieldChanges().add(change);
+        }
+    }
+
+    private String toCacheSetKey(int version, long id) {
+        return entityStorageKeys + "." + version + "." + id;
     }
 }

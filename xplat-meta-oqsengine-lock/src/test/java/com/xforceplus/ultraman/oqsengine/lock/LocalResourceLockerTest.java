@@ -15,12 +15,16 @@ public class LocalResourceLockerTest extends AbstractResourceLockerTest {
     private LocalResourceLocker locker;
 
     @BeforeEach
+    @Override
     public void before() throws Exception {
+        super.before();
+
         locker = new LocalResourceLocker();
     }
 
     @AfterEach
     public void after() throws Exception {
+        super.after();
         locker = null;
     }
 
@@ -28,4 +32,5 @@ public class LocalResourceLockerTest extends AbstractResourceLockerTest {
     public ResourceLocker getLocker() {
         return this.locker;
     }
+
 }

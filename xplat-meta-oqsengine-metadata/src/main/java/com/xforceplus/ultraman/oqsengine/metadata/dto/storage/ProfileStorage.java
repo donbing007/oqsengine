@@ -51,4 +51,8 @@ public class ProfileStorage {
     public void setRelationStorageList(List<RelationStorage> relationStorageList) {
         this.relationStorageList = relationStorageList;
     }
+
+    public EntityField find(long id) {
+        return entityFieldList.stream().filter(f -> f.id() == id).findFirst().orElse(null);
+    }
 }

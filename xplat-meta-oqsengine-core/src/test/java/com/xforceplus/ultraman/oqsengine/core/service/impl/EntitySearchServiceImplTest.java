@@ -7,8 +7,10 @@ import static org.mockito.Mockito.when;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.core.service.impl.mock.EntityClassDefine;
+import com.xforceplus.ultraman.oqsengine.core.service.pojo.OqsResult;
 import com.xforceplus.ultraman.oqsengine.core.service.pojo.ServiceSelectConfig;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
+import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
@@ -23,7 +25,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.CombinedSelectStorage;
-import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
@@ -127,7 +128,7 @@ public class EntitySearchServiceImplTest {
         });
 
         Page page = Page.emptyPage();
-        Collection<IEntity> entities = impl.selectByConditions(
+        OqsResult<Collection<IEntity>> entities = impl.selectByConditions(
             Conditions.buildEmtpyConditions(),
             EntityClassRef.Builder.anEntityClassRef()
                 .withEntityClassId(EntityClassDefine.l1EntityClass.id())
@@ -136,7 +137,8 @@ public class EntitySearchServiceImplTest {
             ServiceSelectConfig.Builder.anSearchConfig().withPage(page).build()
         );
 
-        Assertions.assertEquals(0, entities.size());
+        Assertions.assertTrue(entities.isSuccess());
+        Assertions.assertEquals(0, entities.getValue().get().size());
         Assertions.assertEquals(2, page.getTotalCount());
     }
 
@@ -146,12 +148,12 @@ public class EntitySearchServiceImplTest {
     @Test
     public void testFilter() throws Exception {
         when(masterStorage.select(
-            Conditions.buildEmtpyConditions(),
-            EntityClassDefine.l2EntityClass,
-            SelectConfig.Builder.anSelectConfig()
-                .withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD))
-                .withCommitId(1)
-                .build()
+                Conditions.buildEmtpyConditions(),
+                EntityClassDefine.l2EntityClass,
+                SelectConfig.Builder.anSelectConfig()
+                    .withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD))
+                    .withCommitId(1)
+                    .build()
             )
         ).thenReturn(Arrays.asList(
             EntityRef.Builder.anEntityRef()
@@ -194,13 +196,13 @@ public class EntitySearchServiceImplTest {
 
 
         Page page = Page.newSinglePage(100);
-        Collection<IEntity> entities = impl.selectByConditions(
+        OqsResult<Collection<IEntity>> entities = impl.selectByConditions(
             Conditions.buildEmtpyConditions(),
             EntityClassDefine.l2EntityClass.ref(),
             ServiceSelectConfig.Builder.anSearchConfig().withPage(page).build()
         );
 
-        Assertions.assertEquals(3, entities.size());
+        Assertions.assertEquals(3, entities.getValue().get().size());
         // 总量会多出100,是由于index没有真的查询数据.
         Assertions.assertEquals(3 + 100, page.getTotalCount());
     }
@@ -210,10 +212,10 @@ public class EntitySearchServiceImplTest {
         when(masterStorage.selectOne(1, EntityClassDefine.l0EntityClass)).thenReturn(
             Optional.of(Entity.Builder.anEntity().withId(1).build())
         );
-        Optional<IEntity> entityOp = impl.selectOne(1, EntityClassDefine.l0EntityClass.ref());
+        OqsResult<IEntity> entityOp = impl.selectOne(1, EntityClassDefine.l0EntityClass.ref());
 
-        Assertions.assertTrue(entityOp.isPresent());
-        Assertions.assertEquals(1, entityOp.get().id());
+        Assertions.assertTrue(entityOp.getValue().isPresent());
+        Assertions.assertEquals(1, entityOp.getValue().get().id());
     }
 
     @Test
@@ -229,10 +231,10 @@ public class EntitySearchServiceImplTest {
             )
         );
 
-        Collection<IEntity> entities = impl.selectMultiple(ids, EntityClassDefine.l2EntityClass.ref());
+        OqsResult<Collection<IEntity>> entities = impl.selectMultiple(ids, EntityClassDefine.l2EntityClass.ref());
 
-        Assertions.assertEquals(ids.length, entities.size());
-        List<IEntity> entityList = new ArrayList<>(entities);
+        Assertions.assertEquals(ids.length, entities.getValue().get().size());
+        List<IEntity> entityList = new ArrayList(entities.getValue().get());
         for (int i = 0; i < ids.length; i++) {
             Assertions.assertEquals(ids[i], entityList.get(i).id());
         }
@@ -249,13 +251,13 @@ public class EntitySearchServiceImplTest {
             Entity.Builder.anEntity().withId(100L).build()
         ));
 
-        Collection<IEntity> entities = impl.selectByConditions(conditions,
+        OqsResult<Collection<IEntity>> entities = impl.selectByConditions(conditions,
             EntityClassDefine.l2EntityClass.ref(),
             ServiceSelectConfig.Builder.anSearchConfig().withPage(Page.newSinglePage(1000)).build()
         );
 
-        Assertions.assertEquals(1, entities.size());
-        Assertions.assertEquals(100L, entities.stream().findFirst().get().id());
+        Assertions.assertEquals(1, entities.getValue().get().size());
+        Assertions.assertEquals(100L, entities.getValue().get().stream().findFirst().get().id());
     }
 
     @Test
@@ -317,11 +319,11 @@ public class EntitySearchServiceImplTest {
             )
         );
 
-        List<IEntity> entities = new ArrayList<>(impl.selectByConditions(
+        List<IEntity> entities = new ArrayList(impl.selectByConditions(
             conditions,
             EntityClassDefine.l2EntityClass.ref(),
             ServiceSelectConfig.Builder.anSearchConfig().withPage(page).build()
-        ));
+        ).getValue().get());
 
         Assertions.assertEquals(4, entities.size());
         long[] expectedIds = new long[] {

@@ -101,9 +101,4 @@ public class SnowflakeLongIdGenerator implements LongIdGenerator {
     public boolean isPartialOrder() {
         return true;
     }
-
-    @Override
-    public void reset() {
-
-    }
 }

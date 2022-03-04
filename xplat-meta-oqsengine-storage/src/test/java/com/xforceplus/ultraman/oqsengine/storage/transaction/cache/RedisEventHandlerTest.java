@@ -14,7 +14,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.payload.CachePayload;
@@ -340,11 +339,10 @@ public class RedisEventHandlerTest extends MiddleWare {
             .withId(id)
             .withVersion(version)
             .withEntityClassRef(EntityClassRef.Builder.anEntityClassRef().withEntityClassId(id).build())
-            .withEntityValue(
-                EntityValue.build()
-                    .addValue(new LongValue(genEntity(id, FieldType.LONG), id))
-                    .addValue(
-                        new StringValue(genEntity(id + RANDOM_PLUS_NUMBER, FieldType.STRING), id + RANDOM_PLUS_NUMBER + ""))
+            .withValues(
+                Arrays.asList(
+                    new LongValue(genEntity(id, FieldType.LONG), id),
+                    new StringValue(genEntity(id + RANDOM_PLUS_NUMBER, FieldType.STRING), id + RANDOM_PLUS_NUMBER + ""))
             ).build();
     }
 

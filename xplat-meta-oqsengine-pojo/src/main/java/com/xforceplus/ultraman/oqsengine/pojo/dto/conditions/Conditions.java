@@ -2,6 +2,8 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.conditions;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.validation.ConditionValidation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.validation.fieldtype.ConditionOperatorFieldValidationFactory;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
+import com.xforceplus.ultraman.oqsengine.pojo.query.MemQuery;
 import java.io.Serializable;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -105,6 +107,16 @@ public class Conditions implements Serializable {
      */
     public Conditions addAnd(Conditions conditions, boolean close) {
         return doAdd(ConditionLink.AND, conditions, close);
+    }
+
+    /**
+     * 内存中查找.
+     *
+     * @param entities 输入数据对象列表
+     * @return 返回过滤的数据对象列表
+     */
+    public Collection<IEntity> match(Collection<IEntity> entities) {
+        return MemQuery.query(entities, this);
     }
 
     /**

@@ -9,7 +9,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * 一个元信息定义,OQS内部使用的对象元信息定义.
@@ -77,6 +76,11 @@ public class EntityClass implements IEntityClass {
     }
 
     @Override
+    public String profile() {
+        return profile;
+    }
+
+    @Override
     public String name() {
         return name;
     }
@@ -96,7 +100,7 @@ public class EntityClass implements IEntityClass {
         return EntityClassRef.Builder.anEntityClassRef()
             .withEntityClassId(id())
             .withEntityClassCode(code())
-            .withEntityClassProfile(profile)
+            .withEntityClassProfile(profile())
             .build();
     }
 

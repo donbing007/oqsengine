@@ -39,7 +39,6 @@ public class CacheRecoverMockServer extends BaseResponse {
 
         thread.join();
 
-
         stopServer();
     }
 }

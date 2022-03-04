@@ -6,7 +6,6 @@ import com.xforceplus.ultraman.oqsengine.common.timerwheel.TimerWheel;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -63,7 +62,8 @@ public class RedisLuaScriptWatchDog implements Lifecycle {
 
     @PreDestroy
     @Override
-    public void destroy() throws SQLException {
+    public void destroy() throws Exception {
+        timerWheel.destroy();
         this.connection.close();
     }
 

@@ -68,12 +68,6 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
         return Optional.of(devOpsRebuildIndexExecutor.rebuildIndex(entityClass, start, end));
     }
 
-    @Deprecated
-    @Override
-    public Optional<DevOpsTaskInfo> resumeRebuild(IEntityClass entityClass, String taskId) throws Exception {
-        return Optional.empty();
-    }
-
     @Override
     public Collection<DevOpsTaskInfo> listActiveTasks(Page page) throws SQLException {
         Collection<TaskHandler> collections = devOpsRebuildIndexExecutor.listActiveTasks(page);

@@ -26,5 +26,4 @@ public class SphinxQLStringsStorageStrategy extends StringsStorageStrategy {
     public StorageValue convertIndexStorageValue(String storageName, Object storageValue, boolean attachment, boolean attrF) {
         return SphinxQLHelper.stringsStorageConvert(storageName, (String) storageValue, attachment, true);
     }
-
 }

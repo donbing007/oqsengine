@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation;
 
 import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationContext;
 import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationScenarios;
+import com.xforceplus.ultraman.oqsengine.calculation.dto.AffectedInfo;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationException;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.CalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.strategy.FunctionStrategy;
@@ -11,6 +12,7 @@ import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.strategy.
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.strategy.impl.MinFunctionStrategy;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.strategy.impl.SumFunctionStrategy;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.CalculationParticipant;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
@@ -37,7 +39,9 @@ import com.xforceplus.ultraman.oqsengine.storage.ConditionsSelectStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import java.math.BigDecimal;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -77,16 +81,13 @@ public class AggregationCalculationLogic implements CalculationLogic {
             return aggValue;
         }
         Aggregation aggregation = ((Aggregation) aggField.config().getCalculation());
-        long byAggEntityClassId = aggregation.getClassId();
         long byAggFieldId = aggregation.getFieldId();
         //获取被聚合的entity信息（修改后的）
         IEntity byAggEntity = null;
         //定义一个修改前的被聚合entity信息
         Optional<ValueChange> byAggEntityBeforChange = null;
-        List<IEntity> entities = context.getEntitiesFormCache().stream().filter(e ->
-            e.entityClassRef().getId() == byAggEntityClassId).collect(Collectors.toList());
-
-        if (entities.isEmpty()) {
+        Optional<IEntity> triggerEntityOp = context.getMaintenanceTriggerEntity();
+        if (!triggerEntityOp.isPresent()) {
             // build场景下，给默认值
             if (context.getScenariso().equals(CalculationScenarios.BUILD)) {
                 FieldType fieldType = aggField.type();
@@ -101,91 +102,69 @@ public class AggregationCalculationLogic implements CalculationLogic {
             }
             return aggValue;
         }
+
         // 计算相关的字段定义
         Optional<IValue> agg;
         Optional<IValue> n = null;
         Optional<IValue> o = null;
-        if (entities.size() > 1) {
-            //处理两个对象中存在多个一对多，并且都建立了聚合字段-这种情况是比较少见的
-            List<IEntity> byAggEntitys = entities.stream().filter(e -> {
-                return e.entityValue().values().stream().filter(value ->
-                    value.getValue().equals(entity.id())).collect(Collectors.toList()).size() > ZERO;
-            }).collect(Collectors.toList());
-            if (byAggEntitys.size() == ONE) {
-                byAggEntity = byAggEntitys.get(ZERO);
-                Optional<IEntityClass> byAggEntityClass =
-                    context.getMetaManager().get()
-                        .load(byAggEntity.entityClassRef().getId(), byAggEntity.entityClassRef().getProfile());
-                if (aggregation.getAggregationType().equals(AggregationType.COUNT)) {
-                    if (context.getScenariso().equals(CalculationScenarios.BUILD)) {
-                        n = Optional.of(new LongValue(aggField, 1));
-                        o = Optional.of(new EmptyTypedValue(aggField));
-                    } else if (context.getScenariso().equals(CalculationScenarios.DELETE)) {
-                        o = Optional.of(new LongValue(aggField, 1));
-                        n = Optional.of(new EmptyTypedValue(aggField));
-                    }
-                } else {
-                    if (byAggEntityClass.isPresent()) {
-                        byAggEntityBeforChange =
-                            context.getValueChange(byAggEntity, byAggEntityClass.get().field(byAggFieldId).get());
-                        n = byAggEntityBeforChange.get().getNewValue();
-                        o = byAggEntityBeforChange.get().getOldValue();
-                    }
-                }
+
+        // 正常情况两个对象只存在一个一对多，在cache中该对象也只会存在一个实例
+        byAggEntity = triggerEntityOp.get();
+        Optional<IEntityClass> byAggEntityClass =
+                context.getMetaManager().get().load(byAggEntity.entityClassRef());
+        if (aggregation.getAggregationType().equals(AggregationType.COUNT)) {
+            if (context.getScenariso().equals(CalculationScenarios.BUILD)) {
+                n = Optional.of(new LongValue(aggField, 1));
+                o = Optional.of(new EmptyTypedValue(aggField));
+            } else if (context.getScenariso().equals(CalculationScenarios.DELETE)) {
+                o = Optional.of(new LongValue(aggField, 1));
+                n = Optional.of(new EmptyTypedValue(aggField));
+            } else {
+                return aggValue;
             }
         } else {
-            // 正常情况两个对象只存在一个一对多，在cache中该对象也只会存在一个实例
-            byAggEntity = entities.get(ZERO);
-            Optional<IEntityClass> byAggEntityClass =
-                context.getMetaManager().get().load(byAggEntity.entityClassRef());
-            if (aggregation.getAggregationType().equals(AggregationType.COUNT)) {
-                if (context.getScenariso().equals(CalculationScenarios.BUILD)) {
-                    n = Optional.of(new LongValue(aggField, 1));
-                    o = Optional.of(new EmptyTypedValue(aggField));
-                } else if (context.getScenariso().equals(CalculationScenarios.DELETE)) {
-                    o = Optional.of(new LongValue(aggField, 1));
-                    n = Optional.of(new EmptyTypedValue(aggField));
-                } else {
-                    return aggValue;
-                }
-            } else {
-                if (byAggEntityClass.isPresent()) {
-                    byAggEntityBeforChange =
+            if (byAggEntityClass.isPresent()) {
+                byAggEntityBeforChange =
                         context.getValueChange(byAggEntity, byAggEntityClass.get().field(byAggFieldId).get());
-                    n = byAggEntityBeforChange.get().getNewValue();
-                    o = byAggEntityBeforChange.get().getOldValue();
-                }
+                n = byAggEntityBeforChange.get().getNewValue();
+                o = byAggEntityBeforChange.get().getOldValue();
             }
         }
         //拿到数据后开始进行判断数据是否符合条件
-        boolean pass = checkEntityByCondition(byAggEntity, context.getFocusClass(),
-            ((Aggregation) aggField.config().getCalculation()).getConditions());
+        boolean pass = checkEntityByCondition(((Aggregation) aggField.config().getCalculation()).getConditions());
         if (!pass) {
             return aggValue;
         }
 
-        //拿到数据后开始运算
-        agg = aggValue;
-        AggregationType aggregationType = aggregation.getAggregationType();
-        Optional<IValue> targetValue = null;
-        if (aggregationType.equals(AggregationType.AVG)) {
-            FunctionStrategy functionStrategy = new AvgFunctionStrategy();
-            return functionStrategy.excute(agg, o, n, context);
-        } else if (aggregationType.equals(AggregationType.MAX)) {
-            FunctionStrategy functionStrategy = new MaxFunctionStrategy();
-            return functionStrategy.excute(agg, o, n, context);
-        } else if (aggregationType.equals(AggregationType.MIN)) {
-            FunctionStrategy functionStrategy = new MinFunctionStrategy();
-            return functionStrategy.excute(agg, o, n, context);
-        } else if (aggregationType.equals(AggregationType.SUM)) {
-            FunctionStrategy functionStrategy = new SumFunctionStrategy();
-            return functionStrategy.excute(agg, o, n, context);
-        } else if (aggregationType.equals(AggregationType.COUNT)) {
-            FunctionStrategy functionStrategy = new CountFunctionStrategy();
-            return functionStrategy.excute(agg, o, n, context);
+        try {
+            //拿到数据后开始运算
+            agg = aggValue;
+            AggregationType aggregationType = aggregation.getAggregationType();
+            if (aggregationType.equals(AggregationType.AVG)) {
+                FunctionStrategy functionStrategy = new AvgFunctionStrategy();
+                return functionStrategy.excute(agg, o, n, context);
+            } else if (aggregationType.equals(AggregationType.MAX)) {
+                FunctionStrategy functionStrategy = new MaxFunctionStrategy();
+                return functionStrategy.excute(agg, o, n, context);
+            } else if (aggregationType.equals(AggregationType.MIN)) {
+                FunctionStrategy functionStrategy = new MinFunctionStrategy();
+                return functionStrategy.excute(agg, o, n, context);
+            } else if (aggregationType.equals(AggregationType.SUM)) {
+                FunctionStrategy functionStrategy = new SumFunctionStrategy();
+                return functionStrategy.excute(agg, o, n, context);
+            } else if (aggregationType.equals(AggregationType.COUNT)) {
+                FunctionStrategy functionStrategy = new CountFunctionStrategy();
+                return functionStrategy.excute(agg, o, n, context);
+            }
+        } catch (Exception ex) {
+            throw new CalculationException(
+                String.format(
+                    "Aggregation calculation exception. [focus-field :%d-%s, message :%s]",
+                    aggField.id(), aggField.name(), ex.getMessage()),
+                ex);
         }
 
-        return targetValue;
+        return Optional.empty();
     }
 
     @Override
@@ -221,7 +200,7 @@ public class AggregationCalculationLogic implements CalculationLogic {
                             if (aggregation.getAggregationType().equals(AggregationType.COUNT)) {
                                 infuenceInner.impact(
                                     participant,
-                                    Participant.Builder.anParticipant()
+                                    CalculationParticipant.Builder.anParticipant()
                                         .withEntityClass(relationshipClass)
                                         .withField(f)
                                         .build()
@@ -229,7 +208,7 @@ public class AggregationCalculationLogic implements CalculationLogic {
                             } else {
                                 infuenceInner.impact(
                                     participant,
-                                    Participant.Builder.anParticipant()
+                                    CalculationParticipant.Builder.anParticipant()
                                         .withEntityClass(relationshipClass)
                                         .withField(fieldId.ID_ENTITY_FIELD)
                                         .build()
@@ -239,7 +218,7 @@ public class AggregationCalculationLogic implements CalculationLogic {
                             if (!aggregation.getAggregationType().equals(AggregationType.COUNT)) {
                                 infuenceInner.impact(
                                     participant,
-                                    Participant.Builder.anParticipant()
+                                    CalculationParticipant.Builder.anParticipant()
                                         .withEntityClass(relationshipClass)
                                         .withField(f)
                                         .build()
@@ -255,22 +234,24 @@ public class AggregationCalculationLogic implements CalculationLogic {
     }
 
     @Override
-    public long[] getMaintainTarget(CalculationContext context, Participant participant, Collection<IEntity> entities)
+    public Collection<AffectedInfo> getMaintainTarget(CalculationContext context, Participant participant,
+                                                      Collection<IEntity> entities)
         throws CalculationException {
         IEntityField entityField = participant.getField();
         Aggregation aggregation = (Aggregation) entityField.config().getCalculation();
         if (entities.isEmpty()) {
-            return new long[ZERO];
+            return Collections.emptyList();
         }
 
-        return entities.stream().mapToLong(e -> {
-            Optional<IValue> aggEntityId = e.entityValue().getValue(aggregation.getRelationId());
+        Collection<AffectedInfo> affectedEntityIds = new ArrayList<>(entities.size());
+        for (IEntity entity : entities) {
+            Optional<IValue> aggEntityId = entity.entityValue().getValue(aggregation.getRelationId());
             if (aggEntityId.isPresent()) {
-                return aggEntityId.get().valueToLong();
-            } else {
-                return 0;
+                affectedEntityIds.add(new AffectedInfo(entity, aggEntityId.get().valueToLong()));
             }
-        }).filter(id -> id > 0).toArray();
+        }
+
+        return affectedEntityIds;
     }
 
     @Override
@@ -281,13 +262,10 @@ public class AggregationCalculationLogic implements CalculationLogic {
     /**
      * 根据条件和id来判断这条数据是否符合聚合范围.
      *
-     * @param entity      被聚合数据.
-     * @param entityClass 被聚合对象.
      * @param conditions  条件信息.
      * @return 是否符合.
      */
-    private boolean checkEntityByCondition(IEntity entity, IEntityClass entityClass,
-                                           Conditions conditions) {
+    private boolean checkEntityByCondition(Conditions conditions) {
         if (conditions == null || conditions.size() == 0) {
             return true;
         }

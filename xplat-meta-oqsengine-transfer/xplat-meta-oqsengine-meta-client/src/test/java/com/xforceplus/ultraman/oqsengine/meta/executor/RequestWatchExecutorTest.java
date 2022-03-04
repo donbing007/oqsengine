@@ -71,14 +71,14 @@ public class RequestWatchExecutorTest extends BaseTest {
         int version = 12345;
         WatchElement w = new WatchElement(appId, env, version, Init);
 
-        requestWatchExecutor.add(w);
+        requestWatchExecutor.add(w, false);
 
         Assertions.assertEquals(1, requestWatchExecutor.watcher().watches().size());
 
         /**
          * 重复添加
          */
-        requestWatchExecutor.add(w);
+        requestWatchExecutor.add(w, false);
         Assertions.assertEquals(1, requestWatchExecutor.watcher().watches().size());
     }
 
@@ -89,7 +89,7 @@ public class RequestWatchExecutorTest extends BaseTest {
         int version = 10;
         WatchElement w = new WatchElement(appId, env, version, Init);
 
-        requestWatchExecutor.add(w);
+        requestWatchExecutor.add(w, false);
 
         /**
          * 设置一个小于当前的版本,将被拒绝

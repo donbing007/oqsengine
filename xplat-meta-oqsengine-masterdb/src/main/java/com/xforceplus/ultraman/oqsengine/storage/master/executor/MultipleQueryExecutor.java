@@ -4,12 +4,11 @@ import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.executor.jdbc.AbstractJdbcTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
-import com.xforceplus.ultraman.oqsengine.storage.master.pojo.MasterStorageEntity;
+import com.xforceplus.ultraman.oqsengine.storage.master.pojo.JsonAttributeMasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -22,9 +21,9 @@ import java.util.List;
  * @version 0.1 2020/11/3 14:37
  * @since 1.8
  */
-public class MultipleQueryExecutor extends AbstractJdbcTaskExecutor<long[], Collection<MasterStorageEntity>> {
+public class MultipleQueryExecutor extends AbstractJdbcTaskExecutor<long[], Collection<JsonAttributeMasterStorageEntity>> {
 
-    public static Executor<long[], Collection<MasterStorageEntity>> build(
+    public static Executor<long[], Collection<JsonAttributeMasterStorageEntity>> build(
         String tableName, TransactionResource<Connection> resource, long timeout) {
         return new MultipleQueryExecutor(tableName, resource, timeout);
     }
@@ -38,7 +37,7 @@ public class MultipleQueryExecutor extends AbstractJdbcTaskExecutor<long[], Coll
     }
 
     @Override
-    public Collection<MasterStorageEntity> execute(long[] ids) throws Exception {
+    public Collection<JsonAttributeMasterStorageEntity> execute(long[] ids) throws Exception {
         String sql = buildSQL(ids.length);
         try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
             int index = 1;
@@ -49,25 +48,26 @@ public class MultipleQueryExecutor extends AbstractJdbcTaskExecutor<long[], Coll
 
             checkTimeout(st);
 
-            List<MasterStorageEntity> entities = new ArrayList<>(ids.length);
+            List<JsonAttributeMasterStorageEntity> entities = new ArrayList<>(ids.length);
+            JsonAttributeMasterStorageEntity storageEntity;
             try (ResultSet rs = st.executeQuery()) {
                 while (rs.next()) {
-                    MasterStorageEntity.Builder builder = MasterStorageEntity.Builder.anStorageEntity()
-                        .withId(rs.getLong(FieldDefine.ID))
-                        .withVersion(rs.getInt(FieldDefine.VERSION))
-                        .withOp(rs.getInt(FieldDefine.OP))
-                        .withCreateTime(rs.getLong(FieldDefine.CREATE_TIME))
-                        .withUpdateTime(rs.getLong(FieldDefine.UPDATE_TIME))
-                        .withOqsMajor(rs.getInt(FieldDefine.OQS_MAJOR))
-                        .withAttribute(rs.getString(FieldDefine.ATTRIBUTE))
-                        .withProfile(rs.getString(FieldDefine.PROFILE));
+                    storageEntity = new JsonAttributeMasterStorageEntity();
+                    storageEntity.setId(rs.getLong(FieldDefine.ID));
+                    storageEntity.setVersion(rs.getInt(FieldDefine.VERSION));
+                    storageEntity.setOp(rs.getInt(FieldDefine.OP));
+                    storageEntity.setCreateTime(rs.getLong(FieldDefine.CREATE_TIME));
+                    storageEntity.setUpdateTime(rs.getLong(FieldDefine.UPDATE_TIME));
+                    storageEntity.setOqsMajor(rs.getInt(FieldDefine.OQS_MAJOR));
+                    storageEntity.setAttribute(rs.getString(FieldDefine.ATTRIBUTE));
+                    storageEntity.setProfile(rs.getString(FieldDefine.PROFILE));
 
                     long[] entityClassIds = new long[FieldDefine.ENTITYCLASS_LEVEL_LIST.length];
                     for (int i = 0; i < entityClassIds.length; i++) {
                         entityClassIds[i] = rs.getLong(FieldDefine.ENTITYCLASS_LEVEL_LIST[i]);
                     }
-                    builder.withEntityClasses(entityClassIds);
-                    entities.add(builder.build());
+                    storageEntity.setEntityClasses(entityClassIds);
+                    entities.add(storageEntity);
                 }
 
                 return entities;

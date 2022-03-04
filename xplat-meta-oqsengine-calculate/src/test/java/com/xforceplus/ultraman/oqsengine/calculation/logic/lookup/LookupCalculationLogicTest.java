@@ -2,8 +2,11 @@ package com.xforceplus.ultraman.oqsengine.calculation.logic.lookup;
 
 import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationContext;
 import com.xforceplus.ultraman.oqsengine.calculation.context.DefaultCalculationContext;
+import com.xforceplus.ultraman.oqsengine.calculation.dto.AffectedInfo;
+import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFactory;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.task.LookupMaintainingTask;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.CalculationParticipant;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
@@ -18,7 +21,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Lookup;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.StaticCalculation;
@@ -187,7 +189,7 @@ public class LookupCalculationLogicTest {
                         .withLeftEntityClassId(targetClassId)
                         .withRightEntityClassId(strongLookupClassId)
                         .withRightEntityClassLoader((id, profile) -> Optional.of(strongLookupEntityClass))
-                        .withRightFamilyEntityClassLoader(id -> Arrays.asList(strongLookupEntityClass))
+                        .withRightFamilyEntityClassLoader((id) -> Arrays.asList(strongLookupEntityClass))
                         .withIdentity(true)
                         .withBelongToOwner(true)
                         .withStrong(true)
@@ -198,7 +200,7 @@ public class LookupCalculationLogicTest {
                         .withLeftEntityClassId(targetClassId)
                         .withRightEntityClassId(weakLookupClassId)
                         .withRightEntityClassLoader((id, profile) -> Optional.of(weakLookupEntityClass))
-                        .withRightFamilyEntityClassLoader(id -> Arrays.asList(weakLookupEntityClass))
+                        .withRightFamilyEntityClassLoader((id) -> Arrays.asList(weakLookupEntityClass))
                         .withIdentity(true)
                         .withBelongToOwner(true)
                         .withStrong(false)
@@ -222,7 +224,7 @@ public class LookupCalculationLogicTest {
                         .withLeftEntityClassId(strongLookupClassId)
                         .withRightEntityClassId(targetClassId)
                         .withRightEntityClassLoader((id, profile) -> Optional.of(targetEntityClass))
-                        .withRightFamilyEntityClassLoader(id -> Arrays.asList(targetEntityClass))
+                        .withRightFamilyEntityClassLoader((id) -> Arrays.asList(targetEntityClass))
                         .withIdentity(true)
                         .withBelongToOwner(false)
                         .withStrong(true)
@@ -244,7 +246,7 @@ public class LookupCalculationLogicTest {
                         .withLeftEntityClassId(weakLookupClassId)
                         .withRightEntityClassId(targetClassId)
                         .withRightEntityClassLoader((id, profile) -> Optional.of(targetEntityClass))
-                        .withRightFamilyEntityClassLoader(id -> Arrays.asList(targetEntityClass))
+                        .withRightFamilyEntityClassLoader((id) -> Arrays.asList(targetEntityClass))
                         .withIdentity(true)
                         .withBelongToOwner(false)
                         .withStrong(false)
@@ -265,14 +267,12 @@ public class LookupCalculationLogicTest {
         IEntity targetEntity = Entity.Builder.anEntity()
             .withId(Long.MAX_VALUE)
             .withEntityClassRef(targetEntityClass.ref())
-            .withEntityValue(
-                EntityValue.build().addValue(
-                    new LongValue(targetLongField, 100)
-                )
+            .withValue(
+                new LongValue(targetLongField, 100)
             ).build();
         Infuence infuence = new Infuence(
             targetEntity,
-                Participant.Builder.anParticipant()
+            CalculationParticipant.Builder.anParticipant()
                 .withEntityClass(targetEntityClass)
                 .withField(targetLongField)
                 .withAffectedEntities(Arrays.asList(targetEntity)).build(),
@@ -288,17 +288,17 @@ public class LookupCalculationLogicTest {
         LookupCalculationLogic logic = new LookupCalculationLogic();
         logic.scope(context, infuence);
 
-        List<Participant> participants = new ArrayList<>();
+        List<Participant> abstractParticipants = new ArrayList<>();
         infuence.scan((parentParticipant, participant, infuenceInner) -> {
 
-            participants.add(participant);
+            abstractParticipants.add(participant);
 
             return InfuenceConsumer.Action.CONTINUE;
         });
 
-        Assertions.assertEquals(2, participants.size());
-        Assertions.assertEquals(targetClassId, participants.get(0).getEntityClass().id());
-        Assertions.assertEquals(weakLookupClassId, participants.get(1).getEntityClass().id());
+        Assertions.assertEquals(2, abstractParticipants.size());
+        Assertions.assertEquals(targetClassId, abstractParticipants.get(0).getEntityClass().id());
+        Assertions.assertEquals(weakLookupClassId, abstractParticipants.get(1).getEntityClass().id());
     }
 
     /**
@@ -314,19 +314,17 @@ public class LookupCalculationLogicTest {
             .withTransaction(tx)
             .withTaskExecutorService(TASK_POOL)
             .withTaskCoordinator(coordinator)
-            .build();
+            .withCalculationLogicFactory(new CalculationLogicFactory()).build();
 
         IEntity targetEntity = Entity.Builder.anEntity()
             .withId(Long.MAX_VALUE)
             .withEntityClassRef(targetEntityClass.ref())
-            .withEntityValue(
-                EntityValue.build().addValue(
-                    new LongValue(targetLongField, 100)
-                )
+            .withValue(
+                new LongValue(targetLongField, 100)
             ).build();
         Infuence infuence = new Infuence(
             targetEntity,
-                Participant.Builder.anParticipant()
+                CalculationParticipant.Builder.anParticipant()
                 .withEntityClass(targetEntityClass)
                 .withField(targetLongField)
                 .withAffectedEntities(Arrays.asList(targetEntity)).build(),
@@ -355,8 +353,9 @@ public class LookupCalculationLogicTest {
 
 
         Participant participant = p.get();
-        long[] ids = logic.getMaintainTarget(context, participant, Arrays.asList(targetEntity));
-        Assertions.assertEquals(0, ids.length);
+        Collection<AffectedInfo> affectedInfos =
+            logic.getMaintainTarget(context, participant, Arrays.asList(targetEntity));
+        Assertions.assertEquals(0, affectedInfos.size());
 
         tx.commit();
 
@@ -388,10 +387,8 @@ public class LookupCalculationLogicTest {
         IEntity targetEntity = Entity.Builder.anEntity()
             .withId(Long.MAX_VALUE)
             .withEntityClassRef(targetEntityClass.ref())
-            .withEntityValue(
-                EntityValue.build().addValue(
-                    new StringValue(targetStringField, "v1")
-                )
+            .withValue(
+                new StringValue(targetStringField, "v1")
             ).build();
 
         // 准备超出事务内可处理的极限数量的实例.
@@ -413,7 +410,7 @@ public class LookupCalculationLogicTest {
 
         Infuence infuence = new Infuence(
             targetEntity,
-                Participant.Builder.anParticipant()
+                CalculationParticipant.Builder.anParticipant()
                 .withEntityClass(targetEntityClass)
                 .withField(targetStringField)
                 .withAffectedEntities(Arrays.asList(targetEntity)).build(),
@@ -437,8 +434,8 @@ public class LookupCalculationLogicTest {
 
 
         Participant participant = p.get();
-        long[] ids = logic.getMaintainTarget(context, participant, Arrays.asList(targetEntity));
-        Assertions.assertEquals(1000, ids.length);
+        Collection<AffectedInfo> affectedInfos = logic.getMaintainTarget(context, participant, Arrays.asList(targetEntity));
+        Assertions.assertEquals(1000, affectedInfos.size());
 
         tx.commit();
 

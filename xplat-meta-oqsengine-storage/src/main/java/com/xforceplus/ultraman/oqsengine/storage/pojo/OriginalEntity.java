@@ -1,9 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.storage.pojo;
 
 import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
+import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.AnyEntityClass;
-import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;
@@ -334,6 +334,7 @@ public class OriginalEntity implements Serializable, Cloneable, Comparable<Origi
             originalEntity.attributes = this.attributes;
             originalEntity.version = this.version;
             originalEntity.tx = this.tx;
+            originalEntity.maintainid = this.maintainid;
 
             return originalEntity;
         }

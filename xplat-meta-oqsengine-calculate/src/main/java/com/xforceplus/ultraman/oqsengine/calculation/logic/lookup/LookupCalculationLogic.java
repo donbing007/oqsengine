@@ -2,19 +2,18 @@ package com.xforceplus.ultraman.oqsengine.calculation.logic.lookup;
 
 import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationContext;
 import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationScenarios;
+import com.xforceplus.ultraman.oqsengine.calculation.dto.AffectedInfo;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationException;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.CalculationLogic;
+import com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.infuence.LookupInfuenceConsumer;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.task.LookupMaintainingTask;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.utils.LookupEntityRefIterator;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Lookup;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LookupValue;
@@ -23,9 +22,11 @@ import com.xforceplus.ultraman.oqsengine.task.TaskCoordinator;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,6 +49,12 @@ public class LookupCalculationLogic implements CalculationLogic {
      * 单个任务处理的实例上限.
      */
     private static final int TASK_LIMIT_NUMBER = 10000;
+
+    private LookupInfuenceConsumer infuenceConsumer;
+
+    public LookupCalculationLogic() {
+        this.infuenceConsumer = new LookupInfuenceConsumer();
+    }
 
     @Override
     public Optional<IValue> calculate(CalculationContext context) throws CalculationException {
@@ -98,37 +105,7 @@ public class LookupCalculationLogic implements CalculationLogic {
     @Override
     public void scope(CalculationContext context, Infuence infuence) {
 
-        infuence.scan((parentParticipant, participant, infuenceInner) -> {
-
-            IEntityClass participantClass = participant.getEntityClass();
-            IEntityField participantField = participant.getField();
-
-            /*
-            迭代所有关系中的字段,判断是否有可能会对当前参与者发起lookup.
-             */
-            for (Relationship r : participantClass.relationship()) {
-                // 应该包含所有定制的元信息.
-                Collection<IEntityClass> relationshipClasss = r.getRightFamilyEntityClasses();
-
-                for (IEntityClass relationshipClass : relationshipClasss) {
-                    relationshipClass.fields().stream()
-                        .filter(f -> f.calculationType() == CalculationType.LOOKUP)
-                        .filter(f -> ((Lookup) f.config().getCalculation()).getFieldId() == participantField.id())
-                        .forEach(f -> {
-                            infuenceInner.impact(
-                                participant,
-                                Participant.Builder.anParticipant()
-                                    .withEntityClass(relationshipClass)
-                                    .withField(f)
-                                    .withAttachment(r.isStrong())
-                                    .build()
-                            );
-                        });
-                }
-            }
-
-            return InfuenceConsumer.Action.CONTINUE;
-        });
+        infuence.scan(this.infuenceConsumer);
     }
 
     /**
@@ -136,13 +113,13 @@ public class LookupCalculationLogic implements CalculationLogic {
      * 所以只会处于影响树的第二层,第一层为触发源.
      */
     @Override
-    public long[] getMaintainTarget(CalculationContext context, Participant participant,
-                                    Collection<IEntity> triggerEntities)
+    public Collection<AffectedInfo> getMaintainTarget(
+        CalculationContext context, Participant abstractParticipant, Collection<IEntity> triggerEntities)
         throws CalculationException {
 
-        Optional attachmentOp = participant.getAttachment();
+        Optional attachmentOp = abstractParticipant.getAttachment();
         if (!attachmentOp.isPresent()) {
-            return new long[0];
+            return Collections.emptyList();
         } else {
 
             // 判断是否为强关系,只有强关系才会在当前事务进行部份更新.
@@ -156,9 +133,9 @@ public class LookupCalculationLogic implements CalculationLogic {
                 LookupMaintainingTask lookupMaintainingTask = LookupMaintainingTask.Builder.anLookupMaintainingTask()
                     .withTargetEntityId(context.getFocusEntity().id())
                     .withTargetClassRef(context.getFocusEntity().entityClassRef())
-                    .withTargetFieldId(((Lookup) participant.getField().config().getCalculation()).getFieldId())
-                    .withLookupClassRef(participant.getEntityClass().ref())
-                    .withLookupFieldId(participant.getField().id())
+                    .withTargetFieldId(((Lookup) abstractParticipant.getField().config().getCalculation()).getFieldId())
+                    .withLookupClassRef(abstractParticipant.getEntityClass().ref())
+                    .withLookupFieldId(abstractParticipant.getField().id())
                     .withLastStartLookupEntityId(0)
                     .withMaxSize(TASK_LIMIT_NUMBER)
                     .build();
@@ -166,7 +143,7 @@ public class LookupCalculationLogic implements CalculationLogic {
 
                 addAfterCommitTask(context, lookupMaintainingTask);
 
-                return new long[0];
+                return Collections.emptyList();
 
             } else {
 
@@ -176,8 +153,8 @@ public class LookupCalculationLogic implements CalculationLogic {
                 LookupEntityRefIterator refIter =
                     new LookupEntityRefIterator(TRANSACTION_LIMIT_NUMBER, TRANSACTION_LIMIT_NUMBER);
                 refIter.setCombinedSelectStorage(context.getResourceWithEx(() -> context.getConditionsSelectStorage()));
-                refIter.setEntityClass(participant.getEntityClass());
-                refIter.setField(participant.getField());
+                refIter.setEntityClass(abstractParticipant.getEntityClass());
+                refIter.setField(abstractParticipant.getField());
                 refIter.setTargetEntityId(context.getFocusEntity().id());
                 refIter.setStartId(0);
 
@@ -185,7 +162,11 @@ public class LookupCalculationLogic implements CalculationLogic {
                 while (refIter.hasNext()) {
                     refs.add(refIter.next());
                 }
-                long[] ids = refs.stream().mapToLong(r -> r.getId()).toArray();
+
+                List<AffectedInfo> affectedInfos =
+                    refs.stream()
+                        .map(r -> new AffectedInfo(context.getFocusEntity(), r.getId()))
+                        .collect(Collectors.toList());
 
                 if (refIter.more()) {
                     LookupMaintainingTask lookupMaintainingTask =
@@ -193,16 +174,17 @@ public class LookupCalculationLogic implements CalculationLogic {
                             .withTargetEntityId(context.getFocusEntity().id())
                             .withTargetClassRef(context.getFocusEntity().entityClassRef())
                             .withTargetFieldId(
-                                ((Lookup) participant.getField().config().getCalculation()).getFieldId())
-                            .withLookupClassRef(participant.getEntityClass().ref())
-                            .withLookupFieldId(participant.getField().id())
-                            .withLastStartLookupEntityId(ids[ids.length - 1])
+                                ((Lookup) abstractParticipant.getField().config().getCalculation()).getFieldId())
+                            .withLookupClassRef(abstractParticipant.getEntityClass().ref())
+                            .withLookupFieldId(abstractParticipant.getField().id())
+                            .withLastStartLookupEntityId(
+                                affectedInfos.get(affectedInfos.size() - 1).getAffectedEntityId())
                             .withMaxSize(TASK_LIMIT_NUMBER)
                             .build();
                     addAfterCommitTask(context, lookupMaintainingTask);
                 }
 
-                return ids;
+                return affectedInfos;
             }
         }
     }

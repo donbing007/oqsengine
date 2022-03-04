@@ -8,9 +8,11 @@ import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.CdcErrorStorage;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.condition.CdcErrorQueryCondition;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.dto.ErrorType;
 import com.xforceplus.ultraman.oqsengine.cdc.mock.CdcInitialization;
+import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.CdcErrorTask;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.FixedStatus;
 import java.util.Collection;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -55,7 +57,12 @@ public class CdcErrorStorageTest extends AbstractCDCTestHelper {
 
     @AfterEach
     public void after() throws Exception {
-        super.destroy(false);
+        super.clear(false);
+    }
+
+    @AfterAll
+    public static void afterAll() {
+        InitializationHelper.destroy();
     }
 
 

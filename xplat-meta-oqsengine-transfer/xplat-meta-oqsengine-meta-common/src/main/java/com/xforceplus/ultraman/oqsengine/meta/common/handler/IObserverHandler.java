@@ -18,4 +18,5 @@ public interface IObserverHandler<T, Q> extends IBasicSyncExecutor {
      * handler是否已处于关闭状态.
      */
     boolean isShutDown();
+
 }

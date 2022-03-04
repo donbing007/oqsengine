@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.cdc.rebuild;
 import static com.xforceplus.ultraman.oqsengine.devops.rebuild.constant.ConstantDefine.ONE_HUNDRED_PERCENT;
 
 import com.google.common.collect.Lists;
+import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.handler.TaskHandler;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.mock.RebuildInitialization;
@@ -29,6 +30,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -47,8 +49,6 @@ public class RebuildIndexTest extends DevOpsTestHelper {
 
     private static ExecutorService asyncThreadPool;
 
-    private boolean ifTest = false;
-
     @BeforeAll
     public static void beforeAll() {
         asyncThreadPool = new ThreadPoolExecutor(batchSize, batchSize,
@@ -61,6 +61,7 @@ public class RebuildIndexTest extends DevOpsTestHelper {
     public static void afterAll() {
         if (null != asyncThreadPool) {
             ExecutorHelper.shutdownAndAwaitTermination(asyncThreadPool, 3600);
+            InitializationHelper.destroy();
         }
     }
 
@@ -74,7 +75,7 @@ public class RebuildIndexTest extends DevOpsTestHelper {
     public void after() throws Exception {
         EntityGenerateTooBar.startPos = 1;
 
-        super.destroy();
+        clear();
     }
 
     /**
@@ -94,11 +95,6 @@ public class RebuildIndexTest extends DevOpsTestHelper {
             EntityGenerateTooBar.now.minusSeconds(1000),
             EntityGenerateTooBar.now.plusSeconds(1000));
 
-        Optional<TaskHandler> taskHandlerOp =
-            RebuildInitialization.getInstance().getTaskExecutor().getActiveTask(EntityGenerateTooBar.LONG_STRING_ENTITY_CLASS);
-
-        Assertions.assertTrue(taskHandlerOp.isPresent());
-
         check(taskInfo, "rebuildIndex");
 
         Collection<TaskHandler> taskHandlers =
@@ -107,11 +103,9 @@ public class RebuildIndexTest extends DevOpsTestHelper {
     }
 
     @Test
+    @Disabled
     public void bigBatchRebuild() throws Exception {
-        if (!ifTest) {
-            return;
-        }
-        int batchSize = 1024 * 200;
+        int batchSize = 1024 * 50;
 
         //  初始化数据
         boolean initOk = initData(
@@ -140,6 +134,7 @@ public class RebuildIndexTest extends DevOpsTestHelper {
     }
 
     private void check(DevOpsTaskInfo devOpsTaskInfo, String errorFunction) throws Exception {
+
         int wakeUp = 0;
         Optional<TaskHandler> taskHandlerOptional =
             RebuildInitialization.getInstance().getTaskExecutor().taskHandler(devOpsTaskInfo.getMaintainid());
@@ -159,7 +154,7 @@ public class RebuildIndexTest extends DevOpsTestHelper {
             wakeUp += sleepForWaitStatusOk(wakeUp, errorFunction);
         }
 
-        Assertions.assertTrue(devOpsTaskInfo.getBatchSize() > 0);
+        Assertions.assertTrue(taskHandler.devOpsTaskInfo().getBatchSize() > 0);
         Assertions.assertTrue(taskHandler.isDone());
         Assertions.assertEquals(ONE_HUNDRED_PERCENT, taskHandler.getProgressPercentage());
     }
@@ -211,7 +206,7 @@ public class RebuildIndexTest extends DevOpsTestHelper {
 
         try {
             if (!countDownLatch.await(300, TimeUnit.SECONDS)) {
-                throw new SQLException("Query failed, timeout.");
+                throw new SQLException("batch failed, timeout.");
             }
         } catch (InterruptedException e) {
             throw new SQLException(e.getMessage(), e);

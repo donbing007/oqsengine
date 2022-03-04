@@ -93,6 +93,22 @@ public interface IEntityValue extends Cloneable {
     }
 
     /**
+     * 判断是否为脏.
+     *
+     * @return 是否为脏.
+     */
+    public boolean isDirty();
+
+    /**
+     * 设置状态为干净.
+     */
+    public default void neat() {
+        for (IValue v : values()) {
+            v.neat();
+        }
+    }
+
+    /**
      * 克隆.
      */
     public Object clone() throws CloneNotSupportedException;

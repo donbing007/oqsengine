@@ -31,6 +31,8 @@ import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.vavr.control.Either;
 import java.sql.SQLException;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
@@ -120,6 +122,9 @@ public class ChangelogConfiguration {
         return new ManyToOneRelationChangelog();
     }
 
+    /**
+     * id生成器.
+     */
     @Bean
     public LongIdGenerator snowflakeIdGenerator() {
 
@@ -147,6 +152,9 @@ public class ChangelogConfiguration {
         };
     }
 
+    /**
+     * 版本生成器.
+     */
     @Bean
     public LongIdGenerator versionIdGenerator() {
 
@@ -169,6 +177,9 @@ public class ChangelogConfiguration {
         };
     }
 
+    /**
+     * 快照储存.
+     */
     @Bean
     public SnapshotStorage snapshotStorage() {
         return new SnapshotStorage() {
@@ -184,7 +195,9 @@ public class ChangelogConfiguration {
         };
     }
 
-    //mock Changelog storage
+    /**
+     * mock Changelog storage.
+     */
     @Bean
     public ChangelogStorage changelogStorage(ChangelogExample example) {
         return new ChangelogStorage() {
@@ -200,6 +213,9 @@ public class ChangelogConfiguration {
         };
     }
 
+    /**
+     * 元数据管理器.
+     */
     @Bean
     public MetaManager metaManager(ChangelogExample example) {
         return new MetaManager() {
@@ -210,12 +226,22 @@ public class ChangelogConfiguration {
             }
 
             @Override
-            public Optional<IEntityClass> loadHistory(long id, int version) {
-                return Optional.empty();
+            public Optional<IEntityClass> load(long id, int version, String profile) {
+                return Optional.ofNullable(example.getEntityClassById(id));
+            }
+
+            @Override
+            public Collection<IEntityClass> withProfilesLoad(long id) {
+                return Collections.singletonList(example.getEntityClassById(id));
             }
 
             @Override
             public int need(String appId, String env) {
+                return 0;
+            }
+
+            @Override
+            public int need(String appId, String env, boolean overWrite) {
                 return 0;
             }
 
@@ -225,13 +251,23 @@ public class ChangelogConfiguration {
             }
 
             @Override
-            public boolean dataImport(String appId, String env, int version, String content) {
+            public boolean metaImport(String appId, String env, int version, String content) {
                 return true;
             }
 
             @Override
             public Optional<MetaMetrics> showMeta(String appId) throws Exception {
                 return Optional.empty();
+            }
+
+            @Override
+            public int reset(String appId, String env) {
+                return 0;
+            }
+
+            @Override
+            public boolean remove(String appId) {
+                return true;
             }
         };
     }

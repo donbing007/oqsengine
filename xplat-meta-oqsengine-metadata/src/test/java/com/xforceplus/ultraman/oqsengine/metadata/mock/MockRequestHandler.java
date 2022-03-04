@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.metadata.mock;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
+import com.xforceplus.ultraman.oqsengine.meta.common.monitor.MetricsRecorder;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.executor.IRequestWatchExecutor;
@@ -69,6 +70,16 @@ public class MockRequestHandler implements IRequestHandler {
     @Override
     public void ready() {
 
+    }
+
+    @Override
+    public boolean reset(WatchElement watchElement) {
+        return true;
+    }
+
+    @Override
+    public MetricsRecorder metricsRecorder() {
+        return null;
     }
 
 

@@ -5,8 +5,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.pojo.SphinxQLWhere;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.AbstractSphinxQLConditionBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.AbstractConditionsBuilder;
+import com.xforceplus.ultraman.oqsengine.storage.query.ConditionBuilder;
 
 /**
  * 没有范围查询,没有or 条件.主要利用全文搜索字段进行搜索.
@@ -31,7 +31,7 @@ public class NoOrNoRanageConditionsBuilder extends AbstractConditionsBuilder {
             },
             value -> {
                 Condition condition = value.getCondition();
-                AbstractSphinxQLConditionBuilder builder =
+                ConditionBuilder<Condition, String> builder =
                     getConditionQueryBuilderFactory().getQueryBuilder(condition, true);
                 where.addMatch("(@")
                     .addMatch(FieldDefine.ATTRIBUTEF)

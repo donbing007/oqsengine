@@ -67,12 +67,14 @@ public class CdcInitialization implements BeanInitialization {
 
     @Override
     public void init() throws Exception {
-        singleCDCConnector = new SingleCDCConnector();
-        singleCDCConnector.init(System.getProperty(EnvMockConstant.CANAL_HOST),
-            Integer.parseInt(System.getProperty(EnvMockConstant.CANAL_PORT)),
+        singleCDCConnector = new SingleCDCConnector(
+            System.getProperty(EnvMockConstant.CANAL_HOST),
             System.getProperty(EnvMockConstant.CANAL_DESTINATION),
             System.getProperty(EnvMockConstant.CANAL_USER),
-            System.getProperty(EnvMockConstant.CANAL_PASSWORD));
+            System.getProperty(EnvMockConstant.CANAL_PASSWORD),
+            Integer.parseInt(System.getProperty(EnvMockConstant.CANAL_PORT)));
+
+        singleCDCConnector.init();
 
         initCdcErrors();
 
@@ -101,6 +103,10 @@ public class CdcInitialization implements BeanInitialization {
         consumerService = null;
 
         instance = null;
+    }
+
+    public SphinxSyncExecutor sphinxSyncExecutor() {
+        return sphinxSyncExecutor;
     }
 
     /**

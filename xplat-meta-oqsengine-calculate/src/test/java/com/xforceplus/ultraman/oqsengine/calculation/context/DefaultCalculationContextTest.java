@@ -2,7 +2,6 @@ package com.xforceplus.ultraman.oqsengine.calculation.context;
 
 import com.xforceplus.ultraman.oqsengine.event.EventBus;
 import com.xforceplus.ultraman.oqsengine.idgenerator.client.BizIDGenerator;
-import com.xforceplus.ultraman.oqsengine.lock.MultiResourceLocker;
 import com.xforceplus.ultraman.oqsengine.lock.ResourceLocker;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
@@ -31,7 +30,6 @@ public class DefaultCalculationContextTest {
     @Test
     public void testClone() throws Exception {
         MetaManager metaManager = Mockito.mock(MetaManager.class);
-        MultiResourceLocker multiResourceLocker = Mockito.mock(MultiResourceLocker.class);
         ResourceLocker resourceLocker = Mockito.mock(ResourceLocker.class);
         ExecutorService executorService = Mockito.mock(ExecutorService.class);
         EventBus eventBus = Mockito.mock(EventBus.class);
@@ -45,7 +43,6 @@ public class DefaultCalculationContextTest {
 
         DefaultCalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()
             .withMetaManager(metaManager)
-            .withMultiResourceLocker(multiResourceLocker)
             .withResourceLocker(resourceLocker)
             .withTaskExecutorService(executorService)
             .withEventBus(eventBus)
@@ -71,10 +68,9 @@ public class DefaultCalculationContextTest {
         context.focusEntity(entity, entityClass);
         context.putEntityToCache(entity);
 
-        CalculationContext cloneContext = (CalculationContext) context.clone();
+        CalculationContext cloneContext = context.copy();
 
         Assertions.assertSame(metaManager, cloneContext.getMetaManager().get());
-        Assertions.assertSame(multiResourceLocker, cloneContext.getMultiResourceLocker().get());
         Assertions.assertSame(resourceLocker, cloneContext.getResourceLocker().get());
         Assertions.assertSame(executorService, cloneContext.getTaskExecutorService().get());
         Assertions.assertSame(eventBus, cloneContext.getEvnetBus().get());

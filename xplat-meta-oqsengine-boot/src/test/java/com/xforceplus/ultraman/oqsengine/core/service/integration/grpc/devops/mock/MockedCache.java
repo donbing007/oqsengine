@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.core.service.integration.grpc.devops.m
 
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.xforceplus.ultraman.oqsengine.event.payload.meta.MetaChangePayLoad;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.CacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MetaInitialization;
@@ -30,7 +31,7 @@ public class MockedCache {
     /**
      * 元信息储存保存.
      */
-    public static void entityClassStorageSave(String expectedAppId,
+    public static int entityClassStorageSave(String expectedAppId,
                                               int expectedVersion) throws JsonProcessingException {
 
         List<EntityClassStorage> entityClassStorageList = new ArrayList<>();
@@ -38,11 +39,16 @@ public class MockedCache {
 
         initEntityStorage(entityClassStorageList, expectedEntityStorageList);
 
+        cacheExecutor.appEnvSet(expectedAppId, "test");
 
         //  set storage
-        if (!cacheExecutor.save(expectedAppId, expectedVersion, entityClassStorageList, new ArrayList<>())) {
+        MetaChangePayLoad metaChangePayLoad =
+            cacheExecutor.save(expectedAppId, expectedVersion, entityClassStorageList);
+        if (null == metaChangePayLoad) {
             throw new RuntimeException("save error.");
         }
+
+        return entityClassStorageList.size();
     }
 
 

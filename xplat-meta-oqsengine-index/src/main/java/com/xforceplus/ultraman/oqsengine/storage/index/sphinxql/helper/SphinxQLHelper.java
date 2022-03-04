@@ -172,7 +172,7 @@ public class SphinxQLHelper {
     /**
      * 构造 sphinxQL 全文索引中精确查询语句.
      *
-     * @param value 目标字段.
+     * @param value        目标字段.
      * @param useGroupName 是否userGroupName.
      * @return 结果.
      */
@@ -261,7 +261,7 @@ public class SphinxQLHelper {
     /**
      * 计算sphinxql的查询数据总量.必须紧跟查询语句.
      *
-     * @param statement 当前语句.
+     * @param statement 当前资源.
      * @return 数量.
      * @throws SQLException 发生异常.
      */
@@ -295,7 +295,8 @@ public class SphinxQLHelper {
     /**
      * strings value通用的转换(StorageValue)逻辑.
      */
-    public static StorageValue stringsStorageConvert(String storageName, String originValue, boolean attachment, boolean locationAppend) {
+    public static StorageValue stringsStorageConvert(String storageName, String originValue, boolean attachment,
+                                                     boolean locationAppend) {
 
         String logicName = AnyStorageValue.getInstance(storageName).logicName();
 
@@ -356,7 +357,8 @@ public class SphinxQLHelper {
     /**
      * 对condition进行超长字符处理.
      */
-    public static Tuple2<String, Boolean> stringConditionFormat(String word, ShortStorageName shortStorageName, boolean useGroupName) {
+    public static Tuple2<String, Boolean> stringConditionFormat(String word, ShortStorageName shortStorageName,
+                                                                boolean useGroupName) {
         String[] values = longStringWrap(word);
 
         StringBuilder stringBuilder = new StringBuilder();

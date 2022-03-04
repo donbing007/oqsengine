@@ -7,7 +7,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ValueConditionNode;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.SqlKeywordDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.pojo.SphinxQLWhere;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.AbstractSphinxQLConditionBuilder;
+import com.xforceplus.ultraman.oqsengine.storage.query.ConditionBuilder;
 
 /**
  * 所有连接符都是 and,但是比较符号出现了大于小于等.
@@ -48,7 +48,7 @@ public class NoOrHaveRanageConditionsBuilder extends NoOrNoRanageConditionsBuild
 
                 Condition condition = valueNode.getCondition();
                 if (condition.isRange()) {
-                    AbstractSphinxQLConditionBuilder builder =
+                    ConditionBuilder<Condition, String> builder =
                         getConditionQueryBuilderFactory().getQueryBuilder(condition, false);
                     where.addAttrFilter(builder.build(condition));
                 } else {

@@ -9,11 +9,12 @@ import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.StorageMetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.CacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.DefaultCacheExecutor;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.model.ClientModel;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.model.OfflineModel;
 import com.xforceplus.ultraman.oqsengine.metadata.executor.EntityClassSyncExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.executor.ExpireExecutor;
-import com.xforceplus.ultraman.oqsengine.metadata.handler.DefaultEntityClassFormatHandler;
-import com.xforceplus.ultraman.oqsengine.metadata.handler.EntityClassFormatHandler;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.EnhancedSyncExecutor;
+import com.xforceplus.ultraman.oqsengine.metadata.utils.offline.OffLineMetaHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -45,19 +46,20 @@ public class MetaManagerConfiguration {
     @ConditionalOnExpression("'${meta.grpc.type}'.equals('client') || '${meta.grpc.type}'.equals('offline')")
     public MetaManager productMetaManager(@Value("${meta.grpc.type:offline}") String type,
                                           @Value("${meta.load.path:}") String loadPath) {
-        StorageMetaManager storageMetaManager = new StorageMetaManager();
+
         if (type.equals("offline")) {
             logger.info("init storageMetaManager, use offline model.");
-            storageMetaManager.isOffLineUse();
-        }
-        logger.info("init storageMetaManager success.");
 
-        if (null != loadPath && !loadPath.isEmpty() && !loadPath.equals("-")) {
-            logger.info("init entityClassSyncExecutor load-local-path : {}", loadPath);
-            storageMetaManager.setLoadPath(loadPath);
+            String path = "";
+            if (OffLineMetaHelper.isValidPath(loadPath)) {
+                path = loadPath;
+            }
+            logger.info("init entityClassSyncExecutor load-local-path : {}", path);
+            return new StorageMetaManager(new OfflineModel(path));
         }
 
-        return storageMetaManager;
+        logger.info("init storageMetaManager, use client model.");
+        return new StorageMetaManager(new ClientModel());
     }
 
     @Bean("cacheExecutor")
@@ -73,7 +75,6 @@ public class MetaManagerConfiguration {
      * 增加的SyncExecutor会记录bocp同步过来的原始数据内容，供测试项目进行assert比较.
      */
     @Bean("grpcSyncExecutor")
-    @DependsOn("autoFillUpgradeListener")
     @ConditionalOnExpression("'${meta.grpc.type}'.equals('client') || '${meta.grpc.type}'.equals('offline')")
     public SyncExecutor grpcSyncExecutor(
         @Value("${metadata.enhanced:false}") boolean enhanced) {
@@ -95,8 +96,8 @@ public class MetaManagerConfiguration {
     public SyncExecutor mockSyncExecutor() {
         return new SyncExecutor() {
             @Override
-            public boolean sync(String appId, int version, EntityClassSyncRspProto entityClassSyncRspProto) {
-                return true;
+            public void sync(String appId, int version, EntityClassSyncRspProto entityClassSyncRspProto) {
+                return;
             }
 
             @Override
@@ -110,12 +111,5 @@ public class MetaManagerConfiguration {
     @ConditionalOnExpression("'${meta.grpc.type}'.equals('client') || '${meta.grpc.type}'.equals('offline')")
     public IDelayTaskExecutor delayTaskExecutor() {
         return new ExpireExecutor();
-    }
-
-
-    @Bean("entityClassFormatHandler")
-    @ConditionalOnExpression("'${meta.grpc.type}'.equals('client') || '${meta.grpc.type}'.equals('offline')")
-    public EntityClassFormatHandler entityClassFormatHandler() {
-        return new DefaultEntityClassFormatHandler();
     }
 }

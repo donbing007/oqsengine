@@ -8,6 +8,7 @@ import io.grpc.netty.NettyServerBuilder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +29,7 @@ import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.Ele
  * date : 2021/3/5
  * @since : 1.8
  */
+@Disabled
 @ActiveProfiles("clientLocal")
 @ExtendWith({SpringExtension.class})
 @SpringBootTest(classes = SpringBootApp.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -40,31 +42,24 @@ public class TestClientStartLocal {
 
     @BeforeEach
     public void before() throws InterruptedException {
-        if (IF_TEST) {
             buildServer();
             Thread.sleep(1_000);
-        }
     }
 
     @AfterEach
     public void after() throws InterruptedException {
-        if (IF_TEST) {
             ThreadUtils.shutdown(serverThread, 1);
-
             Thread.sleep(3_000);
-        }
     }
 
     @Test
     public void test() throws InterruptedException {
-        if (IF_TEST) {
             boolean ret =
                     requestHandler.register(new WatchElement("7", "0", -1, Register));
 
             Assertions.assertTrue(ret);
 
             Thread.sleep(5_000);
-        }
     }
 
     private void buildServer() {

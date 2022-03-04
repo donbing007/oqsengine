@@ -35,7 +35,7 @@ public abstract class AbstractCDCTestHelper extends AbstractContainerExtends {
         }
     }
 
-    protected void destroy(boolean isStopRunner) throws Exception {
+    protected void clear(boolean isStopRunner) throws Exception {
         if (isStopRunner) {
             consumerRunner.shutdown();
         }
@@ -43,6 +43,9 @@ public abstract class AbstractCDCTestHelper extends AbstractContainerExtends {
             mockRedisCallbackService.reset();
         }
         InitializationHelper.clearAll();
+    }
+
+    public static void destroy() {
         InitializationHelper.destroy();
     }
 
@@ -51,8 +54,8 @@ public abstract class AbstractCDCTestHelper extends AbstractContainerExtends {
         mockRedisCallbackService = new MockRedisCallbackService(StorageInitialization.getInstance().getCommitIdStatusService());
         ReflectionTestUtils.setField(cdcMetricsService, "cdcMetricsCallback", mockRedisCallbackService);
 
-        return new ConsumerRunner(CdcInitialization.getInstance().getConsumerService(), cdcMetricsService, CdcInitialization.getInstance().getSingleCDCConnector(), RebuildInitialization
-            .getInstance().getTaskExecutor());
+        return new ConsumerRunner(CdcInitialization.getInstance().getConsumerService(), cdcMetricsService,
+            CdcInitialization.getInstance().getSingleCDCConnector(), RebuildInitialization.getInstance().getTaskExecutor());
     }
 
     protected CDCDaemonService initDaemonService() throws Exception {

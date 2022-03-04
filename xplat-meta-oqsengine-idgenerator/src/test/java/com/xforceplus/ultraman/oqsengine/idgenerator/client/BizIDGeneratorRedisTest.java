@@ -35,6 +35,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import javax.sql.DataSource;
 import org.apache.commons.compress.utils.Lists;
 import org.junit.BeforeClass;
@@ -45,8 +46,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.redisson.Redisson;
+import org.redisson.api.RAtomicLong;
 import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
+import org.redisson.client.codec.Codec;
+import org.redisson.codec.JsonJacksonCodec;
 import org.redisson.config.Config;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
@@ -75,11 +79,13 @@ public class BizIDGeneratorRedisTest {
     private static final String LINEAR_BIZ_TYPE_2 = "bizLinear2";
     private static final String LINEAR_BIZ_TYPE_3 = "bizLinear3";
     private static final String LINER_BIZ_TYPE_4 = "bizLinear4";
+    private static final String LINER_BIZ_TYPE_5 = "bizLinear5";
 
     private RedissonClient redissonClient;
     private DataSource dataSource;
     private ExecutorService executorService;
     private DataSourcePackage dataSourcePackage;
+    private PatternParserManager manager;
 
 
     @BeforeClass
@@ -139,10 +145,12 @@ public class BizIDGeneratorRedisTest {
         String redisIp = System.getProperty("REDIS_HOST");
         int redisPort = Integer.parseInt(System.getProperty("REDIS_PORT"));
         config.useSingleServer().setAddress(String.format("redis://%s:%s", redisIp, redisPort));
+        Codec codec = new JsonJacksonCodec();
+        config.setCodec(codec);
         redissonClient = Redisson.create(config);
 
 
-        PatternParserManager manager = new PatternParserManager();
+        manager = new PatternParserManager();
         NumberPatternParser parser = new NumberPatternParser();
         DatePatternParser datePattenParser = new DatePatternParser();
         manager.registVariableParser(parser);
@@ -208,6 +216,18 @@ public class BizIDGeneratorRedisTest {
             .build();
         int ret4 = storage1.build(info4);
         Assertions.assertEquals(ret4, 1);
+
+
+        SegmentInfo info5 = SegmentInfo.builder().withBeginId(1L).withBizType(LINER_BIZ_TYPE_5)
+            .withCreateTime(new Timestamp(System.currentTimeMillis()))
+            .withMaxId(0L).withPatten("{yyyy}-{MM}-{dd}-{HH}:{0000}").withMode(2).withStep(1000)
+            .withUpdateTime(new Timestamp(System.currentTimeMillis()))
+            .withVersion(1L)
+            .withResetable(1)
+            .withPatternKey("")
+            .build();
+        int ret5 = storage1.build(info5);
+        Assertions.assertEquals(ret5, 1);
     }
 
     @Test
@@ -243,6 +263,42 @@ public class BizIDGeneratorRedisTest {
         bizId = bizIDGenerator2.nextId(LINEAR_BIZ_TYPE_2);
         String expected2 = LocalDateTime.now().format(formatter) + ":00111";
         Assertions.assertEquals(expected2, bizId);
+    }
+
+    @Test
+    public void testExpire() throws InterruptedException {
+       RAtomicLong key1 =  redissonClient.getAtomicLong("key1");
+       Assertions.assertEquals(key1.remainTimeToLive(),-2);
+       System.out.println(key1.incrementAndGet());
+       Assertions.assertEquals(key1.remainTimeToLive(),-1);
+       key1.expire(5, TimeUnit.SECONDS);
+       System.out.println("第3次："+key1.remainTimeToLive());
+       System.out.println(key1.incrementAndGet());
+       Thread.sleep(6000);
+       Assertions.assertEquals(key1.remainTimeToLive(),-2);
+       System.out.println(key1.incrementAndGet());
+       Assertions.assertEquals(key1.remainTimeToLive(),-1);
+
+    }
+
+    @Test
+    public void testDistributeBizIDGeneratorWithReset() {
+        String bizId = "";
+        for(int i=0;i<10;i++) {
+            bizId = bizIDGenerator2.nextId(LINER_BIZ_TYPE_5);
+        }
+        System.out.println(bizId);
+        DatePatternParser datePattenParser = new DatePatternParser();
+        LocalDateTime localDateTime = LocalDateTime.now().plusHours(1);
+        DatePatternParser spy = Mockito.spy(datePattenParser);
+        doReturn(localDateTime).when(spy).getLocalDate();
+        manager.unRegist(DATE_PATTEN_PARSER);
+        manager.registVariableParser(spy);
+        bizId = bizIDGenerator2.nextId(LINER_BIZ_TYPE_5);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH");
+        String dest = localDateTime.format(formatter) + ":0001";
+        Assertions.assertEquals(dest,bizId);
+
     }
 
     private DataSource buildDataSource(String file) throws SQLException {

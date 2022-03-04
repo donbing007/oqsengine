@@ -8,9 +8,11 @@ import com.xforceplus.ultraman.oqsengine.cdc.AbstractCDCTestHelper;
 import com.xforceplus.ultraman.oqsengine.cdc.CanalEntryTools;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
 import com.xforceplus.ultraman.oqsengine.cdc.mock.CdcInitialization;
+import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import java.util.ArrayList;
 import java.util.List;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,7 +49,12 @@ public class MessageUnpackBenchmarkTest extends AbstractCDCTestHelper {
 
     @AfterEach
     public void after() throws Exception {
-        super.destroy(true);
+        super.clear(true);
+    }
+
+    @AfterAll
+    public static void afterAll() {
+        InitializationHelper.destroy();
     }
 
     @Test

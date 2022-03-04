@@ -3,7 +3,10 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Objects;
 
 /**
@@ -14,7 +17,10 @@ import java.util.Objects;
  */
 public class Entity implements IEntity, Serializable {
 
-    private boolean dirty;
+    /*
+    判断是否已经成功调用过delete方法.
+     */
+    private boolean deleted;
     /*
      * 数据版本
      */
@@ -55,13 +61,12 @@ public class Entity implements IEntity, Serializable {
     }
 
     @Override
-    public IEntityValue entityValue() {
-        return entityValue;
-    }
+    public IEntityValue  entityValue() {
+        if (this.entityValue == null) {
+            this.entityValue = new EntityValue(this);
+        }
 
-    @Override
-    public void resetEntityValue(IEntityValue enetityValue) {
-        this.entityValue = enetityValue;
+        return this.entityValue;
     }
 
     @Override
@@ -100,6 +105,23 @@ public class Entity implements IEntity, Serializable {
         return this.major;
     }
 
+    @Override
+    public IEntity copy() {
+        Entity cloneEntity = new Entity();
+        cloneEntity.id = this.id;
+        cloneEntity.entityClassRef = this.entityClassRef;
+
+        cloneEntity.entityValue = new EntityValue(cloneEntity);
+        cloneEntity.entityValue.addValues(this.entityValue.values());
+
+        cloneEntity.version = this.version;
+        cloneEntity.major = this.major;
+        cloneEntity.time = this.time;
+        cloneEntity.maintainid = this.maintainid;
+
+        return cloneEntity;
+    }
+
     public Entity() {
     }
 
@@ -113,16 +135,6 @@ public class Entity implements IEntity, Serializable {
         this.id = id;
     }
 
-    @Override
-    public Object clone() throws CloneNotSupportedException {
-        return Entity.Builder.anEntity()
-            .withId(id)
-            .withEntityClassRef(entityClassRef)
-            .withEntityValue((IEntityValue) entityValue().clone())
-            .withVersion(version)
-            .withTime(time)
-            .withMajor(major).build();
-    }
 
     @Override
     public void restMaintainId(long maintainId) {
@@ -130,18 +142,14 @@ public class Entity implements IEntity, Serializable {
     }
 
     @Override
-    public boolean isDirty() {
-        return this.dirty;
+    public void delete() {
+        this.deleted = true;
+        this.neat();
     }
 
     @Override
-    public void dirty() {
-        this.dirty = true;
-    }
-
-    @Override
-    public void neat() {
-        this.dirty = false;
+    public boolean isDeleted() {
+        return this.deleted;
     }
 
     @Override
@@ -168,7 +176,7 @@ public class Entity implements IEntity, Serializable {
         private long id;
         private long time;
         private EntityClassRef entityClassRef;
-        private IEntityValue entityValue;
+        private Collection<IValue> values;
         private int version;
         private long maintainid;
         private int major;
@@ -195,11 +203,6 @@ public class Entity implements IEntity, Serializable {
             return this;
         }
 
-        public Builder withEntityValue(IEntityValue entityValue) {
-            this.entityValue = entityValue;
-            return this;
-        }
-
         public Builder withVersion(int version) {
             this.version = version;
             return this;
@@ -216,6 +219,36 @@ public class Entity implements IEntity, Serializable {
         }
 
         /**
+         * 构造时指定字段值.
+         *
+         * @param values 值列表.
+         * @return 构造器.
+         */
+        public Builder withValues(Collection<IValue> values) {
+            if (this.values == null) {
+                this.values = new ArrayList<>();
+            }
+
+            this.values.addAll(values);
+            return this;
+        }
+
+        /**
+         * 构造时指定字段值.
+         *
+         * @param value 单个字段值.
+         * @return 构造器.
+         */
+        public Builder withValue(IValue value) {
+            if (this.values == null) {
+                this.values = new ArrayList<>();
+            }
+
+            this.values.add(value);
+            return this;
+        }
+
+        /**
          * 构造Entity实例.
          *
          * @return 实例.
@@ -226,9 +259,11 @@ public class Entity implements IEntity, Serializable {
             entity.version = this.version;
             entity.major = this.major;
             entity.time = this.time;
-            entity.entityValue = this.entityValue;
             entity.entityClassRef = this.entityClassRef;
             entity.id = this.id;
+            if (this.values != null) {
+                entity.entityValue().addValues(values);
+            }
             return entity;
         }
     }

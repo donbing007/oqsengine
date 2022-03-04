@@ -185,7 +185,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
     @Override
     public long clean(long entityClassId, long maintainId, long start, long end) throws SQLException {
         CleanExecutor executor = CleanExecutor.Builder.anCleanExecutor()
-            .withEntityClass(entityClassId)
+            .withEntityClassId(entityClassId)
             .withStart(start)
             .withEnd(end)
             .withIndexNames(indexWriteIndexNameSelector.selects())

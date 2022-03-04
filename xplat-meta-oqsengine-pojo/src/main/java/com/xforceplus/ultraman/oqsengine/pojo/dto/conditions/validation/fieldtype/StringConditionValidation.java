@@ -18,6 +18,8 @@ public class StringConditionValidation implements ConditionValidation {
             case EQUALS:
             case NOT_EQUALS:
             case MULTIPLE_EQUALS:
+            case IS_NULL:
+            case IS_NOT_NULL:
             case LIKE: {
                 return true;
             }

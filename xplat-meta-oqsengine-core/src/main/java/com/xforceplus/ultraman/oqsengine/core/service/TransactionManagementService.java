@@ -49,7 +49,7 @@ public interface TransactionManagementService {
      * @param id 事务 id.
      * @throws SQLException 恢复失败.
      */
-    void restore(long id) throws SQLException;
+    boolean restore(long id) throws SQLException;
 
     /**
      * 提交一个事务.

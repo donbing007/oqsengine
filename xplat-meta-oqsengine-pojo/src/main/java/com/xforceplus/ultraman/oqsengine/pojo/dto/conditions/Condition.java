@@ -143,6 +143,15 @@ public class Condition implements Serializable {
         return range;
     }
 
+    /**
+     * 是否判断属性是否为null或者不为null.
+     *
+     * @return true 是, false 不是.
+     */
+    public boolean isNullQuery() {
+        return ConditionOperator.IS_NOT_NULL == operator || ConditionOperator.IS_NULL == operator;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -215,6 +224,11 @@ public class Condition implements Serializable {
     private void checkRange() {
 
         if (field.config().isIdentifie()) {
+            range = true;
+            return;
+        }
+
+        if (ConditionOperator.IS_NULL == getOperator() || ConditionOperator.IS_NOT_NULL == getOperator()) {
             range = true;
             return;
         }

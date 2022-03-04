@@ -2,7 +2,6 @@ package com.xforceplus.ultraman.oqsengine.common.load;
 
 import com.xforceplus.ultraman.oqsengine.common.load.loadfactor.LoadFactor;
 import java.util.Collection;
-import javax.annotation.Resource;
 
 /**
  * 默认的系统负载评价器.
@@ -18,7 +17,6 @@ public class DefaultSystemLoadEvaluator implements SystemLoadEvaluator {
     // 所有最大负载.
     private double max;
 
-    @Resource
     private Collection<LoadFactor> loadFactors;
 
     /**
@@ -30,7 +28,7 @@ public class DefaultSystemLoadEvaluator implements SystemLoadEvaluator {
         max = loadFactors.stream()
             .filter(
                 loadFactor ->
-                    loadFactor.weight() >= LoadFactor.MIN_WEIGHT)
+                    loadFactor.weight() > LoadFactor.MIN_WEIGHT)
             .mapToDouble(loadFactor -> {
                 double weight = loadFactor.weight();
                 if (weight > LoadFactor.MAX_WEIGHT) {
@@ -49,7 +47,7 @@ public class DefaultSystemLoadEvaluator implements SystemLoadEvaluator {
         double value = loadFactors.stream()
             .filter(
                 loadFactor ->
-                    loadFactor.weight() >= LoadFactor.MIN_WEIGHT)
+                    loadFactor.weight() > LoadFactor.MIN_WEIGHT)
             .mapToDouble(loadFactor -> {
                 double load = loadFactor.now();
                 double weight = loadFactor.weight();

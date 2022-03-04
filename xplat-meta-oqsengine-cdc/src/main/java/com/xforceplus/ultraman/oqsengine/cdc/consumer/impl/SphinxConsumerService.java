@@ -189,7 +189,7 @@ public class SphinxConsumerService implements ConsumerService {
                 //  check need sync
                 //  由于主库同步后会在最后commit时再更新一次commit_id，所以对于binlog同步来说，
                 //  只需同步commit_id小于Long.MAX_VALUE的row
-                if (null == columns || columns.size() == EMPTY_COLUMN_SIZE) {
+                if (columns.size() == EMPTY_COLUMN_SIZE) {
                     throw new SQLException(
                         String.format("batch : %d, columns must not be null", cdcMetrics.getBatchId()));
                 }

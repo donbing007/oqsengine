@@ -11,7 +11,7 @@ create table devopstasks
      createtime bigint not null comment '任务创建时间',
      updatetime bigint default null comment '任务结束时间',
      message varchar(512) default null comment '任务摘要',
-     startid bigint default 0 not null comment '起始ID',
+     startid bigint default 0 not null comment '已用作记录失败的数量',
      constraint devopstasks_pk0 primary key (maintainid),
      key devopstasks_k0 (entity)
 ) ENGINE=InnoDB DEFAULT CHARSET = utf8mb4;

@@ -38,11 +38,11 @@ import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.dto.RawEntry;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
+import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.CdcErrorTask;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.DevOpsCdcMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.FixedStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.utils.OriginalEntityUtils;
@@ -295,11 +295,11 @@ public class SphinxSyncExecutor implements SyncExecutor {
     private IEntityClass getEntityClass(
         long id, Map<String, IEntityClass> entityClassMap, List<CanalEntry.Column> columns) throws SQLException {
 
-        long entityId = getEntity(columns);
+        long entityClassId = getEntity(columns);
 
-        if (entityId > ZERO) {
+        if (entityClassId > ZERO) {
             String profile = getStringWithoutNullCheck(columns, PROFILE);
-            String key = toClassKeyWithProfile(id, profile);
+            String key = toClassKeyWithProfile(entityClassId, profile);
 
             //  读取当前批次cache
             IEntityClass entityClass = entityClassMap.get(key);
@@ -309,7 +309,7 @@ public class SphinxSyncExecutor implements SyncExecutor {
 
             //  当前批次cache不存在
 
-            Optional<IEntityClass> entityClassOptional = metaManager.load(entityId, profile);
+            Optional<IEntityClass> entityClassOptional = metaManager.load(entityClassId, profile);
 
             if (entityClassOptional.isPresent()) {
                 IEntityClass finalClass = entityClassOptional.get();
@@ -321,12 +321,9 @@ public class SphinxSyncExecutor implements SyncExecutor {
 
             if (logger.isDebugEnabled()) {
                 logger.debug(
-                    "[cdc-sync-executor] id [{}], entityClassId [{}] has no entityClass in meta.", id, entityId);
+                    "[cdc-sync-executor] id [{}], entityClassId [{}] has no entityClass in meta.", id, entityClassId);
             }
         }
-
-
-
 
         return null;
     }
@@ -352,6 +349,9 @@ public class SphinxSyncExecutor implements SyncExecutor {
     private OriginalEntity prepareForUpdateDelete(
         List<CanalEntry.Column> columns, long id, long commitId, Map<String, IEntityClass> entityClassMap)
         throws SQLException {
+
+
+
         //  通过解析binlog获取
         IEntityClass entityClass = getEntityClass(id, entityClassMap, columns);
         if (null == entityClass) {
