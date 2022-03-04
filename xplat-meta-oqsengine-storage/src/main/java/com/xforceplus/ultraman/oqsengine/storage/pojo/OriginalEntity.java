@@ -334,6 +334,7 @@ public class OriginalEntity implements Serializable, Cloneable, Comparable<Origi
             originalEntity.attributes = this.attributes;
             originalEntity.version = this.version;
             originalEntity.tx = this.tx;
+            originalEntity.maintainid = this.maintainid;
 
             return originalEntity;
         }

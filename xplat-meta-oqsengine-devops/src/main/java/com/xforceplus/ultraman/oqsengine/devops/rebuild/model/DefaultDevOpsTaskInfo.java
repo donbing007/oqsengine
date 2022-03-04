@@ -180,7 +180,7 @@ public class DefaultDevOpsTaskInfo implements DevOpsTaskInfo {
 
     @Override
     public boolean isDone() {
-        return status == BatchStatus.DONE.getCode();
+        return status == BatchStatus.DONE.getCode() || (batchSize == finishSize && batchSize > 0);
     }
 
     @Override
@@ -200,9 +200,7 @@ public class DefaultDevOpsTaskInfo implements DevOpsTaskInfo {
 
     @Override
     public boolean isEnd() {
-        return status == BatchStatus.DONE.getCode()
-                || status == BatchStatus.CANCEL.getCode()
-                    || status == BatchStatus.ERROR.getCode();
+        return isDone() || isError() || isCancel();
     }
 
     @Override

@@ -95,11 +95,6 @@ public class RebuildIndexTest extends DevOpsTestHelper {
             EntityGenerateTooBar.now.minusSeconds(1000),
             EntityGenerateTooBar.now.plusSeconds(1000));
 
-        Optional<TaskHandler> taskHandlerOp =
-            RebuildInitialization.getInstance().getTaskExecutor().getActiveTask(EntityGenerateTooBar.LONG_STRING_ENTITY_CLASS);
-
-        Assertions.assertTrue(taskHandlerOp.isPresent());
-
         check(taskInfo, "rebuildIndex");
 
         Collection<TaskHandler> taskHandlers =
@@ -139,6 +134,7 @@ public class RebuildIndexTest extends DevOpsTestHelper {
     }
 
     private void check(DevOpsTaskInfo devOpsTaskInfo, String errorFunction) throws Exception {
+
         int wakeUp = 0;
         Optional<TaskHandler> taskHandlerOptional =
             RebuildInitialization.getInstance().getTaskExecutor().taskHandler(devOpsTaskInfo.getMaintainid());
@@ -158,7 +154,7 @@ public class RebuildIndexTest extends DevOpsTestHelper {
             wakeUp += sleepForWaitStatusOk(wakeUp, errorFunction);
         }
 
-        Assertions.assertTrue(devOpsTaskInfo.getBatchSize() > 0);
+        Assertions.assertTrue(taskHandler.devOpsTaskInfo().getBatchSize() > 0);
         Assertions.assertTrue(taskHandler.isDone());
         Assertions.assertEquals(ONE_HUNDRED_PERCENT, taskHandler.getProgressPercentage());
     }
