@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -62,6 +63,7 @@ public class RedisResourceLockerTest extends AbstractResourceLockerTest {
      * 测试是否正确续期.
      */
     @Test
+    @Disabled("暂时去除了续期功能,将在下个版本提供.")
     public void testTenewalIntervalMs() throws Exception {
         String resource = "test.resource";
         locker.lock(resource);

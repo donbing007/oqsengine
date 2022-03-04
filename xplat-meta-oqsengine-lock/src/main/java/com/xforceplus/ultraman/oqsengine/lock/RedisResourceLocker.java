@@ -96,8 +96,6 @@ public class RedisResourceLocker extends AbstractResourceLocker implements Lifec
             + "end;"
             + "return failKeyIndex;";
 
-    private final Logger logger = LoggerFactory.getLogger(RedisResourceLocker.class);
-
 
     @Resource(name = "redisClient")
     private RedisClient redisClient;
@@ -108,20 +106,19 @@ public class RedisResourceLocker extends AbstractResourceLocker implements Lifec
     @Resource(name = "taskThreadPool")
     private ExecutorService worker;
 
-    private ITimerWheel<String> timerWheel;
-
     private StatefulRedisConnection<String, String> connection;
     private RedisCommands<String, String> syncCommands;
     private String lockScriptSha;
     private String unLockScriptSha;
 
+    /*
+     * 锁存在时间.
+     */
     private long ttlMs = 1000 * 30;
     /*
-     * 默认的锁存在时间.
+     * 存在时间的字符串表示.
      */
     private String ttlMsString;
-    // 续期间隔.比TTL时间缩短10%.
-    private long renewalIntervalMs;
 
 
     public RedisResourceLocker() {
@@ -158,15 +155,11 @@ public class RedisResourceLocker extends AbstractResourceLocker implements Lifec
         }
 
         ttlMsString = Long.toString(ttlMs);
-        renewalIntervalMs = ttlMs - (long) (ttlMs * 0.1F);
-
-        timerWheel = new MultipleTimerWheel(new LockHeartbeatNotification(syncCommands));
     }
 
     @PreDestroy
     @Override
     public void destroy() throws Exception {
-        timerWheel.destroy();
         connection.close();
     }
 
@@ -179,11 +172,6 @@ public class RedisResourceLocker extends AbstractResourceLocker implements Lifec
 
         for (int i = 0; i < size; i++) {
             stateKeys.move();
-
-            String key = keys[i];
-            CompletableFuture.runAsync(() -> {
-                timerWheel.add(key, renewalIntervalMs);
-            }, worker);
         }
     }
 
@@ -198,60 +186,11 @@ public class RedisResourceLocker extends AbstractResourceLocker implements Lifec
             ((List<Long>) (syncCommands.evalsha(unLockScriptSha, ScriptOutputType.MULTI, keys, locker.getName())))
             .stream().mapToInt(i -> i.intValue()).sorted().toArray();
 
-        for (int i = 0; i < keys.length; i++) {
-            if (Arrays.binarySearch(failKeyIndex, i) < 0) {
-                // 序号不在错误列表中,可以清理.
-                String key = keys[i];
-                CompletableFuture.runAsync(() -> {
-                    timerWheel.remove(key);
-                }, worker);
-            }
-        }
-
         return failKeyIndex;
     }
 
     @Override
     protected boolean doIsLocking(String key) {
         return syncCommands.exists(key) > 0;
-    }
-
-    // 锁心跳续期.
-    class LockHeartbeatNotification implements TimeoutNotification<String> {
-
-        private RedisCommands<String, String> syncCommands;
-
-        public LockHeartbeatNotification(RedisCommands<String, String> syncCommands) {
-            this.syncCommands = syncCommands;
-        }
-
-        @Override
-        public long notice(String key) {
-            boolean ok = false;
-            try {
-                ok = this.syncCommands.pexpire(key, ttlMs);
-            } catch (Exception ex) {
-                // 发生了异常,不确定锁是否还存活,不做续期但是重新放回计时器等待下次尝试.
-                logger.error(ex.getMessage(), ex);
-
-                return renewalIntervalMs;
-            }
-
-            if (ok) {
-
-                if (logger.isDebugEnabled()) {
-                    logger.debug("Successfully renewed the lock {}.", key);
-                }
-
-                return renewalIntervalMs;
-            } else {
-
-                if (logger.isDebugEnabled()) {
-                    logger.debug("Failed to renew for lock {}.", key);
-                }
-
-                return 0;
-            }
-        }
     }
 }
