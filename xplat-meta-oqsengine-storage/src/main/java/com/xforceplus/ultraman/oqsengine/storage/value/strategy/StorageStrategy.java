@@ -96,11 +96,12 @@ public interface StorageStrategy {
      *
      * @param storageName  物理储存名称.
      * @param storageValue 物理储存值.
-     * @param attrF 是否为attrF，默认会对attrF中非attachment、却长度 > MAX_WORLD_SPLIT_LENGTH 字节的String进行切割,比如:
-     *              假如MAX_WORLD_SPLIT_LENGTH长度为5，则AAAAAABBBBBBCCCC将会转为[AAAAA][ABBBB][BBCCC][C].
+     * @param attrF        是否为attrF，默认会对attrF中非attachment、却长度 > MAX_WORLD_SPLIT_LENGTH 的String进行切割,比如:
+     *                     假如MAX_WORLD_SPLIT_LENGTH长度为5，则AAAAAABBBBBBCCCC将会转为[AAAAA][ABBBB][BBCCC][C].
      * @return 实例.
      */
-    default StorageValue convertIndexStorageValue(String storageName, Object storageValue, boolean attachment, boolean attrF) {
+    default StorageValue convertIndexStorageValue(String storageName, Object storageValue, boolean attachment,
+                                                  boolean attrF) {
         StorageValue anyStorageValue = AnyStorageValue.getInstance(storageName);
         if (!attachment) {
             switch (anyStorageValue.type()) {

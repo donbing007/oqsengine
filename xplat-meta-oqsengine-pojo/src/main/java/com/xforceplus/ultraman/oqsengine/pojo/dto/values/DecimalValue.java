@@ -49,9 +49,11 @@ public class DecimalValue extends AbstractValue<BigDecimal> {
         BigDecimal wellValue;
         String plainValue = value.toPlainString();
 
-        // 这里校验,其整形长度不能超过Long.MAX_VALUE
+        // 这里校验,其整形长度不能超过Long.MAX_VALUE.
         String[] checkValues = plainValue.split("\\.");
         Long.parseLong(checkValues[0]);
+
+        // 校验小数长度不能超过Long.MAX_VALUE.
         if (checkValues.length > 1) {
             Long.parseLong(checkValues[1]);
         }

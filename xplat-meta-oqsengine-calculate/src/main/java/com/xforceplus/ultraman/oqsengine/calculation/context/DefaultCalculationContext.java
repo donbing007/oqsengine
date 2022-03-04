@@ -324,7 +324,7 @@ public class DefaultCalculationContext implements CalculationContext {
                     throw new CalculationException(
                         String.format("Not found entityClass.[%s]", entities.get(i).entityClassRef().getId()));
                 }
-                entityPackage.put(entities.get(i), entityClassOp.get());
+                entityPackage.put(entities.get(i), entityClassOp.get(), false);
 
                 if (entityPackage.isFull()) {
                     try {

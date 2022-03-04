@@ -11,8 +11,8 @@ import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.DevOpsTaskInfo;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
-import com.xforceplus.ultraman.oqsengine.storage.master.SQLMasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.mock.MasterDBInitialization;
+import com.xforceplus.ultraman.oqsengine.storage.master.mysql.SQLMasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.EntityPackage;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -236,7 +236,7 @@ public class RebuildIndexTest extends DevOpsTestHelper {
             final EntityPackage entityPackage = new EntityPackage();
             entityList.forEach(
                 e -> {
-                    entityPackage.put(e, entityClass);
+                    entityPackage.put(e, entityClass, false);
                 }
             );
             storage.build(entityPackage);

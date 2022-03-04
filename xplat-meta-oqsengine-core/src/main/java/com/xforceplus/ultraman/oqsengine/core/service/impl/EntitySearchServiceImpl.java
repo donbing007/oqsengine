@@ -332,6 +332,9 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             }
         }
 
+        /*
+        一个优化,将只有一个条件并且条件是id的查询退化成selectOne.
+         */
         if (isOneIdQuery(conditions)) {
             Condition onlyCondition = conditions.collectCondition().stream().findFirst().get();
             long id = onlyCondition.getFirstValue().valueToLong();

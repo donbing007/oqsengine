@@ -74,7 +74,8 @@ public class SphinxQLHelperTest {
     public void testBuildFuzzyQuery() throws Exception {
         Tokenizer tokenizer = new JcsegTokenizer();
         StorageValue storageValue = new StringStorageValue("9223372036854775807", "test", true);
-        Assertions.assertEquals("(1y2p0itestwj32e8e7S)", SphinxQLHelper.buildSegmentationQuery(storageValue, tokenizer));
+        Assertions.assertEquals("(1y2p0itestwj32e8e7S)",
+            SphinxQLHelper.buildSegmentationQuery(storageValue, tokenizer));
 
         storageValue = new StringStorageValue("9223372036854775807", "测试test", true);
         Assertions.assertEquals("(1y2p0i测试wj32e8e7S << 1y2p0itestwj32e8e7S)",
@@ -96,13 +97,15 @@ public class SphinxQLHelperTest {
     @Test
     public void testStringConditionFormat() {
         String longOverString = "aaaabbbbccccddddeeeeffffggggEAAAABBBBCCCCDDDDEEEEFFFFGGGGECDMA";
-        ShortStorageName shortStorageName = new ShortStorageName("","123p", "s456", "S");
+        ShortStorageName shortStorageName = new ShortStorageName("", "123p", "s456", "S");
 
         //  测试ConditionOperator.EQUALS
         Tuple2<String, Boolean> format =
             SphinxQLHelper.stringConditionFormat(longOverString, shortStorageName, false);
 
-        Assertions.assertEquals("(P0123paaaabbbbccccddddeeeeffffgs456S P1123pgggEAAAABBBBCCCCDDDDEEEEFs456S P2123pFFFGGGGECDMAs456S)", format._1);
+        Assertions.assertEquals(
+            "(P0123paaaabbbbccccddddeeeeffffgs456S P1123pgggEAAAABBBBCCCCDDDDEEEEFs456S P2123pFFFGGGGECDMAs456S)",
+            format._1);
     }
 
     /**
