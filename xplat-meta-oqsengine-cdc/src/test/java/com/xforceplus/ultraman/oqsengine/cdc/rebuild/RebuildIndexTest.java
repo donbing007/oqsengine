@@ -30,6 +30,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -47,8 +48,6 @@ public class RebuildIndexTest extends DevOpsTestHelper {
     private static int batchSize = 10;
 
     private static ExecutorService asyncThreadPool;
-
-    private boolean ifTest = false;
 
     @BeforeAll
     public static void beforeAll() {
@@ -96,11 +95,6 @@ public class RebuildIndexTest extends DevOpsTestHelper {
             EntityGenerateTooBar.now.minusSeconds(1000),
             EntityGenerateTooBar.now.plusSeconds(1000));
 
-        Optional<TaskHandler> taskHandlerOp =
-            RebuildInitialization.getInstance().getTaskExecutor().getActiveTask(EntityGenerateTooBar.LONG_STRING_ENTITY_CLASS);
-
-        Assertions.assertTrue(taskHandlerOp.isPresent());
-
         check(taskInfo, "rebuildIndex");
 
         Collection<TaskHandler> taskHandlers =
@@ -109,11 +103,9 @@ public class RebuildIndexTest extends DevOpsTestHelper {
     }
 
     @Test
+    @Disabled
     public void bigBatchRebuild() throws Exception {
-        if (!ifTest) {
-            return;
-        }
-        int batchSize = 1024 * 200;
+        int batchSize = 1024 * 50;
 
         //  初始化数据
         boolean initOk = initData(
@@ -142,6 +134,7 @@ public class RebuildIndexTest extends DevOpsTestHelper {
     }
 
     private void check(DevOpsTaskInfo devOpsTaskInfo, String errorFunction) throws Exception {
+
         int wakeUp = 0;
         Optional<TaskHandler> taskHandlerOptional =
             RebuildInitialization.getInstance().getTaskExecutor().taskHandler(devOpsTaskInfo.getMaintainid());
@@ -161,7 +154,7 @@ public class RebuildIndexTest extends DevOpsTestHelper {
             wakeUp += sleepForWaitStatusOk(wakeUp, errorFunction);
         }
 
-        Assertions.assertTrue(devOpsTaskInfo.getBatchSize() > 0);
+        Assertions.assertTrue(taskHandler.devOpsTaskInfo().getBatchSize() > 0);
         Assertions.assertTrue(taskHandler.isDone());
         Assertions.assertEquals(ONE_HUNDRED_PERCENT, taskHandler.getProgressPercentage());
     }
@@ -213,7 +206,7 @@ public class RebuildIndexTest extends DevOpsTestHelper {
 
         try {
             if (!countDownLatch.await(300, TimeUnit.SECONDS)) {
-                throw new SQLException("Query failed, timeout.");
+                throw new SQLException("batch failed, timeout.");
             }
         } catch (InterruptedException e) {
             throw new SQLException(e.getMessage(), e);

@@ -308,7 +308,10 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     }
 
 
-    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "builds"})
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        percentiles = {0.5, 0.9, 0.99},
+        extraTags = {"initiator", "all", "action", "builds"})
     @Override
     public OqsResult<IEntity[]> build(IEntity[] entities) throws SQLException {
         checkReady();
@@ -436,7 +439,10 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
     }
 
-    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "build"})
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        percentiles = {0.5, 0.9, 0.99},
+        extraTags = {"initiator", "all", "action", "build"})
     @Override
     public OqsResult<IEntity> build(IEntity entity) throws SQLException {
         checkReady();
@@ -526,7 +532,10 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         }
     }
 
-    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "replaces"})
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        percentiles = {0.5, 0.9, 0.99},
+        extraTags = {"initiator", "all", "action", "replaces"})
     @Override
     public OqsResult<Map<IEntity, IValue[]>> replace(IEntity[] entities) throws SQLException {
         checkReady();
@@ -723,7 +732,10 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         return oqsResult;
     }
 
-    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "replace"})
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        percentiles = {0.5, 0.9, 0.99},
+        extraTags = {"initiator", "all", "action", "replace"})
     @Override
     public OqsResult<Map.Entry<IEntity, IValue[]>> replace(IEntity entity) throws SQLException {
         checkReady();
@@ -858,7 +870,10 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         }
     }
 
-    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "deletes"})
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        percentiles = {0.5, 0.9, 0.99},
+        extraTags = {"initiator", "all", "action", "deletes"})
     @Override
     public OqsResult<IEntity[]> delete(IEntity[] entities) throws SQLException {
         checkReady();
@@ -992,7 +1007,10 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         return oqsResult;
     }
 
-    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "delete"})
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        percentiles = {0.5, 0.9, 0.99},
+        extraTags = {"initiator", "all", "action", "delete"})
     @Override
     public OqsResult<IEntity> delete(IEntity entity) throws SQLException {
         checkReady();
@@ -1088,6 +1106,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
     @Timed(
         value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        percentiles = {0.5, 0.9, 0.99},
         extraTags = {"initiator", "all", "action", "deleteforces"}
     )
     @Deprecated
@@ -1099,6 +1118,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
     @Timed(
         value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        percentiles = {0.5, 0.9, 0.99},
         extraTags = {"initiator", "all", "action", "deleteforce"}
     )
     @Deprecated

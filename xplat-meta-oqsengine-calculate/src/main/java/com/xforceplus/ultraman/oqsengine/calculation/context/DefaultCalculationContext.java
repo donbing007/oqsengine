@@ -367,7 +367,7 @@ public class DefaultCalculationContext implements CalculationContext {
                     "exception", "none"
                 )
                 .publishPercentileHistogram(false)
-                .publishPercentiles(null)
+                .publishPercentiles(0.5, 0.9, 0.99)
                 .register(Metrics.globalRegistry));
         }
 

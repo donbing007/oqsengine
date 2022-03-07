@@ -129,8 +129,24 @@ public class SphinxSyncExecutor implements SyncExecutor {
         if (!storageEntityList.isEmpty()) {
             try {
                 //  执行更新
+                if (logger.isDebugEnabled()) {
+                    logger.debug(
+                        "[cdc-sync-executor] Prepare to persist {} objects to the index.",
+                        storageEntityList.size());
+                }
+
                 sphinxQLIndexStorage.saveOrDeleteOriginalEntities(storageEntityList);
+
+                if (logger.isDebugEnabled()) {
+                    logger.debug(
+                        "[cdc-sync-executor] Succeeded in persisting {} objects to the index.",
+                        storageEntityList.size());
+                }
+
             } catch (Exception e) {
+
+                logger.error(e.getMessage(), e);
+
                 //  设置所有的maintain数据都失败了.
                 cdcMetrics.getDevOpsMetrics().forEach((k, v) -> {
                     v.allFails();

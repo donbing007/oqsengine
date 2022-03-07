@@ -16,6 +16,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -25,6 +26,7 @@ import org.junit.jupiter.api.Test;
  * @author : xujia 2020/11/22
  * @since : 1.8
  */
+@Disabled("暂时关闭测试, 测试不完善.")
 public class CdcErrorStorageTest extends AbstractCDCTestHelper {
 
     private static long unExpectedSeqNo = Long.MAX_VALUE;
