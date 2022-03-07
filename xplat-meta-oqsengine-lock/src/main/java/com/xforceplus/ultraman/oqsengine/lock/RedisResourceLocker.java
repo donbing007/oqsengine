@@ -1,21 +1,25 @@
 package com.xforceplus.ultraman.oqsengine.lock;
 
 import com.xforceplus.ultraman.oqsengine.common.lifecycle.Lifecycle;
-import com.xforceplus.ultraman.oqsengine.common.timerwheel.ITimerWheel;
-import com.xforceplus.ultraman.oqsengine.common.timerwheel.MultipleTimerWheel;
-import com.xforceplus.ultraman.oqsengine.common.timerwheel.TimeoutNotification;
+import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.common.watch.RedisLuaScriptWatchDog;
 import com.xforceplus.ultraman.oqsengine.lock.utils.Locker;
 import com.xforceplus.ultraman.oqsengine.lock.utils.StateKeys;
 import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisFuture;
 import io.lettuce.core.ScriptOutputType;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
+import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
@@ -30,6 +34,13 @@ import org.slf4j.LoggerFactory;
  * @since 1.8
  */
 public class RedisResourceLocker extends AbstractResourceLocker implements Lifecycle {
+
+    final Logger logger = LoggerFactory.getLogger(RedisResourceLocker.class);
+
+    /*
+    最小可接受的超时时间.
+     */
+    private static final long MIN_TTL_MS = 1000 * 30;
 
     /*
     批量加锁lua脚本.使用一个hash结构来记录锁,如下.
@@ -96,25 +107,36 @@ public class RedisResourceLocker extends AbstractResourceLocker implements Lifec
             + "end;"
             + "return failKeyIndex;";
 
-
     @Resource(name = "redisClient")
     private RedisClient redisClient;
 
     @Resource
     private RedisLuaScriptWatchDog redisLuaScriptWatchDog;
 
-    @Resource(name = "taskThreadPool")
     private ExecutorService worker;
 
+    /*
+    KEY = 加锁键.
+    Value = 记录加锁者和最后一次的续期时间.
+     */
+    private Map<String, LockInfo> liveLocks;
     private StatefulRedisConnection<String, String> connection;
     private RedisCommands<String, String> syncCommands;
+    private StatefulRedisConnection<String, String> watchDogconnection;
+    private RedisAsyncCommands<String, String> watchDogCommands;
     private String lockScriptSha;
     private String unLockScriptSha;
+    private volatile boolean running;
+    private volatile boolean watchDagRunning;
 
     /*
      * 锁存在时间.
      */
-    private long ttlMs = 1000 * 30;
+    private long ttlMs;
+    /*
+    续期间隔,比锁存在时间少20%时间.
+     */
+    private long renewalMs;
     /*
      * 存在时间的字符串表示.
      */
@@ -142,6 +164,11 @@ public class RedisResourceLocker extends AbstractResourceLocker implements Lifec
         if (redisClient != null) {
             connection = redisClient.connect();
             syncCommands = connection.sync();
+
+            watchDogconnection = redisClient.connect();
+            watchDogCommands = watchDogconnection.async();
+            watchDogCommands.setAutoFlushCommands(false);
+
         } else {
             throw new IllegalStateException("Invalid redisClient.");
         }
@@ -154,29 +181,98 @@ public class RedisResourceLocker extends AbstractResourceLocker implements Lifec
             unLockScriptSha = syncCommands.scriptLoad(UNLOCK_SCRIPT);
         }
 
+        if (ttlMs < MIN_TTL_MS) {
+            ttlMs = MIN_TTL_MS;
+        }
+
         ttlMsString = Long.toString(ttlMs);
+        renewalMs = ttlMs - ((long) (ttlMs * 0.2F));
+
+        this.liveLocks = new ConcurrentHashMap();
+
+        running = true;
+        watchDagRunning = false;
+
+        worker = Executors.newFixedThreadPool(1, ExecutorHelper.buildNameThreadFactory("redis-lock-watchdog"));
+        worker.submit(new WatchDogTask());
     }
 
     @PreDestroy
     @Override
     public void destroy() throws Exception {
+        running = false;
+
+        // 等待watchDao被关闭.
+        while (watchDagRunning) {
+            TimeUnit.MILLISECONDS.sleep(10);
+        }
+
+        cleanAllLock();
+
         connection.close();
+        watchDogconnection.close();
+
+        ExecutorHelper.shutdownAndAwaitTermination(worker);
+    }
+
+    // 最后清理掉生存的锁.
+    private void cleanAllLock() {
+        Map<Locker, List<LockInfo>> groupLockInfos =
+            this.liveLocks.values().stream().collect(Collectors.groupingBy(l -> l.locker));
+        StateKeys stateKeys;
+        for (Map.Entry<Locker, List<LockInfo>> entry : groupLockInfos.entrySet()) {
+            String[] keys = entry.getValue().stream().map(lockInfo -> lockInfo.getLockKey()).toArray(String[]::new);
+            stateKeys = new StateKeys(keys);
+
+            doPriveUnLocks(entry.getKey(), stateKeys);
+
+            keys = null;
+            stateKeys = null;
+        }
     }
 
     @Override
     protected void doLocks(Locker locker, StateKeys stateKeys) {
+        if (!running) {
+            throw new IllegalStateException("It has been shut down.");
+        }
+
         String[] keys = stateKeys.getNoCompleteKeys();
         long size =
             syncCommands.evalsha(lockScriptSha, ScriptOutputType.INTEGER, keys, locker.getName(),
                 ttlMsString);
 
+        long now = System.currentTimeMillis();
         for (int i = 0; i < size; i++) {
             stateKeys.move();
+
+            liveLocks.put(keys[i], new LockInfo(keys[i], now, locker));
         }
     }
 
     @Override
     protected int[] doUnLocks(Locker locker, StateKeys stateKeys) {
+        if (!running) {
+            throw new IllegalStateException("It has been shut down.");
+        }
+
+        return doPriveUnLocks(locker, stateKeys);
+    }
+
+    @Override
+    protected boolean doIsLocking(String key) {
+        if (!liveLocks.containsKey(key)) {
+
+            return syncCommands.exists(key) > 0;
+
+        }
+
+        return true;
+    }
+
+    // 实际解锁实现.
+    private int[] doPriveUnLocks(Locker locker, StateKeys stateKeys) {
+
         String[] keys = stateKeys.getNoCompleteKeys();
         /*
         返回值是一个列表,包含了一系列序号,从1开始.
@@ -184,13 +280,123 @@ public class RedisResourceLocker extends AbstractResourceLocker implements Lifec
          */
         int[] failKeyIndex =
             ((List<Long>) (syncCommands.evalsha(unLockScriptSha, ScriptOutputType.MULTI, keys, locker.getName())))
-            .stream().mapToInt(i -> i.intValue()).sorted().toArray();
+                .stream().mapToInt(i -> i.intValue()).sorted().toArray();
+
+        // 不再需要关注的锁.
+        int keyLen = keys.length;
+        for (int i = 0; i < keyLen; i++) {
+            liveLocks.remove(keys[i]);
+        }
 
         return failKeyIndex;
     }
 
-    @Override
-    protected boolean doIsLocking(String key) {
-        return syncCommands.exists(key) > 0;
+    // 记录加锁信息.
+    private static class LockInfo {
+        private String lockKey;
+        private long lastRenewalTimeMs;
+        private Locker locker;
+
+        public LockInfo(String lockKey, long lastRenewalTimeMs, Locker locker) {
+            this.lockKey = lockKey;
+            this.lastRenewalTimeMs = lastRenewalTimeMs;
+            this.locker = locker;
+        }
+
+        public String getLockKey() {
+            return lockKey;
+        }
+
+        public long getLastRenewalTimeMs() {
+            return lastRenewalTimeMs;
+        }
+
+        public void setLastRenewalTimeMs(long lastRenewalTimeMs) {
+            this.lastRenewalTimeMs = lastRenewalTimeMs;
+        }
+
+        public Locker getLocker() {
+            return locker;
+        }
+    }
+
+    /*
+    为成功加锁的key进行续期.
+     */
+    private class WatchDogTask implements Runnable {
+
+        @Override
+        public void run() {
+
+            watchDagRunning = true;
+
+            int commandSize = 0;
+            long sleepMs = 100;
+
+            if (logger.isDebugEnabled()) {
+                logger.debug("Watchdog checks at a frequency of {} milliseconds.", sleepMs);
+            }
+
+            Map<String, RedisFuture<Boolean>> ackMap = new HashMap<>();
+            try {
+                while (running) {
+
+                    ackMap.clear();
+
+                    for (LockInfo lockInfo : liveLocks.values()) {
+
+                        long nowMs = System.currentTimeMillis();
+
+                        if (needRenewal(lockInfo.getLockKey(), nowMs, lockInfo.getLastRenewalTimeMs())) {
+                            ackMap.put(lockInfo.getLockKey(), watchDogCommands.pexpire(lockInfo.getLockKey(), ttlMs));
+
+                            if (logger.isDebugEnabled()) {
+                                logger.debug("Renewal lock {}({}ms).",
+                                    lockInfo.getLockKey(), nowMs - lockInfo.getLastRenewalTimeMs());
+                            }
+
+                            lockInfo.setLastRenewalTimeMs(nowMs);
+
+                            commandSize++;
+                        }
+                    }
+
+                    if (commandSize > 0) {
+                        watchDogCommands.flushCommands();
+                    }
+
+
+                    for (Map.Entry<String, RedisFuture<Boolean>> entry : ackMap.entrySet()) {
+                        RedisFuture<Boolean> future = entry.getValue();
+                        String lockKey = entry.getKey();
+
+                        if (!future.get()) {
+                            // 续期失败,删除本地锁.
+
+                        }
+                    }
+
+                    commandSize = 0;
+                    LockSupport.parkNanos(this, TimeUnit.MILLISECONDS.toNanos(sleepMs));
+
+                }
+            } catch (Throwable ex) {
+
+                logger.error(ex.getMessage(), ex);
+
+            } finally {
+
+                watchDagRunning = false;
+
+            }
+        }
+
+        private boolean needRenewal(String key, long nowMs, long lastRenewalTimeMs) {
+            if (liveLocks.containsKey(key)) {
+                return nowMs - lastRenewalTimeMs >= renewalMs;
+            } else {
+                return false;
+            }
+        }
     }
 }

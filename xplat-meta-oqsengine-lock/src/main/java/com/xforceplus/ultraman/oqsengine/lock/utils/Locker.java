@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.lock.utils;
 
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -49,5 +50,22 @@ public class Locker {
 
     public int getSuccessLockNumber() {
         return successLockNumber;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof Locker)) {
+            return false;
+        }
+        Locker locker = (Locker) o;
+        return Objects.equals(getName(), locker.getName());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getName());
     }
 }
