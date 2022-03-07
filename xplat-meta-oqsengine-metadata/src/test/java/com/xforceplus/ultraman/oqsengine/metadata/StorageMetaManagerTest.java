@@ -5,9 +5,11 @@ import static com.xforceplus.ultraman.oqsengine.metadata.mock.MockRequestHandler
 import static com.xforceplus.ultraman.oqsengine.metadata.mock.generator.EntityClassSyncProtoBufMocker.EXPECTED_PROFILE_FOUR_GEN;
 import static com.xforceplus.ultraman.oqsengine.metadata.utils.storage.EntityClassStorageBuilderUtils.toFieldTypeValue;
 
+import com.xforceplus.ultraman.oqsengine.common.profile.OqsProfile;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MetaInitialization;
@@ -483,6 +485,12 @@ public class StorageMetaManagerTest extends AbstractMetaTestHelper {
             Assertions.assertNotNull(actual.father());
             Assertions.assertEquals(expected.getFather(), actual.father().get().id());
         }
+
+        Assertions.assertTrue(actual.ref().getProfile().equals(OqsProfile.UN_DEFINE_PROFILE) || expected.getProfilesList().stream().map(
+            ProfileInfo::getCode).anyMatch(c -> {
+                return c.equals(actual.ref().getProfile());
+        }));
+
         Assertions.assertEquals(expected.getLevel(), actual.level());
 
         //  relations

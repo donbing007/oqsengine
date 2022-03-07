@@ -51,6 +51,7 @@ data:
           application:
             name: "oqsengine"
         transaction:
+          waitCommitSync: {{ .Values.storage.transaction.waitCommitSync }}
           timeoutMs: {{ .Values.storage.transaction.timeoutMs | default "2000" }}
         threadPool:
           io:
@@ -145,7 +146,7 @@ data:
               lexicon:
                 url: {{ .Values.storage.tokenizer.segmentation.lexicon.url | default "-" | quote}}
           debug:
-            showsql: {{ .Values.storage.debug.showsql | default "false" }}
+            showsql: {{ .Values.storage.debug.showsql }}
           timeoutMs:
             query: {{ .Values.storage.timeoutMs.query | default "3000" }}
           kv:
@@ -154,7 +155,7 @@ data:
             name: {{ .Values.storage.master.name | default "oqsbigentity" | quote }}
             shard:
               table:
-                enabled: {{ .Values.storage.master.shard.table.enabled | default "false" }}
+                enabled: {{ .Values.storage.master.shard.table.enabled }}
                 size: {{ .Values.storage.master.shard.table.size | default "3" }}
           index:
             search:
@@ -162,7 +163,7 @@ data:
             write:
               name: {{ .Values.storage.index.write.name | default "oqsindex" | quote }}
               shard:
-                enabled: {{ .Values.storage.index.write.shard.enabled | default "false" }}
+                enabled: {{ .Values.storage.index.write.shard.enabled }}
                 size: {{ .Values.storage.index.write.shard.size | default "1" }}
           devOps:
             cdc:
@@ -182,11 +183,11 @@ data:
               page:
                 size: {{ .Values.storage.devOps.task.page.size | default "1000" }}
         sync:
-          ignoreCDCStatusCheck: {{ .Values.sync.ignoreCDCStatusCheck | default "false" }}
+          ignoreCDCStatusCheck: {{ .Values.sync.ignoreCDCStatusCheck }}
           allowMaxLiveTimeMs: {{ .Values.sync.allowMaxLiveTimeMs | default "3000" }}
           allowMaxUnSyncCommitIdSize: {{ .Values.sync.allowMaxUnSyncCommitIdSize | default "30" }}
         changelog:
-          enabled: {{ .Values.changelog.enabled | default "false" }}
+          enabled: {{ .Values.changelog.enabled }}
         cdc:
           connect:
             type: {{ .Values.cdc.connect.type | default "single" }}
@@ -201,13 +202,13 @@ data:
             checkCommitReady: {{ .Values.cdc.consumer.checkCommitReady | default "true" }}
             skipCommitId: {{ .Values.cdc.consumer.skipCommitId | default "-1" | quote }}
         metadata:
-          enhanced: {{ .Values.metadata.enhanced | default "false" }}
+          enhanced: {{ .Values.metadata.enhanced }}
         locker:
           try:
             timeoutMs: {{ .Values.locker.try.timeoutMs | default "30000" }}
         discover:
           sdk:
-            enable: {{ .Values.discover.sdk.enable | default "true" }}
+            enable: {{ .Values.discover.sdk.enable }}
             connection:
               host: {{ .Values.discover.sdk.connection.host | default "ultraman-devops-service-test.n01103-oqs-cdc" | quote }}
               port: {{ .Values.discover.sdk.connection.port | default "8916" | quote }}

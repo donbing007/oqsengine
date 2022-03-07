@@ -38,6 +38,9 @@ public class CalculateEventDispatcher {
     @Resource
     private CalculationEventFactory factory;
 
+    /**
+     * 初始化.
+     */
     @PostConstruct
     public void init() {
         eventBus.watch(EventType.META_DATA_CHANGE, event -> {

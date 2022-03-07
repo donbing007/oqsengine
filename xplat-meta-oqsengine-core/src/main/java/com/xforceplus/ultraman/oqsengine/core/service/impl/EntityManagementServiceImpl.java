@@ -10,7 +10,6 @@ import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.common.mode.OqsMode;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
-import com.xforceplus.ultraman.oqsengine.common.version.VersionHelp;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.pojo.OqsResult;
 import com.xforceplus.ultraman.oqsengine.event.ActualEvent;
@@ -39,10 +38,14 @@ import com.xforceplus.ultraman.oqsengine.status.CDCStatusService;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.ConditionsSelectStorage;
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
+import com.xforceplus.ultraman.oqsengine.storage.executor.ResourceTask;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.EntityPackage;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import com.xforceplus.ultraman.oqsengine.task.TaskCoordinator;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.Counter;
@@ -305,7 +308,10 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     }
 
 
-    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "builds"})
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        percentiles = {0.5, 0.9, 0.99},
+        extraTags = {"initiator", "all", "action", "builds"})
     @Override
     public OqsResult<IEntity[]> build(IEntity[] entities) throws SQLException {
         checkReady();
@@ -381,7 +387,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 EntityPackage entityPackage = new EntityPackage();
                 int len = dirtyEntities.size();
                 for (int i = 0; i < len; i++) {
-                    entityPackage.put(dirtyEntities.get(i), entityClasses[i]);
+                    entityPackage.put(dirtyEntities.get(i), entityClasses[i], false);
                 }
 
                 masterStorage.build(entityPackage);
@@ -433,7 +439,10 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
     }
 
-    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "build"})
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        percentiles = {0.5, 0.9, 0.99},
+        extraTags = {"initiator", "all", "action", "build"})
     @Override
     public OqsResult<IEntity> build(IEntity entity) throws SQLException {
         checkReady();
@@ -523,7 +532,10 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         }
     }
 
-    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "replaces"})
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        percentiles = {0.5, 0.9, 0.99},
+        extraTags = {"initiator", "all", "action", "replaces"})
     @Override
     public OqsResult<Map<IEntity, IValue[]>> replace(IEntity[] entities) throws SQLException {
         checkReady();
@@ -660,7 +672,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     EntityPackage entityPackage = new EntityPackage();
                     // 忽略掉所有替换后计算后仍然是干净的对象,表示没有任何改变.
                     targetEntities.stream().filter(e -> e.isDirty()).forEach(e ->
-                        entityPackage.put(e, entityClassTable.get(e.entityClassRef().getId()))
+                        entityPackage.put(e, entityClassTable.get(e.entityClassRef().getId()), false)
                     );
 
                     if (entityPackage.isEmpty()) {
@@ -673,7 +685,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
                         if (newEntity.isDirty()) {
                             hint.setRollback(true);
-                            return OqsResult.conflict();
+                            return OqsResult.unReplaced(newEntity.id());
                         }
 
                         if (!tx.getAccumulator().accumulateReplace(newEntity)) {
@@ -720,7 +732,10 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         return oqsResult;
     }
 
-    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "replace"})
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        percentiles = {0.5, 0.9, 0.99},
+        extraTags = {"initiator", "all", "action", "replace"})
     @Override
     public OqsResult<Map.Entry<IEntity, IValue[]>> replace(IEntity entity) throws SQLException {
         checkReady();
@@ -750,7 +765,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         CalculationContext calculationContext = buildCalculationContext(CalculationScenarios.REPLACE);
         try {
             oqsResult = (OqsResult) transactionExecutor.execute((tx, resource, hint) -> {
-
                 String lockResource = IEntitys.resource(entity.id());
                 boolean lockResult = resourceLocker.tryLock(lockTimeoutMs, lockResource);
                 if (!lockResult) {
@@ -809,7 +823,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     masterStorage.replace(newEntity, entityClass);
                     if (newEntity.isDirty()) {
                         hint.setRollback(true);
-                        return OqsResult.conflict();
+                        return OqsResult.unReplaced(newEntity.id());
                     }
 
                     if (!calculationContext.persist()) {
@@ -856,7 +870,10 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         }
     }
 
-    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "deletes"})
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        percentiles = {0.5, 0.9, 0.99},
+        extraTags = {"initiator", "all", "action", "deletes"})
     @Override
     public OqsResult<IEntity[]> delete(IEntity[] entities) throws SQLException {
         checkReady();
@@ -930,7 +947,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     for (int i = 0; i < targetEntities.size(); i++) {
                         targetEntity = targetEntities.get(i);
                         entityClass = entityClassTable.get(targetEntity.entityClassRef().getId());
-                        entityPackage.put(targetEntity, entityClass);
+                        entityPackage.put(targetEntity, entityClass, false);
                     }
                     masterStorage.delete(entityPackage);
 
@@ -939,7 +956,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
                         if (!targetEntity.isDeleted()) {
                             hint.setRollback(true);
-                            return OqsResult.conflict();
+                            return OqsResult.unDeleted(targetEntity.id());
                         }
 
                         if (!tx.getAccumulator().accumulateBuild(targetEntity)) {
@@ -956,6 +973,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 } finally {
                     resourceLocker.unlocks(lockResource);
                 }
+
+                Arrays.stream(entities).forEach(e -> e.delete());
 
                 DeletePayload deletePayload =
                     new DeletePayload(tx.id(), targetEntities.stream().toArray(IEntity[]::new));
@@ -988,7 +1007,10 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         return oqsResult;
     }
 
-    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "delete"})
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        percentiles = {0.5, 0.9, 0.99},
+        extraTags = {"initiator", "all", "action", "delete"})
     @Override
     public OqsResult<IEntity> delete(IEntity entity) throws SQLException {
         checkReady();
@@ -1037,7 +1059,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     masterStorage.delete(targetEntity, entityClass);
                     if (!targetEntity.isDeleted()) {
                         hint.setRollback(true);
-                        return OqsResult.conflict();
+                        return OqsResult.unDeleted(targetEntity.id());
                     }
 
                     if (!tx.getAccumulator().accumulateDelete(targetEntity)) {
@@ -1051,12 +1073,11 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         return OqsResult.conflict("Conflict maintenance.");
                     }
 
-                    targetEntity.delete();
-                    entity.delete();
-
                 } finally {
                     resourceLocker.unlock(lockResource);
                 }
+
+                entity.delete();
 
                 eventBus.notify(new ActualEvent(
                     EventType.ENTITY_DELETE,
@@ -1085,27 +1106,24 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
     @Timed(
         value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        percentiles = {0.5, 0.9, 0.99},
         extraTags = {"initiator", "all", "action", "deleteforces"}
     )
+    @Deprecated
     @Override
     public OqsResult<IEntity[]> deleteForce(IEntity[] entities) throws SQLException {
-        for (IEntity entity : entities) {
-            entity.resetVersion(VersionHelp.OMNIPOTENCE_VERSION);
-        }
 
         return delete(entities);
     }
 
     @Timed(
         value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        percentiles = {0.5, 0.9, 0.99},
         extraTags = {"initiator", "all", "action", "deleteforce"}
     )
+    @Deprecated
     @Override
     public OqsResult<IEntity> deleteForce(IEntity entity) throws SQLException {
-        /*
-         * 设置万能版本,表示和所有的版本都匹配.
-         */
-        entity.resetVersion(VersionHelp.OMNIPOTENCE_VERSION);
 
         return delete(entity);
     }
@@ -1346,5 +1364,4 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             entity.markTime(System.currentTimeMillis());
         }
     }
-
 }

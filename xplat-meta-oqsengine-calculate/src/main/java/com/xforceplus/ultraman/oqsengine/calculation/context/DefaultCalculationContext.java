@@ -324,7 +324,11 @@ public class DefaultCalculationContext implements CalculationContext {
                     throw new CalculationException(
                         String.format("Not found entityClass.[%s]", entities.get(i).entityClassRef().getId()));
                 }
-                entityPackage.put(entities.get(i), entityClassOp.get());
+                /*
+                使用非严格模式.
+                如果 entity.entityClassRef 找到的 EntityClass 中的 profile 不一致将忽略,使用原始的EntityClass实例.
+                 */
+                entityPackage.put(entities.get(i), entityClassOp.get(), false);
 
                 if (entityPackage.isFull()) {
                     try {
@@ -363,7 +367,7 @@ public class DefaultCalculationContext implements CalculationContext {
                     "exception", "none"
                 )
                 .publishPercentileHistogram(false)
-                .publishPercentiles(null)
+                .publishPercentiles(0.5, 0.9, 0.99)
                 .register(Metrics.globalRegistry));
         }
 

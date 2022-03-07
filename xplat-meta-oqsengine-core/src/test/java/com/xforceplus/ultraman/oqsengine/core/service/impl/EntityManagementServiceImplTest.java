@@ -11,7 +11,6 @@ import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFac
 import com.xforceplus.ultraman.oqsengine.calculation.impl.DefaultCalculationImpl;
 import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
-import com.xforceplus.ultraman.oqsengine.common.version.VersionHelp;
 import com.xforceplus.ultraman.oqsengine.core.service.impl.mock.EntityClassDefine;
 import com.xforceplus.ultraman.oqsengine.core.service.pojo.OqsResult;
 import com.xforceplus.ultraman.oqsengine.event.DoNothingEventBus;
@@ -273,7 +272,7 @@ public class EntityManagementServiceImplTest {
         when(masterStorage.replace(actualTargetEntity, EntityClassDefine.l2EntityClass)).thenReturn(false);
 
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
-        Assertions.assertEquals(ResultStatus.CONFLICT, impl.replace(replaceEntity).getResultStatus());
+        Assertions.assertEquals(ResultStatus.UNREPLACE, impl.replace(replaceEntity).getResultStatus());
     }
 
     @Test
@@ -348,50 +347,6 @@ public class EntityManagementServiceImplTest {
     }
 
     @Test
-    public void testDeleteForce() throws Exception {
-        MasterStorage masterStorage = mock(MasterStorage.class);
-
-        // 已经存在的
-        IEntity targetEntity = Entity.Builder.anEntity()
-            .withEntityClassRef(
-                new EntityClassRef(EntityClassDefine.l2EntityClass.id(), EntityClassDefine.l2EntityClass.code()))
-            .withId(1)
-            .withVersion(200)
-            .withTime(System.currentTimeMillis())
-            .withValues(Stream.of(new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L),
-                new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"),
-                new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")).collect(Collectors.toList())
-            ).build();
-        targetEntity.neat();
-
-        when(masterStorage.selectOne(1, EntityClassDefine.l2EntityClass)).thenReturn(Optional.of(targetEntity));
-        when(masterStorage.delete(targetEntity, EntityClassDefine.l2EntityClass)).thenAnswer(inv -> {
-            IEntity entity = inv.getArgument(0);
-            entity.resetVersion(VersionHelp.OMNIPOTENCE_VERSION);
-            entity.delete();
-            return true;
-        });
-        ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
-
-        // 删除目标
-        IEntity deletedEntity = Entity.Builder.anEntity()
-            .withEntityClassRef(
-                new EntityClassRef(EntityClassDefine.l2EntityClass.id(), EntityClassDefine.l2EntityClass.code()))
-            .withId(1)
-            .withVersion(200)
-            .withTime(System.currentTimeMillis())
-            .withValues(Stream.of(new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L),
-                new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"),
-                new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")).collect(Collectors.toList())
-            ).build();
-
-        Assertions.assertEquals(ResultStatus.SUCCESS, impl.deleteForce(deletedEntity).getResultStatus());
-        Assertions.assertEquals(VersionHelp.OMNIPOTENCE_VERSION, targetEntity.version());
-
-    }
-
-
-    @Test
     public void testDeleteFail() throws Exception {
         MasterStorage masterStorage = mock(MasterStorage.class);
 
@@ -409,7 +364,7 @@ public class EntityManagementServiceImplTest {
         when(masterStorage.delete(targetEntity, EntityClassDefine.l2EntityClass)).thenReturn(false);
 
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
-        Assertions.assertEquals(ResultStatus.CONFLICT, impl.delete(targetEntity).getResultStatus());
+        Assertions.assertEquals(ResultStatus.UNDELETED, impl.delete(targetEntity).getResultStatus());
     }
 
     @Test

@@ -71,6 +71,11 @@ public class MatchConditionBuilder extends AbstractSphinxQLConditionBuilder impl
                     break;
                 }
                 default: {
+                    /*
+                    二元组,组成如下.
+                    1. 查询组成字符串.
+                    2. 是否进行了分拆.
+                     */
                     Tuple2<String, Boolean> res =
                         SphinxQLHelper.buildPreciseQuery(storageValue, isUseStorageGroupName());
                     //  第一个值为转换的结果

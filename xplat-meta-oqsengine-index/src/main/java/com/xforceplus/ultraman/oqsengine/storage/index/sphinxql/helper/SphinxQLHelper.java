@@ -355,7 +355,13 @@ public class SphinxQLHelper {
     }
 
     /**
-     * 对condition进行超长字符处理.
+     * 对于索引来说过长的字符值进行切分.
+     * 返回值为一个二元组,(格式化后的字符串, 是否进行了格式化).
+     *
+     * @param word             目标字符串.
+     * @param shortStorageName 短名称.
+     * @param useGroupName     true使用组名称,false不使用.
+     * @return 格式化结果.
      */
     public static Tuple2<String, Boolean> stringConditionFormat(String word, ShortStorageName shortStorageName,
                                                                 boolean useGroupName) {

@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl;
 
+import com.xforceplus.ultraman.oqsengine.common.profile.OqsProfile;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -90,6 +91,11 @@ public class EntityClass implements IEntityClass {
     }
 
     @Override
+    public String profile() {
+        return this.profile;
+    }
+
+    @Override
     public String name() {
         return name;
     }
@@ -107,8 +113,8 @@ public class EntityClass implements IEntityClass {
     @Override
     public EntityClassRef ref() {
         return EntityClassRef.Builder.anEntityClassRef()
-            .withEntityClassId(id())
-            .withEntityClassCode(code())
+            .withEntityClassId(id)
+            .withEntityClassCode(code)
             .withEntityClassProfile(profile)
             .build();
     }
@@ -248,6 +254,7 @@ public class EntityClass implements IEntityClass {
         return id == that.id
             && version == that.version
             && level == that.level
+            && Objects.equals(profile, that.profile)
             && Objects.equals(name, that.name)
             && Objects.equals(code, that.code)
             && Objects.equals(appCode, that.appCode)
@@ -267,6 +274,7 @@ public class EntityClass implements IEntityClass {
         sb.append("id=").append(id);
         sb.append(", name='").append(name).append('\'');
         sb.append(", code='").append(code).append('\'');
+        sb.append(", profile='").append(profile).append('\'');
         sb.append(", appCode='").append(appCode).append('\'');
         sb.append(", version=").append(version);
         sb.append(", level=").append(level);
@@ -388,8 +396,11 @@ public class EntityClass implements IEntityClass {
             entityClass.father = father;
             entityClass.fields = fields;
             entityClass.relations = this.relations;
-            entityClass.profile = this.profile;
-            entityClass.type = type;
+            if (this.profile == null) {
+                entityClass.profile = OqsProfile.UN_DEFINE_PROFILE;
+            } else {
+                entityClass.profile = this.profile;
+            }
             return entityClass;
         }
     }

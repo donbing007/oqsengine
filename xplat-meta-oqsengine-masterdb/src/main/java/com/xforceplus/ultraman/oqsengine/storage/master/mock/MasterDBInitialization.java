@@ -11,10 +11,10 @@ import com.xforceplus.ultraman.oqsengine.metadata.mock.MetaInitialization;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.master.SQLMasterStorage;
-import com.xforceplus.ultraman.oqsengine.storage.master.strategy.conditions.SQLJsonConditionsBuilderFactory;
-import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterDecimalStorageStrategy;
-import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterStringsStorageStrategy;
+import com.xforceplus.ultraman.oqsengine.storage.master.mysql.SQLMasterStorage;
+import com.xforceplus.ultraman.oqsengine.storage.master.mysql.strategy.conditions.SQLJsonConditionsBuilderFactory;
+import com.xforceplus.ultraman.oqsengine.storage.master.mysql.strategy.value.MasterDecimalStorageStrategy;
+import com.xforceplus.ultraman.oqsengine.storage.master.mysql.strategy.value.MasterStringsStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.master.transaction.SqlConnectionTransactionResourceFactory;
 import com.xforceplus.ultraman.oqsengine.storage.master.unique.UniqueKeyGenerator;
 import com.xforceplus.ultraman.oqsengine.storage.master.unique.impl.SimpleFieldKeyGenerator;
@@ -96,7 +96,7 @@ public class MasterDBInitialization implements BeanInitialization {
             CommonInitialization.getInstance().getRunner());
         ReflectionUtils.reflectionFieldValue(masterFields, "masterDataSource", masterStorage, dataSource);
 
-        masterStorage.setTableName(MASTER_STORAGE_TABLE);
+        masterStorage.setDynamicTableName(MASTER_STORAGE_TABLE);
         masterStorage.init();
     }
 

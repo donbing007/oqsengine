@@ -136,6 +136,7 @@ public class CdcErrorQueryCondition {
                 stringBuilder.append(" AND ");
             }
             stringBuilder.append(ErrorFieldDefine.FIXED_TIME).append(">=").append("?");
+            hasEnd = true;
         }
 
         return stringBuilder.toString();

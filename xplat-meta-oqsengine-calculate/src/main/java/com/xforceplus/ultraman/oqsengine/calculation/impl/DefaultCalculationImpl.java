@@ -58,6 +58,7 @@ public class DefaultCalculationImpl implements Calculation {
 
     @Timed(
         value = MetricsDefine.CALCULATION_LOGIC_DELAY_LATENCY_SECONDS,
+        percentiles = {0.5, 0.9, 0.99},
         extraTags = {"logic", "all", "action", "calculate"}
     )
     @Override
@@ -118,6 +119,7 @@ public class DefaultCalculationImpl implements Calculation {
 
     @Timed(
         value = MetricsDefine.CALCULATION_LOGIC_DELAY_LATENCY_SECONDS,
+        percentiles = {0.5, 0.9, 0.99},
         extraTags = {"logic", "all", "action", "maintain"}
     )
     @Override
@@ -585,7 +587,7 @@ public class DefaultCalculationImpl implements Calculation {
                 "exception", ex ? CalculationException.class.getSimpleName() : "none"
             )
             .publishPercentileHistogram(false)
-            .publishPercentiles(null)
+            .publishPercentiles(0.5, 0.9, 0.99)
             .register(Metrics.globalRegistry));
     }
 }

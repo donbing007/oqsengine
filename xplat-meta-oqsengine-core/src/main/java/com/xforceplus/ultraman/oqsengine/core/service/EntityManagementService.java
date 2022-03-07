@@ -71,7 +71,9 @@ public interface EntityManagementService {
      * @param entity 目标entity.
      * @return 操作结果.
      * @throws SQLException 操作异常.
+     * @deprecated 已经废弃,直接使用delete.
      */
+    @Deprecated
     OqsResult<IEntity> deleteForce(IEntity entity) throws SQLException;
 
     /**
@@ -79,6 +81,8 @@ public interface EntityManagementService {
      *
      * @param entities 目标列表.
      * @return 操作结果.
+     * @deprecated 已经废弃, 请使用delete.
      */
+    @Deprecated
     OqsResult<IEntity[]> deleteForce(IEntity[] entities) throws SQLException;
 }

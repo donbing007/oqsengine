@@ -36,6 +36,9 @@ public enum EntityClassType {
         throw new SQLException("un-support entityClass-type.");
     }
 
+    /**
+     * 校验.
+     */
     public static boolean validate(int type) {
         for (EntityClassType t : EntityClassType.values()) {
             if (t.type == type) {

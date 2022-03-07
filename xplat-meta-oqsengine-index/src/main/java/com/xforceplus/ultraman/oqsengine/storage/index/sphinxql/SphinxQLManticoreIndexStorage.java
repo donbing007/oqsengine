@@ -135,6 +135,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
 
     @Timed(
         value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        percentiles = {0.5, 0.9, 0.99},
         extraTags = {"initiator", "index", "action", "condition"})
     @Override
     public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, SelectConfig config)
@@ -181,7 +182,10 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
         });
     }
 
-    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "index", "action", "clean"})
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        percentiles = {0.5, 0.9, 0.99},
+        extraTags = {"initiator", "index", "action", "clean"})
     @Override
     public long clean(long entityClassId, long maintainId, long start, long end) throws SQLException {
         CleanExecutor executor = CleanExecutor.Builder.anCleanExecutor()
@@ -195,7 +199,10 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
         return executor.execute(maintainId);
     }
 
-    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "index", "action", "save"})
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        percentiles = {0.5, 0.9, 0.99},
+        extraTags = {"initiator", "index", "action", "save"})
     @Override
     public void saveOrDeleteOriginalEntities(Collection<OriginalEntity> originalEntities) throws SQLException {
         if (originalEntities.isEmpty()) {
@@ -259,6 +266,12 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
             Exception exception = null;
             while (!exit) {
                 try {
+
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("The index performs persistence.[shardKey={}, indexName={}]",
+                            section.getShardKey(), section.getIndexName());
+                    }
+
                     doSave();
                     exit = true;
                     error = false;

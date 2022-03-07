@@ -89,6 +89,14 @@ public class OqsResult<V> implements Serializable {
         return new OqsResult(ResultStatus.UNCREATED, "The entity was not created successfully.");
     }
 
+    public static OqsResult unReplaced(long id) {
+        return new OqsResult(ResultStatus.UNREPLACE, String.format("The entity(%d) was not replace successfully.", id));
+    }
+
+    public static OqsResult unDeleted(long id) {
+        return new OqsResult(ResultStatus.UNDELETED, String.format("The entity(%d) was not deleted successfully.", id));
+    }
+
     public static OqsResult unAccumulate() {
         return unAccumulate(null);
     }
