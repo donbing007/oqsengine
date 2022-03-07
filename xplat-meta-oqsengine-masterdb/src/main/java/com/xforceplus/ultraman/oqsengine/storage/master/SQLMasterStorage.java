@@ -153,6 +153,7 @@ public class SQLMasterStorage implements MasterStorage {
 
     @Timed(
         value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        percentiles = {0.5, 0.9, 0.99},
         extraTags = {"initiator", "master", "action", "condition"}
     )
     @Override
@@ -173,14 +174,20 @@ public class SQLMasterStorage implements MasterStorage {
         });
     }
 
-    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "master", "action", "exist"})
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        percentiles = {0.5, 0.9, 0.99},
+        extraTags = {"initiator", "master", "action", "exist"})
     @Override
     public int exist(long id) throws SQLException {
         return (int) transactionExecutor.execute(((tx, resource, hint) ->
             ExistExecutor.build(tableName, resource, queryTimeout).execute(id)));
     }
 
-    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "master", "action", "one"})
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        percentiles = {0.5, 0.9, 0.99},
+        extraTags = {"initiator", "master", "action", "one"})
     @Override
     public Optional<IEntity> selectOne(long id) throws SQLException {
         return (Optional<IEntity>) transactionExecutor.execute((tx, resource, hint) -> {
@@ -196,7 +203,10 @@ public class SQLMasterStorage implements MasterStorage {
         });
     }
 
-    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "master", "action", "one"})
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        percentiles = {0.5, 0.9, 0.99},
+        extraTags = {"initiator", "master", "action", "one"})
     @Override
     public Optional<IEntity> selectOne(long id, IEntityClass entityClass) throws SQLException {
         Optional<IEntity> entityOptional = selectOne(id);
@@ -224,6 +234,7 @@ public class SQLMasterStorage implements MasterStorage {
 
     @Timed(
         value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        percentiles = {0.5, 0.9, 0.99},
         extraTags = {"initiator", "master", "action", "multiple"}
     )
     @Override
@@ -258,6 +269,7 @@ public class SQLMasterStorage implements MasterStorage {
 
     @Timed(
         value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        percentiles = {0.5, 0.9, 0.99},
         extraTags = {"initiator", "master", "action", "multiple"}
     )
     @Override
@@ -282,7 +294,10 @@ public class SQLMasterStorage implements MasterStorage {
         }).collect(Collectors.toList());
     }
 
-    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "master", "action", "build"})
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        percentiles = {0.5, 0.9, 0.99},
+        extraTags = {"initiator", "master", "action", "build"})
     @Override
     public boolean build(IEntity entity, IEntityClass entityClass) throws SQLException {
         checkId(entity);
@@ -311,7 +326,10 @@ public class SQLMasterStorage implements MasterStorage {
         return result;
     }
 
-    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "master", "action", "builds"})
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        percentiles = {0.5, 0.9, 0.99},
+        extraTags = {"initiator", "master", "action", "builds"})
     @Override
     public void build(EntityPackage entityPackage) throws SQLException {
         checkId(entityPackage);
@@ -362,6 +380,7 @@ public class SQLMasterStorage implements MasterStorage {
 
     @Timed(
         value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        percentiles = {0.5, 0.9, 0.99},
         extraTags = {"initiator", "master", "action", "replace"}
     )
     @Override
@@ -394,6 +413,7 @@ public class SQLMasterStorage implements MasterStorage {
 
     @Timed(
         value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        percentiles = {0.5, 0.9, 0.99},
         extraTags = {"initiator", "master", "action", "replaces"}
     )
     @Override
@@ -443,7 +463,10 @@ public class SQLMasterStorage implements MasterStorage {
         }
     }
 
-    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "master", "action", "delete"})
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        percentiles = {0.5, 0.9, 0.99},
+        extraTags = {"initiator", "master", "action", "delete"})
     @Override
     public boolean delete(IEntity entity, IEntityClass entityClass) throws SQLException {
         checkId(entity);
@@ -473,6 +496,7 @@ public class SQLMasterStorage implements MasterStorage {
 
     @Timed(
         value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        percentiles = {0.5, 0.9, 0.99},
         extraTags = {"initiator", "master", "action", "deletes"}
     )
     @Override

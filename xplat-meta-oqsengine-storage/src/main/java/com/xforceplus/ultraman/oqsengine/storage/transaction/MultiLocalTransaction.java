@@ -374,7 +374,6 @@ public class MultiLocalTransaction implements Transaction {
         sb.append(", committed=").append(committed);
         sb.append(", rollback=").append(rollback);
         sb.append(", msg='").append(msg).append('\'');
-        sb.append(", startMs=").append(startMs);
         sb.append('}');
         return sb.toString();
     }
@@ -466,7 +465,7 @@ public class MultiLocalTransaction implements Transaction {
                 "exception", "none"
             )
             .publishPercentileHistogram(false)
-            .publishPercentiles(null)
+            .publishPercentiles(0.5, 0.9, 0.99)
             .register(Metrics.globalRegistry));
 
 
