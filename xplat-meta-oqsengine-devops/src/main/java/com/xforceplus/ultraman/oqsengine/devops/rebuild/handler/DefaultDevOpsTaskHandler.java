@@ -59,6 +59,7 @@ public class DefaultDevOpsTaskHandler implements TaskHandler {
         try {
             sqlTaskStorage.selectUnique((devOpsTaskInfo).getMaintainid()).ifPresent(opsTaskInfo -> {
                 synchronized (DefaultDevOpsTaskHandler.class) {
+                    devOpsTaskInfo.setBatchSize(opsTaskInfo.getBatchSize());
                     devOpsTaskInfo.setFinishSize(opsTaskInfo.getFinishSize());
                     devOpsTaskInfo.setErrorSize(opsTaskInfo.getErrorSize());
                     devOpsTaskInfo.resetStatus(opsTaskInfo.getStatus());

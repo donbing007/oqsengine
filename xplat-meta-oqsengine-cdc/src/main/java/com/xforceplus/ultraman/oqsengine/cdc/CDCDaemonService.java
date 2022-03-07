@@ -3,9 +3,9 @@ package com.xforceplus.ultraman.oqsengine.cdc;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.DAEMON_NODE_ID;
 
 import com.xforceplus.ultraman.oqsengine.cdc.connect.AbstractCDCConnector;
-import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerRunner;
-import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
-import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
+import com.xforceplus.ultraman.oqsengine.cdc.consumer.CDCRunner;
+import com.xforceplus.ultraman.oqsengine.cdc.consumer.service.ConsumerService;
+import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsHandler;
 import com.xforceplus.ultraman.oqsengine.common.id.node.NodeIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.lifecycle.Lifecycle;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.RebuildIndexExecutor;
@@ -32,15 +32,15 @@ public class CDCDaemonService implements Lifecycle {
     private ConsumerService consumerService;
 
     @Resource
-    private CDCMetricsService cdcMetricsService;
+    private CDCMetricsHandler metricsHandler;
 
     @Resource
-    private AbstractCDCConnector abstractCdcConnector;
+    private AbstractCDCConnector cdcConnector;
 
     @Resource
     private RebuildIndexExecutor rebuildIndexExecutor;
 
-    private ConsumerRunner consumerRunner;
+    private CDCRunner cdcRunner;
 
     private static boolean isStart = false;
 
@@ -52,8 +52,11 @@ public class CDCDaemonService implements Lifecycle {
         logger.info("[cdc-daemon] current node = {}", nodeId);
         if (nodeId == DAEMON_NODE_ID && !isStart) {
             logger.info("[cdc-daemon] node-{} start CDC daemon process thread...", nodeId);
-            consumerRunner = new ConsumerRunner(consumerService, cdcMetricsService, abstractCdcConnector, rebuildIndexExecutor);
-            consumerRunner.start();
+            cdcRunner =
+                new CDCRunner(consumerService, metricsHandler, cdcConnector, rebuildIndexExecutor);
+
+            cdcRunner.start();
+
             isStart = true;
             logger.info("[cdc-daemon] node-{} start CDC daemon process thread success...", nodeId);
         }
@@ -64,7 +67,7 @@ public class CDCDaemonService implements Lifecycle {
     public void destroy() throws Exception {
         if (isStart) {
             logger.info("[cdc-daemon] try close CDC daemon process thread...");
-            consumerRunner.shutdown();
+            cdcRunner.shutdown();
             isStart = false;
             logger.info("[cdc-daemon] try close CDC daemon process thread success...");
         }

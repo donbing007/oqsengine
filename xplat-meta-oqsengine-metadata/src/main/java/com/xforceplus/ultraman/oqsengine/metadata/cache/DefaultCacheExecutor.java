@@ -14,6 +14,7 @@ import static com.xforceplus.ultraman.oqsengine.metadata.cache.RedisLuaScript.PR
 import static com.xforceplus.ultraman.oqsengine.metadata.cache.RedisLuaScript.REST_VERSION;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.NOT_INIT_INTEGER_PARAMETER;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_ANCESTORS;
+import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_APPCODE;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_CODE;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_FATHER;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_FIELDS;
@@ -21,6 +22,7 @@ import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassEle
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_LEVEL;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_NAME;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_RELATIONS;
+import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_TYPE;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_VERSION;
 import static com.xforceplus.ultraman.oqsengine.metadata.utils.CacheUtils.generateEntityCacheInternalKey;
 import static com.xforceplus.ultraman.oqsengine.metadata.utils.CacheUtils.generateEntityCacheKey;
@@ -31,8 +33,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
+import com.xforceplus.ultraman.oqsengine.common.thread.PollingThreadExecutor;
 import com.xforceplus.ultraman.oqsengine.common.watch.RedisLuaScriptWatchDog;
 import com.xforceplus.ultraman.oqsengine.event.payload.meta.MetaChangePayLoad;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
@@ -89,6 +90,12 @@ public class DefaultCacheExecutor implements CacheExecutor {
     private StatefulRedisConnection<String, String> syncConnect;
 
     private RedisCommands<String, String> syncCommands;
+
+    private CacheContext cacheContext;
+
+    private int maxWait = 10;
+    private int versionCacheRefreshDuration = 10;
+    private PollingThreadExecutor<Void> lifeCycleThread;
 
     /*
      * prepare的超时时间
@@ -190,18 +197,6 @@ public class DefaultCacheExecutor implements CacheExecutor {
      */
     private final String entityStorageKeys;
 
-    /**
-     * cache key entityClass.version
-     * value key profile
-     * is not have profile, value key will be defaultKey '-'getFromLocal
-     */
-    private final Cache<String, Map<String, IEntityClass>> entityClassStorageCache;
-
-    /**
-     * cache key entityClass.version
-     * value profile list
-     */
-    private final Cache<String, List<String>> profileCache;
 
     /**
      * 默认实例化.
@@ -293,30 +288,11 @@ public class DefaultCacheExecutor implements CacheExecutor {
             throw new IllegalArgumentException("The appEntityCollections key is invalid.");
         }
 
-        entityClassStorageCache = initCache();
-        profileCache = initCache();
-    }
-
-    public void setMaxCacheSize(int maxCacheSize) {
-        this.maxCacheSize = maxCacheSize;
-    }
-
-    public void setCacheExpire(int cacheExpire) {
-        this.cacheExpire = cacheExpire;
+        cacheContext = new CacheContext(maxCacheSize, cacheExpireSeconds);
     }
 
     public void setPrepareExpire(int prepareExpire) {
         this.prepareExpire = prepareExpire;
-    }
-
-    /**
-     * 初始化cache.
-     */
-    public <V> Cache<String, V> initCache() {
-        return CacheBuilder.newBuilder()
-            .maximumSize(maxCacheSize)
-            .expireAfterAccess(cacheExpire, TimeUnit.SECONDS)
-            .build();
     }
 
     @PostConstruct
@@ -345,11 +321,17 @@ public class DefaultCacheExecutor implements CacheExecutor {
             entityClassStorageScriptSha = syncCommands.scriptLoad(ENTITY_CLASS_STORAGE_INFO);
             entityClassStorageListScriptSha = syncCommands.scriptLoad(ENTITY_CLASS_STORAGE_INFO_LIST);
         }
+
+        lifeCycleThread = new PollingThreadExecutor<Void>("metaVersionCached", versionCacheRefreshDuration,
+                                            TimeUnit.SECONDS, maxWait, (n) -> { cachedVersion(); }, null);
+
+        lifeCycleThread.start();
     }
 
     @PreDestroy
     public void destroy() {
         syncConnect.close();
+        lifeCycleThread.stop();
     }
 
     /**
@@ -411,7 +393,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
     @Override
     public Map<String, String> remoteRead(long entityClassId) throws JsonProcessingException {
         //  这里是一次IO操作REDIS获取当前的版本, 并组装结构
-        int version = version(entityClassId);
+        int version = version(entityClassId, false);
 
         return remoteRead(entityClassId, version);
     }
@@ -465,9 +447,17 @@ public class DefaultCacheExecutor implements CacheExecutor {
      * 通过entityClassId获取当前活动版本.
      */
     @Override
-    public int version(Long entityClassId) {
+    public int version(Long entityClassId, boolean withCache) {
+
         if (null == entityClassId || entityClassId <= 0) {
             return -1;
+        }
+
+        if (withCache) {
+            Integer v = cacheContext.versionCache().get(entityClassId);
+            if (null != v) {
+                return v;
+            }
         }
 
         String[] keys = {
@@ -484,9 +474,32 @@ public class DefaultCacheExecutor implements CacheExecutor {
     }
 
     @Override
-    public Map<Long, Integer> versions(List<Long> entityClassIds, boolean errorContinue) {
+    public Map<Long, Integer> versions(List<Long> entityClassIds, boolean withCache, boolean errorContinue) {
 
         Map<Long, Integer> vs = new HashMap<>();
+
+        List<Long> notFoundIds;
+        if (withCache) {
+            notFoundIds = new ArrayList<>();
+            //  从缓存读取.
+            entityClassIds.forEach(
+                id -> {
+                    Integer v = cacheContext.versionCache().get(id);
+                    if (null != v && v > NOT_EXIST_VERSION) {
+                        vs.put(id, v);
+                    } else {
+                        notFoundIds.add(id);
+                    }
+                }
+            );
+        } else {
+            notFoundIds = entityClassIds;
+        }
+
+        //  如果都读到则直接退出.
+        if (notFoundIds.isEmpty()) {
+            return vs;
+        }
 
         //  获取所有entity->app mapping
         Map<String, String> entityAppRelations = syncCommands.hgetall(appEntityMappingKey);
@@ -498,7 +511,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
         if (null != appVersionRelations && !appVersionRelations.isEmpty()
                 && null != entityAppRelations && !entityAppRelations.isEmpty()) {
 
-            for (Long entityClassId : entityClassIds) {
+            for (Long entityClassId : notFoundIds) {
                 String appId = entityAppRelations.get(String.valueOf(entityClassId));
 
                 if (null != appId) {
@@ -654,8 +667,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
 
     @Override
     public void invalidateLocal() {
-        entityClassStorageCache.invalidateAll();
-        profileCache.invalidateAll();
+        cacheContext.invalidate();
     }
 
     /**
@@ -708,7 +720,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
     @Override
     public Optional<IEntityClass> localRead(long entityClassId, int version, String profile) {
         Map<String, IEntityClass> entityClassMap =
-            entityClassStorageCache.getIfPresent(generateEntityCacheKey(entityClassId, version));
+            cacheContext.entityClassStorageCache().getIfPresent(generateEntityCacheKey(entityClassId, version));
 
         if (null != entityClassMap) {
             return Optional.ofNullable(entityClassMap.get(generateEntityCacheInternalKey(profile)));
@@ -717,17 +729,15 @@ public class DefaultCacheExecutor implements CacheExecutor {
     }
 
     @Override
-    public synchronized List<String> readProfileCodes(long entityClassId, int version) {
+    public List<String> readProfileCodes(long entityClassId, int version) {
         String key = generateEntityCacheKey(entityClassId, version);
         //  从本地cache读取
-        List<String> profiles = profileCache.getIfPresent(key);
-        if (null == profiles || profiles.isEmpty()) {
+        List<String> profiles = cacheContext.profileCache().getIfPresent(key);
+        if (null == profiles) {
             try {
                 profiles = CacheUtils.parseProfileCodes(remoteRead(entityClassId, version));
-                if (!profiles.isEmpty()) {
-                    //  从remoteCache读取,并写入本地cache
-                    profileCache.put(key, profiles);
-                }
+                //  从remoteCache读取,并写入本地cache
+                cacheContext.profileCache().put(key, profiles);
             } catch (Exception e) {
                 throw new RuntimeException(
                     String.format("entityId : %d, version : %d, read profiles failed, message : %s",
@@ -739,13 +749,13 @@ public class DefaultCacheExecutor implements CacheExecutor {
     }
 
     @Override
-    public synchronized void localAdd(long entityClassId, int version, String profile, IEntityClass entityClass) {
+    public void localAdd(long entityClassId, int version, String profile, IEntityClass entityClass) {
         String key = generateEntityCacheKey(entityClassId, version);
-        Map<String, IEntityClass> e = entityClassStorageCache.getIfPresent(key);
+        Map<String, IEntityClass> e = cacheContext.entityClassStorageCache().getIfPresent(key);
         if (null == e) {
             Map<String, IEntityClass> internals = new HashMap<>();
             internals.put(generateEntityCacheInternalKey(profile), entityClass);
-            entityClassStorageCache.put(key, internals);
+            cacheContext.entityClassStorageCache().put(key, internals);
         } else {
             e.putIfAbsent(generateEntityCacheInternalKey(profile), entityClass);
         }
@@ -841,8 +851,9 @@ public class DefaultCacheExecutor implements CacheExecutor {
 
     private void localInvalidate(long entityId, int version) {
         try {
-            entityClassStorageCache.invalidate(generateEntityCacheKey(entityId, version));
-            profileCache.invalidate(generateEntityCacheKey(entityId, version));
+            cacheContext.entityClassStorageCache().invalidate(generateEntityCacheKey(entityId, version));
+            cacheContext.entityClassStorageCache().invalidate(generateEntityCacheKey(entityId, version));
+            cacheContext.versionCache().remove(entityId);
         } catch (Exception e) {
             logger.warn("delete local failed, entityId:[{}], version:[{}], message:[{}]", entityId, version,
                 e.getMessage());
@@ -872,6 +883,8 @@ public class DefaultCacheExecutor implements CacheExecutor {
 
         //  basic elements
         syncCommands.hset(key, ELEMENT_ID, Long.toString(newStorage.getId()));
+        syncCommands.hset(key, ELEMENT_APPCODE, newStorage.getAppCode());
+        syncCommands.hset(key, ELEMENT_TYPE, Integer.toString(newStorage.getType()));
         syncCommands.hset(key, ELEMENT_CODE, newStorage.getCode());
         syncCommands.hset(key, ELEMENT_NAME, newStorage.getName());
         syncCommands.hset(key, ELEMENT_LEVEL, Integer.toString(newStorage.getLevel()));
@@ -1017,5 +1030,22 @@ public class DefaultCacheExecutor implements CacheExecutor {
 
     private String toCacheSetKey(int version, long id) {
         return entityStorageKeys + "." + version + "." + id;
+    }
+
+    private void cachedVersion() {
+        Map<String, String> appEnvMaps = syncCommands.hgetall(appEntityCollectionsKey);
+        appEnvMaps.forEach(
+            (key, value) -> {
+                int version = version(key);
+                if (version > NOT_EXIST_VERSION) {
+                    Collection<Long> entityClassIds = appEntityIdList(key, version);
+                    entityClassIds.forEach(
+                        id -> {
+                            cacheContext.versionCache().put(id, version);
+                        }
+                    );
+                }
+            }
+        );
     }
 }

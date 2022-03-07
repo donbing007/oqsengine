@@ -78,7 +78,7 @@ public class CacheExecutorTest {
         expectedVersions.put(entityClassId, version);
         testEntityClassId.add(entityClassId);
 
-        Map<Long, Integer> result = cacheExecutor.versions(testEntityClassId, false);
+        Map<Long, Integer> result = cacheExecutor.versions(testEntityClassId, false, false);
 
         Assertions.assertEquals(expectedVersions.size(), result.size());
 
@@ -297,13 +297,13 @@ public class CacheExecutorTest {
 
         Assertions.assertEquals(expectedVersion, cacheExecutor.version(appId));
 
-        Assertions.assertEquals(expectedVersion, cacheExecutor.version(expectedIds.get(0)));
+        Assertions.assertEquals(expectedVersion, cacheExecutor.version(expectedIds.get(0), false));
 
-        Assertions.assertEquals(expectedVersion, cacheExecutor.version(expectedIds.get(1)));
+        Assertions.assertEquals(expectedVersion, cacheExecutor.version(expectedIds.get(1), false));
         /*
          * 使用一个未关联的entityId 3 进行版本信息查询，将返回NOT_EXIST_VERSION
          */
-        Assertions.assertEquals(NOT_EXIST_VERSION, cacheExecutor.version(3L));
+        Assertions.assertEquals(NOT_EXIST_VERSION, cacheExecutor.version(3L, false));
     }
 
     @Test
@@ -316,7 +316,7 @@ public class CacheExecutorTest {
         entityClassIds.addAll(addAndRetEntityClassId(expects, "testApp2", expectedVersion + 1, Arrays.asList(3L, 4L)));
         entityClassIds.addAll(addAndRetEntityClassId(expects, "testApp3", expectedVersion + 2, Arrays.asList(5L, 6L)));
 
-        Map<Long, Integer> res = cacheExecutor.versions(entityClassIds, false);
+        Map<Long, Integer> res = cacheExecutor.versions(entityClassIds, false,false);
 
         Assertions.assertEquals(expects.size(), res.size());
 
@@ -406,7 +406,7 @@ public class CacheExecutorTest {
         }
 
         for (ExpectedEntityStorage e : expectedEntityStorageList) {
-            Assertions.assertEquals(expectedVersion, cacheExecutor.version(e.getSelf()));
+            Assertions.assertEquals(expectedVersion, cacheExecutor.version(e.getSelf(), false));
             Map<String, String> results = cacheExecutor.remoteRead(e.getSelf());
 
             Assertions.assertTrue(null != results && !results.isEmpty());

@@ -25,6 +25,7 @@ public class EntityClassStorageBuilderUtilsTest {
     @Test
     public void protoToStorageListTest() {
         String appId = "testLoad";
+        String appCode = "protoToStorageListTest";
         int expectedVersion = 1;
         long expectedId = 1 + 7200;
 
@@ -33,7 +34,7 @@ public class EntityClassStorageBuilderUtilsTest {
 
         EntityClassSyncResponse entityClassSyncResponse =
             EntityClassSyncProtoBufMocker.Response
-                .entityClassSyncResponseGenerator(appId, expectedVersion, expectedEntityStorageList);
+                .entityClassSyncResponseGenerator(appId, appCode, expectedVersion, expectedEntityStorageList);
 
         List<EntityClassStorage> result =
             EntityClassStorageBuilderUtils.protoToStorageList(entityClassSyncResponse.getEntityClassSyncRspProto());

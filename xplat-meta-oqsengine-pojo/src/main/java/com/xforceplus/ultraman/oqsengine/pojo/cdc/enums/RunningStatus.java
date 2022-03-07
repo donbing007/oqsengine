@@ -8,9 +8,18 @@ package com.xforceplus.ultraman.oqsengine.pojo.cdc.enums;
  * @since : 1.8
  */
 public enum RunningStatus {
-    PENDING,
-    INIT,
     RUN,
     TRY_STOP,
-    STOP_SUCCESS
+    STOP_SUCCESS;
+
+    RunningStatus() {
+    }
+
+    public boolean shouldStop() {
+        return this.ordinal() >= TRY_STOP.ordinal();
+    }
+
+    public boolean isStop() {
+        return this.ordinal() >= STOP_SUCCESS.ordinal();
+    }
 }

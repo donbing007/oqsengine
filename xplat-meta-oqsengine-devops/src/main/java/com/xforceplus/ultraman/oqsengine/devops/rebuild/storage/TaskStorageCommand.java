@@ -214,9 +214,9 @@ public class TaskStorageCommand {
                 st.setInt(pos++, (int) taskInfo.getBatchSize());
             }
 
-            //  finishSize
-            if (taskInfo.getFinishSize() > 0) {
-                st.setInt(pos++, taskInfo.getFinishSize());
+            //  finishSize increment
+            if (taskInfo.incrementSize() > 0) {
+                st.setInt(pos++, taskInfo.incrementSize());
             }
 
             //  message
@@ -246,8 +246,8 @@ public class TaskStorageCommand {
         if (taskInfo.getBatchSize() > 0) {
             stringBuilder.append(", ").append("batchsize = ?");
         }
-        if (taskInfo.getFinishSize() > 0) {
-            stringBuilder.append(", ").append("finishsize = ?");
+        if (taskInfo.incrementSize() > 0) {
+            stringBuilder.append(", ").append("finishsize = finishsize + ?");
         }
         if (null != taskInfo.message()) {
             stringBuilder.append(", ").append("message = ?");

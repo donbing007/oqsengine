@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.metadata.utils.storage;
 
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_ANCESTORS;
+import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_APPCODE;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_CODE;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_FATHER;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_FIELDS;
@@ -9,6 +10,7 @@ import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassEle
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_NAME;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_PROFILES;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_RELATIONS;
+import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_TYPE;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_VERSION;
 import static com.xforceplus.ultraman.oqsengine.metadata.utils.CacheUtils.parseOneKeyFromProfileEntity;
 import static com.xforceplus.ultraman.oqsengine.metadata.utils.CacheUtils.parseOneKeyFromProfileRelations;
@@ -62,6 +64,12 @@ public class CacheToStorageGenerator {
         }
 
         EntityClassStorage entityClassStorage = new EntityClassStorage();
+        //  appCode
+        String appCode = keyValues.remove(ELEMENT_APPCODE);
+        if (null == appCode || appCode.isEmpty()) {
+            throw new RuntimeException("appCode is null from cache.");
+        }
+        entityClassStorage.setAppCode(appCode);
 
         //  id
         String id = keyValues.remove(ELEMENT_ID);
@@ -69,6 +77,13 @@ public class CacheToStorageGenerator {
             throw new RuntimeException("id is null from cache.");
         }
         entityClassStorage.setId(Long.parseLong(id));
+
+        //  type
+        String type = keyValues.remove(ELEMENT_TYPE);
+        if (null == type || type.isEmpty()) {
+            throw new RuntimeException("type is null from cache.");
+        }
+        entityClassStorage.setType(Integer.parseInt(type));
 
         //  code
         String code = keyValues.remove(ELEMENT_CODE);

@@ -42,7 +42,7 @@ public class MockRequestHandler implements IRequestHandler {
             watchElement.setVersion(EXIST_MIN_VERSION);
         }
 
-        invoke(EntityClassSyncProtoBufMocker.Response.entityClassSyncResponseGenerator(watchElement.getAppId(), watchElement.getVersion(),
+        invoke(EntityClassSyncProtoBufMocker.Response.entityClassSyncResponseGenerator(watchElement.getAppId(), "MockRequestHandler", watchElement.getVersion(),
             EntityClassSyncProtoBufMocker.mockSelfFatherAncestorsGenerate(System.currentTimeMillis())), null);
         return true;
     }

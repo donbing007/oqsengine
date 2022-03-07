@@ -41,6 +41,7 @@ public class EntityClassSyncExecutorTest extends AbstractMetaTestHelper {
     public void syncTest()
         throws InterruptedException, IllegalAccessException, JsonProcessingException {
         String expectedAppId = "testLoad";
+        String expectedAppCode = "syncTest";
         int expectedVersion = 1;
         long expectedId = System.currentTimeMillis() + 3600_000;
 
@@ -48,7 +49,7 @@ public class EntityClassSyncExecutorTest extends AbstractMetaTestHelper {
             EntityClassSyncProtoBufMocker.mockSelfFatherAncestorsGenerate(expectedId);
 
         EntityClassSyncRspProto entityClassSyncRspProto =
-            EntityClassSyncProtoBufMocker.Response.entityClassSyncRspProtoGenerator(expectedEntityStorageList);
+            EntityClassSyncProtoBufMocker.Response.entityClassSyncRspProtoGenerator(expectedAppCode, expectedEntityStorageList);
 
         int newVersion = expectedVersion + 1;
 
@@ -68,6 +69,10 @@ public class EntityClassSyncExecutorTest extends AbstractMetaTestHelper {
                 ).values();
 
             Assertions.assertEquals(1, res.size());
+
+            for (EntityClassStorage es : res) {
+                Assertions.assertEquals(expectedAppCode, es.getAppCode());
+            }
         }
     }
 }

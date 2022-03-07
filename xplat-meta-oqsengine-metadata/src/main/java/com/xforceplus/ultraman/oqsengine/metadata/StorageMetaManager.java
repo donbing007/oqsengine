@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.metadata;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
 import static com.xforceplus.ultraman.oqsengine.metadata.cache.DefaultCacheExecutor.OBJECT_MAPPER;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.COMMON_WAIT_TIME_OUT;
+import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_APPCODE;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_CODE;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_FATHER;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_FIELDS;
@@ -11,6 +12,7 @@ import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassEle
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_NAME;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_PROFILES;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_RELATIONS;
+import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_TYPE;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_VERSION;
 import static com.xforceplus.ultraman.oqsengine.metadata.utils.CacheUtils.parseOneKeyFromProfileEntity;
 import static com.xforceplus.ultraman.oqsengine.metadata.utils.CacheUtils.parseOneKeyFromProfileRelations;
@@ -36,12 +38,14 @@ import com.xforceplus.ultraman.oqsengine.metadata.utils.CacheUtils;
 import com.xforceplus.ultraman.oqsengine.metadata.utils.offline.FileReaderUtils;
 import com.xforceplus.ultraman.oqsengine.metadata.utils.offline.OffLineMetaHelper;
 import com.xforceplus.ultraman.oqsengine.metadata.utils.storage.CacheToStorageGenerator;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import io.micrometer.core.annotation.Timed;
+import io.vavr.Tuple2;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -139,93 +143,23 @@ public class StorageMetaManager implements MetaManager {
     @Override
     public Optional<IEntityClass> load(long entityClassId, String profile) {
         //  这里是一次IO操作REDIS获取当前的版本, 并组装结构
-        return load(entityClassId, cacheExecutor.version(entityClassId), profile);
+        return load(entityClassId, NOT_EXIST_VERSION, profile);
     }
 
     @Override
     public Optional<IEntityClass> load(long entityClassId, int version, String profile) {
-
-        /*
-        健康检查使用的
-         */
+        //  健康检查使用
         if (entityClassId == HealthCheckEntityClass.getInstance().id()) {
             return Optional.of(HealthCheckEntityClass.getInstance());
         }
 
-        /*
-         * 不存在时抛出异常
-         */
-        if (NOT_EXIST_VERSION == version) {
-            version = cacheExecutor.version(entityClassId);
-            if (NOT_EXIST_VERSION == version) {
-                throw new RuntimeException(
-                    String.format("invalid entityClassId : [%d], no version pair", entityClassId));
-            }
-        }
-
-        Optional<IEntityClass> ecOp = cacheExecutor.localRead(entityClassId, version, profile);
-        if (ecOp.isPresent()) {
-            return ecOp;
-        } else {
-            IEntityClass entityClass = null;
-            try {
-                //  从cache中读取原始数据
-                Map<String, String> keyValues = cacheExecutor.remoteRead(entityClassId, version);
-
-                if (keyValues.isEmpty()) {
-                    throw new RuntimeException("entityClassStorage is null, may be delete.");
-                }
-
-                entityClass = classLoad(entityClassId, profile, keyValues);
-
-                //  加入本地cache
-                if (null != entityClass) {
-                    cacheExecutor.localAdd(entityClassId, version, profile, entityClass);
-                }
-            } catch (Exception e) {
-                logger.warn("load entityClass failed, message : {}", e.getMessage());
-            }
-            return Optional.ofNullable(entityClass);
-        }
-    }
-
-    private Collection<IEntityClass> withProfilesLoad(long entityClassId, int version) {
-        try {
-            List<IEntityClass> entityClassList = new ArrayList<>();
-
-            if (version == NOT_EXIST_VERSION) {
-                version = cacheExecutor.version(entityClassId);
-            }
-            Optional<IEntityClass> entityClassOp =
-                    load(entityClassId, version, null);
-
-            if (entityClassOp.isPresent()) {
-                entityClassList.add(entityClassOp.get());
-
-                List<String> profiles = cacheExecutor.readProfileCodes(entityClassId, version);
-                if (!profiles.isEmpty()) {
-                    for (String profile : profiles) {
-                        Optional<IEntityClass> ecOp =
-                                load(entityClassId, version, profile);
-
-                        ecOp.ifPresent(entityClassList::add);
-                    }
-                }
-            }
-
-            return entityClassList;
-        } catch (Exception e) {
-            logger.warn("load entityClass [{}] error, message [{}]", entityClassId, e.getMessage());
-        }
-        return new ArrayList<>();
-
+        return entityClassLoadWithVersion(entityClassId, version, profile)._2();
     }
 
     @Override
     public Collection<IEntityClass> withProfilesLoad(long entityClassId) {
         return withProfilesLoad(entityClassId, NOT_EXIST_VERSION);
     }
-
 
     @Override
     public int need(String appId, String env) {
@@ -238,11 +172,12 @@ public class StorageMetaManager implements MetaManager {
      *
      * @param appId 应用标识.
      * @param env   环境编码.
+     * @param reset 是否为重置.
      * @return 版本号.
      */
     @Override
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "meta", "action", "need"})
-    public int need(String appId, String env, boolean overWrite) {
+    public int need(String appId, String env, boolean reset) {
         try {
             cacheExecutor.appEnvSet(appId, env);
             String cacheEnv = cacheExecutor.appEnvGet(appId);
@@ -256,14 +191,13 @@ public class StorageMetaManager implements MetaManager {
             }
 
             int version = NOT_EXIST_VERSION;
-
-            if (!overWrite) {
+            if (!reset) {
                 version = cacheExecutor.version(appId);
             }
 
             if (metaModel.getModel().equals(MetaModel.CLIENT_SYNC)) {
                 WatchElement watchElement = new WatchElement(appId, env, version, WatchElement.ElementStatus.Register);
-                if (overWrite) {
+                if (reset) {
                     requestHandler.reset(watchElement);
                 } else {
                     requestHandler.register(watchElement);
@@ -333,6 +267,13 @@ public class StorageMetaManager implements MetaManager {
         }
     }
 
+    /**
+     * 维护类接口, 查询当前的meta指标.
+     *
+     * @param appId 应用ID.
+     * @return MetaMetrics指标.
+     * @throws Exception
+     */
     @Override
     public Optional<MetaMetrics> showMeta(String appId) throws Exception {
 
@@ -490,7 +431,7 @@ public class StorageMetaManager implements MetaManager {
     /**
      * 获取一个完整的EntityClass.
      */
-    public IEntityClass classLoad(long entityClassId, String profile, Map<String, String> keyValues) {
+    private IEntityClass classLoad(long entityClassId, String profile, int version, Map<String, String> keyValues) {
         try {
             EntityClass.Builder builder = EntityClass.Builder.anEntityClass();
 
@@ -498,14 +439,30 @@ public class StorageMetaManager implements MetaManager {
             String id = keyValues.remove(ELEMENT_ID);
             if (null == id || id.isEmpty()) {
                 throw new RuntimeException(
-                    String.format("catch id is null from cache, query entityClassId : %d", entityClassId));
+                    String.format("id is null from cache, query entityClassId : %d", entityClassId));
             }
             builder.withId(Long.parseLong(id));
+
+            //  set appCode
+            String appCode = keyValues.remove(ELEMENT_APPCODE);
+            if (null == appCode || appCode.isEmpty()) {
+                throw new RuntimeException(
+                    String.format("appCode is null from cache, query entityClassId : %d", entityClassId));
+            }
+            builder.withAppCode(appCode);
+
+            //  set type
+            String type = keyValues.remove(ELEMENT_TYPE);
+            if (null == type || type.isEmpty()) {
+                throw new RuntimeException(
+                    String.format("type is null from cache, query entityClassId : %d", entityClassId));
+            }
+            builder.withType(EntityClassType.getInstance(Integer.parseInt(type)));
 
             //  code
             String code = keyValues.remove(ELEMENT_CODE);
             if (null == code || code.isEmpty()) {
-                throw new RuntimeException(String.format("id : %s, code is null from cache.", id));
+                throw new RuntimeException(String.format("code is null from cache, query entityClassId : %d.", entityClassId));
             }
             builder.withCode(code);
 
@@ -518,14 +475,14 @@ public class StorageMetaManager implements MetaManager {
             //  level
             String level = keyValues.remove(ELEMENT_LEVEL);
             if (null == level || level.isEmpty()) {
-                throw new RuntimeException(String.format("id : %s, level is null from cache.", id));
+                throw new RuntimeException(String.format("level is null from cache, query entityClassId : %d.", entityClassId));
             }
             builder.withLevel(Integer.parseInt(level));
 
             //  version
             String vn = keyValues.remove(ELEMENT_VERSION);
             if (null == vn || vn.isEmpty()) {
-                throw new RuntimeException(String.format("id : %s, version is null from cache.", id));
+                throw new RuntimeException(String.format("version is null from cache, query entityClassId : %d.", entityClassId));
             }
             builder.withVersion(Integer.parseInt(vn));
 
@@ -535,11 +492,11 @@ public class StorageMetaManager implements MetaManager {
             //  father
             String father = keyValues.remove(ELEMENT_FATHER);
             if (CacheUtils.validBusinessId(father)) {
-                Optional<IEntityClass> fatherEntityClassOp = load(Long.parseLong(father), profile);
+                Optional<IEntityClass> fatherEntityClassOp = load(Long.parseLong(father), version, profile);
                 if (fatherEntityClassOp.isPresent()) {
                     builder.withFather(fatherEntityClassOp.get());
                 } else {
-                    throw new RuntimeException(String.format("id : %s, father not get from cache.", id));
+                    throw new RuntimeException(String.format("father is null from cache, query entityClassId : %d.", entityClassId));
                 }
             }
 
@@ -587,10 +544,7 @@ public class StorageMetaManager implements MetaManager {
                 }
             }
         }
-        if (profileFound) {
-            builder.withProfile(profile);
-        }
-
+        builder.withProfile(profileFound ? profile : OqsProfile.UN_DEFINE_PROFILE);
         builder.withFields(fields);
 
         //  relations
@@ -634,5 +588,109 @@ public class StorageMetaManager implements MetaManager {
             );
         }
         return relationships;
+    }
+
+
+    /**
+     * 当传入version为NOT_EXIST_VERSION时，从cache中获取version，再load entityClass.
+     *
+     * @param entityClassId id.
+     * @param version 版本.
+     * @param profile 替身.
+     * @return <>版本, entityClass实例</>.
+     */
+    private Tuple2<Integer, Optional<IEntityClass>> entityClassLoadWithVersion(long entityClassId, int version, String profile) {
+
+        //  当没有传入版本时，默认用最简便的方式读取一次
+        if (NOT_EXIST_VERSION == version) {
+            //  从缓存中找一次版本号
+            version = cacheExecutor.version(entityClassId, true);
+            if (NOT_EXIST_VERSION != version) {
+                Optional<IEntityClass> op = internalLoad(entityClassId, profile, version);
+                //  从缓存读取到的version存在
+                if (op.isPresent()) {
+                    return new Tuple2<>(version, op);
+                }
+            }
+
+            //  缓存中没有,从redis再找一次版本号
+            version = cacheExecutor.version(entityClassId, false);
+            if (NOT_EXIST_VERSION == version) {
+                throw new RuntimeException(
+                    String.format("load [entityClass : %d, profile : %s] failed, version not exists.", entityClassId, profile));
+            }
+        }
+
+        //  兜底再根据版本号找一次
+        Optional<IEntityClass> op = internalLoad(entityClassId, profile, version);
+        if (op.isPresent()) {
+            return new Tuple2<>(version, op);
+        }
+
+        return new Tuple2<>(NOT_EXIST_VERSION, Optional.empty());
+    }
+
+    private Optional<IEntityClass> internalLoad(long entityClassId, String profile, int version) {
+        Optional<IEntityClass> ecOp = cacheExecutor.localRead(entityClassId, version, profile);
+        if (ecOp.isPresent()) {
+            return ecOp;
+        } else {
+            IEntityClass entityClass = null;
+            try {
+                //  从cache中读取原始数据
+                Map<String, String> keyValues = cacheExecutor.remoteRead(entityClassId, version);
+
+                if (keyValues.isEmpty()) {
+                    throw new RuntimeException("entityClassStorage is null, may be delete.");
+                }
+
+                entityClass = classLoad(entityClassId, profile, version, keyValues);
+
+                //  加入本地cache
+                if (null != entityClass) {
+                    cacheExecutor.localAdd(entityClassId, version, profile, entityClass);
+                }
+            } catch (Exception e) {
+                logger.warn("load entityClass failed, message : {}", e.getMessage());
+            }
+            return Optional.ofNullable(entityClass);
+        }
+    }
+
+    /**
+     * 获取一个entityClass下所有的变种(origin + jojo list).
+     *
+     * @param entityClassId 当前entityClassId.
+     * @param version 当前的版本.
+     * @return
+     */
+    private Collection<IEntityClass> withProfilesLoad(long entityClassId, int version) {
+        try {
+            List<IEntityClass> entityClassList = new ArrayList<>();
+
+            //  当传入版本>-1时，实际版本为传入版本.
+            //  由于存在传入不存在的版本,需要返回当前实际的版本.
+            Tuple2<Integer, Optional<IEntityClass>> entityClassOp =
+                entityClassLoadWithVersion(entityClassId, version, null);
+
+            if (entityClassOp._2().isPresent()) {
+                entityClassList.add(entityClassOp._2().get());
+
+                //  修正版本.
+                version = entityClassOp._1();
+                List<String> profiles = cacheExecutor.readProfileCodes(entityClassId, version);
+                if (!profiles.isEmpty()) {
+                    for (String profile : profiles) {
+                        Optional<IEntityClass> ecOp = load(entityClassId, version, profile);
+                        ecOp.ifPresent(entityClassList::add);
+                    }
+                }
+            }
+
+            return entityClassList;
+        } catch (Exception e) {
+            logger.warn("load entityClass [{}] error, message [{}]", entityClassId, e.getMessage());
+        }
+        return new ArrayList<>();
     }
 }

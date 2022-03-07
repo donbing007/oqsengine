@@ -12,24 +12,33 @@ import java.util.Optional;
  * @since : 1.8
  */
 public enum OqsBigEntityColumns {
-    ID,
-    ENTITYCLASSL0,
-    ENTITYCLASSL1,
-    ENTITYCLASSL2,
-    ENTITYCLASSL3,
-    ENTITYCLASSL4,
-    ENTITYCLASSVER,
-    TX,
-    COMMITID,
-    OP,
-    VERSION,
-    CREATETIME,
-    UPDATETIME,
-    DELETED,
-    ATTRIBUTE,
-    OQSMAJOR,
-    PROFILE;
+    ID("id"),
+    ENTITYCLASSL0("entityclassl0"),
+    ENTITYCLASSL1("entityclassl1"),
+    ENTITYCLASSL2("entityclassl2"),
+    ENTITYCLASSL3("entityclassl3"),
+    ENTITYCLASSL4("entityclassl4"),
+    ENTITYCLASSVER("entityclassver"),
+    TX("tx"),
+    COMMITID("commitid"),
+    OP("op"),
+    VERSION("version"),
+    CREATETIME("createtime"),
+    UPDATETIME("updatetime"),
+    DELETED("deleted"),
+    ATTRIBUTE("attribute"),
+    OQSMAJOR("oqsmajor"),
+    PROFILE("profile");
 
+    private String code;
+
+    OqsBigEntityColumns(String code) {
+        this.code = code;
+    }
+
+    public String getCode() {
+        return code;
+    }
 
     /**
      * 获取顺序实例.

@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.define;
 
+import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns;
+
 /**
  * 字段定义.
  *
@@ -15,35 +17,35 @@ public class FieldDefine {
     /**
      * 数据标识.
      */
-    public static final String ID = "id";
+    public static final String ID = OqsBigEntityColumns.ID.getCode();
 
     /**
      * 实例在0层的类型.
      */
-    public static final String ENTITYCLASS_LEVEL_0 = "entityclassl0";
+    public static final String ENTITYCLASS_LEVEL_0 = OqsBigEntityColumns.ENTITYCLASSL0.getCode();
 
     /**
      * 实例在1层的类型.
      */
-    public static final String ENTITYCLASS_LEVEL_1 = "entityclassl1";
+    public static final String ENTITYCLASS_LEVEL_1 = OqsBigEntityColumns.ENTITYCLASSL1.getCode();
 
     /**
      * 实例在2层的类型.
      */
-    public static final String ENTITYCLASS_LEVEL_2 = "entityclassl2";
+    public static final String ENTITYCLASS_LEVEL_2 = OqsBigEntityColumns.ENTITYCLASSL2.getCode();
     /**
      * 实例在3层的类型.
      */
-    public static final String ENTITYCLASS_LEVEL_3 = "entityclassl3";
+    public static final String ENTITYCLASS_LEVEL_3 = OqsBigEntityColumns.ENTITYCLASSL3.getCode();
     /**
      * 实例在4层的类型.
      */
-    public static final String ENTITYCLASS_LEVEL_4 = "entityclassl4";
+    public static final String ENTITYCLASS_LEVEL_4 = OqsBigEntityColumns.ENTITYCLASSL4.getCode();
 
     /**
      * 实例产生时的元数据版本.
      */
-    public static final String ENTITYCLASS_VERSION = "entityclassver";
+    public static final String ENTITYCLASS_VERSION = OqsBigEntityColumns.ENTITYCLASSVER.getCode();
 
     /**
      * 无数据类型各层字段定义.
@@ -59,51 +61,51 @@ public class FieldDefine {
     /**
      * 事务号.
      */
-    public static final String TX = "tx";
+    public static final String TX = OqsBigEntityColumns.TX.getCode();
 
     /**
      * 提交号.
      */
-    public static final String COMMITID = "commitid";
+    public static final String COMMITID = OqsBigEntityColumns.COMMITID.getCode();
 
     /**
      * 操作类型,OperationType 枚举值.
      */
-    public static final String OP = "op";
+    public static final String OP = OqsBigEntityColumns.OP.getCode();
 
     /**
      * 数据版本号.
      */
-    public static final String VERSION = "version";
+    public static final String VERSION = OqsBigEntityColumns.VERSION.getCode();
 
     /**
      * 创建时间.
      */
-    public static final String CREATE_TIME = "createtime";
+    public static final String CREATE_TIME = OqsBigEntityColumns.CREATETIME.getCode();
 
     /**
      * 修改时间.
      */
-    public static final String UPDATE_TIME = "updatetime";
+    public static final String UPDATE_TIME = OqsBigEntityColumns.UPDATETIME.getCode();
 
     /**
      * 数据是否被删除.
      */
-    public static final String DELETED = "deleted";
+    public static final String DELETED = OqsBigEntityColumns.DELETED.getCode();
 
     /**
      * 数据属性集合.
      */
-    public static final String ATTRIBUTE = "attribute";
+    public static final String ATTRIBUTE = OqsBigEntityColumns.ATTRIBUTE.getCode();
     /**
      * 产生数据的大版本号.
      */
-    public static final String OQS_MAJOR = "oqsmajor";
+    public static final String OQS_MAJOR = OqsBigEntityColumns.OQSMAJOR.getCode();
 
     /**
      * 替身JOJO.
      */
-    public static final String PROFILE = "profile";
+    public static final String PROFILE = OqsBigEntityColumns.PROFILE.getCode();
 
     /**
      * 业务主键字段.

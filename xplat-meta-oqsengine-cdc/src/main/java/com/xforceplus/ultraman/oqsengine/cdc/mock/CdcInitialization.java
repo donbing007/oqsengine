@@ -2,9 +2,12 @@ package com.xforceplus.ultraman.oqsengine.cdc.mock;
 
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.SQLCdcErrorStorage;
 import com.xforceplus.ultraman.oqsengine.cdc.connect.SingleCDCConnector;
-import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
-import com.xforceplus.ultraman.oqsengine.cdc.consumer.impl.SphinxConsumerService;
-import com.xforceplus.ultraman.oqsengine.cdc.consumer.impl.SphinxSyncExecutor;
+import com.xforceplus.ultraman.oqsengine.cdc.consumer.error.DefaultErrorRecorder;
+import com.xforceplus.ultraman.oqsengine.cdc.consumer.error.ErrorRecorder;
+import com.xforceplus.ultraman.oqsengine.cdc.consumer.service.ConsumerService;
+import com.xforceplus.ultraman.oqsengine.cdc.consumer.service.DefaultConsumerService;
+import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsHandler;
+import com.xforceplus.ultraman.oqsengine.cdc.metrics.DefaultCDCMetricsHandler;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
 import com.xforceplus.ultraman.oqsengine.common.id.SnowflakeLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.node.StaticNodeIdGenerator;
@@ -20,6 +23,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.mock.IndexInitialization;
 import com.xforceplus.ultraman.oqsengine.storage.master.mock.MasterDBInitialization;
+import com.xforceplus.ultraman.oqsengine.storage.mock.StorageInitialization;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.search.SearchConfig;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
@@ -29,20 +33,25 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Collection;
 import javax.sql.DataSource;
+import jdk.nashorn.internal.ir.annotations.Ignore;
 
 /**
  * Created by justin.xu on 06/2021.
  *
  * @since 1.8
  */
+@Ignore
 public class CdcInitialization implements BeanInitialization {
 
     private static volatile CdcInitialization instance;
 
-    private SphinxSyncExecutor sphinxSyncExecutor;
     private SQLCdcErrorStorage cdcErrorStorage;
     private SingleCDCConnector singleCDCConnector;
+    private CDCMetricsHandler cdcMetricsHandler;
     private ConsumerService consumerService;
+    private MockCallBackService mockCallBackService;
+    private ErrorRecorder errorRecorder;
+    private DataSource devOpsDataSource;
 
     public static final String CDC_ERRORS = "cdcerrors";
 
@@ -81,8 +90,15 @@ public class CdcInitialization implements BeanInitialization {
         initConsumerService();
     }
 
+
+
     @Override
     public void clear() throws Exception {
+
+        if (null != mockCallBackService) {
+            mockCallBackService.reset();
+        }
+
         DataSourcePackage dataSourcePackage = CommonInitialization.getInstance().getDataSourcePackage(false);
         if (null != dataSourcePackage && null != dataSourcePackage.getDevOps()) {
             for (DataSource ds : dataSourcePackage.getMaster()) {
@@ -97,24 +113,22 @@ public class CdcInitialization implements BeanInitialization {
 
     @Override
     public void destroy() throws Exception {
-        sphinxSyncExecutor = null;
         cdcErrorStorage = null;
         singleCDCConnector = null;
+        cdcMetricsHandler = null;
+        mockCallBackService = null;
         consumerService = null;
-
+        errorRecorder = null;
         instance = null;
     }
 
-    public SphinxSyncExecutor sphinxSyncExecutor() {
-        return sphinxSyncExecutor;
-    }
 
     /**
      * 使用mock.
      */
     public void useMock() throws IllegalAccessException {
-        Collection<Field> fields = ReflectionUtils.printAllMembers(sphinxSyncExecutor);
-        ReflectionUtils.reflectionFieldValue(fields, "sphinxQLIndexStorage", sphinxSyncExecutor,
+        Collection<Field> fields = ReflectionUtils.printAllMembers(consumerService);
+        ReflectionUtils.reflectionFieldValue(fields, "sphinxQLIndexStorage", consumerService,
             new SwitchErrorThrowIndexStorage());
     }
 
@@ -122,13 +136,14 @@ public class CdcInitialization implements BeanInitialization {
      * 使用real.
      */
     public void useReal() throws Exception {
-        Collection<Field> fields = ReflectionUtils.printAllMembers(sphinxSyncExecutor);
-        ReflectionUtils.reflectionFieldValue(fields, "sphinxQLIndexStorage", sphinxSyncExecutor,
+        Collection<Field> fields = ReflectionUtils.printAllMembers(consumerService);
+        ReflectionUtils.reflectionFieldValue(fields, "sphinxQLIndexStorage", consumerService,
             IndexInitialization.getInstance().getIndexStorage());
     }
 
     private void initCdcErrors() throws Exception {
-        DataSource devOpsDataSource = buildDevOpsDataSource();
+
+        devOpsDataSource = buildDevOpsDataSource();
 
         cdcErrorStorage = new SQLCdcErrorStorage();
         Collection<Field> fields = ReflectionUtils.printAllMembers(cdcErrorStorage);
@@ -136,26 +151,38 @@ public class CdcInitialization implements BeanInitialization {
 
         cdcErrorStorage.setCdcErrorRecordTable(CDC_ERRORS);
         cdcErrorStorage.init();
+
+        errorRecorder = new DefaultErrorRecorder();
+        Collection<Field> errorFields = ReflectionUtils.printAllMembers(errorRecorder);
+        ReflectionUtils.reflectionFieldValue(errorFields, "cdcErrorStorage", errorRecorder, cdcErrorStorage);
+        ReflectionUtils.reflectionFieldValue(errorFields, "seqNoGenerator", errorRecorder,
+            new SnowflakeLongIdGenerator(new StaticNodeIdGenerator(0)));
+    }
+
+    private void initMetrics() throws Exception {
+        mockCallBackService = new MockCallBackService(StorageInitialization.getInstance().getCommitIdStatusService());
+
+        cdcMetricsHandler = new DefaultCDCMetricsHandler();
+        Collection<Field> fields = ReflectionUtils.printAllMembers(cdcMetricsHandler);
+        ReflectionUtils.reflectionFieldValue(fields, "cdcMetricsCallback", cdcMetricsHandler, mockCallBackService);
     }
 
     private void initConsumerService() throws Exception {
 
-        sphinxSyncExecutor = new SphinxSyncExecutor();
+        initMetrics();
 
-        Collection<Field> fields = ReflectionUtils.printAllMembers(sphinxSyncExecutor);
-        ReflectionUtils.reflectionFieldValue(fields, "sphinxQLIndexStorage", sphinxSyncExecutor,
+        consumerService = new DefaultConsumerService();
+
+        Collection<Field> fields = ReflectionUtils.printAllMembers(consumerService);
+        ReflectionUtils.reflectionFieldValue(fields, "sphinxQLIndexStorage", consumerService,
             IndexInitialization.getInstance().getIndexStorage());
-        ReflectionUtils.reflectionFieldValue(fields, "masterStorage", sphinxSyncExecutor,
+        ReflectionUtils.reflectionFieldValue(fields, "masterStorage", consumerService,
             MasterDBInitialization.getInstance().getMasterStorage());
-        ReflectionUtils.reflectionFieldValue(fields, "cdcErrorStorage", sphinxSyncExecutor, cdcErrorStorage);
-        ReflectionUtils.reflectionFieldValue(fields, "seqNoGenerator", sphinxSyncExecutor,
-            new SnowflakeLongIdGenerator(new StaticNodeIdGenerator(0)));
-        ReflectionUtils.reflectionFieldValue(fields, "metaManager", sphinxSyncExecutor,
+        ReflectionUtils.reflectionFieldValue(fields, "errorRecorder", consumerService, errorRecorder);
+        ReflectionUtils.reflectionFieldValue(fields, "metaManager", consumerService,
             MetaInitialization.getInstance().getMetaManager());
 
-        consumerService = new SphinxConsumerService();
-        ReflectionUtils.reflectionFieldValue(ReflectionUtils.printAllMembers(consumerService),
-                                            "sphinxSyncExecutor", consumerService, sphinxSyncExecutor);
+        ReflectionUtils.reflectionFieldValue(fields, "cdcMetricsHandler", consumerService, cdcMetricsHandler);
     }
 
     private DataSource buildDevOpsDataSource() throws IllegalAccessException {
@@ -195,8 +222,8 @@ public class CdcInitialization implements BeanInitialization {
         }
     }
 
-    public SphinxSyncExecutor getSphinxSyncExecutor() {
-        return sphinxSyncExecutor;
+    public ErrorRecorder getErrorRecorder() {
+        return errorRecorder;
     }
 
     public SQLCdcErrorStorage getCdcErrorStorage() {
@@ -207,7 +234,15 @@ public class CdcInitialization implements BeanInitialization {
         return singleCDCConnector;
     }
 
+    public CDCMetricsHandler getCdcMetricsHandler() {
+        return cdcMetricsHandler;
+    }
+
     public ConsumerService getConsumerService() {
         return consumerService;
+    }
+
+    public DataSource getDevOpsDataSource() {
+        return devOpsDataSource;
     }
 }

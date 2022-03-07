@@ -8,6 +8,8 @@ package com.xforceplus.ultraman.oqsengine.metadata.constant;
  */
 public class EntityClassElements {
     public static final String ELEMENT_ID = "id";
+    public static final String ELEMENT_APPCODE = "appCode";
+    public static final String ELEMENT_TYPE = "type";
     public static final String ELEMENT_CODE = "code";
     public static final String ELEMENT_NAME = "name";
     public static final String ELEMENT_LEVEL = "level";

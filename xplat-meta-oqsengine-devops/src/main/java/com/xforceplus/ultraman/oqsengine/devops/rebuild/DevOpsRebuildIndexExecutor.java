@@ -107,10 +107,10 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
                     sqlTaskStorage.update(devOpsTaskInfo);
                 } else {
                     devOpsTaskInfo.setBatchSize(0);
+                    devOpsTaskInfo.resetStatus(DONE.getCode());
                     devOpsTaskInfo.resetMessage("TASK END");
-
-                    sqlTaskStorage.done(devOpsTaskInfo);
                 }
+                sqlTaskStorage.update(devOpsTaskInfo);
             } catch (Exception e) {
                 devOpsTaskInfo.resetMessage(e.getMessage());
                 try {
@@ -187,6 +187,9 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
 
                         if (devOpsMetrics.getSuccess() > 0) {
                             needUpdate = true;
+                            dt.resetIncrementSize(devOpsMetrics.getSuccess());
+
+                            //  完成数量
                             dt.addFinishSize(devOpsMetrics.getSuccess());
                         }
 
@@ -196,15 +199,8 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
                         }
 
                         if (needUpdate) {
-                            //  任务已完成.
-                            if (dt.getErrorSize() == 0 && dt.getFinishSize() >= dt.getBatchSize()) {
-                                try {
-                                    done(dt);
-                                } catch (SQLException ex) {
-                                    logger.warn("do task-done exception, maintainId {}.", dt.getMaintainid());
-                                }
-                            } else if (dt.getErrorSize() > 0) {
-                                //  任务存在失败数据.
+                            //  任务存在失败数据.
+                            if (dt.getErrorSize() > 0) {
                                 try {
                                     dt.resetMessage("task end with error.");
                                     sqlTaskStorage.error(dt);
@@ -213,8 +209,13 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
                                 }
                             } else {
                                 try {
-                                    dt.resetStatus(RUNNING.getCode());
-                                    sqlTaskStorage.update(dt);
+                                    //  任务已完成.
+                                    if (dt.getBatchSize() > 0 && dt.getFinishSize() >= dt.getBatchSize()) {
+                                        done(dt);
+                                    } else {
+                                        dt.resetStatus(RUNNING.getCode());
+                                        sqlTaskStorage.update(dt);
+                                    }
                                 } catch (SQLException ex) {
                                     logger.warn("do task-update exception, maintainId {}.", dt.getMaintainid());
                                 }

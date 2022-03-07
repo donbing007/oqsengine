@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.pojo.cdc.dto;
 
 import com.alibaba.otter.canal.protocol.CanalEntry;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassType;
 import java.io.Serializable;
 import java.util.List;
 
@@ -12,9 +13,9 @@ import java.util.List;
  * @since : 1.8
  */
 public class RawEntry implements Serializable {
+    private EntityClassType entityClassType;
     private String uniKeyPrefix;
     private int pos;
-    private long executeTime;
     private long id;
     private long commitId;
     private List<CanalEntry.Column> columns;
@@ -22,13 +23,17 @@ public class RawEntry implements Serializable {
     /**
      * 实例化.
      */
-    public RawEntry(String uniKeyPrefix, int pos, long id, long commitId, long executeTime, List<CanalEntry.Column> columns) {
+    public RawEntry(EntityClassType entityClassType, String uniKeyPrefix, int pos, long id, long commitId, List<CanalEntry.Column> columns) {
+        this.entityClassType = entityClassType;
         this.uniKeyPrefix = uniKeyPrefix;
         this.pos = pos;
         this.id = id;
         this.commitId = commitId;
-        this.executeTime = executeTime;
         this.columns = columns;
+    }
+
+    public EntityClassType getEntityClassType() {
+        return entityClassType;
     }
 
     public int getPos() {
@@ -41,10 +46,6 @@ public class RawEntry implements Serializable {
 
     public String getUniKeyPrefix() {
         return uniKeyPrefix;
-    }
-
-    public long getExecuteTime() {
-        return executeTime;
     }
 
     public long getId() {

@@ -13,6 +13,7 @@ import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.ProtoAnyHelper;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Formula;
 import java.util.ArrayList;
@@ -53,12 +54,12 @@ public class EntityClassSyncProtoBufMocker {
          * 每层有2个随机的EntityField [String、Long] 各一
          * 每层存在2条关系
          */
-        public static EntityClassSyncResponse entityClassSyncResponseGenerator(String appId, int version,
+        public static EntityClassSyncResponse entityClassSyncResponseGenerator(String appId, String appCode, int version,
                                                                                List<ExpectedEntityStorage> expectedEntityStorages) {
             return EntityClassSyncResponse.newBuilder()
                 .setAppId(appId)
                 .setVersion(version + 1)
-                .setEntityClassSyncRspProto(entityClassSyncRspProtoGenerator(expectedEntityStorages))
+                .setEntityClassSyncRspProto(entityClassSyncRspProtoGenerator(appCode, expectedEntityStorages))
                 .build();
         }
 
@@ -66,7 +67,7 @@ public class EntityClassSyncProtoBufMocker {
          * 生成同步响应.
          */
         public static EntityClassSyncRspProto entityClassSyncRspProtoGenerator(
-            List<ExpectedEntityStorage> expectedEntityStorages) {
+            String appCode, List<ExpectedEntityStorage> expectedEntityStorages) {
             /*
              * 生成爷爷
              */
@@ -80,6 +81,7 @@ public class EntityClassSyncProtoBufMocker {
 
             return EntityClassSyncRspProto.newBuilder()
                 .addAllEntityClasses(entityClassInfos)
+                .setAppCode(appCode)
                 .build();
         }
     }
@@ -107,6 +109,7 @@ public class EntityClassSyncProtoBufMocker {
 
         return EntityClassInfo.newBuilder()
             .setId(id)
+            .setType(EntityClassType.DYNAMIC.getType())
             .setVersion(GeneralConstant.DEFAULT_VERSION)
             .setCode(id + GeneralConstant.LEVEL + level + GeneralConstant.CODE_SUFFIX)
             .setName(id + GeneralConstant.LEVEL + level + GeneralConstant.NAME_SUFFIX)

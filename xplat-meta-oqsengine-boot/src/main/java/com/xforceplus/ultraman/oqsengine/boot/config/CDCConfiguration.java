@@ -7,10 +7,12 @@ import com.xforceplus.ultraman.oqsengine.cdc.CDCDaemonService;
 import com.xforceplus.ultraman.oqsengine.cdc.connect.AbstractCDCConnector;
 import com.xforceplus.ultraman.oqsengine.cdc.connect.ClusterCDCConnector;
 import com.xforceplus.ultraman.oqsengine.cdc.connect.SingleCDCConnector;
-import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
-import com.xforceplus.ultraman.oqsengine.cdc.consumer.impl.SphinxConsumerService;
-import com.xforceplus.ultraman.oqsengine.cdc.consumer.impl.SphinxSyncExecutor;
-import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
+import com.xforceplus.ultraman.oqsengine.cdc.consumer.error.DefaultErrorRecorder;
+import com.xforceplus.ultraman.oqsengine.cdc.consumer.error.ErrorRecorder;
+import com.xforceplus.ultraman.oqsengine.cdc.consumer.service.ConsumerService;
+import com.xforceplus.ultraman.oqsengine.cdc.consumer.service.DefaultConsumerService;
+import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsHandler;
+import com.xforceplus.ultraman.oqsengine.cdc.metrics.DefaultCDCMetricsHandler;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
@@ -25,21 +27,16 @@ public class CDCConfiguration {
     /**
      * sphinxQL 数据消费服务.
      */
-    @Bean("sphinxConsumerService")
-    public ConsumerService sphinxConsumerService(
+    @Bean("consumerService")
+    public ConsumerService consumerService(
         @Value("${cdc.consumer.checkCommitReady:true}") boolean checkCommitReady,
         @Value("${cdc.consumer.skipCommitId:-1}") long skipCommitId) {
-        SphinxConsumerService consumerService = new SphinxConsumerService();
+        DefaultConsumerService consumerService = new DefaultConsumerService();
         consumerService.setCheckCommitReady(checkCommitReady);
         if (skipCommitId > INIT_ID) {
             consumerService.setSkipCommitId(skipCommitId);
         }
         return consumerService;
-    }
-
-    @Bean("syncExecutor")
-    public SphinxSyncExecutor syncExecutor() {
-        return new SphinxSyncExecutor();
     }
 
     /**
@@ -92,8 +89,13 @@ public class CDCConfiguration {
     }
 
     @Bean
-    CDCMetricsService cdcMetricsService() {
-        return new CDCMetricsService();
+    public ErrorRecorder errorRecorder() {
+        return new DefaultErrorRecorder();
+    }
+
+    @Bean
+    CDCMetricsHandler cdcMetricsHandler() {
+        return new DefaultCDCMetricsHandler();
     }
 
     private void initProperties(AbstractCDCConnector abstractCdcConnector, int batchSize) {

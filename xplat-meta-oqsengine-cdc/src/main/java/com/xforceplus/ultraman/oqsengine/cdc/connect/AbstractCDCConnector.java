@@ -43,8 +43,8 @@ public abstract class AbstractCDCConnector {
         this.password = password;
     }
 
-    public boolean canUseConnector(int times) {
-        return times < MAX_RECONNECT_TIMES_PER_CONNECTIONS;
+    public boolean isMaxRetry(int times) {
+        return times >= MAX_RECONNECT_TIMES_PER_CONNECTIONS;
     }
 
     public abstract void init();

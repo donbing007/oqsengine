@@ -2,6 +2,8 @@ package com.xforceplus.ultraman.oqsengine.storage.pojo;
 
 import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.AnyEntityClass;
 import java.io.Serializable;
@@ -37,6 +39,7 @@ public class OriginalEntity implements Serializable, Cloneable, Comparable<Origi
     private IEntityClass entityClass;
     private Map<String, Object> attributes;
     private long maintainid;
+    private EntityClassRef entityClassRef;
 
     /**
      * 实例.
@@ -156,6 +159,14 @@ public class OriginalEntity implements Serializable, Cloneable, Comparable<Origi
         return this.attributes.size();
     }
 
+    public EntityClassRef getEntityClassRef() {
+        return entityClassRef;
+    }
+
+    public void setEntityClassRef(EntityClassRef entityClassRef) {
+        this.entityClassRef = entityClassRef;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -239,6 +250,7 @@ public class OriginalEntity implements Serializable, Cloneable, Comparable<Origi
         private IEntityClass entityClass = ANY_ENTITYCLASS;
         private Map<String, Object> attributes = Collections.emptyMap();
         private long maintainid;
+        private EntityClassRef entityClassRef;
 
         public static Builder anOriginalEntity() {
             return new Builder();
@@ -299,6 +311,11 @@ public class OriginalEntity implements Serializable, Cloneable, Comparable<Origi
             return this;
         }
 
+        public Builder withEntityClassRef(EntityClassRef entityClassRef) {
+            this.entityClassRef = entityClassRef;
+            return this;
+        }
+
         /**
          * 属性集合.
          */
@@ -334,6 +351,8 @@ public class OriginalEntity implements Serializable, Cloneable, Comparable<Origi
             originalEntity.attributes = this.attributes;
             originalEntity.version = this.version;
             originalEntity.tx = this.tx;
+            originalEntity.entityClassRef = this.entityClassRef;
+            originalEntity.maintainid = this.maintainid;
 
             return originalEntity;
         }

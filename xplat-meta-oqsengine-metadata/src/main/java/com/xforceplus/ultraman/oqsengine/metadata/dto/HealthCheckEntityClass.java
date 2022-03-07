@@ -1,7 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.metadata.dto;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import java.util.Collection;
 import java.util.Collections;
@@ -93,5 +95,10 @@ public class HealthCheckEntityClass implements IEntityClass {
     @Override
     public Optional<IEntityField> field(long id) {
         return Optional.empty();
+    }
+
+    @Override
+    public EntityClassType type() {
+        return EntityClassType.DYNAMIC;
     }
 }

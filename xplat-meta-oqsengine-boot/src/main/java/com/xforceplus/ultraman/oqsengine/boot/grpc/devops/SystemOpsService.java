@@ -6,24 +6,15 @@ import com.xforceplus.ultraman.oqsengine.boot.config.system.SystemInfoConfigurat
 import com.xforceplus.ultraman.oqsengine.boot.grpc.devops.dto.ApplicationInfo;
 import com.xforceplus.ultraman.oqsengine.boot.grpc.utils.PrintErrorHelper;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.condition.CdcErrorQueryCondition;
-import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.dto.ErrorType;
 import com.xforceplus.ultraman.oqsengine.core.service.DevOpsManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
-import com.xforceplus.ultraman.oqsengine.core.service.pojo.OqsResult;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.DevOpsTaskInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.monitor.dto.MetricsLog;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
-import com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant;
-import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
-import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.CdcErrorTask;
-import com.xforceplus.ultraman.oqsengine.pojo.devops.FixedStatus;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import java.time.LocalDateTime;
@@ -182,61 +173,6 @@ public class SystemOpsService {
             PrintErrorHelper.exceptionHandle(
                 String.format("removeCommitIds exception, [%s]", Arrays.stream(ids).collect(Collectors.toList())), e);
         }
-        return false;
-    }
-
-    /**
-     * 修复CDC-ERROR中的错误.
-     *
-     * @param seqNo         序号.
-     * @param recoverString 消息.
-     * @return true成功, false失败.
-     */
-    @DiscoverAction(describe = "修复CDC-ERROR中错误的记录", retClass = boolean.class)
-    public boolean cdcErrorRecover(@MethodParam(name = "seqNo", klass = long.class, required = true) long seqNo,
-                                   @MethodParam(name = "recoverString", klass = String.class, required = true)
-                                       String recoverString) {
-        try {
-            if (devOpsManagementService.cdcSendErrorRecover(seqNo, recoverString)) {
-                Optional<CdcErrorTask> cdcErrorTaskOp = devOpsManagementService.queryOne(seqNo);
-                FixedStatus fixedStatus = FixedStatus.FIX_ERROR;
-                if (cdcErrorTaskOp.isPresent()) {
-                    CdcErrorTask task = cdcErrorTaskOp.get();
-                    if (task.getErrorType() == ErrorType.DATA_FORMAT_ERROR.getType()
-                        && task.getOp() > OperationType.UNKNOWN.getValue()
-                        && task.getEntity() > CDCConstant.UN_KNOW_ID
-                        && task.getId() > CDCConstant.UN_KNOW_ID) {
-
-                        OqsResult<IEntity> result =
-                            entitySearchService.selectOne(task.getId(), new EntityClassRef(task.getEntity(), ""));
-
-                        OqsResult oqsResult = null;
-                        if (result.getValue().isPresent()) {
-                            IEntity entity = result.getValue().get();
-                            oqsResult = entityManagementService.replace(entity);
-                        } else {
-                            oqsResult =
-                                entityManagementService.delete(Entity.Builder.anEntity()
-                                    .withId(task.getId())
-                                    .withVersion(task.getVersion())
-                                    .build());
-                        }
-
-                        if (oqsResult.getResultStatus().equals(ResultStatus.SUCCESS)) {
-                            fixedStatus = FixedStatus.FIXED;
-                        }
-                    }
-                }
-
-                devOpsManagementService.cdcUpdateStatus(seqNo, fixedStatus);
-                if (fixedStatus == FixedStatus.FIXED) {
-                    return true;
-                }
-            }
-        } catch (Exception e) {
-            PrintErrorHelper.exceptionHandle(String.format("cdcErrorRecover exception, [%s]", seqNo), e);
-        }
-
         return false;
     }
 

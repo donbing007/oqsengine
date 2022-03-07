@@ -22,6 +22,8 @@ import java.util.ArrayList;
  */
 public class MetaPayLoadHelper {
 
+    private static String APP_CODE = "MetaPayLoadHelper";
+
     /**
      * 产生一个基本对象.
      * @param id entityClassId.
@@ -30,6 +32,7 @@ public class MetaPayLoadHelper {
     public static EntityClassStorage toBasicPrepareEntity(long id) {
         EntityClassStorage entityClassStorage = new EntityClassStorage();
         entityClassStorage.setId(id);
+        entityClassStorage.setAppCode(APP_CODE);
         entityClassStorage.setVersion(GeneralConstant.DEFAULT_VERSION);
 
         entityClassStorage.setName(id + GeneralConstant.LEVEL

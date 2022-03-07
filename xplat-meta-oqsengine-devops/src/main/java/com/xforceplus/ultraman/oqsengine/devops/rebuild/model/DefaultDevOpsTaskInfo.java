@@ -23,9 +23,12 @@ public class DefaultDevOpsTaskInfo implements DevOpsTaskInfo {
     private long updateTime;
     private String message = "";
 
+    private int incrementSize;
+
     private IEntityClass entityClass;
 
     public DefaultDevOpsTaskInfo() {
+        incrementSize = 0;
     }
 
     /**
@@ -38,9 +41,10 @@ public class DefaultDevOpsTaskInfo implements DevOpsTaskInfo {
      */
     public DefaultDevOpsTaskInfo(long maintainId, IEntityClass entityClass, long starts, long ends) {
         this(maintainId, entityClass.id(), starts, ends, 0, 0,
-                        BatchStatus.PENDING.getCode(), System.currentTimeMillis(), 0);
+            BatchStatus.PENDING.getCode(), System.currentTimeMillis(), 0);
         this.entityClass = entityClass;
         this.message = "TASK INIT";
+        this.incrementSize = 0;
     }
 
     /**
@@ -67,6 +71,8 @@ public class DefaultDevOpsTaskInfo implements DevOpsTaskInfo {
         this.status = status;
         this.createTime = createTime;
         this.updateTime = updateTime;
+
+        this.incrementSize = 0;
     }
 
     public long updateTime() {
@@ -174,7 +180,7 @@ public class DefaultDevOpsTaskInfo implements DevOpsTaskInfo {
 
     @Override
     public boolean isDone() {
-        return status == BatchStatus.DONE.getCode();
+        return status == BatchStatus.DONE.getCode() || (batchSize == finishSize && batchSize > 0);
     }
 
     @Override
@@ -194,9 +200,7 @@ public class DefaultDevOpsTaskInfo implements DevOpsTaskInfo {
 
     @Override
     public boolean isEnd() {
-        return status == BatchStatus.DONE.getCode()
-                || status == BatchStatus.CANCEL.getCode()
-                    || status == BatchStatus.ERROR.getCode();
+        return isDone() || isError() || isCancel();
     }
 
     @Override
@@ -207,5 +211,13 @@ public class DefaultDevOpsTaskInfo implements DevOpsTaskInfo {
     @Override
     public void setBatchSize(long size) {
         this.batchSize = size;
+    }
+
+    public int incrementSize() {
+        return incrementSize;
+    }
+
+    public void resetIncrementSize(int incrementSize) {
+        this.incrementSize = incrementSize;
     }
 }

@@ -140,13 +140,8 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
     }
 
     @Override
-    public boolean cdcSendErrorRecover(long seqNo, String recoverStr) throws SQLException {
-        return cdcErrorStorage.submitRecover(seqNo, FixedStatus.SUBMIT_FIX_REQ, recoverStr) == 1;
-    }
-
-    @Override
     public boolean cdcUpdateStatus(long seqNo, FixedStatus fixedStatus) throws SQLException {
-        return cdcErrorStorage.updateCdcError(seqNo, fixedStatus) == 1;
+        return cdcErrorStorage.updateCdcErrorStatus(seqNo, fixedStatus) == 1;
     }
 
     @Override

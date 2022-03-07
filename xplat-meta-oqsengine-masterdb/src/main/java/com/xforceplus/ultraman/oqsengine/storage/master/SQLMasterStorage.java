@@ -35,6 +35,7 @@ import com.xforceplus.ultraman.oqsengine.storage.master.executor.ExistExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.MultipleQueryExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.QueryExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.QueryLimitCommitidByConditionsExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.master.executor.QueryOriginalExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.UpdateExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.rebuild.DevOpsRebuildExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.BaseMasterStorageEntity;
@@ -220,6 +221,18 @@ public class SQLMasterStorage implements MasterStorage {
 
         }
         return entityOptional;
+    }
+
+    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "master", "action", "origin"})
+    @Override
+    public Optional<OriginalEntity> selectOrigin(long id, boolean noDetail) throws SQLException {
+        return (Optional<OriginalEntity>) transactionExecutor.execute((tx, resource, hint) -> {
+            if (noDetail) {
+                return QueryOriginalExecutor.buildNoDetail(tableName, resource, queryTimeout).execute(id);
+            } else {
+                return QueryOriginalExecutor.buildHaveDetail(tableName, resource, queryTimeout).execute(id);
+            }
+        });
     }
 
     @Timed(
