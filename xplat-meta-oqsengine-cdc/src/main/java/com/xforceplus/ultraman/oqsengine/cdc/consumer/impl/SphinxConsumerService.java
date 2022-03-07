@@ -57,7 +57,10 @@ public class SphinxConsumerService implements ConsumerService {
         this.checkCommitReady = checkCommitReady;
     }
 
-    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "cdc", "action", "cdc-consume"})
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        percentiles = {0.5, 0.9, 0.99},
+        extraTags = {"initiator", "cdc", "action", "cdc-consume"})
     @Override
     public CDCMetrics consume(List<CanalEntry.Entry> entries, long batchId, CDCMetricsService cdcMetricsService)
         throws SQLException {

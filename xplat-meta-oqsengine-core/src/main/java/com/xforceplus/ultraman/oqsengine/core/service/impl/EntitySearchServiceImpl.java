@@ -170,7 +170,10 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         this.showResult = showResult;
     }
 
-    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "one"})
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        percentiles = {0.5, 0.9, 0.99},
+        extraTags = {"initiator", "all", "action", "one"})
     @Override
     public OqsResult<IEntity> selectOne(long id, EntityClassRef entityClassRef) throws SQLException {
 
@@ -221,7 +224,10 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         throw new UnsupportedOperationException();
     }
 
-    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "multiple"})
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        percentiles = {0.5, 0.9, 0.99},
+        extraTags = {"initiator", "all", "action", "multiple"})
     @Override
     public OqsResult<Collection<IEntity>> selectMultiple(long[] ids, EntityClassRef entityClassRef)
         throws SQLException {
@@ -255,7 +261,10 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         }
     }
 
-    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "condition"})
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        percentiles = {0.5, 0.9, 0.99},
+        extraTags = {"initiator", "all", "action", "condition"})
     @Override
     public OqsResult<Collection<IEntity>> selectByConditions(Conditions conditions, EntityClassRef entityClassRef,
                                                              Page page)
@@ -264,7 +273,10 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             ServiceSelectConfig.Builder.anSearchConfig().withPage(page).build());
     }
 
-    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "condition"})
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        percentiles = {0.5, 0.9, 0.99},
+        extraTags = {"initiator", "all", "action", "condition"})
     @Override
     public OqsResult<Collection<IEntity>> selectByConditions(
         Conditions conditions, EntityClassRef entityClassRef, Sort sort, Page page) throws SQLException {
@@ -272,7 +284,10 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             ServiceSelectConfig.Builder.anSearchConfig().withSort(sort).withPage(page).build());
     }
 
-    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "condition"})
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        percentiles = {0.5, 0.9, 0.99},
+        extraTags = {"initiator", "all", "action", "condition"})
     @Override
     public OqsResult<Collection<IEntity>> selectByConditions(Conditions conditions, EntityClassRef entityClassRef,
                                                              ServiceSelectConfig config)
@@ -481,7 +496,10 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         }
     }
 
-    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "count"})
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        percentiles = {0.5, 0.9, 0.99},
+        extraTags = {"initiator", "all", "action", "count"})
     @Override
     public OqsResult<Long> countByConditions(Conditions conditions, EntityClassRef entityClassRef,
                                              ServiceSelectConfig config) throws SQLException {
