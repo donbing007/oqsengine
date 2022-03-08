@@ -103,6 +103,10 @@ public class DevOpsOmDataUtils {
                 return ConditionOperator.LESS_THAN;
             case "le":
                 return ConditionOperator.LESS_THAN_EQUALS;
+            case "exists":
+                return ConditionOperator.IS_NOT_NULL;
+            case "nil":
+                return ConditionOperator.IS_NULL;
             default:
                 return null;
         }

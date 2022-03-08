@@ -156,17 +156,26 @@ public class DataOpsService {
                             }
                         }
                     } else {
-                        List<IValue> values =
-                            Arrays.asList(c.getValue())
-                                .stream().map(v -> IValueUtils.toIValue(entityFieldOptl.get(),
-                                    DevOpsOmDataUtils.convertDataObject(entityFieldOptl.get(), v)))
-                                .collect(Collectors.toList());
-                        Condition condition = new Condition(
-                            entityFieldOptl.get(),
-                            operation,
-                            values.toArray(new IValue[] {})
-                        );
-                        conditions.addAnd(condition);
+                        if (operation.equals(ConditionOperator.IS_NOT_NULL) || operation.equals(ConditionOperator.IS_NULL)) {
+                            Condition condition = new Condition(
+                                    entityFieldOptl.get(),
+                                    operation,
+                                    new IValue[]{}
+                            );
+                            conditions.addAnd(condition);
+                        } else {
+                            List<IValue> values =
+                                    Arrays.asList(c.getValue())
+                                            .stream().map(v -> IValueUtils.toIValue(entityFieldOptl.get(),
+                                                    DevOpsOmDataUtils.convertDataObject(entityFieldOptl.get(), v)))
+                                            .collect(Collectors.toList());
+                            Condition condition = new Condition(
+                                    entityFieldOptl.get(),
+                                    operation,
+                                    values.toArray(new IValue[]{})
+                            );
+                            conditions.addAnd(condition);
+                        }
                     }
                 }
             });
