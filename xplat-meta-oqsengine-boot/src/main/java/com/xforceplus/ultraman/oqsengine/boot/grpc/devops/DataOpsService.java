@@ -15,8 +15,6 @@ import com.xforceplus.ultraman.oqsengine.devops.om.model.DevOpsQueryResponse;
 import com.xforceplus.ultraman.oqsengine.devops.om.model.DevOpsQuerySummary;
 import com.xforceplus.ultraman.oqsengine.devops.om.util.DevOpsOmDataUtils;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
-import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
-import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
@@ -246,11 +244,10 @@ public class DataOpsService {
         OqsResult<IEntity> oqsResult = OqsResult.unknown();
         try {
             oqsResult = entityManagementService.build(targetEntity);
+
+            saveOperate(appId, entityClassId, null, OperateType.SINGLE_CREATE, data, oqsResult);
         } catch (SQLException e) {
             PrintErrorHelper.exceptionHandle(String.format("devops om singleCreate exception, [%s]", entityClassId), e);
-        } finally {
-            // TODO 操作日志
-            saveOperate(appId, entityClassId, null, OperateType.SINGLE_CREATE, data, oqsResult);
         }
 
         return toDevOpsDataResponse(oqsResult);
@@ -300,12 +297,11 @@ public class DataOpsService {
         OqsResult<Map.Entry<IEntity, IValue[]>> oqsResult = OqsResult.unknown();
         try {
             oqsResult = entityManagementService.replace(targetEntity);
+
+            saveOperate(appId, entityClassId, entityValueId, OperateType.SINGLE_MODIFY, data, oqsResult);
         } catch (SQLException e) {
             PrintErrorHelper.exceptionHandle(
                 String.format("devops om singleModify exception, [%s-%s]", entityClassId, entityValueId), e);
-        } finally {
-            // TODO 操作日志
-            saveOperate(appId, entityClassId, entityValueId, OperateType.SINGLE_MODIFY, data, oqsResult);
         }
 
         return toDevOpsDataResponse(oqsResult);
@@ -337,12 +333,11 @@ public class DataOpsService {
         OqsResult<IEntity> oqsResult = OqsResult.unknown();
         try {
             oqsResult = entityManagementService.delete(targetEntity);
+
+            saveOperate(appId, entityClassId, entityValueId, OperateType.SINGLE_DELETE, null, oqsResult);
         } catch (SQLException e) {
             PrintErrorHelper.exceptionHandle(
                 String.format("devops om singleDelete exception, [%s-%s]", entityClassId, entityValueId), e);
-        } finally {
-            // TODO 操作日志
-            saveOperate(appId, entityClassId, entityValueId, OperateType.SINGLE_DELETE, null, oqsResult);
         }
 
         return toDevOpsDataResponse(oqsResult);
@@ -410,13 +405,12 @@ public class DataOpsService {
         OqsResult<IEntity[]> oqsResult = OqsResult.unknown();
         try {
             oqsResult = entityManagementService.build(entityList.toArray(new IEntity[]{}));
+
+            saveOperate(appId, entityClassId, null, OperateType.BATCH_CREATE, data, oqsResult);
         } catch (SQLException e) {
             String idStrs = data.stream().map(item -> String.valueOf(item.get("id"))).collect(Collectors.joining(","));
             PrintErrorHelper.exceptionHandle(
                     String.format("devops om batchCreate exception, [%s], %s", entityClassId, idStrs), e);
-        } finally {
-            // TODO 操作日志
-            saveOperate(appId, entityClassId, null, OperateType.BATCH_CREATE, data, oqsResult);
         }
 
         return toDevOpsDataResponse(oqsResult);
@@ -491,13 +485,12 @@ public class DataOpsService {
         OqsResult<Map<IEntity, IValue[]>> oqsResult = OqsResult.unknown();
         try {
             oqsResult = entityManagementService.replace(entityList.toArray(new IEntity[]{}));
+
+            saveOperate(appId, entityClassId, null, OperateType.BATCH_MODIFY, data, oqsResult);
         } catch (SQLException e) {
             String idStrs = data.stream().map(item -> String.valueOf(item.get("id"))).collect(Collectors.joining(","));
             PrintErrorHelper.exceptionHandle(
                     String.format("devops om batchModify exception, [%s], %s", entityClassId, idStrs), e);
-        } finally {
-            // TODO 操作日志
-            saveOperate(appId, entityClassId, null, OperateType.BATCH_MODIFY, data, oqsResult);
         }
 
         return toDevOpsDataResponse(oqsResult);
@@ -549,12 +542,11 @@ public class DataOpsService {
         OqsResult<IEntity[]> oqsResult = OqsResult.unknown();
         try {
             oqsResult = entityManagementService.delete(entityList.toArray(new IEntity[]{}));
+
+            saveOperate(appId, entityClassId, null, OperateType.BATCH_DELETE, idStrs, oqsResult);
         } catch (SQLException e) {
             PrintErrorHelper.exceptionHandle(
                     String.format("devops om batchDelete exception, [%s], %s", entityClassId, JSON.toJSONString(idStrs)), e);
-        } finally {
-            // TODO 操作日志
-            saveOperate(appId, entityClassId, null, OperateType.BATCH_DELETE, idStrs, oqsResult);
         }
 
         return toDevOpsDataResponse(oqsResult);
@@ -580,11 +572,13 @@ public class DataOpsService {
             Collection<IEntityClass> entityClasses = metaManager.appLoad(Long.valueOf(appId).toString());
             if (entityClasses.isEmpty()) {
                 logger.warn("应用[{}]找不到对象列表", appId);
+                return;
             }
             Optional<IEntityClass> entityClassOptl = entityClasses.stream()
                     .filter(entityClass -> operateSysBo.equals(entityClass.code())).findAny();
             if (!entityClassOptl.isPresent()) {
                 logger.warn("应用[{}]找不到记录操作日志对象[{}]", appId, entityClassOptl.get().id());
+                return;
             }
             List<IValue> entityValue = new ArrayList<>();
             entityClassOptl.get().fields().stream().forEach(field -> {
@@ -603,8 +597,10 @@ public class DataOpsService {
                                 new LongValue(field, entityValueId));
                     }
                 } else if ("request_data".equals(field.name())) {
-                    entityValue.add(
-                            new StringValue(field, JSON.toJSONString(reqData)));
+                    if (reqData != null) {
+                        entityValue.add(
+                                new StringValue(field, JSON.toJSONString(reqData)));
+                    }
                 } else if ("response_data".equals(field.name())) {
                     entityValue.add(
                             new StringValue(field, JSON.toJSONString(convertOqsResult(operateType, respData))));
@@ -628,10 +624,10 @@ public class DataOpsService {
             try {
                 entityManagementService.build(targetEntity);
             } catch (SQLException e) {
-                logger.warn("应用[{}]记录操作日志对象[{}]保存数据失败", appId, entityClassOptl.get().id());
+                logger.error("应用[{}]记录操作日志对象[{}]保存数据失败", appId, entityClassOptl.get().id(), e);
             }
         } catch (Exception e) {
-            logger.error("save operation info fail");
+            logger.error("save operation info fail", e);
         }
     }
 

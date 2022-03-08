@@ -3,26 +3,26 @@ package com.xforceplus.ultraman.oqsengine.devops.om.model;
 import java.util.List;
 
 /**
- * 统一数据运维条件对象.
+ * 统一数据运维请求实体.
  *
  * @copyright: 上海云砺信息科技有限公司
  * @author: youyifan
- * @createTime: 11/3/2021 4:45 PM
+ * @createTime: 11/8/2021 4:56 PM
  * @description:
  * @history:
  */
-public class DevOpsQueryCondition {
+public class DevOpsQueryConditionEntity {
 
-    private List<DevOpsQueryConditionEntity> entities;
+    private String code;
 
     private List<DevOpsQueryConditionItem> fields;
 
-    public List<DevOpsQueryConditionEntity> getEntities() {
-        return entities;
+    public String getCode() {
+        return code;
     }
 
-    public void setEntities(List<DevOpsQueryConditionEntity> entities) {
-        this.entities = entities;
+    public void setCode(String code) {
+        this.code = code;
     }
 
     public List<DevOpsQueryConditionItem> getFields() {
