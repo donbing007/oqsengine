@@ -56,9 +56,9 @@ public abstract class AbstractOriginalTaskExecutor<R, T> extends AbstractJdbcTas
             .append(entityClass.appCode())
             .append('_')
             .append(entityClass.code());
-        if (entityClass.profile().isPresent()) {
+        if (null != entityClass.profile() && !entityClass.profile().isEmpty()) {
             buff.append('_')
-                .append(entityClass.profile().get());
+                .append(entityClass.profile());
         }
 
         return buff.toString();

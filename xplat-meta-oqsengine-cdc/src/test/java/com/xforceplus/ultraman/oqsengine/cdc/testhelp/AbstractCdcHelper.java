@@ -6,12 +6,16 @@ import com.google.common.collect.Lists;
 import com.xforceplus.ultraman.oqsengine.cdc.CDCDaemonService;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.CDCRunner;
 import com.xforceplus.ultraman.oqsengine.cdc.mock.CdcInitialization;
+import com.xforceplus.ultraman.oqsengine.cdc.testhelp.meta.EntityClassBuilder;
 import com.xforceplus.ultraman.oqsengine.common.id.node.StaticNodeIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.mock.RebuildInitialization;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MockMetaManagerHolder;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.testcontainer.basic.AbstractContainerExtends;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import org.springframework.test.util.ReflectionTestUtils;
 
 /**
@@ -23,11 +27,15 @@ public class AbstractCdcHelper extends AbstractContainerExtends {
     protected CDCRunner cdcRunner;
 
     protected void init(boolean isStartRunner, IEntityClass entityClass) throws Exception {
+        List<IEntityClass> entityClassList = null;
         if (null == entityClass) {
-            entityClass = EntityClassBuilder.ENTITY_CLASS_2;
+            entityClassList = Lists.newArrayList(EntityClassBuilder.ENTITY_CLASS_0, EntityClassBuilder.ENTITY_CLASS_1,
+                EntityClassBuilder.ENTITY_CLASS_2, EntityClassBuilder.ENTITY_CLASS_STATIC);
+        } else {
+            entityClassList = Collections.singletonList(entityClass);
         }
 
-        MockMetaManagerHolder.initEntityClassBuilder(Lists.newArrayList(entityClass));
+        MockMetaManagerHolder.initEntityClassBuilder(entityClassList);
 
         if (isStartRunner) {
             cdcRunner = initCDCRunner();

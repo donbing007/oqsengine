@@ -123,6 +123,8 @@ public class DynamicBinLogParser implements BinLogParser {
         builder.withCommitid(commitId);
         //  entityClass
         builder.withEntityClass(entityClass);
+        //  entityClassRef
+        builder.withEntityClassRef(entityClass.ref());
 
         //  动态结构需要直接加入attr
         if (entityClass.isDynamic()) {
@@ -185,8 +187,7 @@ public class DynamicBinLogParser implements BinLogParser {
         }
         String profile = getStringWithoutNullCheck(columns, PROFILE);
 
-        return CommonUtils.getEntityClass(id,
-            new EntityClassRef(entityId, "", profile), parserContext);
+        return CommonUtils.getEntityClass(new EntityClassRef(entityId, "", profile), parserContext);
     }
 
 

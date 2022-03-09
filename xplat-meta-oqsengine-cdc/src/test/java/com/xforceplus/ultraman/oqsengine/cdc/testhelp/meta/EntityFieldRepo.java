@@ -1,28 +1,31 @@
-package com.xforceplus.ultraman.oqsengine.cdc.testhelp;
+package com.xforceplus.ultraman.oqsengine.cdc.testhelp.meta;
 
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
- * Created by justin.xu on 02/2022.
+ * Created by justin.xu on 03/2022.
  *
  * @since 1.8
  */
-public class EntityClassBuilder {
+public class EntityFieldRepo {
+
+    public static final IEntityField ID_FIELD =
+        EntityField.Builder
+            .anEntityField()
+            .withId(1)
+            .withName("id")
+            .withFieldType(FieldType.LONG)
+            .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build())
+            .build();
 
     public static final IEntityField LONG_FIELD =
         EntityField.Builder
             .anEntityField()
             .withId(1)
-            .withName("long")
+            .withName("long_col")
             .withFieldType(FieldType.LONG)
             .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build())
             .build();
@@ -31,7 +34,7 @@ public class EntityClassBuilder {
         EntityField.Builder
             .anEntityField()
             .withId(2)
-            .withName("string")
+            .withName("string_col")
             .withFieldType(FieldType.STRING)
             .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build())
             .build();
@@ -40,7 +43,7 @@ public class EntityClassBuilder {
         EntityField.Builder
             .anEntityField()
             .withId(3)
-            .withName("bool")
+            .withName("bool_col")
             .withFieldType(FieldType.BOOLEAN)
             .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build())
             .build();
@@ -49,7 +52,7 @@ public class EntityClassBuilder {
         EntityField.Builder
             .anEntityField()
             .withId(4)
-            .withName("datetime")
+            .withName("datetime_col")
             .withFieldType(FieldType.DATETIME)
             .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build())
             .build();
@@ -58,7 +61,7 @@ public class EntityClassBuilder {
         EntityField.Builder
             .anEntityField()
             .withId(5)
-            .withName("decimal")
+            .withName("decimal_col")
             .withFieldType(FieldType.DECIMAL)
             .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build())
             .build();
@@ -67,65 +70,17 @@ public class EntityClassBuilder {
         EntityField.Builder
             .anEntityField()
             .withId(6)
-            .withName("enum")
+            .withName("enum_col")
             .withFieldType(FieldType.ENUM)
             .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build())
             .build();
-
 
     public static final IEntityField STRINGS_FIELD =
         EntityField.Builder
             .anEntityField()
             .withId(7)
-            .withName("strings")
+            .withName("strings_col")
             .withFieldType(FieldType.STRINGS)
             .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build())
             .build();
-
-    // level 1
-    public static final IEntityClass ENTITY_CLASS_0 =
-        EntityClass.Builder.anEntityClass()
-            .withId(Long.MAX_VALUE)
-            .withType(EntityClassType.DYNAMIC)
-            .withVersion(1)
-            .withCode("c0")
-            .withFields(
-                Arrays.asList(LONG_FIELD, STRING_FIELD)
-            ).build();
-
-    // level 2
-    public static final IEntityClass ENTITY_CLASS_1 =
-        EntityClass.Builder.anEntityClass()
-            .withId(Long.MAX_VALUE - 1)
-            .withType(EntityClassType.DYNAMIC)
-            .withVersion(1)
-            .withCode("c1")
-            .withFather(ENTITY_CLASS_0)
-            .withFields(
-                Arrays.asList(BOOL_FIELD, DATE_TIME_FIELD)
-            ).build();
-
-    // level 3
-    public static final IEntityClass ENTITY_CLASS_2 =
-        EntityClass.Builder.anEntityClass()
-            .withId(Long.MAX_VALUE - 2)
-            .withType(EntityClassType.DYNAMIC)
-            .withVersion(1)
-            .withCode("c2")
-            .withFather(ENTITY_CLASS_1)
-            .withFields(
-                Arrays.asList(DECIMAL_FIELD, STRINGS_FIELD)
-            ).build();
-
-    public static Map<Long, IEntityClass> entityClassMap = new HashMap<>();
-
-    public static IEntityClass getEntityClass(long id) {
-        return entityClassMap.get(id);
-    }
-
-    static {
-        entityClassMap.put(ENTITY_CLASS_0.id(), ENTITY_CLASS_0);
-        entityClassMap.put(ENTITY_CLASS_1.id(), ENTITY_CLASS_1);
-        entityClassMap.put(ENTITY_CLASS_2.id(), ENTITY_CLASS_2);
-    }
 }

@@ -42,10 +42,6 @@ public class StaticBinLogParser implements BinLogParser {
             }
             commitId = originalEntity.getCommitid();
 
-            IEntityClass entityClass =
-                CommonUtils.getEntityClass(id, originalEntity.getEntityClassRef(), parserContext);
-
-            originalEntity.setEntityClass(entityClass);
             //  构造attributes
             businessParse(columns, originalEntity);
 
@@ -72,7 +68,12 @@ public class StaticBinLogParser implements BinLogParser {
 
             if (optionalOriginalEntity.isPresent() &&
                 null != optionalOriginalEntity.get().getEntityClassRef()) {
+
                 originalEntity = optionalOriginalEntity.get();
+
+                if (null == originalEntity.getEntityClass()) {
+                    originalEntity.setEntityClass(CommonUtils.getEntityClass(originalEntity.getEntityClassRef(), parserContext));
+                }
             }
         }
 
@@ -93,7 +94,7 @@ public class StaticBinLogParser implements BinLogParser {
         originalEntity.setAttributes(attrs);
     }
 
-    private static String toStorageKey(IEntityField field) {
+    public static String toStorageKey(IEntityField field) {
         return "F" + field.id() + toStorageSuffix(field.type());
     }
 

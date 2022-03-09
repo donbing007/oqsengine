@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.cdc.testhelp;
+package com.xforceplus.ultraman.oqsengine.cdc.testhelp.cases;
 
 import static com.xforceplus.ultraman.oqsengine.storage.master.utils.OriginalEntityUtils.attributesToMap;
 
@@ -18,8 +18,7 @@ import org.junit.jupiter.api.Assertions;
  *
  * @since 1.8
  */
-public class CanalEntryCase {
-    private long id;
+public class DynamicCanalEntryCase extends AbstractCanalEntryCase {
     private int levelOrdinal;
     private boolean deleted;
     private boolean replacement;
@@ -33,81 +32,77 @@ public class CanalEntryCase {
     private long entityId;
     private String profile;
 
-    private CanalEntryCase() {
+    private DynamicCanalEntryCase() {
 
     }
 
-    public static CanalEntryCase anCase() {
-        return new CanalEntryCase();
+    public static DynamicCanalEntryCase anCase() {
+        return new DynamicCanalEntryCase();
     }
 
-    public CanalEntryCase withId(long id) {
-        this.id = id;
+    public DynamicCanalEntryCase withId(long id) {
+        super.id = id;
         return this;
     }
 
-    public CanalEntryCase withCommitId(long commitId) {
+    public DynamicCanalEntryCase withCommitId(long commitId) {
         this.commitId = commitId;
         return this;
     }
 
-    public CanalEntryCase withReplacement(boolean replacement) {
+    public DynamicCanalEntryCase withReplacement(boolean replacement) {
         this.replacement = replacement;
         return this;
     }
 
-    public CanalEntryCase withLevelOrdinal(int levelOrdinal) {
+    public DynamicCanalEntryCase withLevelOrdinal(int levelOrdinal) {
         this.levelOrdinal = levelOrdinal;
         return this;
     }
 
-    public CanalEntryCase withDeleted(boolean deleted) {
+    public DynamicCanalEntryCase withDeleted(boolean deleted) {
         this.deleted = deleted;
         return this;
     }
 
-    public CanalEntryCase withVersion(int version) {
+    public DynamicCanalEntryCase withVersion(int version) {
         this.version = version;
         return this;
     }
 
-    public CanalEntryCase withQqsmajor(int oqsmajor) {
+    public DynamicCanalEntryCase withQqsmajor(int oqsmajor) {
         this.oqsmajor = oqsmajor;
         return this;
     }
 
-    public CanalEntryCase withCreate(long create) {
+    public DynamicCanalEntryCase withCreate(long create) {
         this.create = create;
         return this;
     }
 
-    public CanalEntryCase withUpdate(long update) {
+    public DynamicCanalEntryCase withUpdate(long update) {
         this.update = update;
         return this;
     }
 
-    public CanalEntryCase withTx(long tx) {
+    public DynamicCanalEntryCase withTx(long tx) {
         this.tx = tx;
         return this;
     }
 
-    public CanalEntryCase withAttr(String attr) {
+    public DynamicCanalEntryCase withAttr(String attr) {
         this.attr = attr;
         return this;
     }
 
-    public CanalEntryCase withProfile(String profile) {
+    public DynamicCanalEntryCase withProfile(String profile) {
         this.profile = profile;
         return this;
     }
 
-    public CanalEntryCase withEntityId(long entityId) {
+    public DynamicCanalEntryCase withEntityId(long entityId) {
         this.entityId = entityId;
         return this;
-    }
-
-    public long getId() {
-        return id;
     }
 
     public boolean isDeleted() {

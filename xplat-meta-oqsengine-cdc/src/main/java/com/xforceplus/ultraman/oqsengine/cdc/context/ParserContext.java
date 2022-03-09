@@ -3,7 +3,6 @@ package com.xforceplus.ultraman.oqsengine.cdc.context;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
-import javax.annotation.Resource;
 
 /**
  * Created by justin.xu on 02/2022.
