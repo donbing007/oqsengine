@@ -13,6 +13,13 @@ public class DynamicCanalEntryGenerator {
     private static final String MOCK_DYNAMIC_TABLE = "oqsbigentity";
 
     /**
+     * 创建事物结束.
+     */
+    public static CanalEntry.Entry buildTransactionEndEntry() {
+        return CanalEntry.Entry.newBuilder().setEntryType(CanalEntry.EntryType.TRANSACTIONEND).build();
+    }
+
+    /**
      * 创建数据行.
      */
     public static CanalEntry.Entry buildRowDataEntry(DynamicCanalEntryCase caseEntry) {

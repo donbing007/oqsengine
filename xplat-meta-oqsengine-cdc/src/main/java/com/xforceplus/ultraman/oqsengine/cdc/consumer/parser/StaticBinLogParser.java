@@ -9,6 +9,8 @@ import com.xforceplus.ultraman.oqsengine.cdc.consumer.dto.ParseResult;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.ColumnsUtils;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.CommonUtils;
 import com.xforceplus.ultraman.oqsengine.cdc.context.ParserContext;
+import com.xforceplus.ultraman.oqsengine.devops.rebuild.utils.DevOpsUtils;
+import com.xforceplus.ultraman.oqsengine.pojo.devops.DevOpsCdcMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
@@ -46,6 +48,12 @@ public class StaticBinLogParser implements BinLogParser {
             businessParse(columns, originalEntity);
 
             parseResult.getFinishEntries().put(id, originalEntity);
+
+            //  如果是维护的commitId，需要设置devOps指标逻辑.
+            if (DevOpsUtils.isMaintainRecord(commitId)) {
+                parserContext.getCdcMetrics().getDevOpsMetrics()
+                    .computeIfAbsent(originalEntity.getTx(), f -> new DevOpsCdcMetrics()).incrementByStatus(true);
+            }
         } catch (Exception e) {
             if (commitId != CommitHelper.getUncommitId()) {
                 //  加入错误列表.

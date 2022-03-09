@@ -91,7 +91,7 @@ public class DynamicBinLogParser implements BinLogParser {
             return;
         }
 
-        //  加入未确认列表
+        //  加入未同步列表
         parserContext.getCdcMetrics().getCdcUnCommitMetrics().getUnCommitIds().add(commitId);
 
         //  判断当前的commitId是否需要readyCheck
@@ -147,8 +147,10 @@ public class DynamicBinLogParser implements BinLogParser {
 
         //  如果是维护的commitId，需要设置devOps指标逻辑.
         if (DevOpsUtils.isMaintainRecord(commitId)) {
-            parserContext.getCdcMetrics().getDevOpsMetrics()
-                .computeIfAbsent(txId, f -> new DevOpsCdcMetrics()).incrementByStatus(true);
+            if (entityClass.isDynamic()) {
+                parserContext.getCdcMetrics().getDevOpsMetrics()
+                    .computeIfAbsent(txId, f -> new DevOpsCdcMetrics()).incrementByStatus(true);
+            }
             builder.withMaintainid(txId);
         }
 
