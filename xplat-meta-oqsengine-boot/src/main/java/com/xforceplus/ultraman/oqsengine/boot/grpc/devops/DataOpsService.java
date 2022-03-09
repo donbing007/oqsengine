@@ -160,7 +160,7 @@ public class DataOpsService {
                             Condition condition = new Condition(
                                     entityFieldOptl.get(),
                                     operation,
-                                    new IValue[]{}
+                                    new EmptyTypedValue(entityFieldOptl.get())
                             );
                             conditions.addAnd(condition);
                         } else {
