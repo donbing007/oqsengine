@@ -60,7 +60,7 @@ public interface CDCMetricsHandler {
      * 表示一个新的连接的回调.
      * @param cdcMetrics 指标对象.
      */
-    void newConnectCallBack(CDCMetrics cdcMetrics);
+    void renewConnect(CDCMetrics cdcMetrics);
 }
 
 

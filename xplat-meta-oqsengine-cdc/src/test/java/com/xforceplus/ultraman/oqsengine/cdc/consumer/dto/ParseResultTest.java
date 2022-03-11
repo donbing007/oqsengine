@@ -36,7 +36,6 @@ public class ParseResultTest {
         Assertions.assertEquals(0, old.getOperationEntries().size());
     }
 
-
     @Test
     public void addErrorTest() {
         ParseResult parseResult = new ParseResult();

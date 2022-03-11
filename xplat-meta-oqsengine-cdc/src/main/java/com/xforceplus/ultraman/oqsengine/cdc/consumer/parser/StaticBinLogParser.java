@@ -38,6 +38,7 @@ public class StaticBinLogParser implements BinLogParser {
             id = getLongFromColumn(columns, ID);
 
             OriginalEntity originalEntity = findOriginalEntity(id, parserContext, parseResult);
+
             if (null == originalEntity) {
                 //  未获取originalEntity,判定为非法操作.
                 return;

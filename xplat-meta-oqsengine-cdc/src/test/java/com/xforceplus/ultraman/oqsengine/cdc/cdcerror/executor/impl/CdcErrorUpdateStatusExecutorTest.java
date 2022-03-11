@@ -36,11 +36,6 @@ public class CdcErrorUpdateStatusExecutorTest extends AbstractCdcHelper {
         super.clear(false);
     }
 
-    @AfterAll
-    public static void afterAll() {
-        InitializationHelper.destroy();
-    }
-
     @Test
     public void errorUpdateStatusTest() throws Exception {
         CdcErrorStorage cdcErrorStorage = CdcInitialization.getInstance().getCdcErrorStorage();

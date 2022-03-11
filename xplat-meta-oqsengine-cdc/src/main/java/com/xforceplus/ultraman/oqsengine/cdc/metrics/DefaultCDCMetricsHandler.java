@@ -173,7 +173,7 @@ public class DefaultCDCMetricsHandler implements CDCMetricsHandler {
     }
 
     @Override
-    public void newConnectCallBack(CDCMetrics cdcMetrics) {
+    public void renewConnect(CDCMetrics cdcMetrics) {
         callback(cdcMetrics);
     }
 

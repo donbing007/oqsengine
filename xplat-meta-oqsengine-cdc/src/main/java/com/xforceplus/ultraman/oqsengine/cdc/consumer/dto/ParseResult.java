@@ -5,9 +5,12 @@ import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.IN
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by justin.xu on 02/2022.
@@ -50,7 +53,7 @@ public class ParseResult {
     /**
      * 需要checkReady的commitIds
      */
-    private List<Long> commitIds;
+    private Set<Long> commitIds;
 
     /**
      * 清除.
@@ -87,7 +90,7 @@ public class ParseResult {
         this.finishEntries = new HashMap<>();
         this.operationEntries = new HashMap<>();
         this.errors  = new LinkedHashMap<>();
-        this.commitIds = new ArrayList<>();
+        this.commitIds = new HashSet<>();
     }
 
     public Map<Long, OriginalEntity> getFinishEntries() {
@@ -102,7 +105,7 @@ public class ParseResult {
         return errors;
     }
 
-    public List<Long> getCommitIds() {
+    public Set<Long> getCommitIds() {
         return commitIds;
     }
 

@@ -1,24 +1,19 @@
 package com.xforceplus.ultraman.oqsengine.cdc.consumer.service;
 
-import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.dto.ParseResult;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.parser.helper.ParseResultCheckHelper;
 import com.xforceplus.ultraman.oqsengine.cdc.mock.CdcInitialization;
 import com.xforceplus.ultraman.oqsengine.cdc.testhelp.AbstractCdcHelper;
 import com.xforceplus.ultraman.oqsengine.cdc.testhelp.cases.DynamicCanalEntryCase;
 import com.xforceplus.ultraman.oqsengine.cdc.testhelp.cases.StaticCanalEntryCase;
-import com.xforceplus.ultraman.oqsengine.cdc.testhelp.generator.DynamicCanalEntryGenerator;
-import com.xforceplus.ultraman.oqsengine.cdc.testhelp.generator.StaticCanalEntryGenerator;
+import com.xforceplus.ultraman.oqsengine.cdc.testhelp.entry.CanalEntryBuilder;
 import com.xforceplus.ultraman.oqsengine.cdc.testhelp.repo.DynamicCanalEntryRepo;
 import com.xforceplus.ultraman.oqsengine.cdc.testhelp.repo.StaticCanalEntryRepo;
-import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import io.vavr.Tuple2;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,30 +30,17 @@ public class DefaultConsumerServiceTest extends AbstractCdcHelper {
     @BeforeEach
     public void before() throws Exception {
         super.init(false, null);
-        ((DefaultConsumerService) CdcInitialization.getInstance().getConsumerService()).setCheckCommitReady(false);
     }
 
     @AfterEach
     public void after() throws Exception {
-        ((DefaultConsumerService) CdcInitialization.getInstance().getConsumerService()).setCheckCommitReady(true);
         super.clear(false);
     }
 
-    @AfterAll
-    public static void afterAll() {
-        InitializationHelper.destroy();
-    }
-
-    private static long expectedBatchId = 2001;
-    private static int expectedDevOpsSize = 2;
-    private static int expectedExecuteSize = 4;
-    private static int expectedCommitIdSize = 3;
-    private static int expectedUnCommitIdSize = 0;
-
-    private static List<DynamicCanalEntryCase> expectedDynamic =
+    private static final List<DynamicCanalEntryCase> expectedDynamic =
         Arrays.asList(DynamicCanalEntryRepo.CASE_NORMAL_2, DynamicCanalEntryRepo.CASE_MAINTAIN);
 
-    private static List<Tuple2<DynamicCanalEntryCase, StaticCanalEntryCase>> expectedStatic =
+    private static final List<Tuple2<DynamicCanalEntryCase, StaticCanalEntryCase>> expectedStatic =
         Arrays.asList(StaticCanalEntryRepo.CASE_STATIC_ALL_IN_ONE, StaticCanalEntryRepo.CASE_STATIC_MAINTAIN);
 
     @Test
@@ -66,11 +48,11 @@ public class DefaultConsumerServiceTest extends AbstractCdcHelper {
         final long expectedBatchId = 2001;
         final int expectedDevOpsSize = 2;
         final int expectedExecuteSize = 4;
-        final int expectedCommitIdSize = 3;
+        final int expectedCommitIdSize = 4;
         final int expectedUnCommitIdSize = 0;
 
         CDCMetrics cdcMetrics =
-            CdcInitialization.getInstance().getConsumerService().consume(initAll(), expectedBatchId, new CDCMetrics());
+            CdcInitialization.getInstance().getConsumerService().consumeOneBatch(CanalEntryBuilder.initAll(expectedDynamic, expectedStatic), expectedBatchId, new CDCMetrics());
 
         Assertions.assertNotNull(cdcMetrics);
         Assertions.assertEquals(expectedBatchId, cdcMetrics.getBatchId());
@@ -89,7 +71,7 @@ public class DefaultConsumerServiceTest extends AbstractCdcHelper {
         final int expectedUnCommitIdSize = 1;
 
         CDCMetrics cdcMetrics =
-            CdcInitialization.getInstance().getConsumerService().consume(initExceptLastStatic(), expectedBatchId, new CDCMetrics());
+            CdcInitialization.getInstance().getConsumerService().consumeOneBatch(CanalEntryBuilder.initExceptLastStatic(expectedDynamic, expectedStatic), expectedBatchId, new CDCMetrics());
 
         Assertions.assertNotNull(cdcMetrics);
         Assertions.assertEquals(expectedBatchId, cdcMetrics.getBatchId());
@@ -111,7 +93,7 @@ public class DefaultConsumerServiceTest extends AbstractCdcHelper {
 
         expectedBatchId = expectedBatchId + 1;
         CDCMetrics cdcMetricsOver =
-            CdcInitialization.getInstance().getConsumerService().consume(initOverBatchStatic(), expectedBatchId, cdcMetrics);
+            CdcInitialization.getInstance().getConsumerService().consumeOneBatch(CanalEntryBuilder.initOverBatchStatic(expectedStatic), expectedBatchId, cdcMetrics);
 
         Assertions.assertNotNull(cdcMetricsOver);
         Assertions.assertEquals(expectedBatchId, cdcMetricsOver.getBatchId());
@@ -122,48 +104,5 @@ public class DefaultConsumerServiceTest extends AbstractCdcHelper {
     }
 
 
-    private List<CanalEntry.Entry> initAll() {
-        List<CanalEntry.Entry> entries = new ArrayList<>();
-        for (DynamicCanalEntryCase dynamicCanalEntryCase : expectedDynamic) {
-            entries.add(DynamicCanalEntryGenerator.buildRowDataEntry(dynamicCanalEntryCase));
-            entries.add(DynamicCanalEntryGenerator.buildTransactionEndEntry());
-        }
 
-        for (Tuple2<DynamicCanalEntryCase, StaticCanalEntryCase> tuple : expectedStatic) {
-            entries.add(DynamicCanalEntryGenerator.buildRowDataEntry(tuple._1()));
-            entries.add(StaticCanalEntryGenerator.buildRowDataEntry(tuple._2()));
-            entries.add(DynamicCanalEntryGenerator.buildTransactionEndEntry());
-        }
-
-        return entries;
-    }
-
-    private List<CanalEntry.Entry> initExceptLastStatic() {
-        List<CanalEntry.Entry> entries = new ArrayList<>();
-        for (int i = 0; i < expectedDynamic.size(); i++) {
-            entries.add(DynamicCanalEntryGenerator.buildRowDataEntry(expectedDynamic.get(i)));
-            entries.add(DynamicCanalEntryGenerator.buildTransactionEndEntry());
-        }
-
-        for (int i = 0; i < expectedStatic.size(); i++) {
-            entries.add(DynamicCanalEntryGenerator.buildRowDataEntry(expectedStatic.get(i)._1()));
-            if (i < expectedStatic.size() - 1) {
-                entries.add(StaticCanalEntryGenerator.buildRowDataEntry(expectedStatic.get(i)._2()));
-                entries.add(DynamicCanalEntryGenerator.buildTransactionEndEntry());
-            }
-        }
-
-        return entries;
-    }
-
-    private List<CanalEntry.Entry> initOverBatchStatic() {
-        List<CanalEntry.Entry> entries = new ArrayList<>();
-        for (int i = 0; i < expectedStatic.size(); i++) {
-            if (i == expectedStatic.size() - 1) {
-                entries.add(StaticCanalEntryGenerator.buildRowDataEntry(expectedStatic.get(i)._2()));
-                entries.add(DynamicCanalEntryGenerator.buildTransactionEndEntry());
-            }
-        }
-        return entries;
-    }
 }

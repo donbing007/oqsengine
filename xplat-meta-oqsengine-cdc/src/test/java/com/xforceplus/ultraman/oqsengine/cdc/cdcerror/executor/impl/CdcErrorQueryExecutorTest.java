@@ -45,12 +45,6 @@ public class CdcErrorQueryExecutorTest extends AbstractCdcHelper {
         super.clear(false);
     }
 
-    @AfterAll
-    public static void afterAll() {
-        InitializationHelper.destroy();
-    }
-
-
     @Test
     public void errorQueryTest() throws Exception {
         CdcErrorStorage cdcErrorStorage = CdcInitialization.getInstance().getCdcErrorStorage();

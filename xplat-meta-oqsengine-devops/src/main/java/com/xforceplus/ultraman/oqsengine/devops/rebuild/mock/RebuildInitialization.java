@@ -73,10 +73,14 @@ public class RebuildInitialization implements BeanInitialization {
 
     @Override
     public void clear() throws Exception {
-        try (Connection conn = devOpsDataSource.getConnection()) {
-            try (Statement st = conn.createStatement()) {
-                st.executeUpdate("truncate table " + DEVOPS_TABLE_NAME);
+        try {
+            try (Connection conn = devOpsDataSource.getConnection()) {
+                try (Statement st = conn.createStatement()) {
+                    st.executeUpdate("truncate table " + DEVOPS_TABLE_NAME);
+                }
             }
+        } catch (Exception e) {
+            //  ignore
         }
     }
 

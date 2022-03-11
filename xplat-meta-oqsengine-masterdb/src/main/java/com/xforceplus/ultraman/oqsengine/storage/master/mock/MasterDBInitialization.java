@@ -99,7 +99,11 @@ public class MasterDBInitialization implements BeanInitialization {
 
     @Override
     public void clear() throws Exception {
-        SqlInitUtils.init("/mysql/truncate", dataSource);
+        try {
+            SqlInitUtils.init("/mysql/truncate", dataSource);
+        } catch (Exception e) {
+            //  ignore
+        }
     }
 
     @Override
@@ -129,7 +133,7 @@ public class MasterDBInitialization implements BeanInitialization {
     }
 
     protected DataSource buildDataSourceSelectorMaster() throws IllegalAccessException {
-        return CommonInitialization.getInstance().getDataSourcePackage(false).getMaster().get(0);
+        return CommonInitialization.getInstance().getDataSourcePackage(true).getMaster().get(0);
     }
 
 

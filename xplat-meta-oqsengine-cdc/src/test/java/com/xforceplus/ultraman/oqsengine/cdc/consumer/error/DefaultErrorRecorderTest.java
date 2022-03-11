@@ -32,12 +32,6 @@ public class DefaultErrorRecorderTest extends AbstractCdcHelper {
         super.clear(false);
     }
 
-    @AfterAll
-    public static void afterAll() {
-        InitializationHelper.destroy();
-    }
-
-
     private static final long expected_batchId = 1001;
     private static final long unexpected_batchId = 1002;
 

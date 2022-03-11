@@ -117,10 +117,14 @@ public class IndexInitialization implements BeanInitialization {
     public void clear() throws Exception {
         List<DataSource> dataSources = CommonInitialization.getInstance().getDataSourcePackage(false).getIndexWriter();
         for (DataSource ds : dataSources) {
-            try (Connection conn = ds.getConnection()) {
-                try (Statement st = conn.createStatement()) {
-                    st.executeUpdate("truncate table " + INDEX_TABLE);
+            try {
+                try (Connection conn = ds.getConnection()) {
+                    try (Statement st = conn.createStatement()) {
+                        st.executeUpdate("truncate table " + INDEX_TABLE);
+                    }
                 }
+            } catch (Exception e) {
+                //  ignore
             }
         }
     }

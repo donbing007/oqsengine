@@ -5,13 +5,11 @@ import static com.xforceplus.ultraman.oqsengine.cdc.testhelp.meta.EntityClassBui
 
 import com.xforceplus.ultraman.oqsengine.cdc.context.ParserContext;
 import com.xforceplus.ultraman.oqsengine.cdc.testhelp.AbstractCdcHelper;
-import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MetaInitialization;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.master.mock.MasterDBInitialization;
 import java.sql.SQLException;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,11 +34,6 @@ public class CommonUtilsTest extends AbstractCdcHelper {
     @AfterEach
     public void after() throws Exception {
         super.clear(false);
-    }
-
-    @AfterAll
-    public static void afterAll() {
-        InitializationHelper.destroy();
     }
 
     @Test

@@ -70,7 +70,7 @@ public class DynamicBinLogParser implements BinLogParser {
                 toOriginalEntity(entityClass, id, commitId, columns, parserContext);
 
             //  动态结构直接加入到结果对象中
-            if (entityClass.isDynamic()) {
+            if (entityClass.isDynamic() || originalEntity.isDeleted()) {
                 parseResult.getFinishEntries().put(id, originalEntity);
             } else {
                 //  加入到半成品对象中
@@ -90,9 +90,6 @@ public class DynamicBinLogParser implements BinLogParser {
 
             return;
         }
-
-        //  加入未同步列表
-        parserContext.getCdcMetrics().getCdcUnCommitMetrics().getUnCommitIds().add(commitId);
 
         //  判断当前的commitId是否需要readyCheck
         addToReadyChecks(commitId, id, parserContext, parseResult);
@@ -163,6 +160,14 @@ public class DynamicBinLogParser implements BinLogParser {
         return builder.build();
     }
 
+    /**
+     * 转换attribute.
+     *
+     * @param id 主键id.
+     * @param columns 原始数据集.
+     * @return 对象键值对.
+     * @throws SQLException
+     */
     private Map<String, Object> attrCollection(long id, List<CanalEntry.Column> columns) throws SQLException {
 
         String attrStr = getStringFromColumn(columns, ATTRIBUTE);
@@ -180,6 +185,14 @@ public class DynamicBinLogParser implements BinLogParser {
         }
     }
 
+    /**
+     * 获取当前的entityClass.
+     * @param id 主键id.
+     * @param columns 原始数据集.
+     * @param parserContext 上下文.
+     * @return
+     * @throws SQLException
+     */
     private IEntityClass getEntityClass(long id, List<CanalEntry.Column> columns, ParserContext parserContext)
         throws SQLException {
         long entityId = entityClassId(columns);
@@ -227,13 +240,16 @@ public class DynamicBinLogParser implements BinLogParser {
                 || (commitId == NO_TRANSACTION_COMMIT_ID && parserContext.getSkipCommitId() != NO_TRANSACTION_COMMIT_ID)
                 || (DevOpsUtils.isMaintainRecord(commitId))) {
 
-                //  维护的CommitId不需要加入
-                if ((parserContext.isCheckCommitReady()
-                    && !parserContext.getCdcMetrics().getCdcUnCommitMetrics().getUnCommitIds().contains(commitId))) {
-                    if (!DevOpsUtils.isMaintainRecord(commitId)) {
-                        parseResult.getCommitIds().add(commitId);
-                    }
+                //  不需要checkReady的情况.
+                if (parserContext.isCheckCommitReady() &&
+                    !DevOpsUtils.isMaintainRecord(commitId) &&
+                    commitId != NO_TRANSACTION_COMMIT_ID) {
+
+                    parseResult.getCommitIds().add(commitId);
                 }
+
+                //  加入未同步列表
+                parserContext.getCdcMetrics().getCdcUnCommitMetrics().getUnCommitIds().add(commitId);
             } else {
                 logger.warn(
                     "[dynamic-binlog-parser] batch : {}, ignore commitId less than skipCommitId, current id : {}, commitId : {}, skipCommitId : {}",

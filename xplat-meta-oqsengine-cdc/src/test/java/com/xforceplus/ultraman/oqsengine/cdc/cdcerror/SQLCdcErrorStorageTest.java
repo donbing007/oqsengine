@@ -3,7 +3,6 @@ package com.xforceplus.ultraman.oqsengine.cdc.cdcerror;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.condition.CdcErrorQueryCondition;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.dto.ErrorType;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.executor.helper.CdcErrorBuildHelper;
-import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.executor.impl.CdcErrorBatchInsertExecutorTest;
 import com.xforceplus.ultraman.oqsengine.cdc.mock.CdcInitialization;
 import com.xforceplus.ultraman.oqsengine.cdc.testhelp.AbstractCdcHelper;
 import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
@@ -33,11 +32,6 @@ public class SQLCdcErrorStorageTest extends AbstractCdcHelper {
     @AfterEach
     public void after() throws Exception {
         super.clear(false);
-    }
-
-    @AfterAll
-    public static void afterAll() {
-        InitializationHelper.destroy();
     }
 
     @Test
@@ -113,29 +107,29 @@ public class SQLCdcErrorStorageTest extends AbstractCdcHelper {
     @Test
     public void queryCdcErrorsByUniKeyTest() throws Exception {
         CdcErrorStorage cdcErrorStorage = CdcInitialization.getInstance().getCdcErrorStorage();
-        Assertions.assertTrue(cdcErrorStorage.batchInsert(CdcErrorBatchInsertExecutorTest.EXPECTED_CDC_ERROR_TASKS));
+        Assertions.assertTrue(cdcErrorStorage.batchInsert(CdcErrorBuildHelper.EXPECTED_CDC_ERROR_TASKS));
 
         List<String>
-            keys = CdcErrorBatchInsertExecutorTest.EXPECTED_CDC_ERROR_TASKS.stream().map(CdcErrorTask::getUniKey).collect(
+            keys = CdcErrorBuildHelper.EXPECTED_CDC_ERROR_TASKS.stream().map(CdcErrorTask::getUniKey).collect(
             Collectors.toList());
 
         Collection<CdcErrorTask> cdcErrorTasks = cdcErrorStorage.queryCdcErrors(keys);
 
-        CdcErrorBuildHelper.checkBatches(CdcErrorBatchInsertExecutorTest.EXPECTED_CDC_ERROR_TASKS, cdcErrorTasks);
+        CdcErrorBuildHelper.checkBatches(CdcErrorBuildHelper.EXPECTED_CDC_ERROR_TASKS, cdcErrorTasks);
     }
 
     @Test
     public void batchTest() throws Exception {
         CdcErrorStorage cdcErrorStorage = CdcInitialization.getInstance().getCdcErrorStorage();
-        Assertions.assertTrue(cdcErrorStorage.batchInsert(CdcErrorBatchInsertExecutorTest.EXPECTED_CDC_ERROR_TASKS));
+        Assertions.assertTrue(cdcErrorStorage.batchInsert(CdcErrorBuildHelper.EXPECTED_CDC_ERROR_TASKS));
 
         List<String>
-            keys = CdcErrorBatchInsertExecutorTest.EXPECTED_CDC_ERROR_TASKS.stream().map(CdcErrorTask::getUniKey).collect(
+            keys = CdcErrorBuildHelper.EXPECTED_CDC_ERROR_TASKS.stream().map(CdcErrorTask::getUniKey).collect(
             Collectors.toList());
 
         Collection<CdcErrorTask> cdcErrorTasks = cdcErrorStorage.queryCdcErrors(keys);
 
-        Assertions.assertEquals(CdcErrorBatchInsertExecutorTest.EXPECTED_CDC_ERROR_TASKS.size(), cdcErrorTasks.size());
+        Assertions.assertEquals(CdcErrorBuildHelper.EXPECTED_CDC_ERROR_TASKS.size(), cdcErrorTasks.size());
     }
 
     @Test
@@ -144,11 +138,19 @@ public class SQLCdcErrorStorageTest extends AbstractCdcHelper {
         int updateIndex = 3;
 
         CdcErrorStorage cdcErrorStorage = CdcInitialization.getInstance().getCdcErrorStorage();
-        Assertions.assertTrue(cdcErrorStorage.batchInsert(CdcErrorBatchInsertExecutorTest.EXPECTED_CDC_ERROR_TASKS));
+        Assertions.assertTrue(cdcErrorStorage.batchInsert(CdcErrorBuildHelper.EXPECTED_CDC_ERROR_TASKS));
+
+        long seqNo = CdcErrorBuildHelper.EXPECTED_CDC_ERROR_TASKS.get(updateIndex).getSeqNo();
+
+        cdcErrorStorage.updateCdcErrorStatus(seqNo, FixedStatus.FIXED);
 
         CdcErrorQueryCondition cdcErrorQueryCondition = new CdcErrorQueryCondition();
-        cdcErrorQueryCondition.setSeqNo(CdcErrorBatchInsertExecutorTest.EXPECTED_CDC_ERROR_TASKS.get(updateIndex).getSeqNo());
-        CdcErrorBuildHelper.queryWithExpected(cdcErrorQueryCondition, FixedStatus.FIXED);
+        cdcErrorQueryCondition.setSeqNo(seqNo);
+
+        Collection<CdcErrorTask> cdcErrorTasks = CdcErrorBuildHelper.queryWithExpected(cdcErrorQueryCondition);
+        for (CdcErrorTask cdcErrorTask : cdcErrorTasks) {
+            Assertions.assertEquals(FixedStatus.FIXED.getStatus(), cdcErrorTask.getStatus());
+        }
     }
 
 }

@@ -4,6 +4,8 @@ import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.SQLCdcErrorStorage;
 import com.xforceplus.ultraman.oqsengine.cdc.connect.SingleCDCConnector;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.error.DefaultErrorRecorder;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.error.ErrorRecorder;
+import com.xforceplus.ultraman.oqsengine.cdc.consumer.process.BatchProcessor;
+import com.xforceplus.ultraman.oqsengine.cdc.consumer.process.DefaultBatchProcessor;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.service.ConsumerService;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.service.DefaultConsumerService;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsHandler;
@@ -16,6 +18,7 @@ import com.xforceplus.ultraman.oqsengine.common.mock.CommonInitialization;
 import com.xforceplus.ultraman.oqsengine.common.mock.EnvMockConstant;
 import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.common.mock.ReflectionUtils;
+import com.xforceplus.ultraman.oqsengine.devops.rebuild.mock.RebuildInitialization;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MetaInitialization;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
@@ -34,6 +37,7 @@ import java.sql.Statement;
 import java.util.Collection;
 import javax.sql.DataSource;
 import jdk.nashorn.internal.ir.annotations.Ignore;
+import org.springframework.test.util.ReflectionTestUtils;
 
 /**
  * Created by justin.xu on 06/2021.
@@ -49,6 +53,7 @@ public class CdcInitialization implements BeanInitialization {
     private SingleCDCConnector singleCDCConnector;
     private CDCMetricsHandler cdcMetricsHandler;
     private ConsumerService consumerService;
+    private BatchProcessor batchProcessor;
     private MockCallBackService mockCallBackService;
     private ErrorRecorder errorRecorder;
     private DataSource devOpsDataSource;
@@ -87,10 +92,12 @@ public class CdcInitialization implements BeanInitialization {
 
         initCdcErrors();
 
+        initMetrics();
+
         initConsumerService();
+
+        initBatchProcessor();
     }
-
-
 
     @Override
     public void clear() throws Exception {
@@ -100,14 +107,18 @@ public class CdcInitialization implements BeanInitialization {
         }
 
         DataSourcePackage dataSourcePackage = CommonInitialization.getInstance().getDataSourcePackage(false);
-        if (null != dataSourcePackage && null != dataSourcePackage.getDevOps()) {
-            for (DataSource ds : dataSourcePackage.getMaster()) {
-                Connection conn = ds.getConnection();
-                Statement st = conn.createStatement();
-                st.execute("truncate table " + CDC_ERRORS);
-                st.close();
-                conn.close();
+        try {
+            if (null != dataSourcePackage && null != dataSourcePackage.getDevOps()) {
+                for (DataSource ds : dataSourcePackage.getMaster()) {
+                    Connection conn = ds.getConnection();
+                    Statement st = conn.createStatement();
+                    st.execute("truncate table " + CDC_ERRORS);
+                    st.close();
+                    conn.close();
+                }
             }
+        } catch (Exception e) {
+            //  ignore
         }
     }
 
@@ -119,6 +130,7 @@ public class CdcInitialization implements BeanInitialization {
         mockCallBackService = null;
         consumerService = null;
         errorRecorder = null;
+        batchProcessor = null;
         instance = null;
     }
 
@@ -139,6 +151,15 @@ public class CdcInitialization implements BeanInitialization {
         Collection<Field> fields = ReflectionUtils.printAllMembers(consumerService);
         ReflectionUtils.reflectionFieldValue(fields, "sphinxQLIndexStorage", consumerService,
             IndexInitialization.getInstance().getIndexStorage());
+    }
+
+    private void initBatchProcessor() throws Exception {
+        batchProcessor = new DefaultBatchProcessor();
+        Collection<Field> fields = ReflectionUtils.printAllMembers(batchProcessor);
+
+        ReflectionUtils.reflectionFieldValue(fields, "rebuildIndexExecutor",
+            batchProcessor, RebuildInitialization.getInstance().getTaskExecutor());
+        ReflectionUtils.reflectionFieldValue(fields, "consumerService", batchProcessor, consumerService);
     }
 
     private void initCdcErrors() throws Exception {
@@ -169,8 +190,6 @@ public class CdcInitialization implements BeanInitialization {
 
     private void initConsumerService() throws Exception {
 
-        initMetrics();
-
         consumerService = new DefaultConsumerService();
 
         Collection<Field> fields = ReflectionUtils.printAllMembers(consumerService);
@@ -183,6 +202,7 @@ public class CdcInitialization implements BeanInitialization {
             MetaInitialization.getInstance().getMetaManager());
 
         ReflectionUtils.reflectionFieldValue(fields, "cdcMetricsHandler", consumerService, cdcMetricsHandler);
+
     }
 
     private DataSource buildDevOpsDataSource() throws IllegalAccessException {
@@ -220,6 +240,10 @@ public class CdcInitialization implements BeanInitialization {
         public Collection<EntityRef> search(SearchConfig config, IEntityClass... entityClasses) throws SQLException {
             return null;
         }
+    }
+
+    public BatchProcessor getBatchProcessor() {
+        return batchProcessor;
     }
 
     public ErrorRecorder getErrorRecorder() {

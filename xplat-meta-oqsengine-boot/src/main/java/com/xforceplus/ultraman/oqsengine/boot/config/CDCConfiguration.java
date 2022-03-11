@@ -9,6 +9,8 @@ import com.xforceplus.ultraman.oqsengine.cdc.connect.ClusterCDCConnector;
 import com.xforceplus.ultraman.oqsengine.cdc.connect.SingleCDCConnector;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.error.DefaultErrorRecorder;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.error.ErrorRecorder;
+import com.xforceplus.ultraman.oqsengine.cdc.consumer.process.BatchProcessor;
+import com.xforceplus.ultraman.oqsengine.cdc.consumer.process.DefaultBatchProcessor;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.service.ConsumerService;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.service.DefaultConsumerService;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsHandler;
@@ -81,6 +83,15 @@ public class CDCConfiguration {
         initProperties(singleCDCConnector, batchSize);
 
         return singleCDCConnector;
+    }
+
+
+    /**
+     * batchProcessor.
+     */
+    @Bean
+    public BatchProcessor batchProcessor() {
+        return new DefaultBatchProcessor();
     }
 
     @Bean

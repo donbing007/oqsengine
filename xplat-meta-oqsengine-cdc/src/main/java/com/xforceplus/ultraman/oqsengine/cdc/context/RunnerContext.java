@@ -10,6 +10,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
  */
 public class RunnerContext {
 
+    private long totalExecutedRecords;
+
     private CDCMetrics cdcMetrics;
 
     private int continuesConnectFails;
@@ -28,6 +30,12 @@ public class RunnerContext {
 
     public void setCdcMetrics(CDCMetrics cdcMetrics) {
         this.cdcMetrics = cdcMetrics;
+
+        this.totalExecutedRecords += cdcMetrics.getCdcAckMetrics().getExecuteRows();
+    }
+
+    public long totalExecutedRecords() {
+        return totalExecutedRecords;
     }
 
     public int getContinuesConnectFails() {
