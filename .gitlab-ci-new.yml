@@ -1,6 +1,5 @@
 image: registry.cn-hangzhou.aliyuncs.com/xforceplus/cibase:std-cibase-0.0.1
 
-
 stages:
   - mvn-package
   - tag-mvn-deploy
