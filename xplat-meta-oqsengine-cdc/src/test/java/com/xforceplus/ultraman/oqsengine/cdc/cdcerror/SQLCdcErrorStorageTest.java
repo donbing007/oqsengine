@@ -34,6 +34,15 @@ public class SQLCdcErrorStorageTest extends AbstractCdcHelper {
         super.clear(false);
     }
 
+    @AfterAll
+    public static void afterAll() {
+        try {
+            InitializationHelper.destroy();
+        } catch (Exception e) {
+
+        }
+    }
+
     @Test
     public void buildCdcErrorTest() throws Exception {
         CdcErrorStorage cdcErrorStorage = CdcInitialization.getInstance().getCdcErrorStorage();

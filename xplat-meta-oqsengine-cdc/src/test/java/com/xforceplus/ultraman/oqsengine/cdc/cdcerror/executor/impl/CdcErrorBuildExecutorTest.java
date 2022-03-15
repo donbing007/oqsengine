@@ -3,8 +3,10 @@ package com.xforceplus.ultraman.oqsengine.cdc.cdcerror.executor.impl;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.executor.helper.CdcErrorBuildHelper;
 import com.xforceplus.ultraman.oqsengine.cdc.mock.CdcInitialization;
 import com.xforceplus.ultraman.oqsengine.cdc.testhelp.AbstractCdcHelper;
+import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,6 +31,15 @@ public class CdcErrorBuildExecutorTest extends AbstractCdcHelper {
     @AfterEach
     public void after() throws Exception {
         super.clear(false);
+    }
+
+    @AfterAll
+    public static void afterAll() {
+        try {
+            InitializationHelper.destroy();
+        } catch (Exception e) {
+
+        }
     }
 
     @Test

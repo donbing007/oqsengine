@@ -4,6 +4,7 @@ import com.xforceplus.ultraman.oqsengine.cdc.context.RunnerContext;
 import com.xforceplus.ultraman.oqsengine.cdc.testhelp.AbstractCdcHelper;
 import com.xforceplus.ultraman.oqsengine.cdc.testhelp.meta.EntityBuilder;
 import com.xforceplus.ultraman.oqsengine.cdc.testhelp.meta.EntityRepo;
+import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -14,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,8 +43,17 @@ public class CDCRunnerTest extends AbstractCdcHelper {
         super.clear(true);
     }
 
+    @AfterAll
+    public static void afterAll() {
+        try {
+            InitializationHelper.destroy();
+        } catch (Exception e) {
+
+        }
+    }
+
     @Test
-    public void test() throws Exception {
+    public void runTest() throws Exception {
         long insertSize = 512;
         long expectedStartId = 1;
 
@@ -85,6 +96,7 @@ public class CDCRunnerTest extends AbstractCdcHelper {
             fails++;
         }
     }
+
 
     private List<IEntity> initDynamicData(long startId, long insertSize, List<Tuple2<IEntityClass, List<IEntityField>>> cases) {
 

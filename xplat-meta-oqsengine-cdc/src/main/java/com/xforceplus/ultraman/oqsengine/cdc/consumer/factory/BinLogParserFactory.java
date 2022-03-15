@@ -1,9 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.cdc.consumer.factory;
 
-import com.xforceplus.ultraman.oqsengine.cdc.consumer.dto.CDCConstant;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.parser.BinLogParser;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.parser.DynamicBinLogParser;
-import com.xforceplus.ultraman.oqsengine.cdc.consumer.parser.StaticBinLogParser;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassType;
 import java.util.HashMap;
 import java.util.Map;
@@ -27,14 +25,15 @@ public class BinLogParserFactory {
     public BinLogParserFactory() {
         binLogParser = new HashMap<>();
         binLogParser.put(EntityClassType.DYNAMIC, new DynamicBinLogParser());
-        binLogParser.put(EntityClassType.STATIC, new StaticBinLogParser());
     }
 
     public BinLogParser getParser(EntityClassType entityClassType) {
         return binLogParser.get(entityClassType);
     }
 
-    public BinLogParser getParser(String tableName) {
-        return binLogParser.get(tableName.contains(CDCConstant.OQS_BIG_ENTITY) ? EntityClassType.DYNAMIC : EntityClassType.STATIC);
+
+    public BinLogParser dynamicParser() {
+        return  binLogParser.get(EntityClassType.DYNAMIC);
     }
+
 }

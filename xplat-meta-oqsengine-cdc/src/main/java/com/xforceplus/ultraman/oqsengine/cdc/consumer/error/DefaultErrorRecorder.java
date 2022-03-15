@@ -34,8 +34,6 @@ public class DefaultErrorRecorder implements ErrorRecorder {
     @Resource(name = "longNoContinuousPartialOrderIdGenerator")
     private LongIdGenerator seqNoGenerator;
 
-
-
     @Override
     public void record(long batchId, Map<String, ParseResult.Error> errors) {
 

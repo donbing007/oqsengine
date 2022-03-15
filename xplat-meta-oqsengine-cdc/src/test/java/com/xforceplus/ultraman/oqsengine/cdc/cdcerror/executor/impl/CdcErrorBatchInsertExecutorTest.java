@@ -32,6 +32,15 @@ public class CdcErrorBatchInsertExecutorTest extends AbstractCdcHelper {
         super.clear(false);
     }
 
+    @AfterAll
+    public static void afterAll() {
+        try {
+            InitializationHelper.destroy();
+        } catch (Exception e) {
+
+        }
+    }
+
     @Test
     public void errorBatchBuildTest() throws Exception {
         Assertions.assertTrue(CdcErrorBatchInsertExecutor

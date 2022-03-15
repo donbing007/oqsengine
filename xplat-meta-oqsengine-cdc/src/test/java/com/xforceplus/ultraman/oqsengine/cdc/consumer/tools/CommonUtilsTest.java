@@ -5,11 +5,13 @@ import static com.xforceplus.ultraman.oqsengine.cdc.testhelp.meta.EntityClassBui
 
 import com.xforceplus.ultraman.oqsengine.cdc.context.ParserContext;
 import com.xforceplus.ultraman.oqsengine.cdc.testhelp.AbstractCdcHelper;
+import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MetaInitialization;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.master.mock.MasterDBInitialization;
 import java.sql.SQLException;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,13 +29,21 @@ public class CommonUtilsTest extends AbstractCdcHelper {
     public void before() throws Exception {
         super.init(false, null);
 
-        parserContext = new ParserContext(-1, true, new CDCMetrics(), MetaInitialization.getInstance().getMetaManager(),
-            MasterDBInitialization.getInstance().getMasterStorage());
+        parserContext = new ParserContext(-1, true, new CDCMetrics(), MetaInitialization.getInstance().getMetaManager());
     }
 
     @AfterEach
     public void after() throws Exception {
         super.clear(false);
+    }
+
+    @AfterAll
+    public static void afterAll() {
+        try {
+            InitializationHelper.destroy();
+        } catch (Exception e) {
+
+        }
     }
 
     @Test
@@ -67,5 +77,6 @@ public class CommonUtilsTest extends AbstractCdcHelper {
         Assertions.assertEquals(expected.id(), actual.id());
         Assertions.assertEquals(expected.ref().getCode(), actual.ref().getCode());
         Assertions.assertEquals(expected.type(), actual.type());
+        Assertions.assertEquals(expected.isDynamic(), actual.isDynamic());
     }
 }

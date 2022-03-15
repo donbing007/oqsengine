@@ -16,7 +16,6 @@ public class CommonUtils {
     /**
      * 获取entityClass.
      *
-     * @param id 当前记录id.
      * @param entityClassRef
      * @param parserContext
      * @return

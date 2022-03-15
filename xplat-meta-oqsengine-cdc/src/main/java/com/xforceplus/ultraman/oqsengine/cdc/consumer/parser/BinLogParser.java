@@ -24,5 +24,4 @@ public interface BinLogParser {
      */
     void parse(List<CanalEntry.Column> columns, ParserContext parserContext, ParseResult parseResult);
 
-
 }

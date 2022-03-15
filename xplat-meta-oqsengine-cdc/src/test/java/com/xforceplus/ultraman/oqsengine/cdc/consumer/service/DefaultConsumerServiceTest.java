@@ -1,19 +1,18 @@
 package com.xforceplus.ultraman.oqsengine.cdc.consumer.service;
 
-import com.xforceplus.ultraman.oqsengine.cdc.consumer.dto.ParseResult;
-import com.xforceplus.ultraman.oqsengine.cdc.consumer.parser.helper.ParseResultCheckHelper;
+import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.xforceplus.ultraman.oqsengine.cdc.mock.CdcInitialization;
 import com.xforceplus.ultraman.oqsengine.cdc.testhelp.AbstractCdcHelper;
 import com.xforceplus.ultraman.oqsengine.cdc.testhelp.cases.DynamicCanalEntryCase;
-import com.xforceplus.ultraman.oqsengine.cdc.testhelp.cases.StaticCanalEntryCase;
 import com.xforceplus.ultraman.oqsengine.cdc.testhelp.entry.CanalEntryBuilder;
 import com.xforceplus.ultraman.oqsengine.cdc.testhelp.repo.DynamicCanalEntryRepo;
-import com.xforceplus.ultraman.oqsengine.cdc.testhelp.repo.StaticCanalEntryRepo;
+import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
-import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import io.vavr.Tuple2;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,22 +36,28 @@ public class DefaultConsumerServiceTest extends AbstractCdcHelper {
         super.clear(false);
     }
 
+    @AfterAll
+    public static void afterAll() {
+        try {
+            InitializationHelper.destroy();
+        } catch (Exception e) {
+
+        }
+    }
+
     private static final List<DynamicCanalEntryCase> expectedDynamic =
         Arrays.asList(DynamicCanalEntryRepo.CASE_NORMAL_2, DynamicCanalEntryRepo.CASE_MAINTAIN);
-
-    private static final List<Tuple2<DynamicCanalEntryCase, StaticCanalEntryCase>> expectedStatic =
-        Arrays.asList(StaticCanalEntryRepo.CASE_STATIC_ALL_IN_ONE, StaticCanalEntryRepo.CASE_STATIC_MAINTAIN);
 
     @Test
     public void consumeTest() throws Exception {
         final long expectedBatchId = 2001;
-        final int expectedDevOpsSize = 2;
-        final int expectedExecuteSize = 4;
-        final int expectedCommitIdSize = 4;
+        final int expectedDevOpsSize = 1;
+        final int expectedExecuteSize = 2;
+        final int expectedCommitIdSize = 2;
         final int expectedUnCommitIdSize = 0;
 
         CDCMetrics cdcMetrics =
-            CdcInitialization.getInstance().getConsumerService().consumeOneBatch(CanalEntryBuilder.initAll(expectedDynamic, expectedStatic), expectedBatchId, new CDCMetrics());
+            CdcInitialization.getInstance().getConsumerService().consumeOneBatch(CanalEntryBuilder.initAll(expectedDynamic), expectedBatchId, new CDCMetrics());
 
         Assertions.assertNotNull(cdcMetrics);
         Assertions.assertEquals(expectedBatchId, cdcMetrics.getBatchId());
@@ -66,12 +71,14 @@ public class DefaultConsumerServiceTest extends AbstractCdcHelper {
     public void consumeOverBatchTest() throws Exception {
         long expectedBatchId = 2002;
         final int expectedDevOpsSize = 1;
-        final int expectedExecuteSize = 3;
-        final int expectedCommitIdSize = 3;
+        final int expectedExecuteSize = 2;
+        final int expectedCommitIdSize = 1;
         final int expectedUnCommitIdSize = 1;
 
+        Tuple2<List<CanalEntry.Entry>, CanalEntry.Entry> tuple2 = CanalEntryBuilder.initOverBatch(expectedDynamic);
+
         CDCMetrics cdcMetrics =
-            CdcInitialization.getInstance().getConsumerService().consumeOneBatch(CanalEntryBuilder.initExceptLastStatic(expectedDynamic, expectedStatic), expectedBatchId, new CDCMetrics());
+            CdcInitialization.getInstance().getConsumerService().consumeOneBatch(tuple2._1(), expectedBatchId, new CDCMetrics());
 
         Assertions.assertNotNull(cdcMetrics);
         Assertions.assertEquals(expectedBatchId, cdcMetrics.getBatchId());
@@ -80,29 +87,17 @@ public class DefaultConsumerServiceTest extends AbstractCdcHelper {
         Assertions.assertEquals(expectedCommitIdSize, cdcMetrics.getCdcAckMetrics().getCommitList().size());
         Assertions.assertEquals(expectedUnCommitIdSize, cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().size());
 
-        ParseResult clone =
-            ((DefaultConsumerService) CdcInitialization.getInstance().getConsumerService()).printParseResult();
-
-        Assertions.assertEquals(1, clone.getOperationEntries().size());
-
-        Tuple2<DynamicCanalEntryCase, StaticCanalEntryCase> overCase = expectedStatic.get(1);
-        OriginalEntity actual = clone.getOperationEntries().get(overCase._1().getId());
-        Assertions.assertNotNull(actual);
-
-        ParseResultCheckHelper.staticCheck(overCase, actual, false);
 
         expectedBatchId = expectedBatchId + 1;
         CDCMetrics cdcMetricsOver =
-            CdcInitialization.getInstance().getConsumerService().consumeOneBatch(CanalEntryBuilder.initOverBatchStatic(expectedStatic), expectedBatchId, cdcMetrics);
+            CdcInitialization.getInstance().getConsumerService().consumeOneBatch(Collections.singletonList(tuple2._2()), expectedBatchId, cdcMetrics);
 
         Assertions.assertNotNull(cdcMetricsOver);
         Assertions.assertEquals(expectedBatchId, cdcMetricsOver.getBatchId());
-        Assertions.assertEquals(1, cdcMetricsOver.getDevOpsMetrics().size());
-        Assertions.assertEquals(1, cdcMetricsOver.getCdcAckMetrics().getExecuteRows());
+        Assertions.assertEquals(0, cdcMetricsOver.getDevOpsMetrics().size());
+        Assertions.assertEquals(0, cdcMetricsOver.getCdcAckMetrics().getExecuteRows());
         Assertions.assertEquals(1, cdcMetricsOver.getCdcAckMetrics().getCommitList().size());
         Assertions.assertEquals(0, cdcMetricsOver.getCdcUnCommitMetrics().getUnCommitIds().size());
     }
-
-
 
 }

@@ -32,6 +32,15 @@ public class DefaultErrorRecorderTest extends AbstractCdcHelper {
         super.clear(false);
     }
 
+    @AfterAll
+    public static void afterAll() {
+        try {
+            InitializationHelper.destroy();
+        } catch (Exception e) {
+
+        }
+    }
+
     private static final long expected_batchId = 1001;
     private static final long unexpected_batchId = 1002;
 
@@ -39,8 +48,6 @@ public class DefaultErrorRecorderTest extends AbstractCdcHelper {
     public void recordTest() throws Exception {
 
         ParseResult parseResult = new ParseResult();
-
-        parseResult.setUniKeyPrefix("head" + "_" + "file" + "_" + "1");
 
         ErrorCase.errorCases.forEach(
             e -> {

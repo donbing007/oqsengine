@@ -2,7 +2,6 @@ package com.xforceplus.ultraman.oqsengine.cdc.consumer.factory;
 
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.parser.BinLogParser;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.parser.DynamicBinLogParser;
-import com.xforceplus.ultraman.oqsengine.cdc.consumer.parser.StaticBinLogParser;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassType;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -16,19 +15,13 @@ public class BinLogParserFactoryTest {
 
     @Test
     public void getParserByTableTest() {
-        BinLogParser parser = BinLogParserFactory.getInstance().getParser("oqsbigentity");
+        BinLogParser parser = BinLogParserFactory.getInstance().dynamicParser();
         Assertions.assertEquals(DynamicBinLogParser.class, parser.getClass());
-
-        parser = BinLogParserFactory.getInstance().getParser("oqs_xxxx");
-        Assertions.assertEquals(StaticBinLogParser.class, parser.getClass());
     }
 
     @Test
     public void getParserByEntityClassType() {
         BinLogParser parser = BinLogParserFactory.getInstance().getParser(EntityClassType.DYNAMIC);
         Assertions.assertEquals(DynamicBinLogParser.class, parser.getClass());
-
-        parser = BinLogParserFactory.getInstance().getParser(EntityClassType.STATIC);
-        Assertions.assertEquals(StaticBinLogParser.class, parser.getClass());
     }
 }

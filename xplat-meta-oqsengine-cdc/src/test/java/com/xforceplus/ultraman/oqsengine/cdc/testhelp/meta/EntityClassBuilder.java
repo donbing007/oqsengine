@@ -22,6 +22,7 @@ public class EntityClassBuilder {
             .withId(Long.MAX_VALUE)
             .withType(EntityClassType.DYNAMIC)
             .withVersion(1)
+            .withLevel(0)
             .withCode("c0")
             .withFields(
                 Arrays.asList(EntityFieldRepo.LONG_FIELD, EntityFieldRepo.STRING_FIELD)
@@ -33,6 +34,7 @@ public class EntityClassBuilder {
             .withId(Long.MAX_VALUE - 1)
             .withType(EntityClassType.DYNAMIC)
             .withVersion(1)
+            .withLevel(1)
             .withCode("c1")
             .withFather(ENTITY_CLASS_0)
             .withFields(
@@ -45,6 +47,7 @@ public class EntityClassBuilder {
             .withId(Long.MAX_VALUE - 2)
             .withType(EntityClassType.DYNAMIC)
             .withVersion(1)
+            .withLevel(2)
             .withCode("c2")
             .withFather(ENTITY_CLASS_1)
             .withFields(
@@ -56,6 +59,7 @@ public class EntityClassBuilder {
         EntityClass.Builder.anEntityClass()
             .withId(Long.MAX_VALUE - 3)
             .withType(EntityClassType.STATIC)
+            .withLevel(0)
             .withVersion(1)
             .withCode("code-static")
             .withFields(

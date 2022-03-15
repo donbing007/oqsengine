@@ -1,69 +1,47 @@
-package com.xforceplus.ultraman.oqsengine.cdc.consumer.service;
+package com.xforceplus.ultraman.oqsengine.cdc.consumer.service.mock;
 
-import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.EMPTY_BATCH_SIZE;
+import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.getLongFromColumn;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.EMPTY_COLUMN_SIZE;
-import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.EXPECTED_COMMIT_ID_COUNT;
-import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.INIT_ID;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns.COMMITID;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns.ID;
 
-import com.alibaba.fastjson.JSON;
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.dto.ParseResult;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.error.ErrorRecorder;
-import com.xforceplus.ultraman.oqsengine.cdc.consumer.factory.BinLogParserFactory;
+import com.xforceplus.ultraman.oqsengine.cdc.consumer.service.ConsumerService;
 import com.xforceplus.ultraman.oqsengine.cdc.context.ParserContext;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsHandler;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
-import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetricsRecorder;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCUnCommitMetrics;
-import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import io.micrometer.core.annotation.Timed;
 import java.sql.SQLException;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import javax.annotation.Resource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.Map;
 
 /**
- * 索引消费服务.
+ * Created by justin.xu on 03/2022.
  *
- * @author xujia 2020/11/3
- * @since : 1.8
+ * @since 1.8
  */
-public class DefaultConsumerService implements ConsumerService {
+public class ErrorConsumerService implements ConsumerService {
 
-    final Logger logger = LoggerFactory.getLogger(DefaultConsumerService.class);
-
-    @Resource
+    private ErrorRecorder errorRecorder;
     private CDCMetricsHandler cdcMetricsHandler;
 
-    @Resource(name = "indexStorage")
-    private IndexStorage sphinxQLIndexStorage;
-
-    @Resource
-    private MetaManager metaManager;
-
-    @Resource
-    private ErrorRecorder errorRecorder;
-
-    private long skipCommitId = INIT_ID;
-
-    private boolean checkCommitReady = true;
+    private Map<String, ParseResult.Error> errors = new HashMap<>();
 
     protected ParseResult parseResult = new ParseResult();
 
-    public void setSkipCommitId(long skipCommitId) {
-        this.skipCommitId = skipCommitId;
-    }
+    private int testCount = 0;
+    private int maxRetry = 3;
 
-    public void setCheckCommitReady(boolean checkCommitReady) {
-        this.checkCommitReady = checkCommitReady;
-    }
+    private volatile boolean isFinishTest = false;
 
-    public ParseResult printParseResult() {
-        return parseResult;
+    public ErrorRecorder errorRecorder() {
+        return errorRecorder;
     }
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "cdc", "action", "cdc-consume"})
@@ -78,12 +56,23 @@ public class DefaultConsumerService implements ConsumerService {
             //  同步逻辑.
             int syncs = parseCanalEntries(entries, cdcMetricsRecorder.getCdcMetrics());
 
+            if (testCount < maxRetry) {
+                testCount++;
+                throw new SQLException("mock error consumer exception.");
+            }
+
             //  完成指标记录器.
             return cdcMetricsRecorder.finishRecord(syncs).getCdcMetrics();
         } finally {
             //  错误记录.
             if (parseResult.getErrors().size() > 0) {
                 errorRecorder.record(batchId, parseResult.getErrors());
+
+                errors.putAll(parseResult.getErrors());
+            }
+
+            if (testCount == maxRetry) {
+                isFinishTest = true;
             }
 
             //  结果集对象不删除只清空
@@ -95,6 +84,10 @@ public class DefaultConsumerService implements ConsumerService {
     @Override
     public CDCMetricsHandler metricsHandler() {
         return cdcMetricsHandler;
+    }
+
+    public boolean isFinishTest() {
+        return isFinishTest;
     }
 
     /**
@@ -109,25 +102,16 @@ public class DefaultConsumerService implements ConsumerService {
         return cdcMetricsRecorder.startRecord(cdcUnCommitMetrics, batchId);
     }
 
-    /**
-     * 解析入口函数,对一个批次进行解析.
-     *
-     * @param entries 完整的批次信息.
-     * @param cdcMetrics 指标数据.
-     * @return 成功条数.
-     * @throws SQLException
-     */
     private int parseCanalEntries(List<CanalEntry.Entry> entries, CDCMetrics cdcMetrics) throws SQLException {
         //  初始化上下文
         ParserContext parserContext =
-            new ParserContext(skipCommitId, checkCommitReady, cdcMetrics, metaManager);
+            new ParserContext(-1, false, cdcMetrics, null);
 
         for (CanalEntry.Entry entry : entries) {
 
             //  不是TransactionEnd/RowData类型数据, 将被过滤
             switch (entry.getEntryType()) {
                 case TRANSACTIONEND: {
-                    transactionEnd(parserContext);
                     break;
                 }
                 case ROWDATA: {
@@ -139,74 +123,7 @@ public class DefaultConsumerService implements ConsumerService {
             }
         }
 
-        //  等待isReady
-        if (!parseResult.getCommitIds().isEmpty()) {
-            cdcMetricsHandler.isReady(new ArrayList<>(parseResult.getCommitIds()));
-        }
-
-        //  批次数据整理完毕，开始执行index写操作。
-        if (!parseResult.getFinishEntries().isEmpty()) {
-            //  通过执行器执行Sphinx同步
-            sphinxQLIndexStorage.saveOrDeleteOriginalEntities(parseResult.getFinishEntries().values());
-        }
-
-        batchLogged(cdcMetrics);
-
-        return parseResult.getFinishEntries().size();
-    }
-
-    /**
-     * 打印批次指标数据.
-     *
-     * @param cdcMetrics 指标数据.
-     */
-    private void batchLogged(CDCMetrics cdcMetrics) {
-        if (cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().size() > EMPTY_BATCH_SIZE) {
-            if (logger.isDebugEnabled()) {
-                logger.debug("[cdc-consumer] batch : {} end with un-commit ids : {}",
-                    cdcMetrics.getBatchId(), JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()));
-            }
-            if (cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().size() > EXPECTED_COMMIT_ID_COUNT) {
-                logger.warn("[cdc-consumer] batch : {}, one transaction has more than one commitId, ids : {}",
-                    cdcMetrics.getBatchId(), JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()));
-            }
-        }
-
-        if (logger.isDebugEnabled()) {
-            logger.debug("[cdc-consumer] batch end, batchId : {}, commitIds : {}, un-commitIds : {}",
-                cdcMetrics.getBatchId(),
-                JSON.toJSON(cdcMetrics.getCdcAckMetrics().getCommitList()),
-                JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()));
-        }
-    }
-
-    /**
-     * TE时需要处理的逻辑.
-     *
-     * 1.转移uncommitIds到ackList.
-     * 2.清空uncommitIds.
-     *
-     * @param parserContext 上下文.
-     */
-    private void transactionEnd(ParserContext parserContext) {
-        if (parserContext.getCdcMetrics().getCdcUnCommitMetrics().getUnCommitIds().size() > EXPECTED_COMMIT_ID_COUNT) {
-            if (logger.isWarnEnabled()) {
-                logger.warn(
-                    "[cdc-consumer] transaction end, batch : {}, one transaction has more than one commitId, ids : {}",
-                    parserContext.getCdcMetrics().getBatchId(), JSON.toJSON(parserContext.getCdcMetrics().getCdcUnCommitMetrics().getUnCommitIds()));
-            }
-        }
-
-        parserContext.getCdcMetrics().getCdcAckMetrics().getCommitList().addAll(
-                parserContext.getCdcMetrics().getCdcUnCommitMetrics().getUnCommitIds());
-
-        if (logger.isDebugEnabled()) {
-            logger.debug("[cdc-consumer] transaction end, batchId : {}, add new commitIds : {}",
-                parserContext.getCdcMetrics().getBatchId(), JSON.toJSON(parserContext.getCdcMetrics().getCdcUnCommitMetrics().getUnCommitIds()));
-        }
-
-        //  每个Transaction的结束需要将unCommitEntityValues清空
-        parserContext.getCdcMetrics().getCdcUnCommitMetrics().getUnCommitIds().clear();
+        return 0;
     }
 
     /**
@@ -241,8 +158,18 @@ public class DefaultConsumerService implements ConsumerService {
                             parserContext.getCdcMetrics().getBatchId()));
                 }
 
-                //  消费columns
-                BinLogParserFactory.getInstance().dynamicParser().parse(columns, parserContext, parseResult);
+                //  获取CommitID
+                long commitId = getLongFromColumn(columns, COMMITID);
+
+                //  获取ID
+                long id = getLongFromColumn(columns, ID);
+
+                //  加入错误列表.
+                parseResult.addError(id, commitId,
+                    String.format("batch : %d, pos : %d, parse columns failed, message : %s",
+                        parserContext.getCdcMetrics().getBatchId(), parseResult.getPos(), "mock test error"));
+
+                parseResult.finishOne(id);
             }
         }
     }
@@ -256,5 +183,14 @@ public class DefaultConsumerService implements ConsumerService {
     private boolean supportEventType(CanalEntry.EventType eventType) {
         return eventType.equals(CanalEntry.EventType.INSERT)
             || eventType.equals(CanalEntry.EventType.UPDATE);
+    }
+
+    public void init(ErrorRecorder errorRecorder, CDCMetricsHandler cdcMetricsHandler) {
+        this.errorRecorder = errorRecorder;
+        this.cdcMetricsHandler = cdcMetricsHandler;
+    }
+
+    public Map<String, ParseResult.Error> getErrors() {
+        return errors;
     }
 }

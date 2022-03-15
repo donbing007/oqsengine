@@ -10,6 +10,7 @@ import com.xforceplus.ultraman.oqsengine.cdc.testhelp.AbstractCdcHelper;
 import com.xforceplus.ultraman.oqsengine.cdc.testhelp.cases.DynamicCanalEntryCase;
 import com.xforceplus.ultraman.oqsengine.cdc.testhelp.generator.DynamicCanalEntryGenerator;
 import com.xforceplus.ultraman.oqsengine.cdc.testhelp.repo.DynamicCanalEntryRepo;
+import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MetaInitialization;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.storage.master.mock.MasterDBInitialization;
@@ -35,8 +36,7 @@ public class DynamicBinLogParserTest extends AbstractCdcHelper {
 
     @BeforeEach
     public void before() throws Exception {
-        parserContext = new ParserContext(-1, true, new CDCMetrics(), MetaInitialization.getInstance().getMetaManager(),
-            MasterDBInitialization.getInstance().getMasterStorage());
+        parserContext = new ParserContext(-1, true, new CDCMetrics(), MetaInitialization.getInstance().getMetaManager());
         super.init(false, null);
     }
 
@@ -44,6 +44,15 @@ public class DynamicBinLogParserTest extends AbstractCdcHelper {
     public void after() throws Exception {
         parserContext = null;
         super.clear(false);
+    }
+
+    @AfterAll
+    public static void afterAll() {
+        try {
+            InitializationHelper.destroy();
+        } catch (Exception e) {
+
+        }
     }
 
     @Test

@@ -1,6 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.cdc.testhelp.repo;
 
-
 import com.xforceplus.ultraman.oqsengine.cdc.testhelp.meta.EntityClassBuilder;
 import com.xforceplus.ultraman.oqsengine.cdc.testhelp.cases.DynamicCanalEntryCase;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant;

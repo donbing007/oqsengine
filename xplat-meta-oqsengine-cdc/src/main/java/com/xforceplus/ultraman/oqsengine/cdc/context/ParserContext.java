@@ -32,16 +32,11 @@ public class ParserContext {
      */
     private CDCMetrics cdcMetrics;
 
-    public ParserContext(long skipCommitId, boolean checkCommitReady, CDCMetrics cdcMetrics, MetaManager metaManager, MasterStorage masterStorage) {
+    public ParserContext(long skipCommitId, boolean checkCommitReady, CDCMetrics cdcMetrics, MetaManager metaManager) {
         this.skipCommitId = skipCommitId;
         this.checkCommitReady = checkCommitReady;
         this.cdcMetrics = cdcMetrics;
         this.metaManager = metaManager;
-        this.masterStorage = masterStorage;
-    }
-
-    public MasterStorage getMasterStorage() {
-        return masterStorage;
     }
 
     public long getSkipCommitId() {

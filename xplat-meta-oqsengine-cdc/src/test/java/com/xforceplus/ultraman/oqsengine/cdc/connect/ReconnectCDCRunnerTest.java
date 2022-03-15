@@ -2,8 +2,10 @@ package com.xforceplus.ultraman.oqsengine.cdc.connect;
 
 import com.xforceplus.ultraman.oqsengine.cdc.context.RunnerContext;
 import com.xforceplus.ultraman.oqsengine.cdc.testhelp.AbstractCdcHelper;
+import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
 import java.util.concurrent.TimeUnit;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
@@ -38,6 +40,15 @@ public class ReconnectCDCRunnerTest extends AbstractCdcHelper {
     @AfterEach
     public void after() throws Exception {
         super.clear(true);
+    }
+
+    @AfterAll
+    public static void afterAll() {
+        try {
+            InitializationHelper.destroy();
+        } catch (Exception e) {
+
+        }
     }
 
     @Test
