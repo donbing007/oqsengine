@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.AbstractCalculation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.StaticCalculation;
 import java.io.Serializable;
+import java.sql.Types;
 import java.util.Objects;
 import java.util.StringJoiner;
 
@@ -183,6 +184,13 @@ public class FieldConfig implements Serializable {
      */
     @JsonProperty(value = "scale")
     private int scale = 0;
+
+    /**
+     * 只有当元信息为静态时此字段才有意义.
+     * 表示静态类型.
+     */
+    @JsonProperty(value = "jdbcType")
+    private int jdbcType = Types.NULL;
 
     /**
      * 废弃.
@@ -463,6 +471,14 @@ public class FieldConfig implements Serializable {
         return len;
     }
 
+    public int getJdbcType() {
+        return jdbcType;
+    }
+
+    public void setJdbcType(int jdbcType) {
+        this.jdbcType = jdbcType;
+    }
+
     /**
      * 克隆.
      */
@@ -552,6 +568,7 @@ public class FieldConfig implements Serializable {
             .add("wildcardMaxWidth=" + wildcardMaxWidth)
             .add("uniqueName='" + uniqueName + "'")
             .add("calculation=" + calculation)
+            .add("jdbcType=" + jdbcType)
             .toString();
     }
 
@@ -561,22 +578,23 @@ public class FieldConfig implements Serializable {
     public static final class Builder {
         private boolean searchable = false;
         private boolean crossSearch = false;
-        private int len = 19;
-        private long max = Long.MAX_VALUE;
-        private long min = Long.MIN_VALUE;
-        private int precision = 0;
-        private int scale = 0;
         private boolean identifie = false;
         private boolean required = false;
-        private FieldSense fieldSense = FieldSense.NORMAL;
-        private String validateRegexString = "";
         private boolean splittable = false;
-        private String delimiter = "";
-        private String displayType = "";
-        private FuzzyType fuzzyType = FuzzyType.NOT;
         private int wildcardMinWidth = 3;
         private int wildcardMaxWidth = 6;
+        private int len = 19;
+        private int precision = 0;
+        private int scale = 0;
+        private int jdbcType = Types.NULL;
+        private long max = Long.MAX_VALUE;
+        private long min = Long.MIN_VALUE;
+        private String validateRegexString = "";
+        private String delimiter = "";
+        private String displayType = "";
         private String uniqueName = "";
+        private FieldSense fieldSense = FieldSense.NORMAL;
+        private FuzzyType fuzzyType = FuzzyType.NOT;
         private AbstractCalculation calculation = StaticCalculation.Builder.anStaticCalculation().build();
 
         private Builder() {
@@ -691,6 +709,11 @@ public class FieldConfig implements Serializable {
             return this;
         }
 
+        public Builder jdbcType(int jdbcType) {
+            this.jdbcType = jdbcType;
+            return this;
+        }
+
         /**
          * 构造实例.
          *
@@ -709,6 +732,7 @@ public class FieldConfig implements Serializable {
             fieldConfig.identifie = this.identifie;
             fieldConfig.splittable = this.splittable;
             fieldConfig.fuzzyType = this.fuzzyType;
+            fieldConfig.jdbcType = this.jdbcType;
             fieldConfig.searchable = this.searchable;
             fieldConfig.crossSearch = this.crossSearch;
             fieldConfig.wildcardMinWidth = this.wildcardMinWidth;

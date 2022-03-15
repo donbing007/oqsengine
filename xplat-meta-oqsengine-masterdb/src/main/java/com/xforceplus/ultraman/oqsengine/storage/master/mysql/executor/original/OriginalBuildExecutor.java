@@ -57,11 +57,16 @@ public class OriginalBuildExecutor extends
 
                     StorageValue storageValue = attributes.get(field);
                     JdbcOriginalFieldAgent agent =
-                        (JdbcOriginalFieldAgent) JdbcOriginalFieldAgentFactory.getInstance().getAgent(0);
+                        (JdbcOriginalFieldAgent) JdbcOriginalFieldAgentFactory.getInstance().getAgent(
+                            field.config().getJdbcType());
                     agent.write(field, storageValue, new WriteJdbcOriginalSource(fieldIndex++, st));
 
                 }
+
+                st.addBatch();
             }
+
+            return this.executedUpdate(st, true);
         }
     }
 
