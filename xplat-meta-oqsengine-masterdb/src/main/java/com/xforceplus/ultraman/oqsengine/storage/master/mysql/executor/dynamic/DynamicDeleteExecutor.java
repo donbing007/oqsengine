@@ -1,8 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.dynamic;
 
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
-import com.xforceplus.ultraman.oqsengine.storage.executor.jdbc.AbstractJdbcTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
+import com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.AbstractMasterTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.mysql.pojo.BaseMasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import java.sql.Connection;
@@ -16,7 +16,7 @@ import java.sql.SQLException;
  * @version 0.1 2020/11/2 16:03
  * @since 1.8
  */
-public class DynamicDeleteExecutor extends AbstractJdbcTaskExecutor<BaseMasterStorageEntity[], boolean[]> {
+public class DynamicDeleteExecutor extends AbstractMasterTaskExecutor<BaseMasterStorageEntity[], boolean[]> {
 
     public static Executor<BaseMasterStorageEntity[], boolean[]> build(
         String tableName, TransactionResource resource, long timeout) {

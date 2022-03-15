@@ -3,8 +3,8 @@ package com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.dynamic;
 import com.xforceplus.ultraman.oqsengine.common.StringUtils;
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.ValueWithEmpty;
-import com.xforceplus.ultraman.oqsengine.storage.executor.jdbc.AbstractJdbcTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
+import com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.AbstractMasterTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.mysql.pojo.MapAttributeMasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import java.sql.Connection;
@@ -18,7 +18,7 @@ import java.util.Map;
  * @version 0.1 2020/11/2 15:44
  * @since 1.8
  */
-public class DynamicUpdateExecutor extends AbstractJdbcTaskExecutor<MapAttributeMasterStorageEntity[], boolean[]> {
+public class DynamicUpdateExecutor extends AbstractMasterTaskExecutor<MapAttributeMasterStorageEntity[], boolean[]> {
 
     public static Executor<MapAttributeMasterStorageEntity[], boolean[]> build(
         String tableName, TransactionResource resource, long timeoutMs) {

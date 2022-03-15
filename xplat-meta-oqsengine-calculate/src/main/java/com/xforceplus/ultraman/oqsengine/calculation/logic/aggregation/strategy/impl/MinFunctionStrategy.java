@@ -20,6 +20,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
+import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import java.math.BigDecimal;
 import java.sql.SQLException;
@@ -259,10 +260,15 @@ public class MinFunctionStrategy implements FunctionStrategy {
      */
     private Optional<IValue> minAggregationEntity(Aggregation aggregation, CalculationContext context,
                                                   CalculationScenarios calculationScenarios) throws SQLException {
+        MasterStorage masterStorage = context.getResourceWithEx(() -> context.getMasterStorage());
         // 得到最大值
         Optional<IEntityClass> aggEntityClass =
-                context.getMetaManager().get().load(aggregation.getClassId(), context.getFocusEntity().entityClassRef().getProfile());
+                context.getMetaManager().get().load(
+                    aggregation.getClassId(), context.getFocusEntity().entityClassRef().getProfile());
         if (aggEntityClass.isPresent()) {
+
+            IEntityClass entityClass = aggEntityClass.get();
+
             Conditions conditions = Conditions.buildEmtpyConditions();
             // 根据关系id得到关系字段
             Optional<IEntityField> entityField = aggEntityClass.get().field(aggregation.getRelationId());
@@ -289,12 +295,13 @@ public class MinFunctionStrategy implements FunctionStrategy {
                         if (calculationScenarios.equals(CalculationScenarios.REPLACE)) {
                             return Optional.empty();
                         }
-                        Optional<IEntity> entity =
-                            context.getMasterStorage().get().selectOne(entityRefs.get(0).getId());
+                        Optional<IEntity> entity = masterStorage.selectOne(entityRefs.get(0).getId(), entityClass);
+
                         if (logger.isDebugEnabled()) {
                             logger.info("minAggregationEntity:entityRefs:{}",
                                 entity.get().entityValue().values().stream().toArray());
                         }
+
                         if (entity.isPresent()) {
                             return entity.get().entityValue().getValue(aggregation.getFieldId());
                         }
@@ -302,12 +309,13 @@ public class MinFunctionStrategy implements FunctionStrategy {
                     return Optional.empty();
                 }
                 if (calculationScenarios.equals(CalculationScenarios.DELETE)) {
-                    Optional<IEntity> entity = context.getMasterStorage().get().selectOne(entityRefs.get(0).getId());
+                    Optional<IEntity> entity = masterStorage.selectOne(entityRefs.get(0).getId(), entityClass);
+
                     if (entity.isPresent()) {
                         return entity.get().entityValue().getValue(aggregation.getFieldId());
                     }
                 }
-                Optional<IEntity> entity = context.getMasterStorage().get().selectOne(entityRefs.get(1).getId());
+                Optional<IEntity> entity = masterStorage.selectOne(entityRefs.get(1).getId(), entityClass);
                 if (logger.isDebugEnabled()) {
                     logger.debug("minAggregationEntity:entityRefs:{}",
                         entity.get().entityValue().values().stream().toArray());

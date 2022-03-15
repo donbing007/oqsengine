@@ -10,9 +10,12 @@ import com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.task.LookupMai
 import com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.utils.LookupEntityRefIterator;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
+import com.xforceplus.ultraman.oqsengine.common.profile.OqsProfile;
+import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Lookup;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
@@ -66,6 +69,16 @@ public class LookupCalculationLogic implements CalculationLogic {
             return Optional.empty();
         }
 
+        long targetEntityClassId = ((Lookup) focusField.config().getCalculation()).getClassId();
+        MetaManager metaManager = context.getResourceWithEx(() -> context.getMetaManager());
+        Optional<IEntityClass> targetEntityClassOp = metaManager.load(targetEntityClassId, OqsProfile.UN_DEFINE_PROFILE);
+        if (!targetEntityClassOp.isPresent()) {
+            throw new CalculationException(
+                String.format("The expected target object meta information was not found.[%s]", targetEntityClassId));
+        }
+
+        IEntityClass targetEntityClass = targetEntityClassOp.get();
+
         if (!context.isMaintenance()) {
             IValue lookupValue = lookupValueOp.get();
             /*
@@ -74,9 +87,10 @@ public class LookupCalculationLogic implements CalculationLogic {
             if (!LookupValue.class.isInstance(lookupValue)) {
                 // 保持原样.
                 return Optional.ofNullable(lookupValue);
+
             } else {
 
-                return doLookup(context, (LookupValue) lookupValue);
+                return doLookup(context, (LookupValue) lookupValue, targetEntityClass);
             }
         } else {
             /*
@@ -97,7 +111,8 @@ public class LookupCalculationLogic implements CalculationLogic {
             }
 
             LookupValue lookupValue = new LookupValue(focusField, sourceEntity.id());
-            return doLookup(context, lookupValue);
+
+            return doLookup(context, lookupValue, targetEntityClass);
         }
 
     }
@@ -225,8 +240,8 @@ public class LookupCalculationLogic implements CalculationLogic {
     /**
      * 实际进行lookup.
      */
-    private Optional<IValue> doLookup(CalculationContext context, LookupValue lookupValue) {
-        Optional<IEntity> targetEntityOp = findTargetEntity(context, lookupValue.valueToLong());
+    private Optional<IValue> doLookup(CalculationContext context, LookupValue lookupValue, IEntityClass targetEntityClass) {
+        Optional<IEntity> targetEntityOp = findTargetEntity(context, lookupValue.valueToLong(), targetEntityClass);
         if (!targetEntityOp.isPresent()) {
             logger.warn("Unable to find the target of the lookup ({}).", lookupValue.valueToLong());
             return Optional.empty();
@@ -262,12 +277,12 @@ public class LookupCalculationLogic implements CalculationLogic {
         }
     }
 
-    private Optional<IEntity> findTargetEntity(CalculationContext context, long targetEntityId) {
+    private Optional<IEntity> findTargetEntity(CalculationContext context, long targetEntityId, IEntityClass targetEntityClass) {
         Optional<IEntity> targetEntityOp = context.getEntityToCache(targetEntityId);
         if (!targetEntityOp.isPresent()) {
             MasterStorage masterStorage = context.getResourceWithEx(() -> context.getMasterStorage());
             try {
-                targetEntityOp = masterStorage.selectOne(targetEntityId);
+                targetEntityOp = masterStorage.selectOne(targetEntityId, targetEntityClass);
             } catch (SQLException ex) {
                 throw new CalculationException(ex.getMessage(), ex);
             }

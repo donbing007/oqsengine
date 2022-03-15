@@ -3,7 +3,7 @@ package com.xforceplus.ultraman.oqsengine.storage.index;
 import com.xforceplus.ultraman.oqsengine.common.lifecycle.Lifecycle;
 import com.xforceplus.ultraman.oqsengine.storage.ConditionsSearchStorage;
 import com.xforceplus.ultraman.oqsengine.storage.ConditionsSelectStorage;
-import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.OqsEngineEntity;
 import java.sql.SQLException;
 import java.util.Collection;
 
@@ -32,6 +32,6 @@ public interface IndexStorage extends ConditionsSelectStorage, ConditionsSearchS
      *
      * @param originalEntities 原始实体列表.
      */
-    void saveOrDeleteOriginalEntities(Collection<OriginalEntity> originalEntities) throws SQLException;
+    void saveOrDeleteOriginalEntities(Collection<OqsEngineEntity> originalEntities) throws SQLException;
 
 }

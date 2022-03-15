@@ -20,9 +20,11 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
+import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import java.math.BigDecimal;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
@@ -252,21 +254,27 @@ public class MaxFunctionStrategy implements FunctionStrategy {
         Optional<IEntityClass> aggEntityClass =
                 context.getMetaManager().get().load(aggregation.getClassId(), context.getFocusEntity().entityClassRef().getProfile());
         if (aggEntityClass.isPresent()) {
+
+            IEntityClass entityClass = aggEntityClass.get();
+
             Conditions conditions = Conditions.buildEmtpyConditions();
             // 根据关系id得到关系字段
-            Optional<IEntityField> entityField = aggEntityClass.get().field(aggregation.getRelationId());
+            Optional<IEntityField> entityField = entityClass.field(aggregation.getRelationId());
             if (entityField.isPresent()) {
                 conditions.addAnd(new Condition(entityField.get(),
                         ConditionOperator.EQUALS, new LongValue(entityField.get(), context.getFocusEntity().id())));
 
             }
             Page emptyPage = Page.newSinglePage(2);
-            List<EntityRef> entityRefs = (List<EntityRef>) context.getConditionsSelectStorage().get().select(conditions, aggEntityClass.get(),
+            List<EntityRef> entityRefs = new ArrayList(context.getConditionsSelectStorage().get().select(
+                conditions, aggEntityClass.get(),
                     SelectConfig.Builder.anSelectConfig()
                             .withPage(emptyPage)
                             .withSort(Sort.buildDescSort(aggEntityClass.get().field(aggregation.getFieldId()).get()))
                             .build()
-            );
+            ));
+
+            MasterStorage masterStorage = context.getResourceWithEx(() -> context.getMasterStorage());
             if (!entityRefs.isEmpty()) {
                 if (entityRefs.size() < 2) {
                     if (entityRefs.size() == 1) {
@@ -274,7 +282,7 @@ public class MaxFunctionStrategy implements FunctionStrategy {
                         if (calculationScenarios.equals(CalculationScenarios.REPLACE)) {
                             return Optional.empty();
                         }
-                        Optional<IEntity> entity = context.getMasterStorage().get().selectOne(entityRefs.get(0).getId());
+                        Optional<IEntity> entity = masterStorage.selectOne(entityRefs.get(0).getId(), entityClass);
                         if (entity.isPresent()) {
                             return entity.get().entityValue().getValue(aggregation.getFieldId());
                         }
@@ -282,12 +290,12 @@ public class MaxFunctionStrategy implements FunctionStrategy {
                     return Optional.empty();
                 }
                 if (calculationScenarios.equals(CalculationScenarios.DELETE)) {
-                    Optional<IEntity> entity = context.getMasterStorage().get().selectOne(entityRefs.get(0).getId());
+                    Optional<IEntity> entity = masterStorage.selectOne(entityRefs.get(0).getId(), entityClass);
                     if (entity.isPresent()) {
                         return entity.get().entityValue().getValue(aggregation.getFieldId());
                     }
                 }
-                Optional<IEntity> entity = context.getMasterStorage().get().selectOne(entityRefs.get(1).getId());
+                Optional<IEntity> entity = masterStorage.selectOne(entityRefs.get(1).getId(), entityClass);
                 if (entity.isPresent()) {
                     return entity.get().entityValue().getValue(aggregation.getFieldId());
                 }

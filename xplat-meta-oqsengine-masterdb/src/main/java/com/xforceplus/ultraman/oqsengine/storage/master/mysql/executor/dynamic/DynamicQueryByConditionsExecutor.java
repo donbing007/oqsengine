@@ -5,8 +5,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
-import com.xforceplus.ultraman.oqsengine.storage.executor.jdbc.AbstractJdbcTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
+import com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.AbstractMasterTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.mysql.strategy.conditions.SQLJsonConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.master.utils.EntityClassHelper;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
@@ -30,7 +30,7 @@ import java.util.Collection;
  * @since 1.8
  */
 public class DynamicQueryByConditionsExecutor
-    extends AbstractJdbcTaskExecutor<Conditions, Collection<EntityRef>> {
+    extends AbstractMasterTaskExecutor<Conditions, Collection<EntityRef>> {
 
     private static final String SELECT_SORT_COLUMN0 = "sort0";
     private static final String SELECT_SORT_COLUMN1 = "sort1";

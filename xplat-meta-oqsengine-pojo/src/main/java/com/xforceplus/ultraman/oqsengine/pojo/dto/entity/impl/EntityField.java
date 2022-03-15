@@ -9,6 +9,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import java.io.Serializable;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.StringJoiner;
 
 /**
@@ -192,8 +193,8 @@ public class EntityField implements IEntityField, Serializable {
     }
 
     @Override
-    public String defaultValue() {
-        return this.defaultValue;
+    public Optional<String> defaultValue() {
+        return Optional.ofNullable(this.defaultValue);
     }
 
     @Override

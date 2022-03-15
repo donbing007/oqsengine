@@ -2,8 +2,8 @@ package com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.dynamic;
 
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.storage.executor.jdbc.AbstractJdbcTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
+import com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.AbstractMasterTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.mysql.pojo.JsonAttributeMasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import java.sql.Connection;
@@ -21,7 +21,8 @@ import java.util.List;
  * @version 0.1 2020/11/3 14:37
  * @since 1.8
  */
-public class DynamicMultipleQueryExecutor extends AbstractJdbcTaskExecutor<long[], Collection<JsonAttributeMasterStorageEntity>> {
+public class DynamicMultipleQueryExecutor extends
+    AbstractMasterTaskExecutor<long[], Collection<JsonAttributeMasterStorageEntity>> {
 
     public static Executor<long[], Collection<JsonAttributeMasterStorageEntity>> build(
         String tableName, TransactionResource<Connection> resource, long timeout) {
@@ -61,6 +62,7 @@ public class DynamicMultipleQueryExecutor extends AbstractJdbcTaskExecutor<long[
                     storageEntity.setOqsMajor(rs.getInt(FieldDefine.OQS_MAJOR));
                     storageEntity.setAttribute(rs.getString(FieldDefine.ATTRIBUTE));
                     storageEntity.setProfile(rs.getString(FieldDefine.PROFILE));
+                    storageEntity.setEntityClassVersion(rs.getInt(FieldDefine.ENTITYCLASS_VERSION));
 
                     long[] entityClassIds = new long[FieldDefine.ENTITYCLASS_LEVEL_LIST.length];
                     for (int i = 0; i < entityClassIds.length; i++) {
@@ -86,6 +88,7 @@ public class DynamicMultipleQueryExecutor extends AbstractJdbcTaskExecutor<long[
             FieldDefine.ENTITYCLASS_LEVEL_2,
             FieldDefine.ENTITYCLASS_LEVEL_3,
             FieldDefine.ENTITYCLASS_LEVEL_4,
+            FieldDefine.ENTITYCLASS_VERSION,
             FieldDefine.CREATE_TIME,
             FieldDefine.UPDATE_TIME,
             FieldDefine.VERSION,

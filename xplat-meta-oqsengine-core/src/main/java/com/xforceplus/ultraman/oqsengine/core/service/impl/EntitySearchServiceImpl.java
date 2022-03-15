@@ -445,22 +445,36 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                 selectConfigBuilder.withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD));
 
             } else {
+                // 排序中是否有id排序,如果有就不需要追加id.
+                boolean haveIdSort = false;
                 // 上层不排序,后续的直接视为不排序.
                 if (config.getSort().isPresent()) {
+                    if (config.getSort().get().getField().config().isIdentifie()) {
+                        haveIdSort = true;
+                    }
                     selectConfigBuilder.withSort(config.getSort().get());
 
                     if (config.getSecondarySort().isPresent()) {
+
+                        if (config.getSecondarySort().get().getField().config().isIdentifie()) {
+                            haveIdSort = true;
+                        }
+
                         selectConfigBuilder.withSecondarySort(config.getSecondarySort().get());
 
                         if (config.getThirdSort().isPresent()) {
                             selectConfigBuilder.withThirdSort(config.getThirdSort().get());
                         } else {
                             // 追加ID排序.防止相同值造成排序不准确.
-                            selectConfigBuilder.withThirdSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD));
+                            if (!haveIdSort) {
+                                selectConfigBuilder.withThirdSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD));
+                            }
                         }
                     } else {
                         // 追加ID排序.防止相同值造成排序不准确.
-                        selectConfigBuilder.withSecondarySort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD));
+                        if (!haveIdSort) {
+                            selectConfigBuilder.withSecondarySort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD));
+                        }
                     }
                 }
             }

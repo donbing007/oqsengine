@@ -4,10 +4,10 @@ package com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.dynamic;
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
 import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
-import com.xforceplus.ultraman.oqsengine.storage.executor.jdbc.AbstractJdbcTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
+import com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.AbstractMasterTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.utils.OriginalEntityUtils;
-import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.OqsEngineEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -20,7 +20,7 @@ import java.util.Optional;
  *
  * @since 1.8
  */
-public class DynamicQueryOriginalExecutor extends AbstractJdbcTaskExecutor<Long, Optional<OriginalEntity>> {
+public class DynamicQueryOriginalExecutor extends AbstractMasterTaskExecutor<Long, Optional<OqsEngineEntity>> {
 
     private boolean noDetail;
 
@@ -31,7 +31,7 @@ public class DynamicQueryOriginalExecutor extends AbstractJdbcTaskExecutor<Long,
      * @param resource  事务资源.
      * @return 执行器实例.
      */
-    public static Executor<Long, Optional<OriginalEntity>> buildHaveDetail(
+    public static Executor<Long, Optional<OqsEngineEntity>> buildHaveDetail(
         String tableName, TransactionResource resource, long timeoutMs) {
         return new DynamicQueryOriginalExecutor(tableName, resource, false, timeoutMs);
     }
@@ -43,7 +43,7 @@ public class DynamicQueryOriginalExecutor extends AbstractJdbcTaskExecutor<Long,
      * @param resource  事务资源.
      * @return 执行器实例.
      */
-    public static Executor<Long, Optional<OriginalEntity>> buildNoDetail(
+    public static Executor<Long, Optional<OqsEngineEntity>> buildNoDetail(
         String tableName, TransactionResource resource, long timeoutMs) {
         return new DynamicQueryOriginalExecutor(tableName, resource, true, timeoutMs);
     }
@@ -55,7 +55,7 @@ public class DynamicQueryOriginalExecutor extends AbstractJdbcTaskExecutor<Long,
     }
 
     @Override
-    public Optional<OriginalEntity> execute(Long id) throws Exception {
+    public Optional<OqsEngineEntity> execute(Long id) throws Exception {
         String sql = buildSQL(id);
         try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
 
@@ -63,13 +63,13 @@ public class DynamicQueryOriginalExecutor extends AbstractJdbcTaskExecutor<Long,
 
             checkTimeout(st);
 
-            OriginalEntity.Builder builder = null;
+            OqsEngineEntity.Builder builder = null;
 
             try (ResultSet rs = st.executeQuery()) {
                 if (rs.next()) {
                     boolean isDelete = rs.getBoolean(FieldDefine.DELETED);
 
-                    builder = OriginalEntity.Builder.anOriginalEntity()
+                    builder = OqsEngineEntity.Builder.anOriginalEntity()
                         .withId(id)
                         .withVersion(rs.getInt(FieldDefine.VERSION))
                         .withEntityClassRef(toEntityClassRef(rs))

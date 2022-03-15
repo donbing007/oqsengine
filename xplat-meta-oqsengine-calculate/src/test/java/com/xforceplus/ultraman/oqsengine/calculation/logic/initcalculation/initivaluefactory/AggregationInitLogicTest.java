@@ -188,7 +188,7 @@ public class AggregationInitLogicTest {
         List<EntityRef> indexRef = indexEntitys.stream().map(entity1 -> EntityRef.Builder.anEntityRef().withId(entity1.id()).build()).collect(Collectors.toList());
         Mockito.when(indexStorage.select(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(indexRef);
 
-        Mockito.when(masterStorage.selectMultiple(Mockito.any())).thenReturn(Stream.of(masterEntitys, indexEntitys).flatMap(Collection::stream).collect(Collectors.toList()));
+        Mockito.when(masterStorage.selectMultiple(Mockito.any(), Mockito.any())).thenReturn(Stream.of(masterEntitys, indexEntitys).flatMap(Collection::stream).collect(Collectors.toList()));
 
     }
 

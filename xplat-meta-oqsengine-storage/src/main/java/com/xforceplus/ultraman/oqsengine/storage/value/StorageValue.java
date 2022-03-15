@@ -135,4 +135,11 @@ public interface StorageValue<V> {
      * 设置当前部分为整个长字段切分中的第几部分.
      */
     void partition(int partition);
+
+    /**
+     * 判断是否空值.
+     *
+     * @return true 空值, false 非空值.
+     */
+    boolean isEmpty();
 }

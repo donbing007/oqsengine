@@ -144,21 +144,25 @@ public class FieldConfig implements Serializable {
     private boolean searchable = false;
 
     /**
-     * 废弃.
-     *
-     * @deprecated 已经被废弃.
+     * 是否为数据标识.
      */
-    @JsonProperty(value = "max")
-    @Deprecated
-    private long max = Long.MAX_VALUE;
+    @JsonProperty(value = "identifie")
+    private boolean identifie = false;
 
     /**
-     * 废弃.
-     *
-     * @deprecated 已经被废弃.
+     * 是否必填字段.
      */
-    @JsonProperty(value = "min")
-    private long min = Long.MIN_VALUE;
+    @JsonProperty(value = "required")
+    private boolean required = false;
+
+    /**
+     * 是否支持跨元信息查询.
+     */
+    @JsonProperty(value = "crossSearch")
+    private boolean crossSearch = false;
+
+    @JsonProperty(value = "splittable")
+    private boolean splittable = false;
 
     /**
      * 最大允许长度.
@@ -181,16 +185,21 @@ public class FieldConfig implements Serializable {
     private int scale = 0;
 
     /**
-     * 是否为数据标识.
+     * 废弃.
+     *
+     * @deprecated 已经被废弃.
      */
-    @JsonProperty(value = "identifie")
-    private boolean identifie = false;
+    @JsonProperty(value = "max")
+    @Deprecated
+    private long max = Long.MAX_VALUE;
 
     /**
-     * 是否必填字段.
+     * 废弃.
+     *
+     * @deprecated 已经被废弃.
      */
-    @JsonProperty(value = "required")
-    private boolean required = false;
+    @JsonProperty(value = "min")
+    private long min = Long.MIN_VALUE;
 
     /**
      * 字段意义.
@@ -199,19 +208,10 @@ public class FieldConfig implements Serializable {
     private FieldSense fieldSense = FieldSense.NORMAL;
 
     /**
-     * 是否支持跨元信息查询.
-     */
-    @JsonProperty(value = "crossSearch")
-    private boolean crossSearch = false;
-
-    /**
      * 校验正则.
      */
     @JsonProperty(value = "validateRegexString")
     private String validateRegexString = "";
-
-    @JsonProperty(value = "splittable")
-    private boolean splittable = false;
 
     @JsonProperty(value = "delimiter")
     private String delimiter = "";

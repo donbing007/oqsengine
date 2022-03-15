@@ -2,7 +2,6 @@ package com.xforceplus.ultraman.oqsengine.storage.pojo;
 
 import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.AnyEntityClass;
@@ -23,7 +22,7 @@ import java.util.Objects;
  * @version 0.1 2021/3/2 13:40
  * @since 1.8
  */
-public class OriginalEntity implements Serializable, Cloneable, Comparable<OriginalEntity> {
+public class OqsEngineEntity implements Serializable, Cloneable, Comparable<OqsEngineEntity> {
     private static final IEntityClass ANY_ENTITYCLASS = AnyEntityClass.getInstance();
     private static final Map<String, Object> EMTPY_ATTRIBUTES = Collections.emptyMap();
 
@@ -44,7 +43,7 @@ public class OriginalEntity implements Serializable, Cloneable, Comparable<Origi
     /**
      * 实例.
      */
-    public OriginalEntity() {
+    public OqsEngineEntity() {
         deleted = false;
         op = OperationType.UNKNOWN.getValue();
         version = 0;
@@ -175,7 +174,7 @@ public class OriginalEntity implements Serializable, Cloneable, Comparable<Origi
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        OriginalEntity that = (OriginalEntity) o;
+        OqsEngineEntity that = (OqsEngineEntity) o;
         return deleted == that.deleted && op == that.op && version == that.version && oqsMajor == that.oqsMajor
             && id == that.id && createTime == that.createTime && updateTime == that.updateTime && tx == that.tx
             && commitid == that.commitid && maintainid == that.maintainid && Objects.equals(entityClass,
@@ -209,7 +208,7 @@ public class OriginalEntity implements Serializable, Cloneable, Comparable<Origi
 
     @Override
     public Object clone() throws CloneNotSupportedException {
-        return OriginalEntity.Builder.anOriginalEntity()
+        return OqsEngineEntity.Builder.anOriginalEntity()
             .withId(id)
             .withEntityClass(entityClass)
             .withAttributes(new HashMap<>(attributes))
@@ -224,7 +223,7 @@ public class OriginalEntity implements Serializable, Cloneable, Comparable<Origi
     }
 
     @Override
-    public int compareTo(OriginalEntity o) {
+    public int compareTo(OqsEngineEntity o) {
         if (this.getId() < o.getId()) {
             return -1;
         } else if (this.getId() > o.getId()) {
@@ -338,23 +337,23 @@ public class OriginalEntity implements Serializable, Cloneable, Comparable<Origi
         /**
          * 构造实例.
          */
-        public OriginalEntity build() {
-            OriginalEntity originalEntity = new OriginalEntity();
-            originalEntity.oqsMajor = this.oqsMajor;
-            originalEntity.commitid = this.commitid;
-            originalEntity.deleted = this.deleted;
-            originalEntity.updateTime = this.updateTime;
-            originalEntity.createTime = this.createTime;
-            originalEntity.entityClass = this.entityClass;
-            originalEntity.op = this.op;
-            originalEntity.id = this.id;
-            originalEntity.attributes = this.attributes;
-            originalEntity.version = this.version;
-            originalEntity.tx = this.tx;
-            originalEntity.entityClassRef = this.entityClassRef;
-            originalEntity.maintainid = this.maintainid;
+        public OqsEngineEntity build() {
+            OqsEngineEntity oqsEngineEntity = new OqsEngineEntity();
+            oqsEngineEntity.oqsMajor = this.oqsMajor;
+            oqsEngineEntity.commitid = this.commitid;
+            oqsEngineEntity.deleted = this.deleted;
+            oqsEngineEntity.updateTime = this.updateTime;
+            oqsEngineEntity.createTime = this.createTime;
+            oqsEngineEntity.entityClass = this.entityClass;
+            oqsEngineEntity.op = this.op;
+            oqsEngineEntity.id = this.id;
+            oqsEngineEntity.attributes = this.attributes;
+            oqsEngineEntity.version = this.version;
+            oqsEngineEntity.tx = this.tx;
+            oqsEngineEntity.entityClassRef = this.entityClassRef;
+            oqsEngineEntity.maintainid = this.maintainid;
 
-            return originalEntity;
+            return oqsEngineEntity;
         }
     }
 }

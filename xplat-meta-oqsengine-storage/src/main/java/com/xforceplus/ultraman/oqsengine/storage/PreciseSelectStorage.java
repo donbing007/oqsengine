@@ -2,7 +2,6 @@ package com.xforceplus.ultraman.oqsengine.storage;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Optional;
@@ -32,18 +31,6 @@ public interface PreciseSelectStorage {
      * @return 目标实例.
      */
     Optional<IEntity> selectOne(long id, IEntityClass entityClass) throws SQLException;
-
-
-    /**
-     * 查询原始记录信息.
-     * @param id 目标实例标识.
-     * @param noDetail 是否需要详细说明.
-     * @return
-     * @throws SQLException
-     */
-    default Optional<OriginalEntity> selectOrigin(long id, boolean noDetail) throws SQLException {
-        return Optional.empty();
-    }
 
     /**
      * 查找多个实例.查询结果保证和查询顺序一致.

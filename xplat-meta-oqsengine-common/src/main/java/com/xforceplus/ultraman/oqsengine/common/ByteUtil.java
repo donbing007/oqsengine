@@ -352,6 +352,20 @@ public class ByteUtil {
     }
 
     /**
+     * 将一个byte数组转换成bit位表示的的字符串表示形式.
+     *
+     * @param bytes 目标字节数组.
+     * @return bit的字符串表示形式.
+     */
+    public static String bitsString(byte[] bytes) {
+        StringBuilder buff = new StringBuilder();
+        for (byte b : bytes) {
+            doBitString(b, buff);
+        }
+        return buff.toString();
+    }
+
+    /**
      * 返回某个字节的bit组成的字符串.
      *
      * @param b 字节.
@@ -359,10 +373,7 @@ public class ByteUtil {
      */
     public static String bitString(byte b) {
         StringBuilder buff = new StringBuilder();
-        boolean[] array = byteToBitArray(b);
-        for (int i = 0; i < array.length; i++) {
-            buff.append(array[i] ? 1 : 0);
-        }
+        doBitString(b, buff);
         return buff.toString();
     }
 
@@ -422,5 +433,12 @@ public class ByteUtil {
         boolean[] bitValues = byteToBitArray(b);
         bitValues[index] = newValue;
         return buildNewByte(bitValues);
+    }
+
+    private static void doBitString(byte b, StringBuilder buff) {
+        boolean[] array = byteToBitArray(b);
+        for (int i = 0; i < array.length; i++) {
+            buff.append(array[i] ? 1 : 0);
+        }
     }
 }

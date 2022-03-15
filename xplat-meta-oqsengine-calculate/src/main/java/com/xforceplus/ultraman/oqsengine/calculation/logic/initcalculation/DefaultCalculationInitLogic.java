@@ -8,7 +8,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.EntityPackage;
-import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.OqsEngineEntity;
 import io.vavr.Tuple2;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -136,7 +136,7 @@ public class DefaultCalculationInitLogic implements CalculationInitLogic {
     public Tuple2<Boolean, List<InitCalculationParticipant>> initLogic(
         IEntityClass entityClass, Collection<InitCalculationParticipant> participants) {
         try {
-            DataIterator<OriginalEntity> iterator = masterStorage.iterator(entityClass, 0, Long.MAX_VALUE, 0, 1);
+            DataIterator<OqsEngineEntity> iterator = masterStorage.iterator(entityClass, 0, Long.MAX_VALUE, 0, 1);
             List<IEntity> failedList = new ArrayList<>();
             while (iterator.hasNext() || !failedList.isEmpty()) {
                 // 先处理上次遍历失败的entity
@@ -145,7 +145,7 @@ public class DefaultCalculationInitLogic implements CalculationInitLogic {
                     for (int i = 0; i < failedList.size(); i++) {
                         ids[i] = failedList.get(i).id();
                     }
-                    Collection<IEntity> entities = masterStorage.selectMultiple(ids);
+                    Collection<IEntity> entities = masterStorage.selectMultiple(ids, entityClass);
                     for (IEntity entity : entities) {
                         // 计算字段具体类型执行初始化计算
                         initEntity(entity, participants);
@@ -154,9 +154,9 @@ public class DefaultCalculationInitLogic implements CalculationInitLogic {
                 }
 
                 if (iterator.hasNext()) {
-                    OriginalEntity originalEntity = iterator.next();
+                    OqsEngineEntity oqsEngineEntity = iterator.next();
 
-                    Optional<IEntity> entity = masterStorage.selectOne(originalEntity.getId(), entityClass);
+                    Optional<IEntity> entity = masterStorage.selectOne(oqsEngineEntity.getId(), entityClass);
                     // 计算字段具体类型执行初始化计算
                     if (entity.isPresent()) {
                         initEntity(entity.get(), participants);

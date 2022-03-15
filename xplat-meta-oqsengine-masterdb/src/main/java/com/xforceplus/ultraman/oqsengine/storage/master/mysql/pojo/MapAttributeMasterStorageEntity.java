@@ -9,15 +9,15 @@ import java.util.Map;
  * @version 0.1 2021/12/23 14:40
  * @since 1.8
  */
-public class MapAttributeMasterStorageEntity extends BaseMasterStorageEntity {
+public class MapAttributeMasterStorageEntity<K, V> extends BaseMasterStorageEntity {
 
-    private Map<String, Object> attributes;
+    private Map<K, V> attributes;
 
-    public Map<String, Object> getAttributes() {
+    public Map<K, V> getAttributes() {
         return attributes;
     }
 
-    public void setAttributes(Map<String, Object> attributes) {
+    public void setAttributes(Map<K, V> attributes) {
         this.attributes = attributes;
     }
 }

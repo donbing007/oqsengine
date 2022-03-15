@@ -1,8 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.dynamic;
 
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
-import com.xforceplus.ultraman.oqsengine.storage.executor.jdbc.AbstractJdbcTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
+import com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.AbstractMasterTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.mysql.pojo.JsonAttributeMasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import java.sql.Connection;
@@ -17,7 +17,7 @@ import java.util.Optional;
  * @version 0.1 2020/11/2 16:32
  * @since 1.8
  */
-public class DynamicQueryExecutor extends AbstractJdbcTaskExecutor<Long, Optional<JsonAttributeMasterStorageEntity>> {
+public class DynamicQueryExecutor extends AbstractMasterTaskExecutor<Long, Optional<JsonAttributeMasterStorageEntity>> {
 
     private boolean noDetail;
 
@@ -68,7 +68,7 @@ public class DynamicQueryExecutor extends AbstractJdbcTaskExecutor<Long, Optiona
 
     @Override
     public Optional<JsonAttributeMasterStorageEntity> execute(Long id) throws Exception {
-        String sql = buildSQL(id);
+        String sql = buildSQL();
         try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
 
             st.setLong(1, id);
@@ -87,6 +87,8 @@ public class DynamicQueryExecutor extends AbstractJdbcTaskExecutor<Long, Optiona
                     storageEntity.setUpdateTime(rs.getLong(FieldDefine.UPDATE_TIME));
                     storageEntity.setOp(rs.getInt(FieldDefine.OP));
                     storageEntity.setProfile(rs.getString(FieldDefine.PROFILE));
+                    storageEntity.setOqsMajor(rs.getInt(FieldDefine.OQS_MAJOR));
+                    storageEntity.setEntityClassVersion(rs.getInt(FieldDefine.ENTITYCLASS_VERSION));
 
                     long[] entityClassIds = new long[FieldDefine.ENTITYCLASS_LEVEL_LIST.length];
                     for (int i = 0; i < entityClassIds.length; i++) {
@@ -104,7 +106,7 @@ public class DynamicQueryExecutor extends AbstractJdbcTaskExecutor<Long, Optiona
         }
     }
 
-    private String buildSQL(long id) {
+    private String buildSQL() {
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT ");
         sql.append(String.join(",",
@@ -113,6 +115,7 @@ public class DynamicQueryExecutor extends AbstractJdbcTaskExecutor<Long, Optiona
             FieldDefine.ENTITYCLASS_LEVEL_2,
             FieldDefine.ENTITYCLASS_LEVEL_3,
             FieldDefine.ENTITYCLASS_LEVEL_4,
+            FieldDefine.ENTITYCLASS_VERSION,
             FieldDefine.VERSION,
             FieldDefine.CREATE_TIME,
             FieldDefine.UPDATE_TIME,

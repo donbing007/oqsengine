@@ -22,7 +22,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.storage.ConditionsSelectStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.EntityPackage;
-import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.OqsEngineEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import com.xforceplus.ultraman.oqsengine.task.DefaultTaskCoordinator;
 import com.xforceplus.ultraman.oqsengine.task.queue.MemoryTaskKeyQueue;
@@ -238,7 +238,7 @@ public class LookupMaintainingTaskRunnerTest {
     private void doTest(int lookupSize) throws Exception {
         buildDatas(lookupSize);
         com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity
-            targetEntity = masterStorage.selectOne(targetEntityId).get();
+            targetEntity = masterStorage.selectOne(targetEntityId, targetEntityClass).get();
         targetEntity.entityValue().addValue(
             new StringValue(targetField0, "2")
         );
@@ -262,7 +262,7 @@ public class LookupMaintainingTaskRunnerTest {
         boolean notUpdate = true;
         int okSize = 0;
         while (notUpdate) {
-            newLookupEntities = masterStorage.selectMultiple(lookupEntityIds);
+            newLookupEntities = masterStorage.selectMultiple(lookupEntityIds, lookupEntityClass);
             okSize = 0;
             for (IEntity lookupEntity : newLookupEntities) {
                 if (lookupEntity.version() == 0) {
@@ -416,14 +416,14 @@ public class LookupMaintainingTaskRunnerTest {
         }
 
         @Override
-        public DataIterator<OriginalEntity> iterator(IEntityClass entityClass, long startTime, long endTime,
-                                                     long lastId) throws SQLException {
+        public DataIterator<OqsEngineEntity> iterator(IEntityClass entityClass, long startTime, long endTime,
+                                                      long lastId) throws SQLException {
             return null;
         }
 
         @Override
-        public DataIterator<OriginalEntity> iterator(IEntityClass entityClass, long startTime, long endTime,
-                                                     long lastId, int size) throws SQLException {
+        public DataIterator<OqsEngineEntity> iterator(IEntityClass entityClass, long startTime, long endTime,
+                                                      long lastId, int size) throws SQLException {
             return null;
         }
     }

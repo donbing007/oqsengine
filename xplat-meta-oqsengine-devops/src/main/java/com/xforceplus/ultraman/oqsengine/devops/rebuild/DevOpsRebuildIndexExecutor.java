@@ -96,7 +96,7 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
             try {
                 //  执行主表更新
                 int rebuildCount =
-                    masterStorage.rebuild(devOpsTaskInfo.getEntity(), devOpsTaskInfo.getMaintainid(),
+                    masterStorage.rebuild(entityClass, devOpsTaskInfo.getMaintainid(),
                         devOpsTaskInfo.getStarts(), devOpsTaskInfo.getEnds());
 
                 if (rebuildCount > 0) {

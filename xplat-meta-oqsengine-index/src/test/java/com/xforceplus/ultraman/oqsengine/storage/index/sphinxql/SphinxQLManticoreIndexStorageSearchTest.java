@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql;
 
 import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
+import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
@@ -9,9 +10,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
-import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.mock.IndexInitialization;
-import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.OqsEngineEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.search.SearchConfig;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.ManticoreContainer;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.RedisContainer;
@@ -88,7 +88,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
         .withFather(baseEntityClass)
         .build();
 
-    private Collection<OriginalEntity> expectedDatas;
+    private Collection<OqsEngineEntity> expectedDatas;
 
     @BeforeEach
     public void before() throws Exception {
@@ -197,11 +197,11 @@ public class SphinxQLManticoreIndexStorageSearchTest {
     private void initData() throws Exception {
         final int size = 10;
         expectedDatas = new ArrayList<>();
-        OriginalEntity oe;
+        OqsEngineEntity oe;
         int index = 0;
         int max = index + size / 2;
         for (; index < max; index++) {
-            oe = OriginalEntity.Builder.anOriginalEntity()
+            oe = OqsEngineEntity.Builder.anOriginalEntity()
                 .withId(Long.MAX_VALUE - index)
                 .withCommitid(0)
                 .withDeleted(false)
@@ -217,7 +217,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
 
         max = index + size / 2;
         for (; index < max; index++) {
-            oe = OriginalEntity.Builder.anOriginalEntity()
+            oe = OqsEngineEntity.Builder.anOriginalEntity()
                 .withId(Long.MAX_VALUE - index)
                 .withCommitid(0)
                 .withDeleted(false)

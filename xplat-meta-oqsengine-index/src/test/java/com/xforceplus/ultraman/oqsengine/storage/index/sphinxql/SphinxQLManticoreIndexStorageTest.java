@@ -26,7 +26,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.mock.IndexInitialization;
-import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.OqsEngineEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import com.xforceplus.ultraman.oqsengine.storage.value.ShortStorageName;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
@@ -176,7 +176,7 @@ public class SphinxQLManticoreIndexStorageTest {
     @Test
     public void testPhysicalStorageCorrect() throws Exception {
 
-        OriginalEntity target = OriginalEntity.Builder.anOriginalEntity()
+        OqsEngineEntity target = OqsEngineEntity.Builder.anOriginalEntity()
             .withId(Long.MAX_VALUE - 300)
             .withAttribute(l2DecField.id() + "S", "123.789")
             .withEntityClass(l2EntityClass)
@@ -222,7 +222,7 @@ public class SphinxQLManticoreIndexStorageTest {
         Assertions.assertEquals(1, refs.size());
         Assertions.assertEquals(Long.MAX_VALUE - 300, refs.stream().findFirst().get().getId());
 
-        target = OriginalEntity.Builder.anOriginalEntity()
+        target = OqsEngineEntity.Builder.anOriginalEntity()
             .withId(Long.MAX_VALUE - 600)
             .withAttribute(l0StringsField.id() + "S", "[RMB][JPY][USD]")
             .withEntityClass(l2EntityClass)
@@ -260,7 +260,7 @@ public class SphinxQLManticoreIndexStorageTest {
     public void longStringValue() throws Exception {
         String value = UUID.randomUUID().toString();
 
-        OriginalEntity target = OriginalEntity.Builder.anOriginalEntity()
+        OqsEngineEntity target = OqsEngineEntity.Builder.anOriginalEntity()
             .withId(Long.MAX_VALUE - 300)
             .withAttribute(l2StringField.id() + "S", value)
             .withEntityClass(l2EntityClass)
@@ -306,7 +306,7 @@ public class SphinxQLManticoreIndexStorageTest {
                 l2EntityClass.field("l0-string").get(),
                 "1d'f"));
 
-        OriginalEntity target = OriginalEntity.Builder.anOriginalEntity()
+        OqsEngineEntity target = OqsEngineEntity.Builder.anOriginalEntity()
             .withId(Long.MAX_VALUE - 300)
             .withAttribute(l0StorageValue.storageName(), l0StorageValue.value())
             .withEntityClass(l2EntityClass)
@@ -347,7 +347,7 @@ public class SphinxQLManticoreIndexStorageTest {
                 l2EntityClass.field("l0-string").get(),
                 "1d\"f"));
 
-        target = OriginalEntity.Builder.anOriginalEntity()
+        target = OqsEngineEntity.Builder.anOriginalEntity()
             .withId(Long.MAX_VALUE - 400)
             .withAttribute(l0StorageValue.storageName(), l0StorageValue.value())
             .withEntityClass(l2EntityClass)
@@ -395,7 +395,7 @@ public class SphinxQLManticoreIndexStorageTest {
                 "abcdefg"
             ));
 
-        OriginalEntity target = OriginalEntity.Builder.anOriginalEntity()
+        OqsEngineEntity target = OqsEngineEntity.Builder.anOriginalEntity()
             .withId(Long.MAX_VALUE - 300)
             .withAttribute(l0StorageValue.storageName(), l0StorageValue.value())
             .withAttribute(l1StorageValue.storageName(), l1StorageValue.value())
@@ -458,7 +458,7 @@ public class SphinxQLManticoreIndexStorageTest {
 
     @Test
     public void testSaveOriginalEntities() throws Exception {
-        List<OriginalEntity> initDatas = new LinkedList<>();
+        List<OqsEngineEntity> initDatas = new LinkedList<>();
         initDatas.addAll(buildSyncData(OperationType.CREATE, 10, Long.MAX_VALUE));
 
         IndexInitialization.getInstance().getIndexStorage().saveOrDeleteOriginalEntities(initDatas);
@@ -473,26 +473,26 @@ public class SphinxQLManticoreIndexStorageTest {
         Assertions.assertEquals(initDatas.size(), page.getTotalCount());
 
         // 新创建2条
-        List<OriginalEntity> processDatas = new LinkedList<>();
+        List<OqsEngineEntity> processDatas = new LinkedList<>();
         processDatas.addAll(buildSyncData(OperationType.CREATE, 2, Long.MAX_VALUE - 11));
 
         // 删除2条
-        OriginalEntity target = initDatas.get(0);
-        OriginalEntity d1 = OriginalEntity.Builder.anOriginalEntity()
+        OqsEngineEntity target = initDatas.get(0);
+        OqsEngineEntity d1 = OqsEngineEntity.Builder.anOriginalEntity()
             .withId(target.getId())
             .withOp(OperationType.DELETE.getValue())
             .withEntityClass(target.getEntityClass())
             .build();
         processDatas.add(d1);
         target = initDatas.get(1);
-        OriginalEntity d2 = OriginalEntity.Builder.anOriginalEntity()
+        OqsEngineEntity d2 = OqsEngineEntity.Builder.anOriginalEntity()
             .withId(target.getId())
             .withOp(OperationType.DELETE.getValue())
             .withEntityClass(target.getEntityClass())
             .build();
         processDatas.add(d2);
         target = initDatas.get(2);
-        OriginalEntity d3 = OriginalEntity.Builder.anOriginalEntity()
+        OqsEngineEntity d3 = OqsEngineEntity.Builder.anOriginalEntity()
             .withId(target.getId())
             .withOp(OperationType.DELETE.getValue())
             .withEntityClass(target.getEntityClass())
@@ -501,7 +501,7 @@ public class SphinxQLManticoreIndexStorageTest {
 
         // 更新两条
         target = initDatas.get(3);
-        OriginalEntity u1 = OriginalEntity.Builder.anOriginalEntity()
+        OqsEngineEntity u1 = OqsEngineEntity.Builder.anOriginalEntity()
             .withId(target.getId())
             .withAttributes(target.getAttributes())
             .withCommitid(target.getCommitid())
@@ -518,7 +518,7 @@ public class SphinxQLManticoreIndexStorageTest {
         processDatas.add(u1);
 
         target = initDatas.get(4);
-        OriginalEntity u2 = OriginalEntity.Builder.anOriginalEntity()
+        OqsEngineEntity u2 = OqsEngineEntity.Builder.anOriginalEntity()
             .withId(target.getId())
             .withAttributes(target.getAttributes())
             .withCommitid(target.getCommitid())
@@ -547,7 +547,7 @@ public class SphinxQLManticoreIndexStorageTest {
 
     @Test
     public void testClean() throws Exception {
-        List<OriginalEntity> initDatas = new LinkedList<>();
+        List<OqsEngineEntity> initDatas = new LinkedList<>();
         initDatas.addAll(buildSyncData(OperationType.CREATE, 10, Long.MAX_VALUE));
 
         IndexInitialization.getInstance().getIndexStorage().saveOrDeleteOriginalEntities(initDatas);
@@ -575,13 +575,13 @@ public class SphinxQLManticoreIndexStorageTest {
     }
 
     // 构造同步数据
-    private Collection<OriginalEntity> buildSyncData(OperationType op, int size, long lastId) {
+    private Collection<OqsEngineEntity> buildSyncData(OperationType op, int size, long lastId) {
         return IntStream.range(0, size).mapToObj(i -> buildSyncData(op, i, l2EntityClass, lastId))
             .collect(Collectors.toList());
     }
 
-    private OriginalEntity buildSyncData(OperationType op, int index, IEntityClass entityClass, long lastId) {
-        OriginalEntity.Builder builder = OriginalEntity.Builder.anOriginalEntity()
+    private OqsEngineEntity buildSyncData(OperationType op, int index, IEntityClass entityClass, long lastId) {
+        OqsEngineEntity.Builder builder = OqsEngineEntity.Builder.anOriginalEntity()
             .withId(lastId - index)
             .withOp(op.getValue())
             .withCreateTime(System.currentTimeMillis())

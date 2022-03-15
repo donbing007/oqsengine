@@ -6,14 +6,12 @@ import com.xforceplus.ultraman.oqsengine.common.watch.RedisLuaScriptWatchDog;
 import com.xforceplus.ultraman.oqsengine.lock.utils.Locker;
 import com.xforceplus.ultraman.oqsengine.lock.utils.StateKeys;
 import io.lettuce.core.RedisClient;
-import io.lettuce.core.RedisFuture;
 import io.lettuce.core.ScriptOutputType;
 import io.lettuce.core.api.StatefulRedisConnection;
-import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -41,6 +39,52 @@ public class RedisResourceLocker extends AbstractResourceLocker implements Lifec
     最小可接受的超时时间.
      */
     private static final long MIN_TTL_MS = 1000 * 30;
+
+    /*
+    续期状态.
+     */
+    private static enum RenewalStatus {
+        UNKNOWN(0),
+        SUCCESS(1),
+        NOT_LOCK(2),
+        OTHER_LOCKER(3);
+
+        private int statue;
+
+        private RenewalStatus(int statue) {
+            this.statue = statue;
+        }
+
+        public int getValue() {
+            return statue;
+        }
+
+        /**
+         * 获取实例.
+         *
+         * @param statue 字面量.
+         * @return 实例.
+         */
+        public static RenewalStatus getInstance(int statue) {
+            for (RenewalStatus status : RenewalStatus.values()) {
+                if (statue == status.getValue()) {
+                    return status;
+                }
+            }
+            return RenewalStatus.UNKNOWN;
+        }
+
+        /**
+         * 获取实例.
+         *
+         * @param statue 长整形的类型值.
+         * @return 实例.
+         */
+        public static RenewalStatus getInstance(long statue) {
+            return getInstance((int) statue);
+        }
+
+    }
 
     /*
     批量加锁lua脚本.使用一个hash结构来记录锁,如下.
@@ -107,6 +151,28 @@ public class RedisResourceLocker extends AbstractResourceLocker implements Lifec
             + "end;"
             + "return failKeyIndex;";
 
+    /*
+    续期脚本,同时只能处理一个锁.
+    ARGV[1] = 加锁者
+    ARGV[2] = ttl新的超时时间.单位毫秒.
+    KEYS[1] = 目标锁key.
+     */
+    private static final String RENEWAL_SCRIPT =
+        "local locker = ARGV[1];"
+            + "local lockKey = KEYS[1];"
+            + "local ttl = ARGV[2];"
+            + "local hasLocked = redis.call('EXISTS', lockKey);"
+            + "if hasLocked == 1 then"
+            + "  local lockLocker = redis.call('HGET', lockKey, 'locker');"
+            + " if locker ~= lockLocker then"
+            + "   return " + RenewalStatus.OTHER_LOCKER.getValue() + ";"
+            + " else"
+            + "   redis.call('pexpire', lockKey, ttl);"
+            + "   return " + RenewalStatus.SUCCESS.getValue() + ";"
+            + " end;"
+            + "end;"
+            + "return " + RenewalStatus.NOT_LOCK.getValue() + ";";
+
     @Resource(name = "redisClient")
     private RedisClient redisClient;
 
@@ -122,10 +188,9 @@ public class RedisResourceLocker extends AbstractResourceLocker implements Lifec
     private Map<String, LockInfo> liveLocks;
     private StatefulRedisConnection<String, String> connection;
     private RedisCommands<String, String> syncCommands;
-    private StatefulRedisConnection<String, String> watchDogconnection;
-    private RedisAsyncCommands<String, String> watchDogCommands;
     private String lockScriptSha;
     private String unLockScriptSha;
+    private String renewalScriptSha;
     private volatile boolean running;
     private volatile boolean watchDagRunning;
 
@@ -165,10 +230,6 @@ public class RedisResourceLocker extends AbstractResourceLocker implements Lifec
             connection = redisClient.connect();
             syncCommands = connection.sync();
 
-            watchDogconnection = redisClient.connect();
-            watchDogCommands = watchDogconnection.async();
-            watchDogCommands.setAutoFlushCommands(false);
-
         } else {
             throw new IllegalStateException("Invalid redisClient.");
         }
@@ -176,9 +237,11 @@ public class RedisResourceLocker extends AbstractResourceLocker implements Lifec
         if (redisLuaScriptWatchDog != null) {
             lockScriptSha = redisLuaScriptWatchDog.watch(LOCK_SCRIPT);
             unLockScriptSha = redisLuaScriptWatchDog.watch(UNLOCK_SCRIPT);
+            renewalScriptSha = redisLuaScriptWatchDog.watch(RENEWAL_SCRIPT);
         } else {
             lockScriptSha = syncCommands.scriptLoad(LOCK_SCRIPT);
             unLockScriptSha = syncCommands.scriptLoad(UNLOCK_SCRIPT);
+            renewalScriptSha = syncCommands.scriptLoad(RENEWAL_SCRIPT);
         }
 
         if (ttlMs < MIN_TTL_MS) {
@@ -195,6 +258,8 @@ public class RedisResourceLocker extends AbstractResourceLocker implements Lifec
 
         worker = Executors.newFixedThreadPool(1, ExecutorHelper.buildNameThreadFactory("redis-lock-watchdog"));
         worker.submit(new WatchDogTask());
+
+        logger.info("The TTL of the lock is {} ms and the renewal interval is {} ms.", ttlMs, renewalMs);
     }
 
     @PreDestroy
@@ -210,7 +275,6 @@ public class RedisResourceLocker extends AbstractResourceLocker implements Lifec
         cleanAllLock();
 
         connection.close();
-        watchDogconnection.close();
 
         ExecutorHelper.shutdownAndAwaitTermination(worker);
     }
@@ -296,11 +360,13 @@ public class RedisResourceLocker extends AbstractResourceLocker implements Lifec
         private String lockKey;
         private long lastRenewalTimeMs;
         private Locker locker;
+        private RenewalStatus renewalStatus;
 
         public LockInfo(String lockKey, long lastRenewalTimeMs, Locker locker) {
             this.lockKey = lockKey;
             this.lastRenewalTimeMs = lastRenewalTimeMs;
             this.locker = locker;
+            this.renewalStatus = RenewalStatus.SUCCESS;
         }
 
         public String getLockKey() {
@@ -318,6 +384,31 @@ public class RedisResourceLocker extends AbstractResourceLocker implements Lifec
         public Locker getLocker() {
             return locker;
         }
+
+        public RenewalStatus getRenewalStatus() {
+            return renewalStatus;
+        }
+
+        public void setRenewalStatus(RenewalStatus renewalStatus) {
+            this.renewalStatus = renewalStatus;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof LockInfo)) {
+                return false;
+            }
+            LockInfo lockInfo = (LockInfo) o;
+            return Objects.equals(getLockKey(), lockInfo.getLockKey());
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(getLockKey());
+        }
     }
 
     /*
@@ -330,53 +421,43 @@ public class RedisResourceLocker extends AbstractResourceLocker implements Lifec
 
             watchDagRunning = true;
 
-            int commandSize = 0;
             long sleepMs = 100;
 
-            if (logger.isDebugEnabled()) {
-                logger.debug("Watchdog checks at a frequency of {} milliseconds.", sleepMs);
-            }
-
-            Map<String, RedisFuture<Boolean>> ackMap = new HashMap<>();
             try {
                 while (running) {
-
-                    ackMap.clear();
 
                     for (LockInfo lockInfo : liveLocks.values()) {
 
                         long nowMs = System.currentTimeMillis();
 
                         if (needRenewal(lockInfo.getLockKey(), nowMs, lockInfo.getLastRenewalTimeMs())) {
-                            ackMap.put(lockInfo.getLockKey(), watchDogCommands.pexpire(lockInfo.getLockKey(), ttlMs));
+
+                            long result = syncCommands.evalsha(
+                                renewalScriptSha,
+                                ScriptOutputType.INTEGER,
+                                new String[] {lockInfo.getLockKey()},
+                                lockInfo.getLocker().getName(), ttlMsString);
+                            RenewalStatus status = RenewalStatus.getInstance(result);
 
                             if (logger.isDebugEnabled()) {
-                                logger.debug("Renewal lock {}({}ms).",
-                                    lockInfo.getLockKey(), nowMs - lockInfo.getLastRenewalTimeMs());
+                                logger.debug("Renewal lock {}({}ms) {}.",
+                                    lockInfo.getLockKey(), nowMs - lockInfo.getLastRenewalTimeMs(), status.name());
                             }
 
-                            lockInfo.setLastRenewalTimeMs(nowMs);
-
-                            commandSize++;
+                            if (RenewalStatus.SUCCESS == status) {
+                                lockInfo.setLastRenewalTimeMs(nowMs);
+                                lockInfo.setRenewalStatus(RenewalStatus.SUCCESS);
+                            } else {
+                                lockInfo.setRenewalStatus(status);
+                            }
                         }
                     }
 
-                    if (commandSize > 0) {
-                        watchDogCommands.flushCommands();
-                    }
+                    /*
+                    清理续期失败的锁,
+                     */
+                    liveLocks.values().removeIf(lockInfo -> lockInfo.getRenewalStatus() != RenewalStatus.SUCCESS);
 
-
-                    for (Map.Entry<String, RedisFuture<Boolean>> entry : ackMap.entrySet()) {
-                        RedisFuture<Boolean> future = entry.getValue();
-                        String lockKey = entry.getKey();
-
-                        if (!future.get()) {
-                            // 续期失败,删除本地锁.
-
-                        }
-                    }
-
-                    commandSize = 0;
                     LockSupport.parkNanos(this, TimeUnit.MILLISECONDS.toNanos(sleepMs));
 
                 }

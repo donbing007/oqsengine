@@ -29,6 +29,24 @@ public abstract class AbstractStorageValue<V> implements StorageValue<V> {
     private int partition;
 
     /**
+     * 构造一个空值表示.
+     *
+     * @param name 字段名称.
+     * @param logicName true 逻辑值, false物理值.
+     * @param type 物理类型.
+     */
+    public AbstractStorageValue(String name, boolean logicName, StorageType type) {
+        if (logicName) {
+            this.logicName = name;
+            this.location = StorageValue.NOT_LOCATION;
+        } else {
+            this.logicName = parseLocigName(name);
+            this.location = parseStorageFieldLocation(name);
+        }
+        this.type = type;
+    }
+
+    /**
      * 使用物理字段名和名构造一个储存值实例.
      *
      * @param name      字段名称.
@@ -214,6 +232,11 @@ public abstract class AbstractStorageValue<V> implements StorageValue<V> {
     @Override
     public void partition(int partition) {
         this.partition = partition;
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return value == null;
     }
 
     // 解析逻辑字段名.

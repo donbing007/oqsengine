@@ -25,7 +25,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.mock.IndexInitialization;
-import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.OqsEngineEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.ManticoreContainer;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.RedisContainer;
@@ -57,7 +57,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 @ExtendWith({RedisContainer.class, ManticoreContainer.class})
 public class SphinxQLManticoreIndexStorageSelectTest {
 
-    private Collection<OriginalEntity> expectedDatas;
+    private Collection<OqsEngineEntity> expectedDatas;
 
     /*
     使用的字段名和其id.
@@ -348,7 +348,7 @@ public class SphinxQLManticoreIndexStorageSelectTest {
 
     @Test
     public void testNegativeNumber() throws Exception {
-        OriginalEntity entity = OriginalEntity.Builder.anOriginalEntity()
+        OqsEngineEntity entity = OqsEngineEntity.Builder.anOriginalEntity()
             .withId(123L)
             .withEntityClass(l2EntityClass)
             .withCreateTime(System.currentTimeMillis())
@@ -393,11 +393,11 @@ public class SphinxQLManticoreIndexStorageSelectTest {
      */
     @Test
     public void testFuzzyAndEqInfluence() throws Exception {
-        List<OriginalEntity> entities = new ArrayList(3);
+        List<OqsEngineEntity> entities = new ArrayList(3);
         long baseId = 1000;
         for (int i = 0; i < 3; i++) {
 
-            entities.add(OriginalEntity.Builder.anOriginalEntity()
+            entities.add(OqsEngineEntity.Builder.anOriginalEntity()
                 .withId(baseId++)
                 .withEntityClass(l2EntityClass)
                 .withCreateTime(System.currentTimeMillis())
@@ -411,7 +411,7 @@ public class SphinxQLManticoreIndexStorageSelectTest {
                 ).build());
         }
 
-        OriginalEntity scanEntity = OriginalEntity.Builder.anOriginalEntity()
+        OqsEngineEntity scanEntity = OqsEngineEntity.Builder.anOriginalEntity()
             .withId(baseId++)
             .withEntityClass(l2EntityClass)
             .withCreateTime(System.currentTimeMillis())
@@ -1474,8 +1474,8 @@ public class SphinxQLManticoreIndexStorageSelectTest {
         Path path = Paths.get(ClassLoader.getSystemResource("OriginalEntityTestData.json").toURI());
         String value = new String(Files.readAllBytes(path), "utf8");
 
-        Collection<OriginalEntity> datas = JacksonDefaultMapper.OBJECT_MAPPER.readValue(value,
-            new TypeReference<List<OriginalEntity>>() {});
+        Collection<OqsEngineEntity> datas = JacksonDefaultMapper.OBJECT_MAPPER.readValue(value,
+            new TypeReference<List<OqsEngineEntity>>() {});
         datas.stream().forEach(o -> {
             o.setEntityClass(l2EntityClass);
         });

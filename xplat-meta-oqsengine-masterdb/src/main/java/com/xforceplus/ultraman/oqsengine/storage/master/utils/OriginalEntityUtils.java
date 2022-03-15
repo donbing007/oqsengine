@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xforceplus.ultraman.oqsengine.common.serializable.utils.JacksonDefaultMapper;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.OqsEngineEntity;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -37,7 +37,7 @@ public class OriginalEntityUtils {
      * @return 解析结果列表.
      * @throws JsonProcessingException JSON错误.
      */
-    public static List<OriginalEntity> toOriginalEntity(MetaManager metaManager, String orgStr)
+    public static List<OqsEngineEntity> toOriginalEntity(MetaManager metaManager, String orgStr)
         throws JsonProcessingException {
         try {
             List<RawOriginalEntity> rawOriginalEntities =
@@ -60,7 +60,7 @@ public class OriginalEntityUtils {
      * @return JSON字符串表示.
      * @throws JsonProcessingException JSON解析异常.
      */
-    public static String toOriginalEntityStr(List<OriginalEntity> originalEntities) throws JsonProcessingException {
+    public static String toOriginalEntityStr(List<OqsEngineEntity> originalEntities) throws JsonProcessingException {
         try {
             return JacksonDefaultMapper.OBJECT_MAPPER.writeValueAsString(
                 originalEntities.stream()
@@ -86,9 +86,9 @@ public class OriginalEntityUtils {
         private Map<String, Object> attributes;
         private long maintainid;
 
-        public static OriginalEntity toOriginalEntity(MetaManager metaManager, RawOriginalEntity rawOriginalEntity) {
+        public static OqsEngineEntity toOriginalEntity(MetaManager metaManager, RawOriginalEntity rawOriginalEntity) {
             Optional<IEntityClass> entityClassOp = metaManager.load(rawOriginalEntity.getEntityId(), "");
-            return entityClassOp.map(entityClass -> OriginalEntity.Builder
+            return entityClassOp.map(entityClass -> OqsEngineEntity.Builder
                 .anOriginalEntity()
                     .withDeleted(rawOriginalEntity.isDeleted())
                     .withOp(rawOriginalEntity.getOp())
@@ -106,21 +106,21 @@ public class OriginalEntityUtils {
                 .orElse(null);
         }
 
-        public static RawOriginalEntity toRawOriginalEntity(OriginalEntity originalEntity) {
+        public static RawOriginalEntity toRawOriginalEntity(OqsEngineEntity oqsEngineEntity) {
             RawOriginalEntity rawOriginalEntity = new RawOriginalEntity();
 
-            rawOriginalEntity.setDeleted(originalEntity.isDeleted());
-            rawOriginalEntity.setOp(originalEntity.getOp());
-            rawOriginalEntity.setVersion(originalEntity.getVersion());
-            rawOriginalEntity.setOqsMajor(originalEntity.getOqsMajor());
-            rawOriginalEntity.setId(originalEntity.getId());
-            rawOriginalEntity.setCreateTime(originalEntity.getCreateTime());
-            rawOriginalEntity.setUpdateTime(originalEntity.getUpdateTime());
-            rawOriginalEntity.setTx(originalEntity.getTx());
-            rawOriginalEntity.setCommitid(originalEntity.getCommitid());
-            rawOriginalEntity.setAttributes(originalEntity.getAttributes());
-            rawOriginalEntity.setEntityId(originalEntity.getEntityClass().id());
-            rawOriginalEntity.setMaintainid(originalEntity.getMaintainid());
+            rawOriginalEntity.setDeleted(oqsEngineEntity.isDeleted());
+            rawOriginalEntity.setOp(oqsEngineEntity.getOp());
+            rawOriginalEntity.setVersion(oqsEngineEntity.getVersion());
+            rawOriginalEntity.setOqsMajor(oqsEngineEntity.getOqsMajor());
+            rawOriginalEntity.setId(oqsEngineEntity.getId());
+            rawOriginalEntity.setCreateTime(oqsEngineEntity.getCreateTime());
+            rawOriginalEntity.setUpdateTime(oqsEngineEntity.getUpdateTime());
+            rawOriginalEntity.setTx(oqsEngineEntity.getTx());
+            rawOriginalEntity.setCommitid(oqsEngineEntity.getCommitid());
+            rawOriginalEntity.setAttributes(oqsEngineEntity.getAttributes());
+            rawOriginalEntity.setEntityId(oqsEngineEntity.getEntityClass().id());
+            rawOriginalEntity.setMaintainid(oqsEngineEntity.getMaintainid());
 
             return rawOriginalEntity;
         }

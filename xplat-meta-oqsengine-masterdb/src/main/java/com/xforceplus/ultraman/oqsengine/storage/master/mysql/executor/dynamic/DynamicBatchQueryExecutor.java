@@ -2,8 +2,8 @@ package com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.dynamic;
 
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.storage.executor.jdbc.AbstractJdbcTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
+import com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.AbstractMasterTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.mysql.pojo.MasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.utils.EntityClassHelper;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
@@ -21,9 +21,8 @@ import java.util.List;
  * @author : xujia 2020/11/18
  * @since : 1.8
  */
-public class DynamicBatchQueryExecutor extends AbstractJdbcTaskExecutor<Long, Collection<MasterStorageEntity>> {
+public class DynamicBatchQueryExecutor extends AbstractMasterTaskExecutor<Long, Collection<MasterStorageEntity>> {
 
-    private IEntityClass entityClass;
     private long startTime;
     private long endTime;
     private int pageSize;
@@ -34,24 +33,32 @@ public class DynamicBatchQueryExecutor extends AbstractJdbcTaskExecutor<Long, Co
      * @param tableName   表名.
      * @param resource    事务资源.
      * @param timeout     超时毫秒.
-     * @param entityClass 元信息.
      * @param startTime   开始时间.
      * @param endTime     结束时间.
      * @param pageSize    分页大小.
      */
-    public DynamicBatchQueryExecutor(String tableName, TransactionResource<Connection> resource, long timeout,
-                                     IEntityClass entityClass, long startTime, long endTime, int pageSize) {
+    public DynamicBatchQueryExecutor(String tableName,
+                                     TransactionResource<Connection> resource,
+                                     long timeout,
+                                     long startTime,
+                                     long endTime,
+                                     int pageSize) {
         super(tableName, resource, timeout);
-        this.entityClass = entityClass;
         this.startTime = startTime;
         this.endTime = endTime;
         this.pageSize = pageSize;
     }
 
+    /**
+     * 批量查询器构造器.
+     */
     public static Executor<Long, Collection<MasterStorageEntity>> build(
-        String tableName, TransactionResource resource, long timeout,
-        IEntityClass entityClass, long startTime, long endTime, int pageSize) {
-        return new DynamicBatchQueryExecutor(tableName, resource, timeout, entityClass, startTime, endTime, pageSize);
+        String tableName, TransactionResource resource, long timeout, IEntityClass entityClass,
+        long startTime, long endTime, int pageSize) {
+        DynamicBatchQueryExecutor executor = new DynamicBatchQueryExecutor(
+            tableName, resource, timeout, startTime, endTime, pageSize);
+        executor.setEntityClass(entityClass);
+        return executor;
     }
 
     @Override
@@ -123,7 +130,7 @@ public class DynamicBatchQueryExecutor extends AbstractJdbcTaskExecutor<Long, Co
             .append(" WHERE ")
             .append(FieldDefine.COMMITID).append(" >= ").append(0)
             .append(" AND ")
-            .append(EntityClassHelper.buildEntityClassQuerySql(entityClass))
+            .append(EntityClassHelper.buildEntityClassQuerySql(getEntityClass()))
             .append(" AND ")
             .append(FieldDefine.DELETED).append(" = ").append("?")
             .append(" AND ")

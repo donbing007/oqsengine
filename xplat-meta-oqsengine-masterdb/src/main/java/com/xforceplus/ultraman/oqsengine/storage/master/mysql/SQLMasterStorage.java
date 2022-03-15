@@ -35,7 +35,6 @@ import com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.dynamic.D
 import com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.dynamic.DynamicMultipleQueryExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.dynamic.DynamicQueryByConditionsExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.dynamic.DynamicQueryExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.dynamic.DynamicQueryOriginalExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.dynamic.DynamicUpdateExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.rebuild.DevOpsRebuildExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.mysql.pojo.BaseMasterStorageEntity;
@@ -45,7 +44,7 @@ import com.xforceplus.ultraman.oqsengine.storage.master.mysql.pojo.MasterStorage
 import com.xforceplus.ultraman.oqsengine.storage.master.mysql.strategy.conditions.SQLJsonConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.master.utils.EntityClassRefHelper;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.EntityPackage;
-import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.OqsEngineEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
@@ -130,14 +129,15 @@ public class SQLMasterStorage implements MasterStorage {
     }
 
     @Override
-    public DataIterator<OriginalEntity> iterator(IEntityClass entityClass, long startTime, long endTime, long lastStart)
+    public DataIterator<OqsEngineEntity> iterator(IEntityClass entityClass, long startTime, long endTime,
+                                                  long lastStart)
         throws SQLException {
         return new EntityIterator(entityClass, lastStart, startTime, endTime);
     }
 
     @Override
-    public DataIterator<OriginalEntity> iterator(IEntityClass entityClass, long startTime, long endTime, long lastId,
-                                                 int size) throws SQLException {
+    public DataIterator<OqsEngineEntity> iterator(IEntityClass entityClass, long startTime, long endTime, long lastId,
+                                                  int size) throws SQLException {
         return new EntityIterator(entityClass, lastId, startTime, endTime, size);
     }
 
@@ -220,20 +220,6 @@ public class SQLMasterStorage implements MasterStorage {
 
         }
         return entityOptional;
-    }
-
-    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "master", "action", "origin"})
-    @Override
-    public Optional<OriginalEntity> selectOrigin(long id, boolean noDetail) throws SQLException {
-        return (Optional<OriginalEntity>) transactionExecutor.execute((tx, resource, hint) -> {
-            if (noDetail) {
-                return DynamicQueryOriginalExecutor
-                    .buildNoDetail(dynamicTableName, resource, queryTimeout).execute(id);
-            } else {
-                return DynamicQueryOriginalExecutor
-                    .buildHaveDetail(dynamicTableName, resource, queryTimeout).execute(id);
-            }
-        });
     }
 
     @Timed(
@@ -398,7 +384,7 @@ public class SQLMasterStorage implements MasterStorage {
         boolean result = (boolean) transactionExecutor.execute(
             (tx, resource, hint) -> {
 
-                MapAttributeMasterStorageEntity masterStorageEntity =
+                MapAttributeMasterStorageEntity<String, Object> masterStorageEntity =
                     buildReplaceMasterStorageEntity(entity, entityClass, resource);
 
                 boolean[] results = DynamicUpdateExecutor.build(dynamicTableName, resource, queryTimeout)
@@ -424,13 +410,13 @@ public class SQLMasterStorage implements MasterStorage {
     public void replace(EntityPackage entityPackage) throws SQLException {
         checkId(entityPackage);
 
-        MapAttributeMasterStorageEntity[] masterStorageEntities =
+        MapAttributeMasterStorageEntity<String, Object>[] masterStorageEntities =
             new MapAttributeMasterStorageEntity[entityPackage.size()];
 
         boolean[] results = (boolean[]) transactionExecutor.execute(
             (tx, resource, hint) -> {
 
-                Map.Entry<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity, IEntityClass> entry;
+                Map.Entry<IEntity, IEntityClass> entry;
                 IEntity entity;
                 IEntityClass entityClass;
                 int size = entityPackage.size();
@@ -514,7 +500,8 @@ public class SQLMasterStorage implements MasterStorage {
                     .map(e -> buildDeleteMasterStorageEntity(e.getKey(), e.getValue(), resource))
                     .toArray(BaseMasterStorageEntity[]::new);
 
-                return DynamicDeleteExecutor.build(dynamicTableName, resource, queryTimeout).execute(masterStorageEntities);
+                return DynamicDeleteExecutor.build(dynamicTableName, resource, queryTimeout)
+                    .execute(masterStorageEntities);
             });
 
         IEntity entity;
@@ -527,21 +514,15 @@ public class SQLMasterStorage implements MasterStorage {
     }
 
     @Override
-    public int rebuild(long entityClassId, long maintainId, long startTime, long endTime) throws Exception {
+    public int rebuild(IEntityClass entityClass, long maintainId, long startTime, long endTime) throws Exception {
 
-        Optional<IEntityClass> actualEntityClassOp = metaManager.load(entityClassId, "");
-
-        if (actualEntityClassOp.isPresent()) {
-            return DevOpsRebuildExecutor
-                .build(dynamicTableName, masterDataSource, maintainId, startTime, endTime)
-                .execute(actualEntityClassOp.get());
-        }
-
-        return 0;
+        return DevOpsRebuildExecutor
+            .build(dynamicTableName, masterDataSource, maintainId, startTime, endTime)
+            .execute(entityClass);
     }
 
     private void checkId(EntityPackage entityPackage) throws SQLException {
-        Iterator<Map.Entry<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity, IEntityClass>> iter =
+        Iterator<Map.Entry<IEntity, IEntityClass>> iter =
             entityPackage.iterator();
         while (iter.hasNext()) {
             checkId(iter.next().getKey());
@@ -557,7 +538,7 @@ public class SQLMasterStorage implements MasterStorage {
     /**
      * 数据迭代器,用以迭代出某个entity的实例列表.
      */
-    private class EntityIterator implements DataIterator<OriginalEntity> {
+    private class EntityIterator implements DataIterator<OqsEngineEntity> {
         private static final int DEFAULT_PAGE_SIZE = 100;
 
         private final IEntityClass entityClass;
@@ -565,7 +546,7 @@ public class SQLMasterStorage implements MasterStorage {
         private final long startTime;
         private final long endTime;
         private final int pageSize;
-        private final List<OriginalEntity> buffer;
+        private final List<OqsEngineEntity> buffer;
 
         public EntityIterator(IEntityClass entityClass, long startId, long startTime, long endTime) {
             this(entityClass, startId, startTime, endTime, DEFAULT_PAGE_SIZE);
@@ -594,11 +575,11 @@ public class SQLMasterStorage implements MasterStorage {
         }
 
         @Override
-        public OriginalEntity next() {
+        public OqsEngineEntity next() {
             if (hasNext()) {
-                OriginalEntity originalEntity = buffer.remove(0);
-                startId = originalEntity.getId();
-                return originalEntity;
+                OqsEngineEntity oqsEngineEntity = buffer.remove(0);
+                startId = oqsEngineEntity.getId();
+                return oqsEngineEntity;
             } else {
                 return null;
             }
@@ -611,7 +592,7 @@ public class SQLMasterStorage implements MasterStorage {
                         .build(dynamicTableName, resource, queryTimeout, entityClass, startTime, endTime, pageSize)
                         .execute(startId);
 
-                Collection<OriginalEntity> originalEntities = new ArrayList<>();
+                Collection<OqsEngineEntity> originalEntities = new ArrayList<>();
                 for (MasterStorageEntity entity : storageEntities) {
                     try {
                         IEntityClass realEntityClass = entityClass;
@@ -628,7 +609,7 @@ public class SQLMasterStorage implements MasterStorage {
                             realEntityClass = entityClassOp.get();
                         }
 
-                        OriginalEntity originalEntity = OriginalEntity.Builder.anOriginalEntity()
+                        OqsEngineEntity oqsEngineEntity = OqsEngineEntity.Builder.anOriginalEntity()
                             .withEntityClass(realEntityClass)
                             .withId(entity.getId())
                             .withCreateTime(entity.getCreateTime())
@@ -642,7 +623,7 @@ public class SQLMasterStorage implements MasterStorage {
                             .withAttributes(attributesToMap(entity.getAttribute()))
                             .build();
 
-                        originalEntities.add(originalEntity);
+                        originalEntities.add(oqsEngineEntity);
                     } catch (JsonProcessingException e) {
                         throw new SQLException(
                             String.format("to originalEntity failed. message : [%s]", e.getMessage()));
@@ -947,7 +928,7 @@ public class SQLMasterStorage implements MasterStorage {
     }
 
     // 更新时构造.
-    private MapAttributeMasterStorageEntity buildReplaceMasterStorageEntity(
+    private MapAttributeMasterStorageEntity<String, Object> buildReplaceMasterStorageEntity(
         IEntity entity, IEntityClass entityClass,
         TransactionResource resource) {
         long updateTime = findTime(entity, FieldConfig.FieldSense.UPDATE_TIME);
@@ -958,7 +939,7 @@ public class SQLMasterStorage implements MasterStorage {
             updateTime = 0;
         }
 
-        MapAttributeMasterStorageEntity storageEntity = new MapAttributeMasterStorageEntity();
+        MapAttributeMasterStorageEntity<String, Object> storageEntity = new MapAttributeMasterStorageEntity();
         storageEntity.setId(entity.id());
         storageEntity.setUpdateTime(updateTime > 0 ? updateTime : entity.time());
         storageEntity.setVersion(entity.version());

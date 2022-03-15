@@ -2,8 +2,8 @@ package com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.dynamic;
 
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.storage.executor.jdbc.AbstractJdbcTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
+import com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.AbstractMasterTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.utils.EntityClassHelper;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import java.sql.Connection;
@@ -16,9 +16,8 @@ import java.sql.ResultSet;
  * @author xujia 2020/11/18
  * @since 1.8
  */
-public class DynamicBatchQueryCountExecutor extends AbstractJdbcTaskExecutor<Long, Integer> {
+public class DynamicBatchQueryCountExecutor extends AbstractMasterTaskExecutor<Long, Integer> {
 
-    private IEntityClass entityClass;
     private long startTime;
     private long endTime;
 
@@ -28,22 +27,34 @@ public class DynamicBatchQueryCountExecutor extends AbstractJdbcTaskExecutor<Lon
      * @param tableName   表名.
      * @param resource    事务资源.
      * @param timeout     超时毫秒.
-     * @param entityClass 元信息.
      * @param startTime   开始时间.
      * @param endTime     结束时间.
      */
     public DynamicBatchQueryCountExecutor(String tableName, TransactionResource<Connection> resource, long timeout,
-                                          IEntityClass entityClass, long startTime, long endTime) {
+                                          long startTime, long endTime) {
         super(tableName, resource, timeout);
-        this.entityClass = entityClass;
         this.startTime = startTime;
         this.endTime = endTime;
     }
 
+    /**
+     * 构造实例.
+     *
+     * @param tableName 表名.
+     * @param resource 事务资源.
+     * @param timeout 超时时间.
+     * @param entityClass 元信息.
+     * @param startTime 开始时间.
+     * @param endTime 结束时间.
+     * @return 执行器实例.
+     */
     public static Executor<Long, Integer> build(
         String tableName, TransactionResource resource, long timeout,
         IEntityClass entityClass, long startTime, long endTime) {
-        return new DynamicBatchQueryCountExecutor(tableName, resource, timeout, entityClass, startTime, endTime);
+        DynamicBatchQueryCountExecutor executor = new DynamicBatchQueryCountExecutor(
+            tableName, resource, timeout, startTime, endTime);
+        executor.setEntityClass(entityClass);
+        return executor;
     }
 
     @Override
@@ -68,7 +79,7 @@ public class DynamicBatchQueryCountExecutor extends AbstractJdbcTaskExecutor<Lon
             .append(" FROM ")
             .append(getTableName())
             .append(" WHERE ")
-            .append(EntityClassHelper.buildEntityClassQuerySql(entityClass))
+            .append(EntityClassHelper.buildEntityClassQuerySql(getEntityClass()))
             .append(" AND ")
             .append(FieldDefine.DELETED).append(" = ").append("?")
             .append(" AND ")
