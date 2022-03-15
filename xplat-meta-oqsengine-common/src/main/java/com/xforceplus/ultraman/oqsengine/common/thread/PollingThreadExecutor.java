@@ -7,14 +7,13 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Created by justin.xu on 03/2022.
- *
  * 轮询的线程执行者.
  *
  * @since 1.8
  */
 public class PollingThreadExecutor<T> implements LifeCycledThread<T> {
 
-    private final Logger LOGGER = LoggerFactory.getLogger(PollingThreadExecutor.class);
+    private final Logger logger = LoggerFactory.getLogger(PollingThreadExecutor.class);
 
     private Thread worker;
 
@@ -28,12 +27,13 @@ public class PollingThreadExecutor<T> implements LifeCycledThread<T> {
      * 构建一个轮询的执行者.
      *
      * @param consumer 传入的消费执行器.
-     * @param element 执行器的实际参数.
+     * @param element  执行器的实际参数.
      * @param duration 每次轮询的间隔.
      * @param timeUnit 每次轮询间隔的时间单位.
-     * @param maxWait 执行者关闭时最大等待次数.
+     * @param maxWait  执行者关闭时最大等待次数.
      */
-    public PollingThreadExecutor(String workName, int duration, TimeUnit timeUnit, int maxWait, Consumer<T> consumer, T element) {
+    public PollingThreadExecutor(String workName, int duration, TimeUnit timeUnit, int maxWait, Consumer<T> consumer,
+                                 T element) {
         if (duration > 0) {
             this.duration = duration;
         }
@@ -56,7 +56,7 @@ public class PollingThreadExecutor<T> implements LifeCycledThread<T> {
 
     @Override
     public void start() {
-        LOGGER.info("[pollingThread-{}] start.", worker.getName());
+        logger.info("[pollingThread-{}] start.", worker.getName());
         worker.start();
     }
 
@@ -70,7 +70,7 @@ public class PollingThreadExecutor<T> implements LifeCycledThread<T> {
         //  等待直到线程结束.
         while (tryTimes < maxStopTimes) {
             if (!worker.isAlive()) {
-                LOGGER.info("[pollingThread-{}] stopped.", worker.getName());
+                logger.info("[pollingThread-{}] stopped.", worker.getName());
                 break;
             }
             wakeupAfter(this.duration, this.timeUnit);
@@ -80,7 +80,7 @@ public class PollingThreadExecutor<T> implements LifeCycledThread<T> {
 
         //  线程仍然活跃
         if (worker.isAlive()) {
-            LOGGER.warn("[pollingThread-{}] stopped by force.", worker.getName());
+            logger.warn("[pollingThread-{}] stopped by force.", worker.getName());
             worker.interrupt();
         }
     }
@@ -95,20 +95,4 @@ public class PollingThreadExecutor<T> implements LifeCycledThread<T> {
             //  ignore
         }
     }
-//
-//    public static void main(String[] args) throws InterruptedException {
-//        PollingThreadExecutor threadExecutor = new PollingThreadExecutor("test", (n) -> {
-//            try {
-//                Thread.sleep(1_000);
-//            } catch (InterruptedException e) {
-//                e.printStackTrace();
-//            }
-//        }, null, 0, TimeUnit.SECONDS, 0);
-//
-//        threadExecutor.start();
-//
-//        Thread.sleep(10_000);
-//
-//        threadExecutor.stop();
-//    }
 }
