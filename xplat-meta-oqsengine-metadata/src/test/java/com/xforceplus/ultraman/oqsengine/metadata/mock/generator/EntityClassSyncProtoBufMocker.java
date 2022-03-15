@@ -16,6 +16,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Formula;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -202,7 +203,7 @@ public class EntityClassSyncProtoBufMocker {
             .setCname(GeneralEntityUtils.EntityFieldHelper.cname(id))
             .setFieldType(protoType)
             .setDictId(GeneralEntityUtils.EntityFieldHelper.dictId(id))
-            .setFieldConfig(fieldConfig(true, GeneralConstant.MOCK_SYSTEM_FIELD_TYPE));
+            .setFieldConfig(fieldConfig(true, fieldType, GeneralConstant.MOCK_SYSTEM_FIELD_TYPE));
 
         switch (fourTa.getC()) {
             case STATIC: {
@@ -242,7 +243,7 @@ public class EntityClassSyncProtoBufMocker {
                 .setId(fieldId)
                 .setFieldType(toFieldType(FieldType.LONG.name()))
                 .setName(GeneralEntityUtils.EntityFieldHelper.name(fieldId))
-                .setFieldConfig(fieldConfig(true, GeneralConstant.MOCK_SYSTEM_FIELD_TYPE))
+                .setFieldConfig(fieldConfig(true, FieldType.LONG, GeneralConstant.MOCK_SYSTEM_FIELD_TYPE))
                 .build())
             .setBelongToOwner(GeneralEntityUtils.RelationHelper.belongTo(id))
             .build();
@@ -252,7 +253,7 @@ public class EntityClassSyncProtoBufMocker {
      * 生成.
      */
     public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig fieldConfig(
-        boolean searchable, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.MetaFieldSense systemFieldType) {
+        boolean searchable, FieldType fieldType, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.MetaFieldSense systemFieldType) {
         return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.newBuilder()
             .setSearchable(searchable)
             .setIsRequired(true)
@@ -260,7 +261,29 @@ public class EntityClassSyncProtoBufMocker {
             .setMetaFieldSense(systemFieldType)
             .setLength(15)
             .setPrecision(4)
+            .setJdbcType(toJdbcType(fieldType))
             .build();
+    }
+
+    public static int toJdbcType(FieldType fieldType) {
+        switch (fieldType) {
+            case LONG: {
+                return Types.BIGINT;
+            }
+            case DECIMAL: {
+                return Types.DECIMAL;
+            }
+            case STRING:
+            case ENUM:
+            case STRINGS: {
+                return Types.VARCHAR;
+            }
+            case DATETIME: {
+                return Types.TIMESTAMP;
+            }
+            default:
+                return Types.VARCHAR;
+        }
     }
 
     /**

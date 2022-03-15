@@ -57,7 +57,7 @@ public class MetaPayLoadHelper {
 
             switch (calculationType) {
                 case STATIC: {
-                    builder.withConfig(fieldConfig(staticCalculation()));
+                    builder.withConfig(fieldConfig(staticCalculation(), fieldType));
                     break;
                 }
                 case FORMULA: {
@@ -65,7 +65,7 @@ public class MetaPayLoadHelper {
                     if (op.equals(OperationType.UPDATE)) {
                         express = GeneralConstant.MOCK_EXPRESSION_SUB;
                     }
-                    builder.withConfig(fieldConfig(formula(express, GeneralConstant.MOCK_LEVEL, fieldType)));
+                    builder.withConfig(fieldConfig(formula(express, GeneralConstant.MOCK_LEVEL, fieldType), fieldType));
                     break;
                 }
                 case AUTO_FILL: {
@@ -74,7 +74,7 @@ public class MetaPayLoadHelper {
                         express = GeneralConstant.MOCK_PATTEN_SUB;
                     }
                     builder.withConfig(fieldConfig(autoFill(express,
-                        GeneralConstant.MOCK_MODEL, GeneralConstant.MOCK_MIN, GeneralConstant.MOCK_STEP)));
+                        GeneralConstant.MOCK_MODEL, GeneralConstant.MOCK_MIN, GeneralConstant.MOCK_STEP), fieldType));
                     break;
                 }
                 default: {

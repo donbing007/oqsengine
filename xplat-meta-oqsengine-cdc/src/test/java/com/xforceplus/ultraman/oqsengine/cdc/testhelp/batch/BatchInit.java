@@ -41,7 +41,7 @@ public class BatchInit {
         if (null != asyncThreadPool) {
             ExecutorHelper.shutdownAndAwaitTermination(asyncThreadPool, 3600);
         }
-
+        asyncThreadPool = null;
     }
 
     // 初始化数据

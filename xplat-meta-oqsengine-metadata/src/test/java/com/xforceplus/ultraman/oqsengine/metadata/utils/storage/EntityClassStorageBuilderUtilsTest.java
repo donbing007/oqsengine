@@ -76,10 +76,4 @@ public class EntityClassStorageBuilderUtilsTest {
         Assertions.assertEquals(aggregation.getClassId(), calculator.getAggregationBoId());
 
     }
-
-    @Test
-    public void convertConditions() {
-
-    }
-
 }

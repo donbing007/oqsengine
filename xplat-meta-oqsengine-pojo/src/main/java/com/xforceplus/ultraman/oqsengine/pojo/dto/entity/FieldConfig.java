@@ -483,7 +483,7 @@ public class FieldConfig implements Serializable {
      * 克隆.
      */
     public FieldConfig clone() {
-        return FieldConfig.Builder.anFieldConfig()
+        return Builder.anFieldConfig()
             .withDelimiter(this.getDelimiter())
             .withDisplayType(this.getDisplayType())
             .withFieldSense(this.getFieldSense())
@@ -503,6 +503,7 @@ public class FieldConfig implements Serializable {
             .withLen(this.getLen())
             .withScale(this.scale())
             .withCalculation(this.getCalculation().clone())
+            .jdbcType(this.getJdbcType())
             .build();
     }
 

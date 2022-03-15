@@ -450,7 +450,8 @@ public class EntityClassStorageBuilderUtils {
             .withWildcardMaxWidth(fieldConfig.getWildcardMaxWidth())
             .withUniqueName(fieldConfig.getUniqueName())
             .withCrossSearch(fieldConfig.getCrossSearch())
-            .withLen(fieldConfig.getLength());
+            .withLen(fieldConfig.getLength())
+            .jdbcType(fieldConfig.getJdbcType());
 
         if (!isRelationEntity) {
             builder.withCalculation(toCalculator(fieldId, fieldType, calculator));

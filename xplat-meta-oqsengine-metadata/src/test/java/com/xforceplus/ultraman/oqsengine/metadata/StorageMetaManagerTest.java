@@ -538,7 +538,9 @@ public class StorageMetaManagerTest extends AbstractMetaTestHelper {
         Assertions.assertEquals(exp.getCname(), act.cnName());
         Assertions.assertEquals(exp.getFieldType().name().toUpperCase(), act.type().getType().toUpperCase());
         Assertions.assertEquals(exp.getDictId(), act.dictId());
-        Assertions.assertEquals(exp.getDefaultValue(), act.defaultValue());
+
+        Assertions.assertTrue(act.defaultValue().isPresent());
+        Assertions.assertEquals(exp.getDefaultValue(), act.defaultValue().get());
 
         if (act.calculationType().equals(CalculationType.FORMULA)) {
             Assertions.assertEquals(exp.getCalculator().getCalculateType(), CalculationType.FORMULA.getSymbol());
