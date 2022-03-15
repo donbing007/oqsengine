@@ -6,6 +6,7 @@ import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +28,7 @@ public class ColumnsUtils {
         STATIC_HANDLER.put(FieldType.BOOLEAN, ColumnsUtils::parseBooleanType);
         STATIC_HANDLER.put(FieldType.DECIMAL, ColumnsUtils::parseBigDecimalType);
         STATIC_HANDLER.put(FieldType.DATETIME, ColumnsUtils::parseDateTimeType);
+        STATIC_HANDLER.put(FieldType.ENUM, ColumnsUtils::parseEnumType);
     }
 
     /**
@@ -52,7 +54,7 @@ public class ColumnsUtils {
      * @param code column名字.
      * @return 最终值.
      */
-    public static String parseStringType(List<CanalEntry.Column> columns, String code) {
+    private static String parseStringType(List<CanalEntry.Column> columns, String code) {
         for (CanalEntry.Column column : columns) {
             if (column.hasName() && column.getName().equals(code)) {
                 return column.getValue();
@@ -67,7 +69,7 @@ public class ColumnsUtils {
      * @param code column名字.
      * @return 最终值.
      */
-    public static Long parseLongType(List<CanalEntry.Column> columns, String code) {
+    private static Long parseLongType(List<CanalEntry.Column> columns, String code) {
         String str = parseStringType(columns, code);
         if (!str.isEmpty()) {
             return Long.parseLong(str);
@@ -81,7 +83,7 @@ public class ColumnsUtils {
      * @param code column名字.
      * @return 最终值.
      */
-    public static String parseBigDecimalType(List<CanalEntry.Column> columns, String code) {
+    private static String parseBigDecimalType(List<CanalEntry.Column> columns, String code) {
         return parseStringType(columns, code);
     }
 
@@ -91,7 +93,7 @@ public class ColumnsUtils {
      * @param code column名字.
      * @return 最终值.
      */
-    public static Long parseBooleanType(List<CanalEntry.Column> columns, String code) {
+    private static Long parseBooleanType(List<CanalEntry.Column> columns, String code) {
         String str = parseStringType(columns, code);
         if (!str.isEmpty()) {
             if (str.equalsIgnoreCase("true") || (StringUtils.isNumeric(str) && Integer.parseInt(str) > ZERO)) {
@@ -102,18 +104,42 @@ public class ColumnsUtils {
         return null;
     }
 
-
     /**
      * 获取一个DateTime类型的值.
      * @param columns 数据集,一个数据集代表一整行记录.
      * @param code column名字.
      * @return 最终值.
      */
-    public static Long parseDateTimeType(List<CanalEntry.Column> columns, String code) {
+    private static Long parseDateTimeType(List<CanalEntry.Column> columns, String code) {
         String str = parseStringType(columns, code);
         if (!str.isEmpty()) {
-            return LocalDateTime.parse(str).atZone(DateTimeValue.ZONE_ID).toInstant().toEpochMilli();
+            return toEpochMilli(str);
         }
         return null;
+    }
+
+    /**
+     * 获取一个Enum类型的值.
+     * @param columns 数据集,一个数据集代表一整行记录.
+     * @param code column名字.
+     * @return 最终值.
+     */
+    private static String parseEnumType(List<CanalEntry.Column> columns, String code) {
+        return parseStringType(columns, code);
+    }
+
+    private static final DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
+    /**
+     * 将时间格式转为Long型格式.
+     *
+     * @param strTime 字符串的时间戳.
+     *
+     * @return long型时间戳.
+     */
+    public static Long toEpochMilli(String strTime) {
+        if (null == strTime) {
+            return null;
+        }
+        return LocalDateTime.parse(strTime, formatter).atZone(DateTimeValue.ZONE_ID).toInstant().toEpochMilli();
     }
 }

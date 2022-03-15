@@ -38,7 +38,11 @@ public class CdcErrorUpdateStatusExecutorTest extends AbstractCdcHelper {
 
     @AfterAll
     public static void afterAll() {
-        InitializationHelper.destroy();
+        try {
+            InitializationHelper.destroy();
+        } catch (Exception e) {
+
+        }
     }
 
     @Test

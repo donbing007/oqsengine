@@ -10,7 +10,6 @@ import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.dto.ParseResult;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.error.ErrorRecorder;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.factory.BinLogParserFactory;
-import com.xforceplus.ultraman.oqsengine.cdc.consumer.parser.BinLogParser;
 import com.xforceplus.ultraman.oqsengine.cdc.context.ParserContext;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsHandler;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
@@ -19,9 +18,9 @@ import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetricsRecorder;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCUnCommitMetrics;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
-import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import io.micrometer.core.annotation.Timed;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Resource;
 import org.slf4j.Logger;
@@ -49,12 +48,11 @@ public class DefaultConsumerService implements ConsumerService {
     @Resource
     private ErrorRecorder errorRecorder;
 
-    @Resource
-    private MasterStorage masterStorage;
-
     private long skipCommitId = INIT_ID;
 
     private boolean checkCommitReady = true;
+
+    protected ParseResult parseResult = new ParseResult();
 
     public void setSkipCommitId(long skipCommitId) {
         this.skipCommitId = skipCommitId;
@@ -64,15 +62,13 @@ public class DefaultConsumerService implements ConsumerService {
         this.checkCommitReady = checkCommitReady;
     }
 
-    private ParseResult parseResult = new ParseResult();
-
     public ParseResult printParseResult() {
         return parseResult;
     }
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "cdc", "action", "cdc-consume"})
     @Override
-    public CDCMetrics consume(List<CanalEntry.Entry> entries, long batchId, CDCMetrics cdcMetrics)
+    public CDCMetrics consumeOneBatch(List<CanalEntry.Entry> entries, long batchId, CDCMetrics cdcMetrics)
         throws SQLException {
         try {
             //  初始化指标记录器
@@ -94,6 +90,11 @@ public class DefaultConsumerService implements ConsumerService {
             //  跨批次的情况(静态的最后一条业务数据没有到达时)operationEntries保留最后一条数据到下次消费.
             parseResult.clean();
         }
+    }
+
+    @Override
+    public CDCMetricsHandler metricsHandler() {
+        return cdcMetricsHandler;
     }
 
     /**
@@ -119,7 +120,7 @@ public class DefaultConsumerService implements ConsumerService {
     private int parseCanalEntries(List<CanalEntry.Entry> entries, CDCMetrics cdcMetrics) throws SQLException {
         //  初始化上下文
         ParserContext parserContext =
-            new ParserContext(skipCommitId, checkCommitReady, cdcMetrics, metaManager, masterStorage);
+            new ParserContext(skipCommitId, checkCommitReady, cdcMetrics, metaManager);
 
         for (CanalEntry.Entry entry : entries) {
 
@@ -140,7 +141,7 @@ public class DefaultConsumerService implements ConsumerService {
 
         //  等待isReady
         if (!parseResult.getCommitIds().isEmpty()) {
-            cdcMetricsHandler.isReady(parseResult.getCommitIds());
+            cdcMetricsHandler.isReady(new ArrayList<>(parseResult.getCommitIds()));
         }
 
         //  批次数据整理完毕，开始执行index写操作。
@@ -209,16 +210,6 @@ public class DefaultConsumerService implements ConsumerService {
     }
 
     /**
-     * 生成一个唯一的key前缀.
-     *
-     * @param header canalEntry的头.
-     * @return 唯一key前缀.
-     */
-    private String uniKeyGeneratePrefix(CanalEntry.Header header) {
-        return header.getLogfileName() + "-" + header.getLogfileName();
-    }
-
-    /**
      * 对rowData进行解析，rowData为对一张表的CUD操作，记录条数1～N.
      *
      * @param entry canal对象同步实例.
@@ -226,14 +217,6 @@ public class DefaultConsumerService implements ConsumerService {
      * @throws SQLException
      */
     private void rowDataParse(CanalEntry.Entry entry, ParserContext parserContext) throws SQLException {
-        //  设置唯一前缀.
-        parseResult.setUniKeyPrefix(uniKeyGeneratePrefix(entry.getHeader()));
-
-        String tableName = entry.getHeader().getTableName();
-        if (tableName.isEmpty()) {
-            throw new SQLException(String.format("batch : %d, parse entry value failed, [%s], [%s]",
-                parserContext.getCdcMetrics().getBatchId(), entry.getStoreValue(), "tableName is empty."));
-        }
 
         CanalEntry.RowChange rowChange = null;
         try {
@@ -242,10 +225,6 @@ public class DefaultConsumerService implements ConsumerService {
             throw new SQLException(String.format("batch : %d, parse entry value failed, [%s], [%s]",
                 parserContext.getCdcMetrics().getBatchId(), entry.getStoreValue(), e));
         }
-
-        BinLogParser parser =
-            BinLogParserFactory.getInstance().getParser(tableName);
-
         CanalEntry.EventType eventType = rowChange.getEventType();
         if (supportEventType(eventType)) {
             //  遍历RowData
@@ -263,7 +242,7 @@ public class DefaultConsumerService implements ConsumerService {
                 }
 
                 //  消费columns
-                parser.parse(columns, parserContext, parseResult);
+                BinLogParserFactory.getInstance().dynamicParser().parse(columns, parserContext, parseResult);
             }
         }
     }

@@ -20,28 +20,17 @@ public class ParseResultTest {
         long expectedKey = Long.MAX_VALUE - 100;
 
         OqsEngineEntity expectedOriginal = new OqsEngineEntity();
-        old.getOperationEntries().put(expectedKey, expectedOriginal);
+        old.getFinishEntries().put(expectedKey, expectedOriginal);
         old.finishOne(expectedKey);
 
         old.clean();
 
-        Assertions.assertEquals(1, old.getOperationEntries().size());
-        Assertions.assertEquals(expectedOriginal, old.getOperationEntries().get(expectedKey));
-
-        expectedKey = Long.MAX_VALUE - 99;
-        old.finishOne(expectedKey);
-
-        old.clean();
-
-        Assertions.assertEquals(0, old.getOperationEntries().size());
+        Assertions.assertEquals(0, old.getFinishEntries().size());
     }
-
 
     @Test
     public void addErrorTest() {
         ParseResult parseResult = new ParseResult();
-
-        parseResult.setUniKeyPrefix("head" + "_" + "file" + "_" + "1");
 
         ErrorCase.errorCases.forEach(
             e -> {
@@ -53,7 +42,6 @@ public class ParseResultTest {
 
         parseResult.getErrors().forEach(
             (k, v) -> {
-                Assertions.assertTrue(k.startsWith(parseResult.getUniKeyPrefix()));
                 Assertions.assertEquals(k, v.keyGenerate());
 
                 Tuple3<Long, Long, String> errorCase = ErrorCase.errorCases.get(i.getAndIncrement());

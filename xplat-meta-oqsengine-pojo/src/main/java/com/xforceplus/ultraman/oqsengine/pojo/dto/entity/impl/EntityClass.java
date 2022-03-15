@@ -125,6 +125,11 @@ public class EntityClass implements IEntityClass {
     }
 
     @Override
+    public boolean isDynamic() {
+        return type == null || type.equals(EntityClassType.DYNAMIC);
+    }
+
+    @Override
     public Collection<Relationship> relationship() {
 
         List<Relationship> relations = new ArrayList<>();
@@ -396,6 +401,7 @@ public class EntityClass implements IEntityClass {
             entityClass.father = father;
             entityClass.fields = fields;
             entityClass.relations = this.relations;
+            entityClass.type = this.type;
             if (this.profile == null) {
                 entityClass.profile = OqsProfile.UN_DEFINE_PROFILE;
             } else {

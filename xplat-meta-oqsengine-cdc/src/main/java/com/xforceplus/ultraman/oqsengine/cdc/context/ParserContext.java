@@ -3,7 +3,6 @@ package com.xforceplus.ultraman.oqsengine.cdc.context;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
-import javax.annotation.Resource;
 
 /**
  * Created by justin.xu on 02/2022.
@@ -33,16 +32,11 @@ public class ParserContext {
      */
     private CDCMetrics cdcMetrics;
 
-    public ParserContext(long skipCommitId, boolean checkCommitReady, CDCMetrics cdcMetrics, MetaManager metaManager, MasterStorage masterStorage) {
+    public ParserContext(long skipCommitId, boolean checkCommitReady, CDCMetrics cdcMetrics, MetaManager metaManager) {
         this.skipCommitId = skipCommitId;
         this.checkCommitReady = checkCommitReady;
         this.cdcMetrics = cdcMetrics;
         this.metaManager = metaManager;
-        this.masterStorage = masterStorage;
-    }
-
-    public MasterStorage getMasterStorage() {
-        return masterStorage;
     }
 
     public long getSkipCommitId() {

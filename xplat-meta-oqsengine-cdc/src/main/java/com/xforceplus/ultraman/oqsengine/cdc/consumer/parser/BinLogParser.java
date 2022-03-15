@@ -4,7 +4,6 @@ package com.xforceplus.ultraman.oqsengine.cdc.consumer.parser;
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.dto.ParseResult;
 import com.xforceplus.ultraman.oqsengine.cdc.context.ParserContext;
-import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -24,6 +23,5 @@ public interface BinLogParser {
      * @throws SQLException
      */
     void parse(List<CanalEntry.Column> columns, ParserContext parserContext, ParseResult parseResult);
-
 
 }

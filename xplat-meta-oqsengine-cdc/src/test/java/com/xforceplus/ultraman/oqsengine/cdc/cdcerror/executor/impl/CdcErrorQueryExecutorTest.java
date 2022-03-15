@@ -47,9 +47,12 @@ public class CdcErrorQueryExecutorTest extends AbstractCdcHelper {
 
     @AfterAll
     public static void afterAll() {
-        InitializationHelper.destroy();
-    }
+        try {
+            InitializationHelper.destroy();
+        } catch (Exception e) {
 
+        }
+    }
 
     @Test
     public void errorQueryTest() throws Exception {

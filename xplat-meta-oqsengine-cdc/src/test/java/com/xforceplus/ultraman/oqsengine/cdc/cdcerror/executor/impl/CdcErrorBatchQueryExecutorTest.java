@@ -10,7 +10,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
@@ -28,7 +27,6 @@ public class CdcErrorBatchQueryExecutorTest  extends AbstractCdcHelper {
     private String expectedSql =
         "SELECT seqno,unikey,batchid,id,entity,version,op,commitid,type,status,operationobject,message,executetime,fixedtime FROM cdcerrors WHERE unikey IN (%s) order by executetime desc";
 
-
     @BeforeEach
     public void before() throws Exception {
         super.init(false, null);
@@ -41,22 +39,26 @@ public class CdcErrorBatchQueryExecutorTest  extends AbstractCdcHelper {
 
     @AfterAll
     public static void afterAll() {
-        InitializationHelper.destroy();
+        try {
+            InitializationHelper.destroy();
+        } catch (Exception e) {
+
+        }
     }
 
     @Test
     public void errorBatchQueryTest() throws Exception {
         CdcErrorStorage cdcErrorStorage = CdcInitialization.getInstance().getCdcErrorStorage();
-        Assertions.assertTrue(cdcErrorStorage.batchInsert(CdcErrorBatchInsertExecutorTest.EXPECTED_CDC_ERROR_TASKS));
+        Assertions.assertTrue(cdcErrorStorage.batchInsert(CdcErrorBuildHelper.EXPECTED_CDC_ERROR_TASKS));
 
-        List<String> keys = CdcErrorBatchInsertExecutorTest.EXPECTED_CDC_ERROR_TASKS.stream().map(CdcErrorTask::getUniKey).collect(
+        List<String> keys = CdcErrorBuildHelper.EXPECTED_CDC_ERROR_TASKS.stream().map(CdcErrorTask::getUniKey).collect(
             Collectors.toList());
 
         Collection<CdcErrorTask> cdcErrorTasks = CdcErrorBatchQueryExecutor
             .build(CdcInitialization.CDC_ERRORS, CdcInitialization.getInstance().getDevOpsDataSource(), 10_000L)
             .execute(keys);
 
-        CdcErrorBuildHelper.checkBatches(CdcErrorBatchInsertExecutorTest.EXPECTED_CDC_ERROR_TASKS, cdcErrorTasks);
+        CdcErrorBuildHelper.checkBatches(CdcErrorBuildHelper.EXPECTED_CDC_ERROR_TASKS, cdcErrorTasks);
     }
 
 

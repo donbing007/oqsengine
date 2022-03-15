@@ -9,6 +9,7 @@ import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.dto.ErrorType;
 import com.xforceplus.ultraman.oqsengine.cdc.mock.CdcInitialization;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.CdcErrorTask;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.FixedStatus;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -42,11 +43,9 @@ public class CdcErrorBuildHelper {
             expectedVersion, expectedOp, expectedCommitId, expectedErrorType, expectedObjectStr, expectedMessage);
 
     public static void queryWithExpected(CdcErrorQueryCondition cdcErrorQueryCondition, FixedStatus expectedFixedStatus) throws Exception {
-        CdcErrorStorage cdcErrorStorage = CdcInitialization.getInstance().getCdcErrorStorage();
-        Collection<CdcErrorTask> cdcErrorTaskList = cdcErrorStorage.queryCdcErrors(cdcErrorQueryCondition);
-        Assertions.assertEquals(1, cdcErrorTaskList.size());
+        Collection<CdcErrorTask> cdcErrorTasks = queryWithExpected(cdcErrorQueryCondition);
 
-        check(cdcErrorTaskList, expectedFixedStatus);
+        check(cdcErrorTasks, expectedFixedStatus);
     }
 
     public static void check(Collection<CdcErrorTask> cdcErrorTaskList, FixedStatus expectedFixedStatus) {
@@ -85,9 +84,30 @@ public class CdcErrorBuildHelper {
         }
     }
 
-    public static  void queryWithUnexpected(CdcErrorQueryCondition cdcErrorQueryCondition) throws Exception {
+    public static void queryWithUnexpected(CdcErrorQueryCondition cdcErrorQueryCondition) throws Exception {
         CdcErrorStorage cdcErrorStorage = CdcInitialization.getInstance().getCdcErrorStorage();
         Collection<CdcErrorTask> cdcErrorTaskList = cdcErrorStorage.queryCdcErrors(cdcErrorQueryCondition);
         Assertions.assertEquals(0, cdcErrorTaskList.size());
     }
+
+    public static Collection<CdcErrorTask> queryWithExpected(CdcErrorQueryCondition cdcErrorQueryCondition) throws Exception {
+        CdcErrorStorage cdcErrorStorage = CdcInitialization.getInstance().getCdcErrorStorage();
+        Collection<CdcErrorTask> cdcErrorTaskList = cdcErrorStorage.queryCdcErrors(cdcErrorQueryCondition);
+        Assertions.assertEquals(1, cdcErrorTaskList.size());
+
+        return cdcErrorTaskList;
+    }
+
+
+    public static final List<CdcErrorTask> EXPECTED_CDC_ERROR_TASKS =
+        Arrays.asList(
+            CdcErrorTask.buildErrorTask(1, "1", 1, 1, 1,
+                1, 1, 1, FixedStatus.NOT_FIXED.getStatus(), "1", "1"),
+            CdcErrorTask.buildErrorTask(2, "2", 2, 2, 2,
+                2, 2, 2, FixedStatus.NOT_FIXED.getStatus(), "2", "2"),
+            CdcErrorTask.buildErrorTask(3, "3", 3, 3, 3,
+                3, 3, 3, FixedStatus.NOT_FIXED.getStatus(), "3", "3"),
+            CdcErrorTask.buildErrorTask(5, "5", 5, 5, 5,
+                5, 5, 5, FixedStatus.NOT_FIXED.getStatus(), "5", "5")
+        );
 }

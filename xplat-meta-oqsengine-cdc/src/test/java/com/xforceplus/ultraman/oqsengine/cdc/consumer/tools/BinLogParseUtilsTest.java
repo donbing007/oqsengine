@@ -3,9 +3,9 @@ package com.xforceplus.ultraman.oqsengine.cdc.consumer.tools;
 
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.google.protobuf.InvalidProtocolBufferException;
-import com.xforceplus.ultraman.oqsengine.cdc.testhelp.CanalEntryCase;
-import com.xforceplus.ultraman.oqsengine.cdc.testhelp.CanalEntryGenerator;
-import com.xforceplus.ultraman.oqsengine.cdc.testhelp.DynamicCanalEntryRepo;
+import com.xforceplus.ultraman.oqsengine.cdc.testhelp.cases.DynamicCanalEntryCase;
+import com.xforceplus.ultraman.oqsengine.cdc.testhelp.generator.DynamicCanalEntryGenerator;
+import com.xforceplus.ultraman.oqsengine.cdc.testhelp.repo.DynamicCanalEntryRepo;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns;
 import java.util.List;
 import org.junit.jupiter.api.Assertions;
@@ -19,12 +19,12 @@ import org.junit.jupiter.api.Test;
  */
 public class BinLogParseUtilsTest {
 
-    static CanalEntryCase expected = DynamicCanalEntryRepo.CASE_NORMAL_2;
+    static DynamicCanalEntryCase expected = DynamicCanalEntryRepo.CASE_NORMAL_2;
     static List<CanalEntry.Column> columns;
 
     @BeforeAll
     public static void before() throws InvalidProtocolBufferException {
-        CanalEntry.Entry entry = CanalEntryGenerator.buildRowDataEntry(expected, true);
+        CanalEntry.Entry entry = DynamicCanalEntryGenerator.buildRowDataEntry(expected);
 
         CanalEntry.RowChange rowChange = CanalEntry.RowChange.parseFrom(entry.getStoreValue());
 

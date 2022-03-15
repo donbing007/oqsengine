@@ -1,13 +1,12 @@
 package com.xforceplus.ultraman.oqsengine.cdc.consumer.dto;
 
-import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.INIT_ID;
-
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OqsEngineEntity;
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * Created by justin.xu on 02/2022.
@@ -20,16 +19,6 @@ public class ParseResult {
      * 计数器.
      */
     int pos;
-
-    /**
-     * dynamic中最后一条数据的主键ID.
-     */
-    long lastId;
-
-    /**
-     * 当前记录的唯一前缀.
-     */
-    private String uniKeyPrefix;
 
     /**
      * 需要最终操作manticore的对象结果集.
@@ -50,7 +39,7 @@ public class ParseResult {
     /**
      * 需要checkReady的commitIds
      */
-    private List<Long> commitIds;
+    private Set<Long> commitIds;
 
     /**
      * 清除.
@@ -60,49 +49,26 @@ public class ParseResult {
         errors.clear();
         commitIds.clear();
 
-        //  最后一条记录不是binLog中该批次的最后一条时将清除掉该集合.
-        if (operationEntries.size() > 0) {
-            OqsEngineEntity t = operationEntries.remove(lastId);
-
-            operationEntries.clear();
-            //  跨批次最后只有控制信息
-            if (null != t) {
-                operationEntries.put(lastId, t);
-            }
-        }
-
         //  pos重置为0
         pos = CDCConstant.START_POS;
-
-        //  lastId重置
-        lastId = INIT_ID;
-
-        uniKeyPrefix = "";
     }
 
     public ParseResult() {
         this.pos = CDCConstant.START_POS;
-        this.lastId = INIT_ID;
-        this.uniKeyPrefix = "";
         this.finishEntries = new HashMap<>();
-        this.operationEntries = new HashMap<>();
         this.errors  = new LinkedHashMap<>();
-        this.commitIds = new ArrayList<>();
+        this.commitIds = new HashSet<>();
     }
 
     public Map<Long, OqsEngineEntity> getFinishEntries() {
         return finishEntries;
     }
 
-    public Map<Long, OqsEngineEntity> getOperationEntries() {
-        return operationEntries;
-    }
-
     public Map<String, Error> getErrors() {
         return errors;
     }
 
-    public List<Long> getCommitIds() {
+    public Set<Long> getCommitIds() {
         return commitIds;
     }
 
@@ -111,21 +77,7 @@ public class ParseResult {
     }
 
     public void finishOne(long id) {
-        this.lastId = id;
         pos++;
-    }
-
-    public long getLastId() {
-        return lastId;
-    }
-
-
-    public String getUniKeyPrefix() {
-        return uniKeyPrefix;
-    }
-
-    public void setUniKeyPrefix(String uniKeyPrefix) {
-        this.uniKeyPrefix = uniKeyPrefix;
     }
 
     /**
@@ -140,18 +92,16 @@ public class ParseResult {
      * generate and addError.
      */
     public void addError(long id, long commitId, String message) {
-        addError(new Error(this.uniKeyPrefix, id, commitId, pos, message));
+        addError(new Error(id, commitId, pos, message));
     }
 
     public static class Error {
-        private String prefix;
         private long id;
         private long commitId;
         private int pos;
         private String message;
 
-        public Error(String prefix, long id, long commitId, int pos, String message) {
-            this.prefix = prefix;
+        public Error(long id, long commitId, int pos, String message) {
             this.id = id;
             this.commitId = commitId;
             this.pos = pos;
@@ -171,7 +121,28 @@ public class ParseResult {
         }
 
         public String keyGenerate() {
-            return prefix + "_" + id + "_" + commitId + "_" + pos;
+            return commitId + "_" + id + "_" + pos;
+        }
+
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            Error error = (Error) o;
+            return id == error.id && commitId == error.commitId && pos == error.pos &&
+                Objects.equals(message, error.message);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(id, commitId, pos, message);
         }
     }
+
+
 }

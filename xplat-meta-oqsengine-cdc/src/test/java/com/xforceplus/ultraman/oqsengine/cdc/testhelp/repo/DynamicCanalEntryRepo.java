@@ -1,6 +1,7 @@
-package com.xforceplus.ultraman.oqsengine.cdc.testhelp;
+package com.xforceplus.ultraman.oqsengine.cdc.testhelp.repo;
 
-
+import com.xforceplus.ultraman.oqsengine.cdc.testhelp.meta.EntityClassBuilder;
+import com.xforceplus.ultraman.oqsengine.cdc.testhelp.cases.DynamicCanalEntryCase;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant;
 
 /**
@@ -10,7 +11,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant;
  */
 public class DynamicCanalEntryRepo {
 
-    public static CanalEntryCase CASE_NORMAL_0 = CanalEntryCase.anCase()
+    public static DynamicCanalEntryCase CASE_NORMAL_0 = DynamicCanalEntryCase.anCase()
         .withId(1)
         .withLevelOrdinal(1)
         .withDeleted(false)
@@ -26,7 +27,7 @@ public class DynamicCanalEntryRepo {
         .withProfile("");
 
 
-    public static CanalEntryCase CASE_NORMAL_1 = CanalEntryCase.anCase()
+    public static DynamicCanalEntryCase CASE_NORMAL_1 = DynamicCanalEntryCase.anCase()
         .withId(2)
         .withLevelOrdinal(2)
         .withDeleted(false)
@@ -42,7 +43,7 @@ public class DynamicCanalEntryRepo {
         .withProfile("");
 
 
-    public static CanalEntryCase CASE_NORMAL_2 = CanalEntryCase.anCase()
+    public static DynamicCanalEntryCase CASE_NORMAL_2 = DynamicCanalEntryCase.anCase()
         .withId(3)
         .withLevelOrdinal(3)
         .withDeleted(false)
@@ -57,7 +58,7 @@ public class DynamicCanalEntryRepo {
         .withEntityId(EntityClassBuilder.ENTITY_CLASS_2.id())
         .withProfile("");
 
-    public static CanalEntryCase CASE_MAINTAIN = CanalEntryCase.anCase()
+    public static DynamicCanalEntryCase CASE_MAINTAIN = DynamicCanalEntryCase.anCase()
         .withId(Long.MAX_VALUE - 1)
         .withLevelOrdinal(3)
         .withDeleted(false)
