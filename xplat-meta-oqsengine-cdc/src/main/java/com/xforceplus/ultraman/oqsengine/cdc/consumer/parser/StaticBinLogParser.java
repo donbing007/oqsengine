@@ -12,7 +12,7 @@ import com.xforceplus.ultraman.oqsengine.cdc.context.ParserContext;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.OqsEngineEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper;
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -35,21 +35,21 @@ public class StaticBinLogParser implements BinLogParser {
             //  获取ID
             id = getLongFromColumn(columns, ID);
 
-            OriginalEntity originalEntity = findOriginalEntity(id, parserContext, parseResult);
-            if (null == originalEntity) {
+            OqsEngineEntity oqsEngineEntity = findOriginalEntity(id, parserContext, parseResult);
+            if (null == oqsEngineEntity) {
                 //  未获取originalEntity,判定为非法操作.
                 return;
             }
-            commitId = originalEntity.getCommitid();
+            commitId = oqsEngineEntity.getCommitid();
 
             IEntityClass entityClass =
-                CommonUtils.getEntityClass(id, originalEntity.getEntityClassRef(), parserContext);
+                CommonUtils.getEntityClass(id, oqsEngineEntity.getEntityClassRef(), parserContext);
 
-            originalEntity.setEntityClass(entityClass);
+            oqsEngineEntity.setEntityClass(entityClass);
             //  构造attributes
-            businessParse(columns, originalEntity);
+            businessParse(columns, oqsEngineEntity);
 
-            parseResult.getFinishEntries().put(id, originalEntity);
+            parseResult.getFinishEntries().put(id, oqsEngineEntity);
         } catch (Exception e) {
             if (commitId != CommitHelper.getUncommitId()) {
                 //  加入错误列表.
@@ -63,25 +63,25 @@ public class StaticBinLogParser implements BinLogParser {
         parseResult.finishOne(id);
     }
 
-    private OriginalEntity findOriginalEntity(long id, ParserContext parserContext, ParseResult parseResult)
+    private OqsEngineEntity findOriginalEntity(long id, ParserContext parserContext, ParseResult parseResult)
         throws SQLException {
-        OriginalEntity originalEntity = parseResult.getOperationEntries().remove(id);
-        if (null == originalEntity) {
-            Optional<OriginalEntity> optionalOriginalEntity =
+        OqsEngineEntity oqsEngineEntity = parseResult.getOperationEntries().remove(id);
+        if (null == oqsEngineEntity) {
+            Optional<OqsEngineEntity> optionalOriginalEntity =
                 parserContext.getMasterStorage().selectOrigin(id, true);
 
             if (optionalOriginalEntity.isPresent() &&
                 null != optionalOriginalEntity.get().getEntityClassRef()) {
-                originalEntity = optionalOriginalEntity.get();
+                oqsEngineEntity = optionalOriginalEntity.get();
             }
         }
 
-        return originalEntity;
+        return oqsEngineEntity;
     }
 
-    private void businessParse(List<CanalEntry.Column> columns, OriginalEntity originalEntity) {
+    private void businessParse(List<CanalEntry.Column> columns, OqsEngineEntity oqsEngineEntity) {
         Map<String, Object> attrs = new HashMap<>();
-        originalEntity.getEntityClass().fields().forEach(
+        oqsEngineEntity.getEntityClass().fields().forEach(
             f -> {
                 Object value = ColumnsUtils.execute(columns, f.name(), f.type());
                 if (null != value) {
@@ -90,7 +90,7 @@ public class StaticBinLogParser implements BinLogParser {
             }
         );
 
-        originalEntity.setAttributes(attrs);
+        oqsEngineEntity.setAttributes(attrs);
     }
 
     private static String toStorageKey(IEntityField field) {

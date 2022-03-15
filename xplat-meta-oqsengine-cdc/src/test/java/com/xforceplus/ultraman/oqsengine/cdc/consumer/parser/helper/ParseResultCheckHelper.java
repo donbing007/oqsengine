@@ -1,12 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.cdc.consumer.parser.helper;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.CommonUtils;
 import com.xforceplus.ultraman.oqsengine.cdc.testhelp.CanalEntryCase;
 import com.xforceplus.ultraman.oqsengine.common.serializable.utils.JacksonDefaultMapper;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.utils.DevOpsUtils;
 import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
-import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.OqsEngineEntity;
 import org.junit.jupiter.api.Assertions;
 
 /**
@@ -16,7 +15,7 @@ import org.junit.jupiter.api.Assertions;
  */
 public class ParseResultCheckHelper {
 
-    public static void dynamicCheck(CanalEntryCase expected, OriginalEntity actual) throws JsonProcessingException {
+    public static void dynamicCheck(CanalEntryCase expected, OqsEngineEntity actual) throws JsonProcessingException {
         Assertions.assertEquals(expected.getId(), actual.getId());
         Assertions.assertEquals(expected.isDeleted(), actual.isDeleted());
         Assertions.assertEquals(expected.isDeleted() ? OperationType.DELETE.getValue() : OperationType.UPDATE.getValue(), actual.getOp());

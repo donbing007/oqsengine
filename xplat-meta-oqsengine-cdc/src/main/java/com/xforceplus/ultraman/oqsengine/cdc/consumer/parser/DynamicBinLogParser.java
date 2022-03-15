@@ -33,7 +33,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.DevOpsCdcMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.OqsEngineEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper;
 import java.sql.SQLException;
 import java.util.Collections;
@@ -66,15 +66,15 @@ public class DynamicBinLogParser implements BinLogParser {
             IEntityClass entityClass = getEntityClass(id, columns, parserContext);
 
             //  生成执行对象
-            OriginalEntity originalEntity =
+            OqsEngineEntity oqsEngineEntity =
                 toOriginalEntity(entityClass, id, commitId, columns, parserContext);
 
             //  动态结构直接加入到结果对象中
             if (entityClass.isDynamic()) {
-                parseResult.getFinishEntries().put(id, originalEntity);
+                parseResult.getFinishEntries().put(id, oqsEngineEntity);
             } else {
                 //  加入到半成品对象中
-                parseResult.getOperationEntries().put(id, originalEntity);
+                parseResult.getOperationEntries().put(id, oqsEngineEntity);
             }
         } catch (Exception e) {
             if (commitId != CommitHelper.getUncommitId()) {
@@ -112,10 +112,10 @@ public class DynamicBinLogParser implements BinLogParser {
      * @return
      * @throws SQLException
      */
-    private OriginalEntity toOriginalEntity(IEntityClass entityClass, long id, long commitId,
-                                            List<CanalEntry.Column> columns, ParserContext parserContext) throws SQLException {
+    private OqsEngineEntity toOriginalEntity(IEntityClass entityClass, long id, long commitId,
+                                             List<CanalEntry.Column> columns, ParserContext parserContext) throws SQLException {
 
-        OriginalEntity.Builder builder = OriginalEntity.Builder.anOriginalEntity();
+        OqsEngineEntity.Builder builder = OqsEngineEntity.Builder.anOriginalEntity();
 
         //  主键ID
         builder.withId(id);

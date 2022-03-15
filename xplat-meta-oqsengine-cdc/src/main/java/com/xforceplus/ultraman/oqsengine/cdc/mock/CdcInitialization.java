@@ -24,7 +24,7 @@ import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.mock.IndexInitialization;
 import com.xforceplus.ultraman.oqsengine.storage.master.mock.MasterDBInitialization;
 import com.xforceplus.ultraman.oqsengine.storage.mock.StorageInitialization;
-import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.OqsEngineEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.search.SearchConfig;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import java.lang.reflect.Field;
@@ -202,7 +202,7 @@ public class CdcInitialization implements BeanInitialization {
         }
 
         @Override
-        public void saveOrDeleteOriginalEntities(Collection<OriginalEntity> originalEntities) throws SQLException {
+        public void saveOrDeleteOriginalEntities(Collection<OqsEngineEntity> originalEntities) throws SQLException {
             error++;
 
             if (error < 3) {

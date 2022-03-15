@@ -14,7 +14,7 @@ import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MetaInitialization;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.storage.master.mock.MasterDBInitialization;
-import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.OqsEngineEntity;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -73,10 +73,10 @@ public class DynamicBinLogParserTest extends AbstractCdcHelper {
         for (int i = 0; i < expected.length; i++) {
             Assertions.assertTrue(parserContext.getCdcMetrics().getCdcUnCommitMetrics().getUnCommitIds().contains(expected[i].getCommitId()));
 
-            OriginalEntity originalEntity =
+            OqsEngineEntity oqsEngineEntity =
                 parseResult.getFinishEntries().get(expected[i].getId());
-            Assertions.assertNotNull(originalEntity);
-            ParseResultCheckHelper.dynamicCheck(expected[i], originalEntity);
+            Assertions.assertNotNull(oqsEngineEntity);
+            ParseResultCheckHelper.dynamicCheck(expected[i], oqsEngineEntity);
         }
     }
 

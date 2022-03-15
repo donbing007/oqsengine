@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.cdc.consumer.dto;
 
-import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.OqsEngineEntity;
 import io.vavr.Tuple3;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Assertions;
@@ -19,7 +19,7 @@ public class ParseResultTest {
 
         long expectedKey = Long.MAX_VALUE - 100;
 
-        OriginalEntity expectedOriginal = new OriginalEntity();
+        OqsEngineEntity expectedOriginal = new OqsEngineEntity();
         old.getOperationEntries().put(expectedKey, expectedOriginal);
         old.finishOne(expectedKey);
 

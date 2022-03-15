@@ -7,7 +7,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns;
 import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
-import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.OqsEngineEntity;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -175,23 +175,23 @@ public class CanalEntryCase {
         return profile;
     }
 
-    public void assertionOriginEntry(OriginalEntity originalEntity) throws JsonProcessingException {
-        Assertions.assertEquals(this.id, originalEntity.getId());
-        Assertions.assertEquals(this.entityId, originalEntity.getEntityClass().id());
-        Assertions.assertEquals(this.tx, originalEntity.getTx());
-        Assertions.assertEquals(this.commitId, originalEntity.getCommitid());
-        Assertions.assertEquals(this.oqsmajor, originalEntity.getOqsMajor());
-        Assertions.assertEquals(this.create, originalEntity.getCreateTime());
-        Assertions.assertEquals(this.update, originalEntity.getUpdateTime());
-        Assertions.assertEquals(this.version, originalEntity.getVersion());
-        Assertions.assertEquals(this.deleted, originalEntity.isDeleted());
-        Assertions.assertEquals(this.getOp(), originalEntity.getOp());
+    public void assertionOriginEntry(OqsEngineEntity oqsEngineEntity) throws JsonProcessingException {
+        Assertions.assertEquals(this.id, oqsEngineEntity.getId());
+        Assertions.assertEquals(this.entityId, oqsEngineEntity.getEntityClass().id());
+        Assertions.assertEquals(this.tx, oqsEngineEntity.getTx());
+        Assertions.assertEquals(this.commitId, oqsEngineEntity.getCommitid());
+        Assertions.assertEquals(this.oqsmajor, oqsEngineEntity.getOqsMajor());
+        Assertions.assertEquals(this.create, oqsEngineEntity.getCreateTime());
+        Assertions.assertEquals(this.update, oqsEngineEntity.getUpdateTime());
+        Assertions.assertEquals(this.version, oqsEngineEntity.getVersion());
+        Assertions.assertEquals(this.deleted, oqsEngineEntity.isDeleted());
+        Assertions.assertEquals(this.getOp(), oqsEngineEntity.getOp());
 
         Map<String, Object> r = attributesToMap(this.attr);
-        Assertions.assertEquals(r.size(), originalEntity.attributeSize());
+        Assertions.assertEquals(r.size(), oqsEngineEntity.attributeSize());
         r.forEach(
             (rk, rv) -> {
-                Object ov = originalEntity.getAttributes().get(rk);
+                Object ov = oqsEngineEntity.getAttributes().get(rk);
                 Assertions.assertEquals(rv, ov);
             }
         );
