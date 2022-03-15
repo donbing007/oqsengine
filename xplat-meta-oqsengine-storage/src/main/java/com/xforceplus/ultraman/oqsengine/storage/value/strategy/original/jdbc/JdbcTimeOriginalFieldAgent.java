@@ -36,7 +36,13 @@ public class JdbcTimeOriginalFieldAgent extends AbstractJdbcOriginalFieldAgent {
     }
 
     @Override
-    public void write(IEntityField field, StorageValue data, WriteJdbcOriginalSource ws) throws Exception {
+    protected void doWriteDefault(IEntityField field, String s, WriteJdbcOriginalSource ws) throws Exception {
+        Time time = Time.valueOf(s);
+        ws.getPreparedStatement().setTime(ws.getColumnNumber(), time);
+    }
+
+    @Override
+    protected void doWrite(IEntityField field, StorageValue data, WriteJdbcOriginalSource ws) throws Exception {
         long value = (long) data.value();
         Time time = new Time(value);
         ws.getPreparedStatement().setTime(ws.getColumnNumber(), time);

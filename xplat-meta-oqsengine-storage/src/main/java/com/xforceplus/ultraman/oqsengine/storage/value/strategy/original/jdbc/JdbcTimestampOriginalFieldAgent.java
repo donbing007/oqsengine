@@ -37,6 +37,16 @@ public class JdbcTimestampOriginalFieldAgent extends AbstractJdbcOriginalFieldAg
 
     @Override
     public void write(IEntityField field, StorageValue data, WriteJdbcOriginalSource ws) throws Exception {
+
+    }
+
+    @Override
+    protected void doWriteDefault(IEntityField field, String s, WriteJdbcOriginalSource ws) throws Exception {
+        ws.getPreparedStatement().setTimestamp(ws.getColumnNumber(), Timestamp.valueOf(s));
+    }
+
+    @Override
+    protected void doWrite(IEntityField field, StorageValue data, WriteJdbcOriginalSource ws) throws Exception {
         long value = (long) data.value();
         Timestamp timestamp = new Timestamp(value);
         ws.getPreparedStatement().setTimestamp(ws.getColumnNumber(), timestamp);

@@ -56,4 +56,19 @@ public class JdbcBlobOriginalFieldAgent extends AbstractJdbcOriginalFieldAgent {
             ws.getPreparedStatement().setBlob(ws.getColumnNumber(), in);
         }
     }
+
+    @Override
+    protected void doWriteDefault(IEntityField field, String s, WriteJdbcOriginalSource ws) throws Exception {
+        try (ByteArrayInputStream in = new ByteArrayInputStream(s.getBytes(StandardCharsets.UTF_8))) {
+            ws.getPreparedStatement().setBlob(ws.getColumnNumber(), in);
+        }
+    }
+
+    @Override
+    protected void doWrite(IEntityField field, StorageValue data, WriteJdbcOriginalSource ws) throws Exception {
+        String value = ((StringStorageValue) data).value();
+        try (ByteArrayInputStream in = new ByteArrayInputStream(value.getBytes(StandardCharsets.UTF_8))) {
+            ws.getPreparedStatement().setBlob(ws.getColumnNumber(), in);
+        }
+    }
 }

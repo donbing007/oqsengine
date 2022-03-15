@@ -33,7 +33,13 @@ public class JdbcBooleanOriginalFieldAgent extends AbstractJdbcOriginalFieldAgen
     }
 
     @Override
-    public void write(IEntityField field, StorageValue data, WriteJdbcOriginalSource ws) throws Exception {
+    protected void doWriteDefault(IEntityField field, String s, WriteJdbcOriginalSource ws) throws Exception {
+        boolean defaultValue = Boolean.parseBoolean(s);
+        ws.getPreparedStatement().setBoolean(ws.getColumnNumber(), defaultValue);
+    }
+
+    @Override
+    protected void doWrite(IEntityField field, StorageValue data, WriteJdbcOriginalSource ws) throws Exception {
         long value = ((LongStorageValue) data).value();
         ws.getPreparedStatement().setBoolean(ws.getColumnNumber(), value == 0 ? false : true);
     }

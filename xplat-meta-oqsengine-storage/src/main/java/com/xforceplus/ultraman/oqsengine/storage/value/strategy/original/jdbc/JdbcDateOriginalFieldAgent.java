@@ -37,7 +37,13 @@ public class JdbcDateOriginalFieldAgent extends AbstractJdbcOriginalFieldAgent {
     }
 
     @Override
-    public void write(IEntityField field, StorageValue data, WriteJdbcOriginalSource ws) throws Exception {
+    protected void doWriteDefault(IEntityField field, String s, WriteJdbcOriginalSource ws) throws Exception {
+        Date defaultDate = Date.valueOf(s);
+        ws.getPreparedStatement().setDate(ws.getColumnNumber(), defaultDate);
+    }
+
+    @Override
+    protected void doWrite(IEntityField field, StorageValue data, WriteJdbcOriginalSource ws) throws Exception {
         long value = ((LongStorageValue) data).value();
         ws.getPreparedStatement().setDate(ws.getColumnNumber(), new Date(value));
     }

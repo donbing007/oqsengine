@@ -37,6 +37,16 @@ public class JdbcFloatOriginalFieldAgent extends AbstractJdbcOriginalFieldAgent 
 
     @Override
     public void write(IEntityField field, StorageValue data, WriteJdbcOriginalSource ws) throws Exception {
+
+    }
+
+    @Override
+    protected void doWriteDefault(IEntityField field, String s, WriteJdbcOriginalSource ws) throws Exception {
+        ws.getPreparedStatement().setFloat(ws.getColumnNumber(), Float.parseFloat(s));
+    }
+
+    @Override
+    protected void doWrite(IEntityField field, StorageValue data, WriteJdbcOriginalSource ws) throws Exception {
         ws.getPreparedStatement().setFloat(ws.getColumnNumber(),
             Float.parseFloat(JdbcOriginalFieldHelper.buildDecimalStorageValuePlainValue(data)));
     }

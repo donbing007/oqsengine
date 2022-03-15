@@ -36,6 +36,17 @@ public class JdbcDoubleOriginalFieldAgent extends AbstractJdbcOriginalFieldAgent
 
     @Override
     public void write(IEntityField field, StorageValue data, WriteJdbcOriginalSource ws) throws Exception {
+
+    }
+
+    @Override
+    protected void doWriteDefault(IEntityField field, String s, WriteJdbcOriginalSource ws) throws Exception {
+        double defaultValue = Double.parseDouble(s);
+        ws.getPreparedStatement().setDouble(ws.getColumnNumber(), defaultValue);
+    }
+
+    @Override
+    protected void doWrite(IEntityField field, StorageValue data, WriteJdbcOriginalSource ws) throws Exception {
         ws.getPreparedStatement().setDouble(ws.getColumnNumber(),
             Double.parseDouble(JdbcOriginalFieldHelper.buildDecimalStorageValuePlainValue(data)));
     }

@@ -36,6 +36,17 @@ public class JdbcIntegerOriginalFieldAgent extends AbstractJdbcOriginalFieldAgen
 
     @Override
     public void write(IEntityField field, StorageValue data, WriteJdbcOriginalSource ws) throws Exception {
+
+    }
+
+    @Override
+    protected void doWriteDefault(IEntityField field, String s, WriteJdbcOriginalSource ws) throws Exception {
+
+        ws.getPreparedStatement().setInt(ws.getColumnNumber(), Integer.parseInt(s));
+    }
+
+    @Override
+    protected void doWrite(IEntityField field, StorageValue data, WriteJdbcOriginalSource ws) throws Exception {
         long value = (long) data.value();
 
         ws.getPreparedStatement().setInt(ws.getColumnNumber(), (int) value);

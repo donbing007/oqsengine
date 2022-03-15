@@ -37,8 +37,13 @@ public class JdbcDecimalOriginalFieldAgent extends AbstractJdbcOriginalFieldAgen
     }
 
     @Override
-    public void write(IEntityField field, StorageValue data, WriteJdbcOriginalSource ws) throws Exception {
+    protected void doWriteDefault(IEntityField field, String s, WriteJdbcOriginalSource ws) throws Exception {
+        BigDecimal defaultBigdecimal = new BigDecimal(s);
+        ws.getPreparedStatement().setBigDecimal(ws.getColumnNumber(), defaultBigdecimal);
+    }
 
+    @Override
+    protected void doWrite(IEntityField field, StorageValue data, WriteJdbcOriginalSource ws) throws Exception {
         ws.getPreparedStatement().setBigDecimal(ws.getColumnNumber(),
             new BigDecimal(JdbcOriginalFieldHelper.buildDecimalStorageValuePlainValue(data)));
     }
