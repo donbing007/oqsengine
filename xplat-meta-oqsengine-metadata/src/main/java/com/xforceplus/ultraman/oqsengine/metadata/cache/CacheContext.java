@@ -57,7 +57,7 @@ public class CacheContext {
     /**
      * 初始化cache.
      */
-    public <V> Cache<String, V> initCache(int maxCacheSize, int cacheExpire) {
+    private  <V> Cache<String, V> initCache(int maxCacheSize, int cacheExpire) {
         return CacheBuilder.newBuilder()
             .maximumSize(maxCacheSize)
             .expireAfterAccess(cacheExpire, TimeUnit.SECONDS)

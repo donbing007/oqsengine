@@ -105,4 +105,9 @@ public interface FieldConfigOrBuilder extends
    * <code>int32 valueFloatScale = 16;</code>
    */
   int getValueFloatScale();
+
+  /**
+   * <code>int32 jdbcType = 17;</code>
+   */
+  int getJdbcType();
 }
