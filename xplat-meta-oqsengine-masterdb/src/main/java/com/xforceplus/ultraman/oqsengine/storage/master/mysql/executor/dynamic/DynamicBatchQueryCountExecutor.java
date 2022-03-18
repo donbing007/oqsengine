@@ -20,6 +20,7 @@ public class DynamicBatchQueryCountExecutor extends AbstractMasterTaskExecutor<L
 
     private long startTime;
     private long endTime;
+    private IEntityClass entityClass;
 
     /**
      * 实例化.
@@ -71,6 +72,14 @@ public class DynamicBatchQueryCountExecutor extends AbstractMasterTaskExecutor<L
                 return rs.getInt("count");
             }
         }
+    }
+
+    public IEntityClass getEntityClass() {
+        return entityClass;
+    }
+
+    public void setEntityClass(IEntityClass entityClass) {
+        this.entityClass = entityClass;
     }
 
     private String buildCountSQL() {

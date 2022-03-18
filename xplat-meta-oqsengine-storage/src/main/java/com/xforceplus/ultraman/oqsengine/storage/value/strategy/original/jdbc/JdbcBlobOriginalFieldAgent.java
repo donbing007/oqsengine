@@ -50,11 +50,10 @@ public class JdbcBlobOriginalFieldAgent extends AbstractJdbcOriginalFieldAgent {
     }
 
     @Override
-    public void write(IEntityField field, StorageValue data, WriteJdbcOriginalSource ws) throws Exception {
+    public String plainText(IEntityField field, StorageValue data) throws Exception {
         String value = ((StringStorageValue) data).value();
-        try (ByteArrayInputStream in = new ByteArrayInputStream(value.getBytes(StandardCharsets.UTF_8))) {
-            ws.getPreparedStatement().setBlob(ws.getColumnNumber(), in);
-        }
+
+        return String.format("\'%s\'", value);
     }
 
     @Override

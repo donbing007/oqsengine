@@ -32,11 +32,6 @@ public class JdbcVarcharOriginalFieldAgent extends AbstractJdbcOriginalFieldAgen
     }
 
     @Override
-    public void write(IEntityField field, StorageValue data, WriteJdbcOriginalSource ws) throws Exception {
-
-    }
-
-    @Override
     protected void doWriteDefault(IEntityField field, String s, WriteJdbcOriginalSource ws) throws Exception {
         ws.getPreparedStatement().setString(ws.getColumnNumber(), s);
     }
@@ -46,5 +41,12 @@ public class JdbcVarcharOriginalFieldAgent extends AbstractJdbcOriginalFieldAgen
         String value = (String) data.value();
 
         ws.getPreparedStatement().setString(ws.getColumnNumber(), value);
+    }
+
+    @Override
+    public String plainText(IEntityField field, StorageValue data) throws Exception {
+        String value = (String) data.value();
+
+        return String.format("\'%s\'", value);
     }
 }

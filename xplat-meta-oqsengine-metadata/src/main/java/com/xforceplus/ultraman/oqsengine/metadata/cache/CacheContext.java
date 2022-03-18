@@ -32,6 +32,12 @@ public class CacheContext {
      */
     private Map<Long, Integer> versions;
 
+    /**
+     * build new context.
+     *
+     * @param maxCacheSize max cache size.
+     * @param cacheExpire Elimination time, in seconds.
+     */
     public CacheContext(int maxCacheSize, int cacheExpire) {
         entityClassStorageCache = initCache(maxCacheSize, cacheExpire);
         profileCache = initCache(maxCacheSize, cacheExpire);

@@ -26,7 +26,7 @@ public class DefaultErrorRecorder implements ErrorRecorder {
 
     final Logger logger = LoggerFactory.getLogger(DefaultErrorRecorder.class);
 
-    final static int MAX_MESSAGE_LENGTH = 500;
+    private static final int MAX_MESSAGE_LENGTH = 500;
 
     @Resource
     private CdcErrorStorage cdcErrorStorage;
@@ -61,8 +61,8 @@ public class DefaultErrorRecorder implements ErrorRecorder {
                                 DATA_FORMAT_ERROR.getType(),
                                 "{}",
                                 (null == value.getMessage()) ? "unKnow error." :
-                                    ((value.getMessage().length() <= MAX_MESSAGE_LENGTH) ?
-                                        value.getMessage() : value.getMessage().substring(0, MAX_MESSAGE_LENGTH)))
+                                    ((value.getMessage().length() <= MAX_MESSAGE_LENGTH)
+                                        ? value.getMessage() : value.getMessage().substring(0, MAX_MESSAGE_LENGTH)))
                     );
                 }
             );

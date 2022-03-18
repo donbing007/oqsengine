@@ -38,12 +38,14 @@ public interface CDCMetricsHandler {
 
     /**
      * 备份当前的指标.
+     *
      * @param cdcMetrics 当前指标对象.
      */
     void backup(CDCMetrics cdcMetrics);
 
     /**
      * 查询指标.
+     *
      * @return 指标对象.
      */
     CDCMetrics query() throws SQLException;
@@ -51,6 +53,7 @@ public interface CDCMetricsHandler {
     /**
      * 查询当前的commitIds列表是否处于可操作状态.
      * 没有准备将进行等待.
+     *
      * @param commitIds 提交号列表.
      */
     void isReady(List<Long> commitIds);
@@ -58,6 +61,7 @@ public interface CDCMetricsHandler {
 
     /**
      * 表示一个新的连接的回调.
+     *
      * @param cdcMetrics 指标对象.
      */
     void renewConnect(CDCMetrics cdcMetrics);

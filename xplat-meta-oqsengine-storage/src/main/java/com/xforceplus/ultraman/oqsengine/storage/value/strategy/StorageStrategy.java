@@ -12,7 +12,6 @@ import com.xforceplus.ultraman.oqsengine.storage.value.StringStorageValue;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * 逻辑类型和储存类型转换策略.
@@ -73,23 +72,6 @@ public interface StorageStrategy {
      * @return 空表示实例.
      */
     StorageValue toEmptyStorageValue(IEntityField field);
-
-    /**
-     * 将逻辑类型的附件转换成储存类型.
-     *
-     * @param value 目标逻辑值逻辑类型.
-     * @return 储存类型.
-     */
-    default Optional<StorageValue> toAttachmentStorageValue(IValue value) {
-        Optional<String> attachmentOp = value.getAttachment();
-        if (!attachmentOp.isPresent()) {
-            return Optional.empty();
-        } else {
-            StringStorageValue sv =
-                new StringStorageValue(Long.toString(value.getField().id()), attachmentOp.get(), true);
-            return Optional.ofNullable(sv);
-        }
-    }
 
     /**
      * 通过离散的物理储存来构造本地的StorageValue.

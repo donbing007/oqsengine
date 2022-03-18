@@ -47,4 +47,9 @@ public class JdbcDecimalOriginalFieldAgent extends AbstractJdbcOriginalFieldAgen
         ws.getPreparedStatement().setBigDecimal(ws.getColumnNumber(),
             new BigDecimal(JdbcOriginalFieldHelper.buildDecimalStorageValuePlainValue(data)));
     }
+
+    @Override
+    public String plainText(IEntityField field, StorageValue data) throws Exception {
+        return JdbcOriginalFieldHelper.buildDecimalStorageValuePlainValue(data);
+    }
 }

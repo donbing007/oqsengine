@@ -50,24 +50,15 @@ public class JdbcBitOriginalFieldAgent extends AbstractJdbcOriginalFieldAgent {
     }
 
     @Override
-    public void write(IEntityField field, StorageValue data, WriteJdbcOriginalSource ws) throws Exception {
+    protected void doWriteDefault(IEntityField field, String s, WriteJdbcOriginalSource ws) throws Exception {
         if (field.type() == FieldType.BOOLEAN) {
 
-            Long value = ((LongStorageValue) data).value();
-
-            ws.getPreparedStatement().setBoolean(ws.getColumnNumber(), value > 0 ? true : false);
+            ws.getPreparedStatement().setBoolean(ws.getColumnNumber(), Boolean.parseBoolean(s));
 
         } else {
 
-            String value = ((StringStorageValue) data).value();
-            byte[] bytes = value.getBytes(StandardCharsets.UTF_8);
-            ws.getPreparedStatement().setBytes(ws.getColumnNumber(), bytes);
+            ws.getPreparedStatement().setBytes(ws.getColumnNumber(), s.getBytes(StandardCharsets.UTF_8));
         }
-    }
-
-    @Override
-    protected void doWriteDefault(IEntityField field, String s, WriteJdbcOriginalSource ws) throws Exception {
-        
     }
 
     @Override
@@ -83,6 +74,17 @@ public class JdbcBitOriginalFieldAgent extends AbstractJdbcOriginalFieldAgent {
             String value = ((StringStorageValue) data).value();
             byte[] bytes = value.getBytes(StandardCharsets.UTF_8);
             ws.getPreparedStatement().setBytes(ws.getColumnNumber(), bytes);
+        }
+    }
+
+    @Override
+    public String plainText(IEntityField field, StorageValue data) throws Exception {
+        if (field.type() == FieldType.BOOLEAN) {
+            Long value = ((LongStorageValue) data).value();
+            return Boolean.toString(value > 0 ? true : false);
+        } else {
+            String value = ((StringStorageValue) data).value();
+            return String.format("\'%s\'", value);
         }
     }
 }

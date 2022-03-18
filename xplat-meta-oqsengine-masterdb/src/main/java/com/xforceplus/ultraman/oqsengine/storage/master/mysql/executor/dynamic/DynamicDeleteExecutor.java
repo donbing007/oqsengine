@@ -36,6 +36,7 @@ public class DynamicDeleteExecutor extends AbstractMasterTaskExecutor<BaseMaster
         // 判断是否为单个操作.
         boolean single = masterStorageEntities.length == 1;
 
+        boolean[] results;
         if (single) {
             BaseMasterStorageEntity entity = masterStorageEntities[0];
 
@@ -44,7 +45,7 @@ public class DynamicDeleteExecutor extends AbstractMasterTaskExecutor<BaseMaster
                 checkTimeout(st);
 
                 setParam(entity, st);
-                return executedUpdate(st, false);
+                results = executedUpdate(st, false);
             }
 
         } else {
@@ -56,9 +57,12 @@ public class DynamicDeleteExecutor extends AbstractMasterTaskExecutor<BaseMaster
 
                     st.addBatch();
                 }
-                return executedUpdate(st, true);
+                results = executedUpdate(st, true);
             }
         }
+
+        setDynamicProcessStatus(masterStorageEntities, results);
+        return results;
     }
 
     private void setParam(BaseMasterStorageEntity entity, PreparedStatement st) throws SQLException {
@@ -69,7 +73,6 @@ public class DynamicDeleteExecutor extends AbstractMasterTaskExecutor<BaseMaster
         st.setInt(5, entity.getOp());
         st.setInt(6, entity.getEntityClassVersion());
         st.setLong(7, entity.getId());
-        st.setInt(8, entity.getVersion());
     }
 
     private String buildSQL() {

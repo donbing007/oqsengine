@@ -70,7 +70,7 @@ public class DynamicBinLogParser implements BinLogParser {
                 toOriginalEntity(entityClass, id, commitId, columns, parserContext);
 
             //  动态结构直接加入到结果对象中
-            parseResult.getFinishEntries().put(id, originalEntity);
+            parseResult.getFinishEntries().put(id, oqsEngineEntity);
         } catch (Exception e) {
             if (commitId != CommitHelper.getUncommitId()) {
                 if (commitId != UN_KNOW_ID) {
@@ -96,16 +96,15 @@ public class DynamicBinLogParser implements BinLogParser {
     /**
      * 按照当前的columns生成一条最终的索引记录.
      *
-     * @param entityClass entityClass.
-     * @param id 数据主键ID.
-     * @param commitId 提交号.
-     * @param columns 原始数据.
+     * @param entityClass   entityClass.
+     * @param id            数据主键ID.
+     * @param commitId      提交号.
+     * @param columns       原始数据.
      * @param parserContext 上下文.
-     * @return
-     * @throws SQLException
      */
     private OqsEngineEntity toOriginalEntity(IEntityClass entityClass, long id, long commitId,
-                                             List<CanalEntry.Column> columns, ParserContext parserContext) throws SQLException {
+                                             List<CanalEntry.Column> columns, ParserContext parserContext)
+        throws SQLException {
 
         OqsEngineEntity.Builder builder = OqsEngineEntity.Builder.anOriginalEntity();
 
@@ -156,10 +155,9 @@ public class DynamicBinLogParser implements BinLogParser {
     /**
      * 转换attribute.
      *
-     * @param id 主键id.
+     * @param id      主键id.
      * @param columns 原始数据集.
      * @return 对象键值对.
-     * @throws SQLException
      */
     private Map<String, Object> attrCollection(long id, List<CanalEntry.Column> columns) throws SQLException {
 
@@ -172,7 +170,8 @@ public class DynamicBinLogParser implements BinLogParser {
             return attributesToMap(attrStr);
         } catch (Exception e) {
             String error = String
-                .format("[dynamic-binlog-parser] id : %d, jsonToObject error, message : %s, attrStr %s.", id, e.getMessage(), attrStr);
+                .format("[dynamic-binlog-parser] id : %d, jsonToObject error, message : %s, attrStr %s.", id,
+                    e.getMessage(), attrStr);
             logger.warn(error);
             throw new SQLException(error);
         }
@@ -180,11 +179,10 @@ public class DynamicBinLogParser implements BinLogParser {
 
     /**
      * 获取当前的entityClass.
-     * @param id 主键id.
-     * @param columns 原始数据集.
+     *
+     * @param id            主键id.
+     * @param columns       原始数据集.
      * @param parserContext 上下文.
-     * @return
-     * @throws SQLException
      */
     private IEntityClass getEntityClass(long id, List<CanalEntry.Column> columns, ParserContext parserContext)
         throws SQLException {
@@ -217,8 +215,8 @@ public class DynamicBinLogParser implements BinLogParser {
     /**
      * 检查commitId是否ready，将数据加入到结果集中.
      *
-     * @param commitId commitId.
-     * @param id 主键Id.
+     * @param commitId      commitId.
+     * @param id            主键Id.
      * @param parserContext 上下文.
      */
     private void addToReadyChecks(long commitId, long id, ParserContext parserContext, ParseResult parseResult) {
@@ -231,14 +229,14 @@ public class DynamicBinLogParser implements BinLogParser {
              */
             if (!parseResult.getCommitIds().contains(commitId)) {
                 if (commitId > parserContext.getSkipCommitId()
-                    || (commitId == NO_TRANSACTION_COMMIT_ID &&
-                    parserContext.getSkipCommitId() != NO_TRANSACTION_COMMIT_ID)
+                    || (commitId == NO_TRANSACTION_COMMIT_ID
+                    && parserContext.getSkipCommitId() != NO_TRANSACTION_COMMIT_ID)
                     || (DevOpsUtils.isMaintainRecord(commitId))) {
 
                     //  不需要checkReady的情况.
-                    if (parserContext.isCheckCommitReady() &&
-                        !DevOpsUtils.isMaintainRecord(commitId) &&
-                        commitId != NO_TRANSACTION_COMMIT_ID) {
+                    if (parserContext.isCheckCommitReady()
+                        && !DevOpsUtils.isMaintainRecord(commitId)
+                        && commitId != NO_TRANSACTION_COMMIT_ID) {
 
                         parseResult.getCommitIds().add(commitId);
                     }
@@ -247,8 +245,8 @@ public class DynamicBinLogParser implements BinLogParser {
                     parserContext.getCdcMetrics().getCdcUnCommitMetrics().getUnCommitIds().add(commitId);
                 } else {
                     logger.warn(
-                        "[dynamic-binlog-parser] batch : {}, ignore commitId less than skipCommitId, " +
-                            "current id : {}, commitId : {}, skipCommitId : {}",
+                        "[dynamic-binlog-parser] batch : {}, ignore commitId less than skipCommitId, "
+                            + "current id : {}, commitId : {}, skipCommitId : {}",
                         parserContext.getCdcMetrics(), id, commitId, parserContext.getSkipCommitId());
                 }
             }

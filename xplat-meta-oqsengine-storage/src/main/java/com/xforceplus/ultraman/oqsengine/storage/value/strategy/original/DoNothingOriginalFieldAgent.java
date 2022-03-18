@@ -20,12 +20,17 @@ public class DoNothingOriginalFieldAgent implements OriginalFieldAgent {
 
 
     @Override
-    public StorageValue read(IEntityField field, Object originalData) {
-        return null;
+    public StorageValue read(IEntityField field, Object originalData) throws Exception {
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void write(IEntityField field, StorageValue data, Object originalData) throws Exception {
+        throw new UnsupportedOperationException();
+    }
 
+    @Override
+    public String plainText(IEntityField field, StorageValue data) throws Exception {
+        throw new UnsupportedOperationException();
     }
 }

@@ -8,6 +8,7 @@ import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StringStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
+import java.util.Optional;
 
 /**
  * 逻辑类型为字符串的处理策略.
@@ -34,17 +35,24 @@ public class StringStorageStrategy implements StorageStrategy {
 
     @Override
     public StorageValue toStorageValue(IValue value) {
-        StorageValue<String> storageValue =
+        StringStorageValue storageValue =
             new StringStorageValue(Long.toString(value.getField().id()), (String) value.getValue(), true);
 
         storageValue.notLocationAppend();
+
+        Optional<String> attachment = value.getAttachment();
+        if (attachment.isPresent()) {
+            StringStorageValue attachemntStorageValue =
+                new StringStorageValue(Long.toString(value.getField().id()), attachment.get(), true);
+            storageValue.setAttachment(attachemntStorageValue);
+        }
 
         return storageValue;
     }
 
     @Override
     public StorageValue toEmptyStorageValue(IEntityField field) {
-        return new StringStorageValue(Long.toString(field.id()), "", true);
+        return new StringStorageValue(Long.toString(field.id()), true);
     }
 
     @Override

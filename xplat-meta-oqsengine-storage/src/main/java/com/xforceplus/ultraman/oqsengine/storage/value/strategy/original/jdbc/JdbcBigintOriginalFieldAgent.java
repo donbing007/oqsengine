@@ -44,4 +44,10 @@ public class JdbcBigintOriginalFieldAgent extends AbstractJdbcOriginalFieldAgent
         long value = ((LongStorageValue) data).value();
         ws.getPreparedStatement().setLong(ws.getColumnNumber(), value);
     }
+
+    @Override
+    public String plainText(IEntityField field, StorageValue data) throws Exception {
+        long value = ((LongStorageValue) data).value();
+        return Long.toString(value);
+    }
 }

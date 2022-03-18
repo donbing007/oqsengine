@@ -7,10 +7,8 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.original.jdbc.JdbcOriginalFieldAgent;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.original.jdbc.JdbcOriginalFieldAgentFactory;
-import com.xforceplus.ultraman.oqsengine.storage.value.strategy.original.jdbc.helper.WriteJdbcOriginalSource;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.util.Collection;
+import java.sql.Statement;
 import java.util.Map;
 
 /**
@@ -39,45 +37,31 @@ public class OriginalBuildExecutor extends
         构造SQL,和字段的填需要保证同样的迭代顺序.
         这里依赖IEntityClass.fields() 方法的迭代顺序,多次迭代需要是顺序一致的.
          */
-        String sql = buildSql();
-        try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
+        try (Statement st = getResource().value().createStatement()) {
             checkTimeout(st);
 
             for (MapAttributeMasterStorageEntity<IEntityField, StorageValue> e : storageEntities) {
 
-                Collection<IEntityField> fields = getEntityClass().fields();
-                Map<IEntityField, StorageValue> attributes = e.getAttributes();
+                String sql = buildSql(e);
 
-                /*
-                会处理当前元信息定义的静态字段的所有属性信息.
-                 */
-                // 当前字段的顺序.从1开始.
-                int fieldIndex = 1;
-                for (IEntityField field : fields) {
-
-                    StorageValue storageValue = attributes.get(field);
-                    JdbcOriginalFieldAgent agent =
-                        (JdbcOriginalFieldAgent) JdbcOriginalFieldAgentFactory.getInstance().getAgent(
-                            field.config().getJdbcType());
-                    agent.write(field, storageValue, new WriteJdbcOriginalSource(fieldIndex++, st));
-
-                }
-
-                st.addBatch();
+                st.addBatch(sql);
             }
 
-            return this.executedUpdate(st, true);
+            boolean[] results = this.executedUpdate(st, true);
+            setOriginalProcessStatus(storageEntities, results);
+            return results;
         }
     }
 
-    private String buildSql() {
+    private String buildSql(MapAttributeMasterStorageEntity<IEntityField, StorageValue> entity) throws Exception {
         StringBuilder buff = new StringBuilder();
         // INSERT INTO oqs_app_bussiness_profile (id,  语句的前半段.
-        buff.append("INSERT INTO ").append(buildOriginalTableName())
+        buff.append("INSERT INTO ").append(entity.getOriginalTableName())
             .append(" (").append(FieldDefine.ID).append(",");
 
         int emptyLen = buff.length();
-        for (IEntityField f : getEntityClass().fields()) {
+        Map<IEntityField, StorageValue> attributes = entity.getAttributes();
+        for (IEntityField f : attributes.keySet()) {
             if (buff.length() > emptyLen) {
                 buff.append(",");
             }
@@ -88,16 +72,22 @@ public class OriginalBuildExecutor extends
         // 字段定义的闭合括号
         buff.append(") ");
 
-        // 根据字段数量生成 "?".
         buff.append("VALUES (");
+        buff.append(entity.getId());
 
         emptyLen = buff.length();
-        for (IEntityField f : getEntityClass().fields()) {
+
+        for (IEntityField field : attributes.keySet()) {
             if (buff.length() > emptyLen) {
                 buff.append(", ");
             }
 
-            buff.append("?");
+            JdbcOriginalFieldAgent agent =
+                (JdbcOriginalFieldAgent) JdbcOriginalFieldAgentFactory.getInstance().getAgent(
+                    field.config().getJdbcType());
+            String plainText = agent.plainText(field, attributes.get(field));
+
+            buff.append(plainText);
         }
 
         buff.append(")");

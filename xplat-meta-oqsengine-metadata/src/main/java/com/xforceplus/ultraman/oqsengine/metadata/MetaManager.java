@@ -52,8 +52,8 @@ public interface MetaManager {
      * 加载指定的IEntityClass实例.
      *
      * @param entityClassId 元信息标识.
-     * @param version 版本.
-     * @param profile 个性化定制标识.
+     * @param version       版本.
+     * @param profile       个性化定制标识.
      * @return 元信息的实例.
      */
     Optional<IEntityClass> load(long entityClassId, int version, String profile);
@@ -78,8 +78,8 @@ public interface MetaManager {
      * 表示需要关注此appId代表的应用的元信息.
      *
      * @param appId 应用标识.
-     * @return 当前的元信息版本号.小于0表示没有持有任何版本的元信息.
      * @param reset 是否为重置.
+     * @return 当前的元信息版本号.小于0表示没有持有任何版本的元信息.
      */
     int need(String appId, String env, boolean reset);
 
@@ -91,11 +91,11 @@ public interface MetaManager {
 
     /**
      * 导入Meta信息.
-     * @param appId 应用ID.
-     * @param env 环境CODE.
+     *
+     * @param appId   应用ID.
+     * @param env     环境CODE.
      * @param version 应用版本.
      * @param content 应用的entityClass json.
-     * @return
      */
     boolean metaImport(String appId, String env, int version, String content);
 
@@ -104,7 +104,6 @@ public interface MetaManager {
      *
      * @param appId 应用ID.
      * @return MetaMetrics指标.
-     * @throws Exception
      */
     Optional<MetaMetrics> showMeta(String appId) throws Exception;
 
@@ -122,7 +121,7 @@ public interface MetaManager {
      * 表示将刷新某个appId所关注的env信息.
      *
      * @param appId 应用标识.
-     * @param env 环境标识.
+     * @param env   环境标识.
      * @return 当前的元信息版本号, 小于0表示没有持有任何版本的元信息.
      */
     int reset(String appId, String env);

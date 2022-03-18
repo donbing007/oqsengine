@@ -605,14 +605,12 @@ public class SphinxQLManticoreIndexStorageTest {
                     long v = faker.number().numberBetween(1, Long.MAX_VALUE);
                     IValue iv = new LongValue(f, v, Long.toString(v));
                     svs.add(storageStrategy.toStorageValue(iv));
-                    svs.add(storageStrategy.toAttachmentStorageValue(iv).get());
                     break;
                 }
                 case "l0-string": {
                     String v = faker.name().fullName();
                     IValue iv = new StringValue(f, v, v);
                     svs.add(storageStrategy.toStorageValue(iv));
-                    svs.add(storageStrategy.toAttachmentStorageValue(iv).get());
                     break;
                 }
                 case "l0-strings": {
@@ -632,21 +630,18 @@ public class SphinxQLManticoreIndexStorageTest {
                     long v = faker.number().numberBetween(100, 200);
                     IValue iv = new LongValue(f, v, Long.toString(v));
                     svs.add(storageStrategy.toStorageValue(iv));
-                    svs.add(storageStrategy.toAttachmentStorageValue(iv).get());
                     break;
                 }
                 case "l1-string": {
                     String v = faker.phoneNumber().cellPhone();
                     IValue iv = new StringValue(f, v, v);
                     svs.add(storageStrategy.toStorageValue(iv));
-                    svs.add(storageStrategy.toAttachmentStorageValue(iv).get());
                     break;
                 }
                 case "l2-string": {
                     String v = faker.idNumber().invalid();
                     IValue iv = new StringValue(f, v, v);
                     svs.add(storageStrategy.toStorageValue(iv));
-                    svs.add(storageStrategy.toAttachmentStorageValue(iv).get());
                     break;
                 }
                 case "l2-time": {
@@ -654,14 +649,12 @@ public class SphinxQLManticoreIndexStorageTest {
                         LocalDateTime.ofInstant(faker.date().birthday().toInstant(), ZoneId.systemDefault());
                     IValue iv = new DateTimeValue(f, localDateTime, localDateTime.toString());
                     svs.add(storageStrategy.toStorageValue(iv));
-                    svs.add(storageStrategy.toAttachmentStorageValue(iv).get());
                     break;
                 }
                 case "l2-enum": {
                     String v = faker.color().name();
                     IValue iv = new EnumValue(f, v, v);
                     svs.add(storageStrategy.toStorageValue(iv));
-                    svs.add(storageStrategy.toAttachmentStorageValue(iv).get());
                     break;
                 }
                 case "l2-dec": {

@@ -3,13 +3,22 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.entity;
 import java.sql.SQLException;
 
 /**
- * Created by justin.xu on 02/2022.
+ * 定义了元信息的类型.
  *
  * @since 1.8
  */
 public enum EntityClassType {
+    /**
+     * 未知.一般表示发生了某种错误.
+     */
     UNKNOWN(0),
-    STATIC(1),
+    /**
+     * 原始类型.
+     */
+    ORIGINAL(1),
+    /**
+     * OQS托管类型.
+     */
     DYNAMIC(2);
 
     private int type;

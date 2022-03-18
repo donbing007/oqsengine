@@ -7,6 +7,7 @@ import com.xforceplus.ultraman.oqsengine.storage.value.strategy.original.jdbc.he
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.original.jdbc.helper.WriteJdbcOriginalSource;
 import java.sql.Time;
 import java.sql.Types;
+import java.text.SimpleDateFormat;
 
 /**
  * Types.TIME 的代理.
@@ -46,5 +47,13 @@ public class JdbcTimeOriginalFieldAgent extends AbstractJdbcOriginalFieldAgent {
         long value = (long) data.value();
         Time time = new Time(value);
         ws.getPreparedStatement().setTime(ws.getColumnNumber(), time);
+    }
+
+    @Override
+    public String plainText(IEntityField field, StorageValue data) throws Exception {
+        long value = ((LongStorageValue) data).value();
+
+        SimpleDateFormat format = new SimpleDateFormat("HH:MM:SS");
+        return String.format("\'%s\'", format.format(new Time(value)));
     }
 }

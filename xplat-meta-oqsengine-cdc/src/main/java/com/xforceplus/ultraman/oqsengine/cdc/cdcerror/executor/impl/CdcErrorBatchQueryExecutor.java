@@ -19,7 +19,7 @@ import javax.sql.DataSource;
  *
  * @since 1.8
  */
-public class CdcErrorBatchQueryExecutor extends AbstractDevOpsExecutor<Collection<String>, Collection<CdcErrorTask>>{
+public class CdcErrorBatchQueryExecutor extends AbstractDevOpsExecutor<Collection<String>, Collection<CdcErrorTask>> {
 
     public CdcErrorBatchQueryExecutor(String tableName, DataSource dataSource, long timeoutMs) {
         super(tableName, dataSource, timeoutMs);
@@ -37,10 +37,10 @@ public class CdcErrorBatchQueryExecutor extends AbstractDevOpsExecutor<Collectio
         }
 
         String sql = String.format(buildSQL(),
-            res.stream().map(e -> {return "'" + e + "'";}).collect(Collectors.joining(",")));
+            res.stream().map(e -> "'" + e + "'").collect(Collectors.joining(",")));
 
         try (Connection connection = getDataSource().getConnection();
-            PreparedStatement st = connection.prepareStatement(sql)) {
+             PreparedStatement st = connection.prepareStatement(sql)) {
             if (logger.isDebugEnabled()) {
                 logger.debug(st.toString());
             }

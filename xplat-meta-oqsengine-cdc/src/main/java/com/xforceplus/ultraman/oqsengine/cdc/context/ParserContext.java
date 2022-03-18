@@ -15,7 +15,7 @@ public class ParserContext {
      */
     private long skipCommitId;
     /**
-     * 是否进行commit-id的isReady-check
+     * 是否进行commit-id的isReady-check.
      */
     private boolean checkCommitReady;
     /**
@@ -32,6 +32,14 @@ public class ParserContext {
      */
     private CDCMetrics cdcMetrics;
 
+    /**
+     * 构造新的实例.
+     *
+     * @param skipCommitId     需要跳过的提交号.
+     * @param checkCommitReady 是否检查提交号状态.
+     * @param cdcMetrics       CDC指标器.
+     * @param metaManager      元数据管理.
+     */
     public ParserContext(long skipCommitId, boolean checkCommitReady, CDCMetrics cdcMetrics, MetaManager metaManager) {
         this.skipCommitId = skipCommitId;
         this.checkCommitReady = checkCommitReady;

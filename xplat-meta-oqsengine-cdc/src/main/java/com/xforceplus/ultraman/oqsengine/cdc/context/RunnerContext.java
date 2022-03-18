@@ -18,6 +18,9 @@ public class RunnerContext {
 
     private volatile RunningStatus runningStatus;
 
+    /**
+     * 构造实例.
+     */
     public RunnerContext() {
         cdcMetrics = new CDCMetrics();
         continuesConnectFails = 0;
@@ -28,6 +31,9 @@ public class RunnerContext {
         return cdcMetrics;
     }
 
+    /**
+     * 设置CDC指标.
+     */
     public void setCdcMetrics(CDCMetrics cdcMetrics) {
         this.cdcMetrics = cdcMetrics;
 

@@ -7,6 +7,7 @@ import com.xforceplus.ultraman.oqsengine.storage.value.strategy.original.jdbc.he
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.original.jdbc.helper.WriteJdbcOriginalSource;
 import java.sql.Timestamp;
 import java.sql.Types;
+import java.text.SimpleDateFormat;
 
 /**
  * Types.TIMESTAMP 类型支持.
@@ -36,11 +37,6 @@ public class JdbcTimestampOriginalFieldAgent extends AbstractJdbcOriginalFieldAg
     }
 
     @Override
-    public void write(IEntityField field, StorageValue data, WriteJdbcOriginalSource ws) throws Exception {
-
-    }
-
-    @Override
     protected void doWriteDefault(IEntityField field, String s, WriteJdbcOriginalSource ws) throws Exception {
         ws.getPreparedStatement().setTimestamp(ws.getColumnNumber(), Timestamp.valueOf(s));
     }
@@ -50,5 +46,14 @@ public class JdbcTimestampOriginalFieldAgent extends AbstractJdbcOriginalFieldAg
         long value = (long) data.value();
         Timestamp timestamp = new Timestamp(value);
         ws.getPreparedStatement().setTimestamp(ws.getColumnNumber(), timestamp);
+    }
+
+    @Override
+    public String plainText(IEntityField field, StorageValue data) throws Exception {
+        long value = (long) data.value();
+        Timestamp timestamp = new Timestamp(value);
+
+        SimpleDateFormat format = new SimpleDateFormat("YYYY-MM-DD HH:MM:SS");
+        return String.format("\'%s\'", format.format(timestamp));
     }
 }

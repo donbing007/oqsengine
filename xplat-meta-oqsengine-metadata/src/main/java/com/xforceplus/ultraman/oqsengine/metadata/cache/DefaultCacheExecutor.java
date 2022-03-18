@@ -322,8 +322,12 @@ public class DefaultCacheExecutor implements CacheExecutor {
             entityClassStorageListScriptSha = syncCommands.scriptLoad(ENTITY_CLASS_STORAGE_INFO_LIST);
         }
 
-        lifeCycleThread = new PollingThreadExecutor<Void>("metaVersionCached", versionCacheRefreshDuration,
-                                            TimeUnit.SECONDS, maxWait, (n) -> { cachedVersion(); }, null);
+        lifeCycleThread = new PollingThreadExecutor(
+            "metaVersionCached",
+            versionCacheRefreshDuration,
+            TimeUnit.SECONDS, maxWait,
+            (n) -> cachedVersion(),
+            null);
 
         lifeCycleThread.start();
     }

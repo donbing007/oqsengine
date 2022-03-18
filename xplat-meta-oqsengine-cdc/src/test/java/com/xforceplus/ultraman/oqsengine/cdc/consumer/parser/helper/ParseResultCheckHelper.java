@@ -15,7 +15,13 @@ import org.junit.jupiter.api.Assertions;
  */
 public class ParseResultCheckHelper {
 
-    public static void dynamicCheck(DynamicCanalEntryCase expected, OriginalEntity actual) throws JsonProcessingException {
+    /**
+     * 动态信息检查.
+     *
+     * @param expected 预期.
+     * @param actual 实际.
+     */
+    public static void dynamicCheck(DynamicCanalEntryCase expected, OqsEngineEntity actual) throws JsonProcessingException {
         Assertions.assertEquals(expected.getId(), actual.getId());
         Assertions.assertEquals(expected.isDeleted(), actual.isDeleted());
         Assertions.assertEquals(expected.isDeleted() ? OperationType.DELETE.getValue() : OperationType.UPDATE.getValue(), actual.getOp());

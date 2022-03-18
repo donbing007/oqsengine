@@ -10,6 +10,7 @@ import com.xforceplus.ultraman.oqsengine.storage.value.StringStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * 多字符串转换策略.
@@ -51,8 +52,8 @@ public class StringsStorageStrategy implements StorageStrategy {
         }
 
 
-        StorageValue head = null;
-        StorageValue point;
+        StringStorageValue head = null;
+        StringStorageValue point;
         for (String v : values) {
             point = new StringStorageValue(Long.toString(value.getField().id()), v, true);
 
@@ -60,8 +61,15 @@ public class StringsStorageStrategy implements StorageStrategy {
                 head = point;
                 head.locate(0);
             } else {
-                head = head.stick(point);
+                head = (StringStorageValue) head.stick(point);
             }
+        }
+
+        Optional<String> attachment = value.getAttachment();
+        if (attachment.isPresent()) {
+            StringStorageValue attachemntStorageValue =
+                new StringStorageValue(Long.toString(value.getField().id()), attachment.get(), true);
+            head.setAttachment(attachemntStorageValue);
         }
 
         return head;
@@ -69,7 +77,7 @@ public class StringsStorageStrategy implements StorageStrategy {
 
     @Override
     public StorageValue toEmptyStorageValue(IEntityField field) {
-        return new StringStorageValue(Long.toString(field.id()), "", true);
+        return new StringStorageValue(Long.toString(field.id()),  true);
     }
 
     @Override

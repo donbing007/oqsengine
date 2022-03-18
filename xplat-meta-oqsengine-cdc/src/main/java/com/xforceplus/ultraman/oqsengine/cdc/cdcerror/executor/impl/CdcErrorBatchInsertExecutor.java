@@ -15,7 +15,9 @@ import javax.sql.DataSource;
  *
  * @since 1.8
  */
-public class CdcErrorBatchInsertExecutor  extends AbstractDevOpsExecutor<Collection<CdcErrorTask>, Boolean>{
+public class CdcErrorBatchInsertExecutor extends AbstractDevOpsExecutor<Collection<CdcErrorTask>, Boolean> {
+
+    private static final String VALUES_TEMPLATE = "(?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
     public CdcErrorBatchInsertExecutor(String tableName, DataSource dataSource, long timeoutMs) {
         super(tableName, dataSource, timeoutMs);
@@ -63,7 +65,7 @@ public class CdcErrorBatchInsertExecutor  extends AbstractDevOpsExecutor<Collect
             int success = 0;
             for (int i = 0; i < flags.length; i++) {
                 if (flags[i] > 0 || flags[i] == Statement.SUCCESS_NO_INFO) {
-                    success ++;
+                    success++;
                 }
             }
 
@@ -99,6 +101,4 @@ public class CdcErrorBatchInsertExecutor  extends AbstractDevOpsExecutor<Collect
 
         return sql.toString();
     }
-
-    private static final String VALUES_TEMPLATE = "(?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 }

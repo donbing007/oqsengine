@@ -1,7 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.original;
 
-import com.xforceplus.ultraman.oqsengine.common.profile.OqsProfile;
 import com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.AbstractMasterTaskExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.master.mysql.pojo.BaseMasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import java.sql.Connection;
 import java.sql.ResultSetMetaData;
@@ -29,28 +29,10 @@ public abstract class AbstractOriginalMasterTaskExecutor<R, T> extends AbstractM
     }
 
     /**
-     * 构造静态表名, oqs_{应用code}_{对象code}_{定制}.
-     */
-    protected String buildOriginalTableName() {
-
-        StringBuilder buff = new StringBuilder();
-        buff.append("oqs_")
-            .append(getEntityClass().appCode())
-            .append('_')
-            .append(getEntityClass().code());
-        if (!getEntityClass().profile().equals(OqsProfile.UN_DEFINE_PROFILE)) {
-            buff.append('_')
-                .append(getEntityClass().profile());
-        }
-
-        return buff.toString();
-    }
-
-    /**
      * 获取指定字段名称的JDBC类型.
      *
      * @param metaData 元信息.
-     * @param name 字段名称.
+     * @param name     字段名称.
      * @return java.sql.Types 中定义的值. Types.NULL 表示没有找到类型.
      * @throws SQLException 异常.
      */
@@ -63,6 +45,18 @@ public abstract class AbstractOriginalMasterTaskExecutor<R, T> extends AbstractM
         }
 
         return Types.NULL;
+    }
+
+    /**
+     * 设置静态对象操作状态.
+     *
+     * @param storageEntities 实体表示.
+     * @param results         操作结果.
+     */
+    protected void setOriginalProcessStatus(BaseMasterStorageEntity[] storageEntities, boolean[] results) {
+        for (int i = 0; i < storageEntities.length; i++) {
+            storageEntities[i].setOriginalSucess(results[i]);
+        }
     }
 
 }

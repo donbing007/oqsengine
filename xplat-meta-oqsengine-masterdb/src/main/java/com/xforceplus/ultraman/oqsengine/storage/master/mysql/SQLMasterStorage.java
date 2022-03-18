@@ -13,6 +13,7 @@ import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
@@ -24,7 +25,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.ValueWithEmpty;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.dynamic.DynamicBatchQueryCountExecutor;
@@ -36,6 +36,9 @@ import com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.dynamic.D
 import com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.dynamic.DynamicQueryByConditionsExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.dynamic.DynamicQueryExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.dynamic.DynamicUpdateExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.original.OriginalBuildExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.original.OriginalDeleteExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.original.OriginalUpdateExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.rebuild.DevOpsRebuildExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.mysql.pojo.BaseMasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.mysql.pojo.JsonAttributeMasterStorageEntity;
@@ -290,30 +293,7 @@ public class SQLMasterStorage implements MasterStorage {
         extraTags = {"initiator", "master", "action", "build"})
     @Override
     public boolean build(IEntity entity, IEntityClass entityClass) throws SQLException {
-        checkId(entity);
-
-        if (!entity.isDirty()) {
-            return true;
-        }
-
-        boolean result = (boolean) transactionExecutor.execute(
-            (tx, resource, hint) -> {
-
-                JsonAttributeMasterStorageEntity
-                    entityForBuild = buildNewMasterStorageEntity(entity, entityClass, resource);
-
-                boolean[] results = DynamicBuildExecutor.build(dynamicTableName, resource, queryTimeout)
-                    .execute(new JsonAttributeMasterStorageEntity[] {entityForBuild});
-
-                final int first = 0;
-                return results[first];
-            });
-
-        if (result) {
-            entity.neat();
-        }
-
-        return result;
+        return doBuildOrReplace(entity, entityClass, true);
     }
 
     @Timed(
@@ -322,50 +302,7 @@ public class SQLMasterStorage implements MasterStorage {
         extraTags = {"initiator", "master", "action", "builds"})
     @Override
     public void build(EntityPackage entityPackage) throws SQLException {
-        checkId(entityPackage);
-
-        JsonAttributeMasterStorageEntity[] masterStorageEntities =
-            new JsonAttributeMasterStorageEntity[entityPackage.size()];
-
-        boolean[] results = (boolean[]) transactionExecutor.execute(
-            (tx, resource, hint) -> {
-
-                Map.Entry<IEntity, IEntityClass> entry;
-                IEntity entity;
-                IEntityClass entityClass;
-                int size = entityPackage.size();
-                for (int i = 0; i < size; i++) {
-                    entry = entityPackage.getNotSafe(i);
-                    entity = entry.getKey();
-
-                    if (entity.isDirty()) {
-
-                        entityClass = entry.getValue();
-
-                        masterStorageEntities[i] = buildNewMasterStorageEntity(entity, entityClass, resource);
-
-                    } else {
-
-                        masterStorageEntities[i] = EMPTY_JSON_STORAGE_ENTITY;
-
-                    }
-                }
-
-                return DynamicBuildExecutor.build(dynamicTableName, resource, queryTimeout).execute(
-                    Arrays.stream(masterStorageEntities)
-                        .filter(se -> EMPTY_JSON_STORAGE_ENTITY != se).toArray(JsonAttributeMasterStorageEntity[]::new)
-                );
-            }
-        );
-
-        int resultsCursor = 0;
-        for (int i = 0; i < masterStorageEntities.length; i++) {
-            if (EMPTY_JSON_STORAGE_ENTITY != masterStorageEntities[i]) {
-                if (results[resultsCursor++]) {
-                    entityPackage.getNotSafe(i).getKey().neat();
-                }
-            }
-        }
+        doBatchBuildOrReplace(entityPackage, true);
     }
 
     @Timed(
@@ -375,30 +312,7 @@ public class SQLMasterStorage implements MasterStorage {
     )
     @Override
     public boolean replace(IEntity entity, IEntityClass entityClass) throws SQLException {
-        checkId(entity);
-
-        if (!entity.isDirty()) {
-            return true;
-        }
-
-        boolean result = (boolean) transactionExecutor.execute(
-            (tx, resource, hint) -> {
-
-                MapAttributeMasterStorageEntity<String, Object> masterStorageEntity =
-                    buildReplaceMasterStorageEntity(entity, entityClass, resource);
-
-                boolean[] results = DynamicUpdateExecutor.build(dynamicTableName, resource, queryTimeout)
-                    .execute(new MapAttributeMasterStorageEntity[] {masterStorageEntity});
-
-                final int first = 0;
-                return results[first];
-            });
-
-        if (result) {
-            entity.neat();
-        }
-
-        return result;
+        return doBuildOrReplace(entity, entityClass, false);
     }
 
     @Timed(
@@ -408,49 +322,7 @@ public class SQLMasterStorage implements MasterStorage {
     )
     @Override
     public void replace(EntityPackage entityPackage) throws SQLException {
-        checkId(entityPackage);
-
-        MapAttributeMasterStorageEntity<String, Object>[] masterStorageEntities =
-            new MapAttributeMasterStorageEntity[entityPackage.size()];
-
-        boolean[] results = (boolean[]) transactionExecutor.execute(
-            (tx, resource, hint) -> {
-
-                Map.Entry<IEntity, IEntityClass> entry;
-                IEntity entity;
-                IEntityClass entityClass;
-                int size = entityPackage.size();
-                for (int i = 0; i < size; i++) {
-                    entry = entityPackage.getNotSafe(i);
-                    entity = entry.getKey();
-
-                    if (entity.isDirty()) {
-
-                        entityClass = entry.getValue();
-
-                        masterStorageEntities[i] = buildReplaceMasterStorageEntity(entity, entityClass, resource);
-
-                    } else {
-
-                        masterStorageEntities[i] = EMPTY_MAP_STORAGE_ENTITY;
-
-                    }
-                }
-
-                return DynamicUpdateExecutor.build(dynamicTableName, resource, queryTimeout).execute(
-                    Arrays.stream(masterStorageEntities)
-                        .filter(se -> EMPTY_MAP_STORAGE_ENTITY != se).toArray(MapAttributeMasterStorageEntity[]::new)
-                );
-            });
-
-        int resultsCursor = 0;
-        for (int i = 0; i < masterStorageEntities.length; i++) {
-            if (EMPTY_MAP_STORAGE_ENTITY != masterStorageEntities[i]) {
-                if (results[resultsCursor++]) {
-                    entityPackage.getNotSafe(i).getKey().neat();
-                }
-            }
-        }
+        doBatchBuildOrReplace(entityPackage, false);
     }
 
     @Timed(
@@ -468,13 +340,24 @@ public class SQLMasterStorage implements MasterStorage {
         boolean result = (boolean) transactionExecutor.execute(
             (tx, resource, hint) -> {
 
-                BaseMasterStorageEntity
-                    masterStorageEntity = buildDeleteMasterStorageEntity(entity, entityClass, resource);
-                boolean[] results = DynamicDeleteExecutor.build(dynamicTableName, resource, queryTimeout)
-                    .execute(new BaseMasterStorageEntity[] {masterStorageEntity});
+                BaseMasterStorageEntity storageEntity = buildDeleteMasterStorageEntity(entity, entityClass, resource);
+                BaseMasterStorageEntity[] storageEntities = new BaseMasterStorageEntity[] {
+                    storageEntity
+                };
 
-                final int first = 0;
-                return results[first];
+                DynamicDeleteExecutor.build(dynamicTableName, resource, queryTimeout).execute(storageEntities);
+
+                if (storageEntity.isDynamicSuccess()) {
+                    if (storageEntity.isOriginal()) {
+                        new OriginalDeleteExecutor(dynamicTableName, resource, queryTimeout).execute(storageEntities);
+                    }
+                }
+
+                if (storageEntity.isOriginal()) {
+                    return storageEntity.isDynamicSuccess() && storageEntity.isOriginalSucess();
+                } else {
+                    return storageEntity.isDynamicSuccess();
+                }
             });
 
         if (result) {
@@ -493,24 +376,43 @@ public class SQLMasterStorage implements MasterStorage {
     public void delete(EntityPackage entityPackage) throws SQLException {
         checkId(entityPackage);
 
-        boolean[] results = (boolean[]) transactionExecutor.execute(
-            (tx, resource, hint) -> {
+        int originalCount =
+            (int) entityPackage.stream().filter(e -> e.getValue().type() == EntityClassType.ORIGINAL).count();
+        List<BaseMasterStorageEntity> originalEntities = new ArrayList<>(originalCount);
 
-                BaseMasterStorageEntity[] masterStorageEntities = entityPackage.stream()
-                    .map(e -> buildDeleteMasterStorageEntity(e.getKey(), e.getValue(), resource))
-                    .toArray(BaseMasterStorageEntity[]::new);
+        transactionExecutor.execute((tx, resource, hint) -> {
 
-                return DynamicDeleteExecutor.build(dynamicTableName, resource, queryTimeout)
-                    .execute(masterStorageEntities);
-            });
+            BaseMasterStorageEntity[] storageEntities = entityPackage.stream()
+                .filter(er -> !er.getKey().isDeleted())
+                .map(e -> buildDeleteMasterStorageEntity(e.getKey(), e.getValue(), resource))
+                .toArray(BaseMasterStorageEntity[]::new);
 
-        IEntity entity;
-        for (int i = 0; i < results.length; i++) {
-            if (results[i]) {
-                entity = entityPackage.get(i).get().getKey();
-                entity.delete();
+            DynamicDeleteExecutor.build(dynamicTableName, resource, queryTimeout).execute(storageEntities);
+
+            for (BaseMasterStorageEntity storageEntity : storageEntities) {
+                if (storageEntity.isDynamicSuccess() && storageEntity.isOriginal()) {
+                    originalEntities.add(storageEntity);
+                }
             }
-        }
+
+            new OriginalDeleteExecutor(dynamicTableName, resource, queryTimeout).execute(
+                originalEntities.stream().toArray(BaseMasterStorageEntity[]::new)
+            );
+
+            for (BaseMasterStorageEntity storageEntity : storageEntities) {
+                if (storageEntity.isOriginal()) {
+                    if (storageEntity.isDynamicSuccess() && storageEntity.isOriginalSucess()) {
+                        storageEntity.getSourceEntity().delete();
+                    }
+                } else {
+                    if (storageEntity.isDynamicSuccess()) {
+                        storageEntity.getSourceEntity().delete();
+                    }
+                }
+            }
+
+            return null;
+        });
     }
 
     @Override
@@ -521,9 +423,141 @@ public class SQLMasterStorage implements MasterStorage {
             .execute(entityClass);
     }
 
+    /**
+     * 批量更新或者删除.
+     *
+     * @param entity      目标对象.
+     * @param entityClass 目标元信息.
+     * @param build       true 创建, false 更新.
+     * @return true 成功, false 失败.
+     */
+    private boolean doBuildOrReplace(IEntity entity, IEntityClass entityClass, boolean build) throws SQLException {
+        checkId(entity);
+
+        if (!entity.isDirty()) {
+            return true;
+        }
+
+        boolean result = (boolean) transactionExecutor.execute(
+            (tx, resource, hint) -> {
+
+                MapAttributeMasterStorageEntity<IEntityField, StorageValue> storageEntity =
+                    build
+                        ? buildNewMasterStorageEntity(entity, entityClass, resource)
+                        : buildReplaceMasterStorageEntity(entity, entityClass, resource);
+
+                MapAttributeMasterStorageEntity<IEntityField, StorageValue>[] storageEntities =
+                    new MapAttributeMasterStorageEntity[] {storageEntity};
+
+                if (build) {
+                    DynamicBuildExecutor.build(dynamicTableName, resource, queryTimeout).execute(storageEntities);
+                } else {
+                    DynamicUpdateExecutor.build(dynamicTableName, resource, queryTimeout).execute(storageEntities);
+                }
+
+                if (storageEntity.isDynamicSuccess()) {
+                    if (storageEntity.isOriginal()) {
+                        if (build) {
+                            new OriginalBuildExecutor(dynamicTableName, resource, queryTimeout)
+                                .execute(storageEntities);
+                        } else {
+                            new OriginalUpdateExecutor(dynamicTableName, resource, queryTimeout)
+                                .execute(storageEntities);
+                        }
+                    }
+                }
+
+                if (storageEntity.isOriginal()) {
+                    return storageEntity.isOriginalSucess() && storageEntity.isDynamicSuccess();
+                } else {
+                    return storageEntity.isDynamicSuccess();
+                }
+            });
+
+        if (result) {
+            entity.neat();
+        }
+
+        return result;
+    }
+
+    /**
+     * 批量创建或者更新.
+     *
+     * @param entityPackage 目标实例包.
+     * @param build         ture 创建, false 更新.
+     */
+    private void doBatchBuildOrReplace(EntityPackage entityPackage, boolean build) throws SQLException {
+        checkId(entityPackage);
+
+        // 这个计算只是防止ArrayList进行扩张.
+        int originalCount =
+            (int) entityPackage.stream().filter(e -> e.getValue().type() == EntityClassType.ORIGINAL).count();
+        List<MapAttributeMasterStorageEntity<IEntityField, StorageValue>> originalEntities
+            = new ArrayList<>(originalCount);
+
+        transactionExecutor.execute(
+            (tx, resource, hint) -> {
+
+                MapAttributeMasterStorageEntity<IEntityField, StorageValue>[] storageEntities = entityPackage.stream()
+                    .filter(er -> er.getKey().isDirty())
+                    .map(er -> {
+                        if (build) {
+                            return buildNewMasterStorageEntity(er.getKey(), er.getValue(), resource);
+                        } else {
+                            return buildReplaceMasterStorageEntity(er.getKey(), er.getValue(), resource);
+                        }
+                    })
+                    .toArray(MapAttributeMasterStorageEntity[]::new);
+
+                if (build) {
+                    DynamicBuildExecutor.build(dynamicTableName, resource, queryTimeout)
+                        .execute(storageEntities);
+                } else {
+                    DynamicUpdateExecutor.build(dynamicTableName, resource, queryTimeout)
+                        .execute(storageEntities);
+                }
+
+                // 将静态实体动态部份完成后移入静态列表.
+                for (int i = 0; i < storageEntities.length; i++) {
+                    if (storageEntities[i].isOriginal() && storageEntities[i].isDynamicSuccess()) {
+                        originalEntities.add(storageEntities[i]);
+                    }
+                }
+
+                // 如果含有静态对象.
+                if (!originalEntities.isEmpty()) {
+                    if (build) {
+                        new OriginalBuildExecutor(dynamicTableName, resource, queryTimeout).execute(
+                            originalEntities.stream().toArray(MapAttributeMasterStorageEntity[]::new)
+                        );
+                    } else {
+                        new OriginalUpdateExecutor(dynamicTableName, resource, queryTimeout).execute(
+                            originalEntities.stream().toArray(MapAttributeMasterStorageEntity[]::new)
+                        );
+                    }
+                }
+
+                // 设置对象状态
+                for (MapAttributeMasterStorageEntity storageEntity : storageEntities) {
+                    if (storageEntity.isOriginal()) {
+                        if (storageEntity.isDynamicSuccess() && storageEntity.isOriginalSucess()) {
+                            storageEntity.getSourceEntity().neat();
+                        }
+                    } else {
+                        if (storageEntity.isDynamicSuccess()) {
+                            storageEntity.getSourceEntity().neat();
+                        }
+                    }
+                }
+
+                return null;
+            }
+        );
+    }
+
     private void checkId(EntityPackage entityPackage) throws SQLException {
-        Iterator<Map.Entry<IEntity, IEntityClass>> iter =
-            entityPackage.iterator();
+        Iterator<Map.Entry<IEntity, IEntityClass>> iter = entityPackage.iterator();
         while (iter.hasNext()) {
             checkId(iter.next().getKey());
         }
@@ -743,19 +777,19 @@ public class SQLMasterStorage implements MasterStorage {
 
     }
 
-    // 构造储存字段哈希.
-    private Map<String, Object> toStorageValues(IEntityValue value) {
+    // 构造字段的物理储存表示.
+    private Map<IEntityField, StorageValue> toStorageValues(IEntityValue value) {
 
-        Map<String, Object> values = new HashMap<>(MapUtils.calculateInitSize(value.size()));
+        // 值为可能的多个物理储存值.
+        Map<IEntityField, StorageValue> values = new HashMap<>(MapUtils.calculateInitSize(value.size()));
 
         StorageStrategy storageStrategy = null;
         StorageValue storageValue = null;
-        StorageValue attachmentSv = null;
+
         for (IValue logicValue : value.values()) {
 
-            /*
-            只有状态为"脏"的字段才会需要处理.
-             */
+            storageValue = null;
+
             if (!logicValue.isDirty()) {
                 continue;
             }
@@ -766,50 +800,17 @@ public class SQLMasterStorage implements MasterStorage {
 
                 storageValue = storageStrategy.toEmptyStorageValue(logicValue.getField());
 
-                values.put(String.format("%s%s", AnyStorageValue.ATTRIBUTE_PREFIX, storageValue.storageName()),
-                    ValueWithEmpty.EMPTY_VALUE);
-                values.put(String.format("%s%s", AnyStorageValue.ATTACHMENT_PREFIX, storageValue.storageName()),
-                    ValueWithEmpty.EMPTY_VALUE);
-
             } else {
 
                 storageValue = storageStrategy.toStorageValue(logicValue);
 
-                while (true) {
-                    values.put(
-                        String.format("%s%s", AnyStorageValue.ATTRIBUTE_PREFIX, storageValue.storageName()),
-                        storageValue.value());
-
-                    if (storageValue.next() != null) {
-                        storageValue = storageValue.next();
-                    } else {
-                        break;
-                    }
-                }
-
-                // 处理附件.
-                Optional<StorageValue> attachmentSvOp = storageStrategy.toAttachmentStorageValue(logicValue);
-                if (attachmentSvOp.isPresent()) {
-                    attachmentSv = attachmentSvOp.get();
-                    values.put(String.format("%s%s", AnyStorageValue.ATTACHMENT_PREFIX, attachmentSv.storageName()),
-                        logicValue.getAttachment().get());
-                }
             }
+
+            values.put(logicValue.getField(), storageValue);
+
         }
 
         return values;
-    }
-
-    // 构造创建实例属性JSON字符串,名称使用的是属性 F + {id}.
-    private String toBuildJson(IEntityValue value) {
-
-        Map<String, Object> values = toStorageValues(value);
-
-        try {
-            return JacksonDefaultMapper.OBJECT_MAPPER.writeValueAsString(values);
-        } catch (JsonProcessingException e) {
-            throw new IllegalArgumentException(e.getMessage(), e);
-        }
     }
 
     // 无法实例化的数据将返回null.
@@ -928,7 +929,7 @@ public class SQLMasterStorage implements MasterStorage {
     }
 
     // 更新时构造.
-    private MapAttributeMasterStorageEntity<String, Object> buildReplaceMasterStorageEntity(
+    private MapAttributeMasterStorageEntity<IEntityField, StorageValue> buildReplaceMasterStorageEntity(
         IEntity entity, IEntityClass entityClass,
         TransactionResource resource) {
         long updateTime = findTime(entity, FieldConfig.FieldSense.UPDATE_TIME);
@@ -939,21 +940,30 @@ public class SQLMasterStorage implements MasterStorage {
             updateTime = 0;
         }
 
-        MapAttributeMasterStorageEntity<String, Object> storageEntity = new MapAttributeMasterStorageEntity();
+        MapAttributeMasterStorageEntity<IEntityField, StorageValue> storageEntity =
+            new MapAttributeMasterStorageEntity();
         storageEntity.setId(entity.id());
         storageEntity.setUpdateTime(updateTime > 0 ? updateTime : entity.time());
         storageEntity.setVersion(entity.version());
         storageEntity.setEntityClassVersion(entityClass.version());
         storageEntity.setOp(OperationType.UPDATE.getValue());
         storageEntity.setAttributes(toStorageValues(entity.entityValue()));
+        storageEntity.setOriginal(entityClass.type() == EntityClassType.ORIGINAL);
         fullEntityClassInformation(storageEntity, entityClass);
         fullTransactionInformation(storageEntity, resource);
+
+        if (entityClass.type() == EntityClassType.ORIGINAL) {
+            storageEntity.setOriginal(true);
+            storageEntity.setOriginalTableName(buildOriginalTableName(entityClass));
+        }
+
+        storageEntity.setSourceEntity(entity);
 
         return storageEntity;
     }
 
     // 新建时构造.
-    private JsonAttributeMasterStorageEntity buildNewMasterStorageEntity(
+    private MapAttributeMasterStorageEntity<IEntityField, StorageValue> buildNewMasterStorageEntity(
         IEntity entity, IEntityClass entityClass, TransactionResource resource) {
 
         long createTime = findTime(entity, FieldConfig.FieldSense.CREATE_TIME);
@@ -966,20 +976,25 @@ public class SQLMasterStorage implements MasterStorage {
             updateTime = entity.time();
         }
 
-        JsonAttributeMasterStorageEntity storageEntity = new JsonAttributeMasterStorageEntity();
+        MapAttributeMasterStorageEntity<IEntityField, StorageValue> storageEntity =
+            new MapAttributeMasterStorageEntity();
         storageEntity.setId(entity.id());
         storageEntity.setCreateTime(createTime);
         storageEntity.setUpdateTime(updateTime);
+        storageEntity.setOriginal(entityClass.type() == EntityClassType.ORIGINAL);
         storageEntity.setDeleted(false);
         storageEntity.setEntityClassVersion(entityClass.version());
         storageEntity.setVersion(entity.version());
-        try {
-            storageEntity.setAttribute(toBuildJson(entity.entityValue()));
-        } catch (Exception ex) {
-            throw new RuntimeException(ex.getMessage(), ex);
-        }
+        storageEntity.setAttributes(toStorageValues(entity.entityValue()));
         storageEntity.setOp(OperationType.CREATE.getValue());
         storageEntity.setProfile(entity.entityClassRef().getProfile());
+
+        if (entityClass.type() == EntityClassType.ORIGINAL) {
+            storageEntity.setOriginal(true);
+            storageEntity.setOriginalTableName(buildOriginalTableName(entityClass));
+        }
+
+        storageEntity.setSourceEntity(entity);
 
         fullEntityClassInformation(storageEntity, entityClass);
         fullTransactionInformation(storageEntity, resource);
@@ -997,7 +1012,14 @@ public class SQLMasterStorage implements MasterStorage {
         storageEntity.setEntityClassVersion(entityClass.version());
         storageEntity.setDeleted(true);
         storageEntity.setVersion(entity.version());
+        storageEntity.setOriginal(entityClass.type() == EntityClassType.ORIGINAL);
 
+        if (entityClass.type() == EntityClassType.ORIGINAL) {
+            storageEntity.setOriginal(true);
+            storageEntity.setOriginalTableName(buildOriginalTableName(entityClass));
+        }
+
+        storageEntity.setSourceEntity(entity);
 
         fullEntityClassInformation(storageEntity, entityClass);
         fullTransactionInformation(storageEntity, resource);
@@ -1017,5 +1039,23 @@ public class SQLMasterStorage implements MasterStorage {
             .mapToLong(v -> v.valueToLong()).findFirst();
 
         return op.orElse(0);
+    }
+
+    /**
+     * 构造静态表名, oqs_{应用code}_{对象code}_{定制}.
+     */
+    private static String buildOriginalTableName(IEntityClass entityClass) {
+
+        StringBuilder buff = new StringBuilder();
+        buff.append("oqs_")
+            .append(entityClass.appCode())
+            .append('_')
+            .append(entityClass.code());
+        if (!entityClass.profile().equals(OqsProfile.UN_DEFINE_PROFILE)) {
+            buff.append('_')
+                .append(entityClass.profile());
+        }
+
+        return buff.toString();
     }
 }

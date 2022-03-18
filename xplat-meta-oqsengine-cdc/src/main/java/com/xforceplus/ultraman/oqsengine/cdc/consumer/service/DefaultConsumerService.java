@@ -66,7 +66,10 @@ public class DefaultConsumerService implements ConsumerService {
         return parseResult;
     }
 
-    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "cdc", "action", "cdc-consume"})
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        extraTags = {"initiator", "cdc", "action", "cdc-consume"}
+    )
     @Override
     public CDCMetrics consumeOneBatch(List<CanalEntry.Entry> entries, long batchId, CDCMetrics cdcMetrics)
         throws SQLException {
@@ -101,7 +104,7 @@ public class DefaultConsumerService implements ConsumerService {
      * 初始化指标记录器, 将上一个批次unCommit数据写回当前指标.
      *
      * @param cdcUnCommitMetrics 上一个批次unCommit指标数据.
-     * @param batchId 批次号.
+     * @param batchId            批次号.
      * @return 指标记录器.
      */
     private CDCMetricsRecorder init(CDCUnCommitMetrics cdcUnCommitMetrics, long batchId) {
@@ -112,10 +115,9 @@ public class DefaultConsumerService implements ConsumerService {
     /**
      * 解析入口函数,对一个批次进行解析.
      *
-     * @param entries 完整的批次信息.
+     * @param entries    完整的批次信息.
      * @param cdcMetrics 指标数据.
      * @return 成功条数.
-     * @throws SQLException
      */
     private int parseCanalEntries(List<CanalEntry.Entry> entries, CDCMetrics cdcMetrics) throws SQLException {
         //  初始化上下文
@@ -182,7 +184,6 @@ public class DefaultConsumerService implements ConsumerService {
 
     /**
      * TE时需要处理的逻辑.
-     *
      * 1.转移uncommitIds到ackList.
      * 2.清空uncommitIds.
      *
@@ -193,16 +194,18 @@ public class DefaultConsumerService implements ConsumerService {
             if (logger.isWarnEnabled()) {
                 logger.warn(
                     "[cdc-consumer] transaction end, batch : {}, one transaction has more than one commitId, ids : {}",
-                    parserContext.getCdcMetrics().getBatchId(), JSON.toJSON(parserContext.getCdcMetrics().getCdcUnCommitMetrics().getUnCommitIds()));
+                    parserContext.getCdcMetrics().getBatchId(),
+                    JSON.toJSON(parserContext.getCdcMetrics().getCdcUnCommitMetrics().getUnCommitIds()));
             }
         }
 
         parserContext.getCdcMetrics().getCdcAckMetrics().getCommitList().addAll(
-                parserContext.getCdcMetrics().getCdcUnCommitMetrics().getUnCommitIds());
+            parserContext.getCdcMetrics().getCdcUnCommitMetrics().getUnCommitIds());
 
         if (logger.isDebugEnabled()) {
             logger.debug("[cdc-consumer] transaction end, batchId : {}, add new commitIds : {}",
-                parserContext.getCdcMetrics().getBatchId(), JSON.toJSON(parserContext.getCdcMetrics().getCdcUnCommitMetrics().getUnCommitIds()));
+                parserContext.getCdcMetrics().getBatchId(),
+                JSON.toJSON(parserContext.getCdcMetrics().getCdcUnCommitMetrics().getUnCommitIds()));
         }
 
         //  每个Transaction的结束需要将unCommitEntityValues清空
@@ -212,9 +215,8 @@ public class DefaultConsumerService implements ConsumerService {
     /**
      * 对rowData进行解析，rowData为对一张表的CUD操作，记录条数1～N.
      *
-     * @param entry canal对象同步实例.
+     * @param entry         canal对象同步实例.
      * @param parserContext 上下文.
-     * @throws SQLException
      */
     private void rowDataParse(CanalEntry.Entry entry, ParserContext parserContext) throws SQLException {
 
@@ -251,7 +253,6 @@ public class DefaultConsumerService implements ConsumerService {
      * 只支持逻辑删除，实际上是进行了UPDATE操作.
      *
      * @param eventType 操作类型
-     * @return
      */
     private boolean supportEventType(CanalEntry.EventType eventType) {
         return eventType.equals(CanalEntry.EventType.INSERT)

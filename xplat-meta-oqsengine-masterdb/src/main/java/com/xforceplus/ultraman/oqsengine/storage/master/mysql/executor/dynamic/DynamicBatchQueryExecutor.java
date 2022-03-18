@@ -26,6 +26,7 @@ public class DynamicBatchQueryExecutor extends AbstractMasterTaskExecutor<Long, 
     private long startTime;
     private long endTime;
     private int pageSize;
+    private IEntityClass entityClass;
 
     /**
      * 实例.
@@ -102,6 +103,14 @@ public class DynamicBatchQueryExecutor extends AbstractMasterTaskExecutor<Long, 
                 return entities;
             }
         }
+    }
+
+    public IEntityClass getEntityClass() {
+        return entityClass;
+    }
+
+    public void setEntityClass(IEntityClass entityClass) {
+        this.entityClass = entityClass;
     }
 
     private String buildSQL() {

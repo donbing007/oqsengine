@@ -17,7 +17,6 @@ import org.slf4j.LoggerFactory;
 
 /**
  * desc : 处理client端通讯,及外层逻辑.
- *
  * name : CdcConnectorRunner.
  *
  * @author : xujia 2020/11/3
@@ -40,8 +39,7 @@ public class CDCRunner extends Thread {
     /**
      * 实例化.
      */
-    public CDCRunner(BatchProcessor batchProcessor,
-                          AbstractCDCConnector connector) {
+    public CDCRunner(BatchProcessor batchProcessor, AbstractCDCConnector connector) {
 
         this.batchProcessor = batchProcessor;
         this.connector = connector;

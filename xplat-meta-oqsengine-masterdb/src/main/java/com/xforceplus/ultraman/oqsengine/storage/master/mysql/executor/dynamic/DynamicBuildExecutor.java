@@ -1,15 +1,20 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.dynamic;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
+import com.xforceplus.ultraman.oqsengine.common.serializable.utils.JacksonDefaultMapper;
 import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.AbstractMasterTaskExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.master.mysql.pojo.JsonAttributeMasterStorageEntity;
+import com.xforceplus.ultraman.oqsengine.storage.master.mysql.pojo.MapAttributeMasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
+import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Collections;
+import java.util.Map;
 
 /**
  * 创建数据执行器.
@@ -18,9 +23,10 @@ import java.util.Collections;
  * @version 0.1 2020/11/2 14:41
  * @since 1.8
  */
-public class DynamicBuildExecutor extends AbstractMasterTaskExecutor<JsonAttributeMasterStorageEntity[], boolean[]> {
+public class DynamicBuildExecutor
+    extends AbstractMasterTaskExecutor<MapAttributeMasterStorageEntity<IEntityField, StorageValue>[], boolean[]> {
 
-    public static Executor<JsonAttributeMasterStorageEntity[], boolean[]> build(
+    public static Executor<MapAttributeMasterStorageEntity<IEntityField, StorageValue>[], boolean[]> build(
         String tableName, TransactionResource resource, long timeout) {
         return new DynamicBuildExecutor(tableName, resource, timeout);
     }
@@ -34,7 +40,8 @@ public class DynamicBuildExecutor extends AbstractMasterTaskExecutor<JsonAttribu
     }
 
     @Override
-    public boolean[] execute(JsonAttributeMasterStorageEntity[] masterStorageEntities) throws Exception {
+    public boolean[] execute(MapAttributeMasterStorageEntity<IEntityField, StorageValue>[] masterStorageEntities)
+        throws Exception {
 
         String sql = buildSQL();
         try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
@@ -49,7 +56,7 @@ public class DynamicBuildExecutor extends AbstractMasterTaskExecutor<JsonAttribu
 
             } else {
 
-                for (JsonAttributeMasterStorageEntity entity : masterStorageEntities) {
+                for (MapAttributeMasterStorageEntity<IEntityField, StorageValue> entity : masterStorageEntities) {
 
                     setParam(entity, st);
 
@@ -57,11 +64,15 @@ public class DynamicBuildExecutor extends AbstractMasterTaskExecutor<JsonAttribu
                 }
             }
 
-            return executedUpdate(st, !single);
+            boolean[] results = executedUpdate(st, !single);
+            setDynamicProcessStatus(masterStorageEntities, results);
+
+            return results;
         }
     }
 
-    private void setParam(JsonAttributeMasterStorageEntity entity, PreparedStatement st) throws SQLException {
+    private void setParam(MapAttributeMasterStorageEntity<IEntityField, StorageValue> entity, PreparedStatement st)
+        throws SQLException {
         int pos = 1;
         /*
                 FieldDefine.ID,
@@ -93,13 +104,13 @@ public class DynamicBuildExecutor extends AbstractMasterTaskExecutor<JsonAttribu
         st.setInt(pos++, OqsVersion.MAJOR);
         st.setBoolean(pos++, false);
         st.setString(pos++, entity.getProfile());
-        st.setString(pos++, entity.getAttribute());
+        st.setString(pos++, toBuildJson(entity.getAttributes()));
         fullEntityClass(pos, st, entity);
     }
 
     private int fullEntityClass(int startPos,
                                 PreparedStatement st,
-                                JsonAttributeMasterStorageEntity masterStorageEntity)
+                                MapAttributeMasterStorageEntity masterStorageEntity)
         throws SQLException {
         int pos = startPos;
         for (int i = 0; i < FieldDefine.ENTITYCLASS_LEVEL_LIST.length; i++) {
@@ -128,8 +139,7 @@ public class DynamicBuildExecutor extends AbstractMasterTaskExecutor<JsonAttribu
                 FieldDefine.OQS_MAJOR,
                 FieldDefine.DELETED,
                 FieldDefine.PROFILE,
-                FieldDefine.ATTRIBUTE)
-            );
+                FieldDefine.ATTRIBUTE));
 
         for (int i = 0; i < FieldDefine.ENTITYCLASS_LEVEL_LIST.length; i++) {
             buff.append(",")
@@ -144,5 +154,17 @@ public class DynamicBuildExecutor extends AbstractMasterTaskExecutor<JsonAttribu
                 baseColumnSize + FieldDefine.ENTITYCLASS_LEVEL_LIST.length, "?")))
             .append(")");
         return buff.toString();
+    }
+
+    // 构造创建实例属性JSON字符串,名称使用的是属性 F + {id}.
+    private String toBuildJson(Map<IEntityField, StorageValue> storageValues) {
+
+        Map<String, Object> values = toPainValues(storageValues);
+
+        try {
+            return JacksonDefaultMapper.OBJECT_MAPPER.writeValueAsString(values);
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException(e.getMessage(), e);
+        }
     }
 }

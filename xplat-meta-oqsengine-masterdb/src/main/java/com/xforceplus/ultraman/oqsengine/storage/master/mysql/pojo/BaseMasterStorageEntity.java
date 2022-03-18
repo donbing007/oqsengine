@@ -1,5 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.mysql.pojo;
 
+import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
+import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
+
 /**
  * 储存实例抽像公共.
  *
@@ -9,18 +13,33 @@ package com.xforceplus.ultraman.oqsengine.storage.master.mysql.pojo;
  */
 public class BaseMasterStorageEntity {
 
-    private boolean deleted;
-    private int oqsMajor;
-    private int entityClassVersion;
-    private int version;
-    private int op;
-    private long id;
-    private long tx;
-    private long commitid;
+    // 动态对象操作是否成功.
+    private boolean dynamicSuccess = false;
+    // 静态对象操作是否成功.
+    private boolean originalSucess = false;
+    private boolean original = false;
+    private boolean deleted = false;
+    private int oqsMajor = OqsVersion.MAJOR;
+    private int entityClassVersion = 0;
+    private int version = 0;
+    private int op = OperationType.UNKNOWN.getValue();
+    private long id = -1;
+    private long tx = -1;
+    private long commitid = -1;
     private long createTime;
     private long updateTime;
     private long[] entityClasses;
     private String profile;
+    private String originalTableName;
+    private IEntity sourceEntity;
+
+    public boolean isOriginal() {
+        return original;
+    }
+
+    public void setOriginal(boolean original) {
+        this.original = original;
+    }
 
     public int getOqsMajor() {
         return oqsMajor;
@@ -116,6 +135,38 @@ public class BaseMasterStorageEntity {
 
     public void setDeleted(boolean deleted) {
         this.deleted = deleted;
+    }
+
+    public String getOriginalTableName() {
+        return originalTableName;
+    }
+
+    public void setOriginalTableName(String originalTableName) {
+        this.originalTableName = originalTableName;
+    }
+
+    public IEntity getSourceEntity() {
+        return sourceEntity;
+    }
+
+    public void setSourceEntity(IEntity sourceEntity) {
+        this.sourceEntity = sourceEntity;
+    }
+
+    public boolean isDynamicSuccess() {
+        return dynamicSuccess;
+    }
+
+    public void setDynamicSuccess(boolean dynamicSuccess) {
+        this.dynamicSuccess = dynamicSuccess;
+    }
+
+    public boolean isOriginalSucess() {
+        return originalSucess;
+    }
+
+    public void setOriginalSucess(boolean originalSucess) {
+        this.originalSucess = originalSucess;
     }
 
     /**

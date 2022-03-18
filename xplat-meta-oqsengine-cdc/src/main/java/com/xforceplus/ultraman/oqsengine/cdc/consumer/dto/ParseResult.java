@@ -37,7 +37,7 @@ public class ParseResult {
     private Map<String, Error> errors;
 
     /**
-     * 需要checkReady的commitIds
+     * 需要checkReady的commitIds.
      */
     private Set<Long> commitIds;
 
@@ -53,10 +53,13 @@ public class ParseResult {
         pos = CDCConstant.START_POS;
     }
 
+    /**
+     * 构造一个解析结果.
+     */
     public ParseResult() {
         this.pos = CDCConstant.START_POS;
         this.finishEntries = new HashMap<>();
-        this.errors  = new LinkedHashMap<>();
+        this.errors = new LinkedHashMap<>();
         this.commitIds = new HashSet<>();
     }
 
@@ -82,7 +85,6 @@ public class ParseResult {
 
     /**
      * 写入一条error.
-     * @param error
      */
     public void addError(Error error) {
         errors.put(error.keyGenerate(), error);
@@ -95,12 +97,23 @@ public class ParseResult {
         addError(new Error(id, commitId, pos, message));
     }
 
+    /**
+     * 表示一个错误.
+     */
     public static class Error {
         private long id;
         private long commitId;
         private int pos;
         private String message;
 
+        /**
+         * 构造一个错误.
+         *
+         * @param id       错误标识.
+         * @param commitId 提交号.
+         * @param pos      当前读取位置号.
+         * @param message  消息.
+         */
         public Error(long id, long commitId, int pos, String message) {
             this.id = id;
             this.commitId = commitId;
@@ -134,8 +147,10 @@ public class ParseResult {
                 return false;
             }
             Error error = (Error) o;
-            return id == error.id && commitId == error.commitId && pos == error.pos &&
-                Objects.equals(message, error.message);
+            return id == error.id
+                && commitId == error.commitId
+                && pos == error.pos
+                && Objects.equals(message, error.message);
         }
 
         @Override

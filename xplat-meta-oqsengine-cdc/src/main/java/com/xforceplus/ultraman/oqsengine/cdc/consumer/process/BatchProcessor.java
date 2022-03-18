@@ -22,6 +22,7 @@ public interface BatchProcessor {
     void shutdown();
 
     /**
+     * 错误.
      *
      * @param context 上下文.
      */
@@ -31,16 +32,15 @@ public interface BatchProcessor {
      * 批次处理器.
      *
      * @param connector 连接器.
-     * @param context 上下文.
-     * @throws SQLException
+     * @param context   上下文.
      */
     void executeOneBatch(AbstractCDCConnector connector, RunnerContext context) throws SQLException;
 
     /**
      * 备份.
+     *
      * @param connector 连接器.
-     * @param context 上下文.
-     * @throws SQLException
+     * @param context   上下文.
      */
     void recover(AbstractCDCConnector connector, RunnerContext context) throws SQLException;
 }

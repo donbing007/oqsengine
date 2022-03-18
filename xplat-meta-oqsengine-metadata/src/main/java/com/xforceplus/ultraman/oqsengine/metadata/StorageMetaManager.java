@@ -128,7 +128,7 @@ public class StorageMetaManager implements MetaManager {
 
             entityClassIds.forEach(
                 entityClassId -> {
-                    collection.addAll(withProfilesLoad(entityClassId, currentVersion));
+                    collection.addAll(doWithProfilesLoad(entityClassId, currentVersion));
                 }
             );
 
@@ -158,7 +158,7 @@ public class StorageMetaManager implements MetaManager {
 
     @Override
     public Collection<IEntityClass> withProfilesLoad(long entityClassId) {
-        return withProfilesLoad(entityClassId, NOT_EXIST_VERSION);
+        return doWithProfilesLoad(entityClassId, NOT_EXIST_VERSION);
     }
 
     @Override
@@ -272,7 +272,6 @@ public class StorageMetaManager implements MetaManager {
      *
      * @param appId 应用ID.
      * @return MetaMetrics指标.
-     * @throws Exception
      */
     @Override
     public Optional<MetaMetrics> showMeta(String appId) throws Exception {
@@ -284,11 +283,11 @@ public class StorageMetaManager implements MetaManager {
             }
 
             Collection<EntityClassStorage> result = CacheToStorageGenerator.toEntityClassStorages(
-                    DefaultCacheExecutor.OBJECT_MAPPER,
-                    cacheExecutor.multiRemoteRead(
-                        cacheExecutor.appEntityIdList(appId, currentVersion), currentVersion
-                    )
-                ).values();
+                DefaultCacheExecutor.OBJECT_MAPPER,
+                cacheExecutor.multiRemoteRead(
+                    cacheExecutor.appEntityIdList(appId, currentVersion), currentVersion
+                )
+            ).values();
 
 
             return Optional
@@ -462,7 +461,8 @@ public class StorageMetaManager implements MetaManager {
             //  code
             String code = keyValues.remove(ELEMENT_CODE);
             if (null == code || code.isEmpty()) {
-                throw new RuntimeException(String.format("code is null from cache, query entityClassId : %d.", entityClassId));
+                throw new RuntimeException(
+                    String.format("code is null from cache, query entityClassId : %d.", entityClassId));
             }
             builder.withCode(code);
 
@@ -475,14 +475,16 @@ public class StorageMetaManager implements MetaManager {
             //  level
             String level = keyValues.remove(ELEMENT_LEVEL);
             if (null == level || level.isEmpty()) {
-                throw new RuntimeException(String.format("level is null from cache, query entityClassId : %d.", entityClassId));
+                throw new RuntimeException(
+                    String.format("level is null from cache, query entityClassId : %d.", entityClassId));
             }
             builder.withLevel(Integer.parseInt(level));
 
             //  version
             String vn = keyValues.remove(ELEMENT_VERSION);
             if (null == vn || vn.isEmpty()) {
-                throw new RuntimeException(String.format("version is null from cache, query entityClassId : %d.", entityClassId));
+                throw new RuntimeException(
+                    String.format("version is null from cache, query entityClassId : %d.", entityClassId));
             }
             builder.withVersion(Integer.parseInt(vn));
 
@@ -496,7 +498,8 @@ public class StorageMetaManager implements MetaManager {
                 if (fatherEntityClassOp.isPresent()) {
                     builder.withFather(fatherEntityClassOp.get());
                 } else {
-                    throw new RuntimeException(String.format("father is null from cache, query entityClassId : %d.", entityClassId));
+                    throw new RuntimeException(
+                        String.format("father is null from cache, query entityClassId : %d.", entityClassId));
                 }
             }
 
@@ -538,8 +541,9 @@ public class StorageMetaManager implements MetaManager {
                     if (profile.equals(key)) {
                         profileFound = true;
                         relationships.addAll(toQqsRelation(OBJECT_MAPPER.readValue(keyValues.get(entry.getKey()),
-                            OBJECT_MAPPER.getTypeFactory().constructParametricType(
-                                List.class, RelationStorage.class)), rightEntityClassLoader, rightFamilyEntityClassLoader));
+                                OBJECT_MAPPER.getTypeFactory().constructParametricType(
+                                    List.class, RelationStorage.class)), rightEntityClassLoader,
+                            rightFamilyEntityClassLoader));
                     }
                 }
             }
@@ -595,11 +599,12 @@ public class StorageMetaManager implements MetaManager {
      * 当传入version为NOT_EXIST_VERSION时，从cache中获取version，再load entityClass.
      *
      * @param entityClassId id.
-     * @param version 版本.
-     * @param profile 替身.
-     * @return <>版本, entityClass实例</>.
+     * @param version       版本.
+     * @param profile       替身.
+     * @return 版本, entityClass实例.
      */
-    private Tuple2<Integer, Optional<IEntityClass>> entityClassLoadWithVersion(long entityClassId, int version, String profile) {
+    private Tuple2<Integer, Optional<IEntityClass>> entityClassLoadWithVersion(long entityClassId, int version,
+                                                                               String profile) {
 
         //  当没有传入版本时，默认用最简便的方式读取一次
         if (NOT_EXIST_VERSION == version) {
@@ -617,7 +622,8 @@ public class StorageMetaManager implements MetaManager {
             version = cacheExecutor.version(entityClassId, false);
             if (NOT_EXIST_VERSION == version) {
                 throw new RuntimeException(
-                    String.format("load [entityClass : %d, profile : %s] failed, version not exists.", entityClassId, profile));
+                    String.format("load [entityClass : %d, profile : %s] failed, version not exists.", entityClassId,
+                        profile));
             }
         }
 
@@ -661,10 +667,9 @@ public class StorageMetaManager implements MetaManager {
      * 获取一个entityClass下所有的变种(origin + jojo list).
      *
      * @param entityClassId 当前entityClassId.
-     * @param version 当前的版本.
-     * @return
+     * @param version       当前的版本.
      */
-    private Collection<IEntityClass> withProfilesLoad(long entityClassId, int version) {
+    private Collection<IEntityClass> doWithProfilesLoad(long entityClassId, int version) {
         try {
             List<IEntityClass> entityClassList = new ArrayList<>();
 

@@ -29,4 +29,15 @@ public interface OriginalFieldAgent<S, W> {
      * @throws Exception 发生异常.
      */
     public void write(IEntityField field, StorageValue data, W originalData) throws Exception;
+
+    /**
+     * 代表实现的静态储存中的原始属性的字符串表示.
+     *
+     * @param field 目标oqs字段.
+     * @param data  OQS物理储存值.
+     * @return 字符串表示.
+     * @throws Exception 发生异常.
+     */
+    public String plainText(IEntityField field, StorageValue data) throws Exception;
+
 }

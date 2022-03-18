@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.cdc.testhelp.meta;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassType;
-
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import java.util.Arrays;
@@ -58,7 +57,7 @@ public class EntityClassBuilder {
     public static final IEntityClass ENTITY_CLASS_STATIC =
         EntityClass.Builder.anEntityClass()
             .withId(Long.MAX_VALUE - 3)
-            .withType(EntityClassType.STATIC)
+            .withType(EntityClassType.ORIGINAL)
             .withLevel(0)
             .withVersion(1)
             .withCode("code-static")

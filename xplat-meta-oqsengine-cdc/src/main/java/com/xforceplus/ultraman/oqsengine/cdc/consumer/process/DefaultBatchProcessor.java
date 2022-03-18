@@ -104,7 +104,8 @@ public class DefaultBatchProcessor implements BatchProcessor {
                 error = "consume message error";
             }
 
-            logger.error("[batchProcess] consume batch error, connection will reset..., message : {}, {}", error, e.getMessage());
+            logger.error("[batchProcess] consume batch error, connection will reset..., message : {}, {}", error,
+                e.getMessage());
             throw new SQLException(error);
         }
     }
@@ -152,8 +153,7 @@ public class DefaultBatchProcessor implements BatchProcessor {
     /**
      * 保存未提交的指标数据.
      *
-      * @param cdcMetrics 指标数据.
-     *
+     * @param cdcMetrics 指标数据.
      * @return true/false.
      */
     private boolean saveMetrics(CDCMetrics cdcMetrics) {
@@ -166,12 +166,11 @@ public class DefaultBatchProcessor implements BatchProcessor {
      * 完成时的确认.
      *
      * @param cdcMetrics 指标数据.
-     * @param connector 连接器.
-     * @param context 上下文.
-     *
-     * @throws SQLException
+     * @param connector  连接器.
+     * @param context    上下文.
      */
-    private void finishBatch(CDCMetrics cdcMetrics, AbstractCDCConnector connector, RunnerContext context) throws SQLException {
+    private void finishBatch(CDCMetrics cdcMetrics, AbstractCDCConnector connector, RunnerContext context)
+        throws SQLException {
         if (null != cdcMetrics) {
             long originBatchId = cdcMetrics.getBatchId();
 
@@ -186,10 +185,8 @@ public class DefaultBatchProcessor implements BatchProcessor {
     /**
      * 同步一个空的batchId.
      *
-     * @param batchId 批次id.
+     * @param batchId   批次id.
      * @param connector 连接器.
-     *
-     * @throws SQLException
      */
     private void emptyBatch(long batchId, AbstractCDCConnector connector) throws SQLException {
         //  同步状态
@@ -201,14 +198,13 @@ public class DefaultBatchProcessor implements BatchProcessor {
 
     /**
      * 备份.
-     *         由于采用2阶段prepare -> confirm模式，当进入backAfterAck的逻辑时,必须保证一致性（成功）.
-     *         所以需要在ack成功后标记batchId为-Long.MAX_VALUE，并覆盖unCommitMetrics.
-     *         启动时重复该步骤.
+     * 由于采用2阶段prepare -> confirm模式，当进入backAfterAck的逻辑时,必须保证一致性（成功）.
+     * 所以需要在ack成功后标记batchId为-Long.MAX_VALUE，并覆盖unCommitMetrics.
+     * 启动时重复该步骤.
      *
      * @param originBatchId 批次ID.
-     * @param connector 连接器.
-     * @param cdcMetrics 指标.
-     * @throws SQLException
+     * @param connector     连接器.
+     * @param cdcMetrics    指标.
      */
     private void backup(long originBatchId, AbstractCDCConnector connector, CDCMetrics cdcMetrics) throws SQLException {
         //  1.确认ack batchId
@@ -224,9 +220,10 @@ public class DefaultBatchProcessor implements BatchProcessor {
 
     /**
      * 回调(成功).
+     *
      * @param originBatchId 批次ID.
-     * @param temp 临时的指标数据.
-     * @param context 上下文.
+     * @param temp          临时的指标数据.
+     * @param context       上下文.
      * @param isConnectSync 是否成功消费标志.
      */
     private void callBackSuccess(long originBatchId, CDCMetrics temp, RunnerContext context, boolean isConnectSync) {

@@ -35,8 +35,8 @@ public class JdbcDoubleOriginalFieldAgent extends AbstractJdbcOriginalFieldAgent
     }
 
     @Override
-    public void write(IEntityField field, StorageValue data, WriteJdbcOriginalSource ws) throws Exception {
-
+    public String plainText(IEntityField field, StorageValue data) throws Exception {
+        return JdbcOriginalFieldHelper.buildDecimalStorageValuePlainValue(data);
     }
 
     @Override

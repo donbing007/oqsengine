@@ -35,8 +35,9 @@ public class JdbcIntegerOriginalFieldAgent extends AbstractJdbcOriginalFieldAgen
     }
 
     @Override
-    public void write(IEntityField field, StorageValue data, WriteJdbcOriginalSource ws) throws Exception {
-
+    public String plainText(IEntityField field, StorageValue data) throws Exception {
+        int value = (int) data.value();
+        return Integer.toString(value);
     }
 
     @Override

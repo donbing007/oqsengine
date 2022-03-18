@@ -7,7 +7,9 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.value.LongStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
+import com.xforceplus.ultraman.oqsengine.storage.value.StringStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
+import java.util.Optional;
 
 /**
  * 长整形逻辑字段的储存通用策略.
@@ -35,12 +37,22 @@ public class LongStorageStrategy implements StorageStrategy {
 
     @Override
     public StorageValue toStorageValue(IValue value) {
-        return new LongStorageValue(Long.toString(value.getField().id()), value.valueToLong(), true);
+        LongStorageValue storageValue =
+            new LongStorageValue(Long.toString(value.getField().id()), value.valueToLong(), true);
+
+        Optional<String> attachment = value.getAttachment();
+        if (attachment.isPresent()) {
+            StringStorageValue attachemntStorageValue =
+                new StringStorageValue(Long.toString(value.getField().id()), attachment.get(), true);
+            storageValue.setAttachment(attachemntStorageValue);
+        }
+
+        return storageValue;
     }
 
     @Override
     public StorageValue toEmptyStorageValue(IEntityField field) {
-        return new LongStorageValue(Long.toString(field.id()), 0, true);
+        return new LongStorageValue(Long.toString(field.id()), true);
     }
 
     @Override

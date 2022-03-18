@@ -20,7 +20,9 @@ import org.apache.commons.lang3.StringUtils;
  */
 public class ColumnsUtils {
 
-    private static Map<FieldType, BiFunction<List<CanalEntry.Column>, String, Object>> STATIC_HANDLER = new HashMap<>();
+    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ISO_DATE_TIME;
+    private static final Map<FieldType, BiFunction<List<CanalEntry.Column>, String, Object>> STATIC_HANDLER =
+        new HashMap<>();
 
     static {
         STATIC_HANDLER.put(FieldType.STRING, ColumnsUtils::parseStringType);
@@ -34,8 +36,8 @@ public class ColumnsUtils {
     /**
      * 静态执行器, 选择执行器, 解析当前columns,获取最终值.
      *
-     * @param columns 数据集,一个数据集代表一整行记录.
-     * @param code column名字.
+     * @param columns   数据集,一个数据集代表一整行记录.
+     * @param code      column名字.
      * @param fieldType column类型.
      * @return 最终值.
      */
@@ -50,8 +52,9 @@ public class ColumnsUtils {
 
     /**
      * 获取一个String类型的值.
+     *
      * @param columns 数据集,一个数据集代表一整行记录.
-     * @param code column名字.
+     * @param code    column名字.
      * @return 最终值.
      */
     private static String parseStringType(List<CanalEntry.Column> columns, String code) {
@@ -65,8 +68,9 @@ public class ColumnsUtils {
 
     /**
      * 获取一个Long类型的值.
+     *
      * @param columns 数据集,一个数据集代表一整行记录.
-     * @param code column名字.
+     * @param code    column名字.
      * @return 最终值.
      */
     private static Long parseLongType(List<CanalEntry.Column> columns, String code) {
@@ -79,8 +83,9 @@ public class ColumnsUtils {
 
     /**
      * 获取一个BigDecimal类型的值.
+     *
      * @param columns 数据集,一个数据集代表一整行记录.
-     * @param code column名字.
+     * @param code    column名字.
      * @return 最终值.
      */
     private static String parseBigDecimalType(List<CanalEntry.Column> columns, String code) {
@@ -89,8 +94,9 @@ public class ColumnsUtils {
 
     /**
      * 获取一个Boolean类型的值.
+     *
      * @param columns 数据集,一个数据集代表一整行记录.
-     * @param code column名字.
+     * @param code    column名字.
      * @return 最终值.
      */
     private static Long parseBooleanType(List<CanalEntry.Column> columns, String code) {
@@ -106,8 +112,9 @@ public class ColumnsUtils {
 
     /**
      * 获取一个DateTime类型的值.
+     *
      * @param columns 数据集,一个数据集代表一整行记录.
-     * @param code column名字.
+     * @param code    column名字.
      * @return 最终值.
      */
     private static Long parseDateTimeType(List<CanalEntry.Column> columns, String code) {
@@ -120,26 +127,25 @@ public class ColumnsUtils {
 
     /**
      * 获取一个Enum类型的值.
+     *
      * @param columns 数据集,一个数据集代表一整行记录.
-     * @param code column名字.
+     * @param code    column名字.
      * @return 最终值.
      */
     private static String parseEnumType(List<CanalEntry.Column> columns, String code) {
         return parseStringType(columns, code);
     }
 
-    private static final DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
     /**
      * 将时间格式转为Long型格式.
      *
      * @param strTime 字符串的时间戳.
-     *
      * @return long型时间戳.
      */
     public static Long toEpochMilli(String strTime) {
         if (null == strTime) {
             return null;
         }
-        return LocalDateTime.parse(strTime, formatter).atZone(DateTimeValue.ZONE_ID).toInstant().toEpochMilli();
+        return LocalDateTime.parse(strTime, DATE_TIME_FORMATTER).atZone(DateTimeValue.ZONE_ID).toInstant().toEpochMilli();
     }
 }

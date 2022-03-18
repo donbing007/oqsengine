@@ -7,6 +7,8 @@ import com.xforceplus.ultraman.oqsengine.storage.value.strategy.original.jdbc.he
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.original.jdbc.helper.WriteJdbcOriginalSource;
 import java.sql.Date;
 import java.sql.Types;
+import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
 
 /**
  * Types.DATE 属性读取器.
@@ -16,6 +18,8 @@ import java.sql.Types;
  * @since 1.8
  */
 public class JdbcDateOriginalFieldAgent extends AbstractJdbcOriginalFieldAgent {
+
+    private DateTimeFormatter formatter = DateTimeFormatter.ofPattern("YYYY-MM-DD");
 
     @Override
     protected StorageValue doRead(IEntityField field, ReadJdbcOriginalSource rs) throws Exception {
@@ -46,5 +50,14 @@ public class JdbcDateOriginalFieldAgent extends AbstractJdbcOriginalFieldAgent {
     protected void doWrite(IEntityField field, StorageValue data, WriteJdbcOriginalSource ws) throws Exception {
         long value = ((LongStorageValue) data).value();
         ws.getPreparedStatement().setDate(ws.getColumnNumber(), new Date(value));
+    }
+
+    @Override
+    public String plainText(IEntityField field, StorageValue data) throws Exception {
+        long value = ((LongStorageValue) data).value();
+
+        SimpleDateFormat format = new SimpleDateFormat("YYYY-MM-DD");
+
+        return String.format("\'%s\'", format.format(new Date(value)));
     }
 }

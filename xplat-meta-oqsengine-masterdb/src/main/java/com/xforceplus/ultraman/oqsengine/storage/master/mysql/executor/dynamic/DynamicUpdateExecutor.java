@@ -2,11 +2,13 @@ package com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.dynamic;
 
 import com.xforceplus.ultraman.oqsengine.common.StringUtils;
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.ValueWithEmpty;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.AbstractMasterTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.mysql.pojo.MapAttributeMasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
+import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import java.sql.Connection;
 import java.sql.Statement;
 import java.util.Map;
@@ -18,9 +20,10 @@ import java.util.Map;
  * @version 0.1 2020/11/2 15:44
  * @since 1.8
  */
-public class DynamicUpdateExecutor extends AbstractMasterTaskExecutor<MapAttributeMasterStorageEntity[], boolean[]> {
+public class DynamicUpdateExecutor
+    extends AbstractMasterTaskExecutor<MapAttributeMasterStorageEntity<IEntityField, StorageValue>[], boolean[]> {
 
-    public static Executor<MapAttributeMasterStorageEntity[], boolean[]> build(
+    public static Executor<MapAttributeMasterStorageEntity<IEntityField, StorageValue>[], boolean[]> build(
         String tableName, TransactionResource resource, long timeoutMs) {
         return new DynamicUpdateExecutor(tableName, resource, timeoutMs);
     }
@@ -34,9 +37,11 @@ public class DynamicUpdateExecutor extends AbstractMasterTaskExecutor<MapAttribu
     }
 
     @Override
-    public boolean[] execute(MapAttributeMasterStorageEntity[] masterStorageEntities) throws Exception {
+    public boolean[] execute(MapAttributeMasterStorageEntity<IEntityField, StorageValue>[] masterStorageEntities)
+        throws Exception {
 
         boolean single = masterStorageEntities.length == 1;
+        Map<String, Object> painAttributes;
         String sql;
         try (Statement st = getResource().value().createStatement()) {
 
@@ -44,30 +49,40 @@ public class DynamicUpdateExecutor extends AbstractMasterTaskExecutor<MapAttribu
 
 
             if (single) {
-                MapAttributeMasterStorageEntity entity = masterStorageEntities[0];
+                MapAttributeMasterStorageEntity<IEntityField, StorageValue> entity = masterStorageEntities[0];
+                painAttributes = toPainValues(entity.getAttributes());
+
 
                 sql = buildSQL(
                     entity,
-                    buildReplaceFunction(entity.getAttributes()),
-                    buildRemoveFuncation(entity.getAttributes()));
+                    buildReplaceFunction(painAttributes),
+                    buildRemoveFuncation(painAttributes));
 
-                return new boolean[] {
+                boolean[] results = new boolean[] {
                     st.executeUpdate(sql) > 0
                 };
 
+                setDynamicProcessStatus(masterStorageEntities, results);
+
+                return results;
+
             } else {
 
-                for (MapAttributeMasterStorageEntity entity : masterStorageEntities) {
+                for (MapAttributeMasterStorageEntity<IEntityField, StorageValue> entity : masterStorageEntities) {
 
+                    painAttributes = toPainValues(entity.getAttributes());
                     sql = buildSQL(
                         entity,
-                        buildReplaceFunction(entity.getAttributes()),
-                        buildRemoveFuncation(entity.getAttributes()));
+                        buildReplaceFunction(painAttributes),
+                        buildRemoveFuncation(painAttributes));
 
                     st.addBatch(sql);
                 }
 
-                return executedUpdate(st, true);
+                boolean[] results = executedUpdate(st, true);
+                setDynamicProcessStatus(masterStorageEntities, results);
+
+                return results;
             }
         }
     }

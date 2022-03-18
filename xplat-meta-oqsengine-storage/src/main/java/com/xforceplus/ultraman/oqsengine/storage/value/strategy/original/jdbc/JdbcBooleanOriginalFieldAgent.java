@@ -43,4 +43,10 @@ public class JdbcBooleanOriginalFieldAgent extends AbstractJdbcOriginalFieldAgen
         long value = ((LongStorageValue) data).value();
         ws.getPreparedStatement().setBoolean(ws.getColumnNumber(), value == 0 ? false : true);
     }
+
+    @Override
+    public String plainText(IEntityField field, StorageValue data) throws Exception {
+        long value = ((LongStorageValue) data).value();
+        return Boolean.toString(value == 0 ? false : true);
+    }
 }

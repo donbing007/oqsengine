@@ -15,17 +15,13 @@ public class CommonUtils {
 
     /**
      * 获取entityClass.
-     *
-     * @param entityClassRef
-     * @param parserContext
-     * @return
-     * @throws SQLException
      */
     public static IEntityClass getEntityClass(EntityClassRef entityClassRef, ParserContext parserContext) throws
         SQLException {
 
         Optional<IEntityClass>
-            entityClassOptional = parserContext.getMetaManager().load(entityClassRef.getId(), entityClassRef.getProfile());
+            entityClassOptional =
+            parserContext.getMetaManager().load(entityClassRef.getId(), entityClassRef.getProfile());
 
         if (entityClassOptional.isPresent()) {
 
@@ -33,7 +29,7 @@ public class CommonUtils {
         }
 
         throw new SQLException(
-            String.format("[common-utils] id : %d, profile : %s has no entityClass..."
-                , entityClassRef.getId(), entityClassRef.getProfile()));
+            String.format("[common-utils] id : %d, profile : %s has no entityClass...",
+                entityClassRef.getId(), entityClassRef.getProfile()));
     }
 }
