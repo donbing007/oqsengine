@@ -3,6 +3,8 @@ package com.xforceplus.ultraman.oqsengine.boot.grpc.devops;
 import com.alibaba.fastjson.JSON;
 import com.xforceplus.ultraman.devops.service.sdk.annotation.DiscoverAction;
 import com.xforceplus.ultraman.devops.service.sdk.annotation.MethodParam;
+import com.xforceplus.ultraman.devops.service.sdk.config.context.AuthContext;
+import com.xforceplus.ultraman.devops.service.transfer.generate.Auth;
 import com.xforceplus.ultraman.oqsengine.boot.grpc.utils.PrintErrorHelper;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.initcalculation.InitCalculationManager;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
@@ -15,8 +17,6 @@ import com.xforceplus.ultraman.oqsengine.devops.om.model.DevOpsQueryResponse;
 import com.xforceplus.ultraman.oqsengine.devops.om.model.DevOpsQuerySummary;
 import com.xforceplus.ultraman.oqsengine.devops.om.util.DevOpsOmDataUtils;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
-import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
-import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
@@ -158,17 +158,26 @@ public class DataOpsService {
                             }
                         }
                     } else {
-                        List<IValue> values =
-                            Arrays.asList(c.getValue())
-                                .stream().map(v -> IValueUtils.toIValue(entityFieldOptl.get(),
-                                    DevOpsOmDataUtils.convertDataObject(entityFieldOptl.get(), v)))
-                                .collect(Collectors.toList());
-                        Condition condition = new Condition(
-                            entityFieldOptl.get(),
-                            operation,
-                            values.toArray(new IValue[] {})
-                        );
-                        conditions.addAnd(condition);
+                        if (operation.equals(ConditionOperator.IS_NOT_NULL) || operation.equals(ConditionOperator.IS_NULL)) {
+                            Condition condition = new Condition(
+                                    entityFieldOptl.get(),
+                                    operation,
+                                    new EmptyTypedValue(entityFieldOptl.get())
+                            );
+                            conditions.addAnd(condition);
+                        } else {
+                            List<IValue> values =
+                                    Arrays.asList(c.getValue())
+                                            .stream().map(v -> IValueUtils.toIValue(entityFieldOptl.get(),
+                                                    DevOpsOmDataUtils.convertDataObject(entityFieldOptl.get(), v)))
+                                            .collect(Collectors.toList());
+                            Condition condition = new Condition(
+                                    entityFieldOptl.get(),
+                                    operation,
+                                    values.toArray(new IValue[]{})
+                            );
+                            conditions.addAnd(condition);
+                        }
                     }
                 }
             });
@@ -219,12 +228,9 @@ public class DataOpsService {
         }
 
         List<IValue> entityValue = new ArrayList<>();
-        entityClassOptl.get().fields().stream().forEach(field -> {
-            if ("create_time".equals(field.name())) {
-                entityValue.add(
-                    new LongValue(field, LocalDateTime.now().toInstant(ZoneOffset.ofHours(8)).toEpochMilli()));
-            }
-        });
+
+        entityValue.addAll(buildCreateInfoField(entityClassOptl.get()));
+
         data.keySet().stream().forEach(fieldCode -> {
             Optional<IEntityField> entityFieldOptl = entityClassOptl.get().fields()
                 .stream().filter(field -> fieldCode.equals(field.name())).findAny();
@@ -246,11 +252,10 @@ public class DataOpsService {
         OqsResult<IEntity> oqsResult = OqsResult.unknown();
         try {
             oqsResult = entityManagementService.build(targetEntity);
+
+            saveOperate(appId, entityClassId, null, OperateType.SINGLE_CREATE, data, oqsResult);
         } catch (SQLException e) {
             PrintErrorHelper.exceptionHandle(String.format("devops om singleCreate exception, [%s]", entityClassId), e);
-        } finally {
-            // TODO 操作日志
-            saveOperate(appId, entityClassId, null, OperateType.SINGLE_CREATE, data, oqsResult);
         }
 
         return toDevOpsDataResponse(oqsResult);
@@ -276,12 +281,9 @@ public class DataOpsService {
         }
 
         List<IValue> entityValue = new ArrayList<>();
-        entityClassOptl.get().fields().stream().forEach(field -> {
-            if ("update_time".equals(field.name())) {
-                entityValue.add(
-                    new LongValue(field, LocalDateTime.now().toInstant(ZoneOffset.ofHours(8)).toEpochMilli()));
-            }
-        });
+
+        entityValue.addAll(buildUpdateInfoField(entityClassOptl.get()));
+
         data.keySet().forEach(fieldCode -> {
             Optional<IEntityField> entityFieldOptl = entityClassOptl.get().fields()
                 .stream().filter(field -> fieldCode.equals(field.name())).findAny();
@@ -300,12 +302,11 @@ public class DataOpsService {
         OqsResult<Map.Entry<IEntity, IValue[]>> oqsResult = OqsResult.unknown();
         try {
             oqsResult = entityManagementService.replace(targetEntity);
+
+            saveOperate(appId, entityClassId, entityValueId, OperateType.SINGLE_MODIFY, data, oqsResult);
         } catch (SQLException e) {
             PrintErrorHelper.exceptionHandle(
                 String.format("devops om singleModify exception, [%s-%s]", entityClassId, entityValueId), e);
-        } finally {
-            // TODO 操作日志
-            saveOperate(appId, entityClassId, entityValueId, OperateType.SINGLE_MODIFY, data, oqsResult);
         }
 
         return toDevOpsDataResponse(oqsResult);
@@ -337,12 +338,11 @@ public class DataOpsService {
         OqsResult<IEntity> oqsResult = OqsResult.unknown();
         try {
             oqsResult = entityManagementService.delete(targetEntity);
+
+            saveOperate(appId, entityClassId, entityValueId, OperateType.SINGLE_DELETE, null, oqsResult);
         } catch (SQLException e) {
             PrintErrorHelper.exceptionHandle(
                 String.format("devops om singleDelete exception, [%s-%s]", entityClassId, entityValueId), e);
-        } finally {
-            // TODO 操作日志
-            saveOperate(appId, entityClassId, entityValueId, OperateType.SINGLE_DELETE, null, oqsResult);
         }
 
         return toDevOpsDataResponse(oqsResult);
@@ -385,12 +385,9 @@ public class DataOpsService {
 
         List<IEntity> entityList = data.stream().map(map -> {
             List<IValue> entityValue = new ArrayList<>();
-            entityClassOptl.get().fields().stream().forEach(field -> {
-                if ("create_time".equals(field.name())) {
-                    entityValue.add(
-                            new LongValue(field, LocalDateTime.now().toInstant(ZoneOffset.ofHours(8)).toEpochMilli()));
-                }
-            });
+
+            entityValue.addAll(buildCreateInfoField(entityClassOptl.get()));
+
             map.keySet().forEach(fieldCode -> {
                 Optional<IEntityField> entityFieldOptl = entityClassOptl.get().fields()
                         .stream().filter(field -> fieldCode.equals(field.name())).findAny();
@@ -410,13 +407,12 @@ public class DataOpsService {
         OqsResult<IEntity[]> oqsResult = OqsResult.unknown();
         try {
             oqsResult = entityManagementService.build(entityList.toArray(new IEntity[]{}));
+
+            saveOperate(appId, entityClassId, null, OperateType.BATCH_CREATE, data, oqsResult);
         } catch (SQLException e) {
             String idStrs = data.stream().map(item -> String.valueOf(item.get("id"))).collect(Collectors.joining(","));
             PrintErrorHelper.exceptionHandle(
                     String.format("devops om batchCreate exception, [%s], %s", entityClassId, idStrs), e);
-        } finally {
-            // TODO 操作日志
-            saveOperate(appId, entityClassId, null, OperateType.BATCH_CREATE, data, oqsResult);
         }
 
         return toDevOpsDataResponse(oqsResult);
@@ -464,12 +460,9 @@ public class DataOpsService {
 
         List<IEntity> entityList = data.stream().map(map -> {
             List<IValue> entityValue = new ArrayList<>();
-            entityClassOptl.get().fields().stream().forEach(field -> {
-                if ("update_time".equals(field.name())) {
-                    entityValue.add(
-                            new LongValue(field, LocalDateTime.now().toInstant(ZoneOffset.ofHours(8)).toEpochMilli()));
-                }
-            });
+
+            entityValue.addAll(buildUpdateInfoField(entityClassOptl.get()));
+
             map.keySet().stream().filter(fieldCode -> !"id".equals(fieldCode)).forEach(fieldCode -> {
                 Optional<IEntityField> entityFieldOptl = entityClassOptl.get().fields()
                         .stream().filter(field -> fieldCode.equals(field.name())).findAny();
@@ -491,13 +484,12 @@ public class DataOpsService {
         OqsResult<Map<IEntity, IValue[]>> oqsResult = OqsResult.unknown();
         try {
             oqsResult = entityManagementService.replace(entityList.toArray(new IEntity[]{}));
+
+            saveOperate(appId, entityClassId, null, OperateType.BATCH_MODIFY, data, oqsResult);
         } catch (SQLException e) {
             String idStrs = data.stream().map(item -> String.valueOf(item.get("id"))).collect(Collectors.joining(","));
             PrintErrorHelper.exceptionHandle(
                     String.format("devops om batchModify exception, [%s], %s", entityClassId, idStrs), e);
-        } finally {
-            // TODO 操作日志
-            saveOperate(appId, entityClassId, null, OperateType.BATCH_MODIFY, data, oqsResult);
         }
 
         return toDevOpsDataResponse(oqsResult);
@@ -549,12 +541,11 @@ public class DataOpsService {
         OqsResult<IEntity[]> oqsResult = OqsResult.unknown();
         try {
             oqsResult = entityManagementService.delete(entityList.toArray(new IEntity[]{}));
+
+            saveOperate(appId, entityClassId, null, OperateType.BATCH_DELETE, idStrs, oqsResult);
         } catch (SQLException e) {
             PrintErrorHelper.exceptionHandle(
                     String.format("devops om batchDelete exception, [%s], %s", entityClassId, JSON.toJSONString(idStrs)), e);
-        } finally {
-            // TODO 操作日志
-            saveOperate(appId, entityClassId, null, OperateType.BATCH_DELETE, idStrs, oqsResult);
         }
 
         return toDevOpsDataResponse(oqsResult);
@@ -580,12 +571,15 @@ public class DataOpsService {
             Collection<IEntityClass> entityClasses = metaManager.appLoad(Long.valueOf(appId).toString());
             if (entityClasses.isEmpty()) {
                 logger.warn("应用[{}]找不到对象列表", appId);
+                return;
             }
             Optional<IEntityClass> entityClassOptl = entityClasses.stream()
                     .filter(entityClass -> operateSysBo.equals(entityClass.code())).findAny();
             if (!entityClassOptl.isPresent()) {
                 logger.warn("应用[{}]找不到记录操作日志对象[{}]", appId, entityClassOptl.get().id());
+                return;
             }
+            Auth auth = AuthContext.get();
             List<IValue> entityValue = new ArrayList<>();
             entityClassOptl.get().fields().stream().forEach(field -> {
                 if ("create_time".equals(field.name())) {
@@ -603,14 +597,28 @@ public class DataOpsService {
                                 new LongValue(field, entityValueId));
                     }
                 } else if ("request_data".equals(field.name())) {
-                    entityValue.add(
-                            new StringValue(field, JSON.toJSONString(reqData)));
+                    if (reqData != null) {
+                        entityValue.add(
+                                new StringValue(field, JSON.toJSONString(reqData)));
+                    }
                 } else if ("response_data".equals(field.name())) {
                     entityValue.add(
                             new StringValue(field, JSON.toJSONString(convertOqsResult(operateType, respData))));
-                //} else if ("operator_id".equals(field.name())) {
-                //} else if ("operator_code".equals(field.name())) {
-                //} else if ("operator_name".equals(field.name())) {
+                } else if ("operator_id".equals(field.name())) {
+                    if (auth != null && !StringUtils.isEmpty(auth.getId())) {
+                        entityValue.add(
+                                new LongValue(field, Long.valueOf(auth.getId())));
+                    }
+                } else if ("operator_code".equals(field.name())) {
+                    if (auth != null && !StringUtils.isEmpty(auth.getLoginName())) {
+                        entityValue.add(
+                                new StringValue(field, auth.getLoginName()));
+                    }
+                } else if ("operator_name".equals(field.name())) {
+                    if (auth != null && !StringUtils.isEmpty(auth.getUsername())) {
+                        entityValue.add(
+                                new StringValue(field, auth.getUsername()));
+                    }
                 } else if ("operate_type".equals(field.name())) {
                     entityValue.add(
                             new StringValue(field, operateType.name()));
@@ -628,10 +636,10 @@ public class DataOpsService {
             try {
                 entityManagementService.build(targetEntity);
             } catch (SQLException e) {
-                logger.warn("应用[{}]记录操作日志对象[{}]保存数据失败", appId, entityClassOptl.get().id());
+                logger.error("应用[{}]记录操作日志对象[{}]保存数据失败", appId, entityClassOptl.get().id(), e);
             }
         } catch (Exception e) {
-            logger.error("save operation info fail");
+            logger.error("save operation info fail", e);
         }
     }
 
@@ -676,6 +684,66 @@ public class DataOpsService {
         }
 
         return respMap;
+    }
+
+    private List<IValue> buildCreateInfoField(IEntityClass entityClass) {
+        List<IValue> entityValue = new ArrayList<>();
+        if (entityClass == null) {
+            return entityValue;
+        }
+        Auth auth = AuthContext.get();
+        entityClass.fields().stream().forEach(field -> {
+            switch (field.name()) {
+                case "create_time":
+                    entityValue.add(
+                            new LongValue(field, LocalDateTime.now().toInstant(ZoneOffset.ofHours(8)).toEpochMilli()));
+                    break;
+                case "create_user_id":
+                    if (auth != null && !StringUtils.isEmpty(auth.getId())) {
+                        entityValue.add(
+                                new LongValue(field, Long.valueOf(auth.getId())));
+                    }
+                    break;
+                case "create_user_name":
+                    if (auth != null && !StringUtils.isEmpty(auth.getUsername())) {
+                        entityValue.add(
+                                new StringValue(field, auth.getUsername()));
+                    }
+                    break;
+                default:
+            }
+        });
+        return entityValue;
+    }
+
+    private List<IValue> buildUpdateInfoField(IEntityClass entityClass) {
+        List<IValue> entityValue = new ArrayList<>();
+        if (entityClass == null) {
+            return entityValue;
+        }
+        Auth auth = AuthContext.get();
+        entityClass.fields().stream().forEach(field -> {
+            switch (field.name()) {
+                case "update_time":
+                    entityValue.add(
+                            new LongValue(field, LocalDateTime.now().toInstant(ZoneOffset.ofHours(8)).toEpochMilli()));
+                    break;
+                case "update_user_id":
+                    if (auth != null && !StringUtils.isEmpty(auth.getId())) {
+                        entityValue.add(
+                                new LongValue(field, Long.valueOf(auth.getId())));
+                    }
+                    break;
+                case "update_user_name":
+                    if (auth != null && !StringUtils.isEmpty(auth.getUsername())) {
+                        entityValue.add(
+                                new StringValue(field, auth.getUsername()));
+                    }
+                    break;
+                default:
+            }
+        });
+        return entityValue;
     }
 
     private enum OperateType {
