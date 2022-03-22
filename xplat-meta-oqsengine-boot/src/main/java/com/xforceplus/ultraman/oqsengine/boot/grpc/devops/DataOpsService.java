@@ -253,7 +253,7 @@ public class DataOpsService {
         try {
             oqsResult = entityManagementService.build(targetEntity);
 
-            saveOperate(appId, entityClassId, null, OperateType.SINGLE_CREATE, data, oqsResult);
+            saveOperate(appId, entityClassOptl.get(), null, OperateType.SINGLE_CREATE, data, oqsResult);
         } catch (SQLException e) {
             PrintErrorHelper.exceptionHandle(String.format("devops om singleCreate exception, [%s]", entityClassId), e);
         }
@@ -303,7 +303,7 @@ public class DataOpsService {
         try {
             oqsResult = entityManagementService.replace(targetEntity);
 
-            saveOperate(appId, entityClassId, entityValueId, OperateType.SINGLE_MODIFY, data, oqsResult);
+            saveOperate(appId, entityClassOptl.get(), entityValueId, OperateType.SINGLE_MODIFY, data, oqsResult);
         } catch (SQLException e) {
             PrintErrorHelper.exceptionHandle(
                 String.format("devops om singleModify exception, [%s-%s]", entityClassId, entityValueId), e);
@@ -339,7 +339,7 @@ public class DataOpsService {
         try {
             oqsResult = entityManagementService.delete(targetEntity);
 
-            saveOperate(appId, entityClassId, entityValueId, OperateType.SINGLE_DELETE, null, oqsResult);
+            saveOperate(appId, entityClassOptl.get(), entityValueId, OperateType.SINGLE_DELETE, null, oqsResult);
         } catch (SQLException e) {
             PrintErrorHelper.exceptionHandle(
                 String.format("devops om singleDelete exception, [%s-%s]", entityClassId, entityValueId), e);
@@ -408,7 +408,7 @@ public class DataOpsService {
         try {
             oqsResult = entityManagementService.build(entityList.toArray(new IEntity[]{}));
 
-            saveOperate(appId, entityClassId, null, OperateType.BATCH_CREATE, data, oqsResult);
+            saveOperate(appId, entityClassOptl.get(), null, OperateType.BATCH_CREATE, data, oqsResult);
         } catch (SQLException e) {
             String idStrs = data.stream().map(item -> String.valueOf(item.get("id"))).collect(Collectors.joining(","));
             PrintErrorHelper.exceptionHandle(
@@ -485,7 +485,7 @@ public class DataOpsService {
         try {
             oqsResult = entityManagementService.replace(entityList.toArray(new IEntity[]{}));
 
-            saveOperate(appId, entityClassId, null, OperateType.BATCH_MODIFY, data, oqsResult);
+            saveOperate(appId, entityClassOptl.get(), null, OperateType.BATCH_MODIFY, data, oqsResult);
         } catch (SQLException e) {
             String idStrs = data.stream().map(item -> String.valueOf(item.get("id"))).collect(Collectors.joining(","));
             PrintErrorHelper.exceptionHandle(
@@ -513,7 +513,7 @@ public class DataOpsService {
         }
 
         if (idStrs == null || idStrs.size() == 0) {
-            return DevOpsDataResponse.fail("没有可修改的数据");
+            return DevOpsDataResponse.fail("没有可删除的数据");
         }
 
         if (idStrs.size() > batchLimit) {
@@ -542,7 +542,7 @@ public class DataOpsService {
         try {
             oqsResult = entityManagementService.delete(entityList.toArray(new IEntity[]{}));
 
-            saveOperate(appId, entityClassId, null, OperateType.BATCH_DELETE, idStrs, oqsResult);
+            saveOperate(appId, entityClassOptl.get(), null, OperateType.BATCH_DELETE, idStrs, oqsResult);
         } catch (SQLException e) {
             PrintErrorHelper.exceptionHandle(
                     String.format("devops om batchDelete exception, [%s], %s", entityClassId, JSON.toJSONString(idStrs)), e);
@@ -566,7 +566,7 @@ public class DataOpsService {
         return DevOpsDataResponse.ok(oqsResult.getMessage());
     }
 
-    private void saveOperate(long appId, long entityClassId, Long entityValueId, OperateType operateType, Object reqData, Object respData) {
+    private void saveOperate(long appId, IEntityClass entityClassRecord, Long entityValueId, OperateType operateType, Object reqData, Object respData) {
         try {
             Collection<IEntityClass> entityClasses = metaManager.appLoad(Long.valueOf(appId).toString());
             if (entityClasses.isEmpty()) {
@@ -582,15 +582,23 @@ public class DataOpsService {
             Auth auth = AuthContext.get();
             List<IValue> entityValue = new ArrayList<>();
             entityClassOptl.get().fields().stream().forEach(field -> {
-                if ("create_time".equals(field.name())) {
-                    entityValue.add(
-                            new LongValue(field, LocalDateTime.now().toInstant(ZoneOffset.ofHours(8)).toEpochMilli()));
-                } else if ("app_id".equals(field.name())) {
+                if ("app_id".equals(field.name())) {
                     entityValue.add(
                             new LongValue(field, appId));
+                } else if ("app_code".equals(field.name())) {
+                    if (!StringUtils.isEmpty(entityClassRecord.appCode())) {
+                        entityValue.add(
+                                new StringValue(field, entityClassRecord.appCode()));
+                    }
                 } else if ("bo_id".equals(field.name())) {
                     entityValue.add(
-                            new LongValue(field, entityClassId));
+                            new LongValue(field, entityClassRecord.id()));
+                } else if ("bo_name".equals(field.name())) {
+                    entityValue.add(
+                            new StringValue(field, entityClassRecord.name()));
+                } else if ("bo_code".equals(field.name())) {
+                    entityValue.add(
+                            new StringValue(field, entityClassRecord.code()));
                 } else if ("entity_id".equals(field.name())) {
                     if (entityValueId != null) {
                         entityValue.add(
@@ -645,44 +653,42 @@ public class DataOpsService {
 
     private Map convertOqsResult(OperateType operateType, Object respData) {
         Map respMap = new HashMap();
+        if (respData == null) {
+            return respMap;
+        }
+        OqsResult oqsResult = (OqsResult) respData;
+        respMap.put("status", oqsResult.getResultStatus() == null ? "" : oqsResult.getResultStatus().name());
         if (OperateType.SINGLE_CREATE.equals(operateType)
                 || OperateType.SINGLE_DELETE.equals(operateType)) {
-            OqsResult<IEntity> oqsResult = (OqsResult<IEntity>) respData;
-            respMap.put("status", oqsResult.getResultStatus().name());
             if (oqsResult.getValue().isPresent()) {
-                respMap.put("data", oqsResult.getValue().get().entityValue().values().stream().collect(Collectors.toMap(v -> v.getField().name(), v -> v.getValue())));
+                IEntity oqsResultValue = (IEntity) oqsResult.getValue().get();
+                respMap.put("data", oqsResultValue.entityValue().values().stream().collect(Collectors.toMap(v -> v.getField().name(), v -> v.getValue())));
             }
         } else if (OperateType.SINGLE_MODIFY.equals(operateType)) {
-            OqsResult<Map.Entry<IEntity, IValue[]>> oqsResult = (OqsResult<Map.Entry<IEntity, IValue[]>>) respData;
-            respMap.put("status", oqsResult.getResultStatus().name());
             if (oqsResult.getValue().isPresent()) {
-                respMap.put("data", Arrays.stream(oqsResult.getValue().get().getValue()).collect(Collectors.toMap(v -> v.getField().name(), v -> v.getValue())));
+                Map.Entry<IEntity, IValue[]> oqsResultValue = (Map.Entry<IEntity, IValue[]>) oqsResult.getValue().get();
+                respMap.put("data", Arrays.stream(oqsResultValue.getValue()).collect(Collectors.toMap(v -> v.getField().name(), v -> v.getValue())));
             }
         } else if (OperateType.BATCH_CREATE.equals(operateType)
                 || OperateType.BATCH_DELETE.equals(operateType)) {
-            OqsResult<IEntity[]> oqsResult = (OqsResult<IEntity[]>) respData;
-            respMap.put("status", oqsResult.getResultStatus().name());
             if (oqsResult.getValue().isPresent()) {
-                IEntity[] data = oqsResult.getValue().get();
+                IEntity[] oqsResultValue = (IEntity[]) oqsResult.getValue().get();
                 Map dataMap = new HashMap();
-                Arrays.stream(data).map(entity ->
+                Arrays.stream(oqsResultValue).map(entity ->
                     dataMap.put(entity.id(), entity.entityValue().values().stream().collect(Collectors.toMap(v -> v.getField().name(), v -> v.getValue())))
                 );
-                respMap.put("data", Arrays.stream(data).map(item -> item.entityValue().values()).collect(Collectors.toList()));
+                respMap.put("data", dataMap);
             }
         } else if (OperateType.BATCH_MODIFY.equals(operateType)) {
-            OqsResult<Map<IEntity, IValue[]>> oqsResult = (OqsResult<Map<IEntity, IValue[]>>) respData;
-            respMap.put("status", oqsResult.getResultStatus().name());
             if (oqsResult.getValue().isPresent()) {
-                Map<IEntity, IValue[]> data = oqsResult.getValue().get();
+                Map<IEntity, IValue[]> oqsResultValue = (Map<IEntity, IValue[]>) oqsResult.getValue().get();
                 Map dataMap = new HashMap();
-                data.keySet().forEach(key ->
-                    dataMap.put(key.id(), Arrays.stream(data.get(key)).collect(Collectors.toMap(v -> v.getField().name(), v -> v.getValue())))
+                oqsResultValue.keySet().forEach(key ->
+                    dataMap.put(key.id(), Arrays.stream(oqsResultValue.get(key)).collect(Collectors.toMap(v -> v.getField().name(), v -> v.getValue())))
                 );
                 respMap.put("data", dataMap);
             }
         }
-
         return respMap;
     }
 
