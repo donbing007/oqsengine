@@ -79,11 +79,11 @@ public class DevOpsRebuildExecutor implements Executor<IEntityClass, Integer> {
             .append(FieldDefine.OP).append("=").append("?");
 
         sql.append(" WHERE ")
-            .append(EntityClassHelper.buildEntityClassQuerySql(entityClass))
-            .append(" AND ")
             .append(FieldDefine.UPDATE_TIME).append(" >= ").append("?")
             .append(" AND ")
             .append(FieldDefine.UPDATE_TIME).append(" <= ").append("?")
+            .append(" AND ")
+            .append(EntityClassHelper.buildEntityClassQuerySql(entityClass))
             .append(" AND ")
             .append(FieldDefine.DELETED).append(" = ").append("?");
 
