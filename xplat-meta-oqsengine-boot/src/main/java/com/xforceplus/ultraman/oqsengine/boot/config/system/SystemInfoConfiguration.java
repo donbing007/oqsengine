@@ -79,7 +79,9 @@ public class SystemInfoConfiguration {
         }
     }
 
-
+    /**
+     * 生成system-info.
+     */
     public SDKAgentConfig generateSystemInfo() {
         SDKAgentConfig sdkAgentConfig = new SDKAgentConfig();
         //  cdc
