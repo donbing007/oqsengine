@@ -13,6 +13,7 @@ public class AppSimpleInfo {
 
     /**
      * 构造函数.
+     *
      * @param appId 业务主键ID.
      * @param env 环境.
      * @param code 业务CODE.
