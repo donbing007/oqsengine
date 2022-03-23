@@ -670,7 +670,7 @@ public class DataOpsService {
                 IEntity[] oqsResultValue = (IEntity[]) oqsResult.getValue().get();
                 Map dataMap = new HashMap();
                 Arrays.stream(oqsResultValue).map(entity ->
-                    dataMap.put(entity.id(), entity.entityValue().values().stream().collect(Collectors.toMap(v -> v.getField().name(), v -> v.getValue())))
+                    dataMap.put(String.valueOf(entity.id()), entity.entityValue().values().stream().collect(Collectors.toMap(v -> v.getField().name(), v -> v.getValue())))
                 );
                 respMap.put("data", dataMap);
             }
@@ -679,7 +679,7 @@ public class DataOpsService {
                 Map<IEntity, IValue[]> oqsResultValue = (Map<IEntity, IValue[]>) oqsResult.getValue().get();
                 Map dataMap = new HashMap();
                 oqsResultValue.keySet().forEach(key ->
-                    dataMap.put(key.id(), Arrays.stream(oqsResultValue.get(key)).collect(Collectors.toMap(v -> v.getField().name(), v -> v.getValue())))
+                    dataMap.put(String.valueOf(key.id()), Arrays.stream(oqsResultValue.get(key)).collect(Collectors.toMap(v -> v.getField().name(), v -> v.getValue())))
                 );
                 respMap.put("data", dataMap);
             }
