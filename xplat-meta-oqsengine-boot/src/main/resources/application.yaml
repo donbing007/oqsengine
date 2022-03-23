@@ -232,6 +232,7 @@ discover:
       serviceName: oqs-engine
       serviceGroup: ${HOSTNAME}
       serviceId: ${discover.sdk.agent.serviceGroup}.${instance.id}
+      description: "OQS-ENGINE"
     threadPool:
       task: 5
       queue: 100

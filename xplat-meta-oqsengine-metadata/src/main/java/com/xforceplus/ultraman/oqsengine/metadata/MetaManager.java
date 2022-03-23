@@ -1,13 +1,13 @@
 package com.xforceplus.ultraman.oqsengine.metadata;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.monitor.dto.MetricsLog;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.AppSimpleInfo;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -126,7 +126,7 @@ public interface MetaManager {
      *
      * @return appId列表.
      */
-    default Map<String, String> showApplications() {
-        return new HashMap<>();
+    default List<AppSimpleInfo> showApplications() {
+        return new ArrayList<>();
     }
 }
