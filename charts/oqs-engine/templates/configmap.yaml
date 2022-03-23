@@ -218,7 +218,7 @@ data:
                 duration: {{ .Values.discover.sdk.time.duration | default "5000" | quote }}
             agent:
               serviceId: {{ .Values.discover.sdk.agent.serviceId }}
-              serviceGroup: {{ .Values.discover.sdk.agent.serviceGroup }}
+              serviceGroup: {{ .Release.Name }}
               serviceName: {{ .Values.discover.sdk.agent.serviceName | default "oqs-engine" | quote }}
             threadPool:
               task: {{ .Values.discover.sdk.threadPool.task | default "5" | quote }}

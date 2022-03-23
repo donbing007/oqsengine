@@ -3,13 +3,13 @@ package com.xforceplus.ultraman.oqsengine.core.service.integration.grpc.devops;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xforceplus.ultraman.oqsengine.boot.OqsengineBootApplication;
 import com.xforceplus.ultraman.oqsengine.boot.grpc.devops.SystemOpsService;
-import com.xforceplus.ultraman.oqsengine.boot.grpc.devops.dto.ApplicationInfo;
 import com.xforceplus.ultraman.oqsengine.common.mock.CommonInitialization;
 import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.common.mock.ReflectionUtils;
 import com.xforceplus.ultraman.oqsengine.core.service.integration.grpc.devops.mock.MockedCache;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.StorageMetaManager;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.AppSimpleInfo;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.model.ClientModel;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MetaInitialization;
@@ -20,6 +20,7 @@ import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.MysqlConta
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.RedisContainer;
 import java.lang.reflect.Field;
 import java.util.Collection;
+import java.util.List;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -56,8 +57,6 @@ public class DiscoverDevOpsServiceTest {
 
     @MockBean(name = "keyValueStorage")
     private KeyValueStorage keyValueStorage;
-
-    private boolean waitForDebug = false;
 
     private static String expectedAppId = "discover-test";
     private static int expectedVersion = Integer.MAX_VALUE;
@@ -103,18 +102,18 @@ public class DiscoverDevOpsServiceTest {
 
     @Test
     public void showApplicationTest() {
-        ApplicationInfo applicationInfo = discoverDevOpsService.showApplications();
-        Assertions.assertTrue(applicationInfo.getSystemInfo().size() > 0);
-        Assertions.assertEquals(1, applicationInfo.getApplicationEnv().size());
+        List<AppSimpleInfo> applicationInfo = discoverDevOpsService.appInfo();
+        Assertions.assertEquals(1, applicationInfo.size());
+    }
+
+    @Test
+    public void systemInfoTest() {
+        Assertions.assertTrue(discoverDevOpsService.systemInfo().size() > 0);
     }
 
     @Test
     @Disabled("不是常用的测试,平时忽略.")
     public void test() throws InterruptedException, JsonProcessingException {
-        if (waitForDebug) {
-            Thread.sleep(10000_000);
-        } else {
-            Thread.sleep(5_000);
-        }
+        Thread.sleep(10000_000);
     }
 }
