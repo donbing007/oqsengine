@@ -585,11 +585,6 @@ public class DataOpsService {
                 if ("app_id".equals(field.name())) {
                     entityValue.add(
                             new LongValue(field, appId));
-                } else if ("app_code".equals(field.name())) {
-                    if (!StringUtils.isEmpty(entityClassRecord.appCode())) {
-                        entityValue.add(
-                                new StringValue(field, entityClassRecord.appCode()));
-                    }
                 } else if ("bo_id".equals(field.name())) {
                     entityValue.add(
                             new LongValue(field, entityClassRecord.id()));
