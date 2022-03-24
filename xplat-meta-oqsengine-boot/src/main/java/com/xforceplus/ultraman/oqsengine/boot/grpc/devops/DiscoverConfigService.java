@@ -25,6 +25,11 @@ public class DiscoverConfigService {
     @Autowired
     private SystemInfoConfiguration systemInfoConfiguration;
 
+    /**
+     * 获取oqs的配置.
+     *
+     * @return Service对象.
+     */
     @DiscoverService(name = "serviceConfig", describe = "获取oqs的配置")
     public Service serviceConfigDiscover() {
         SDKAgentConfig sdkAgentConfig = systemInfoConfiguration.generateSystemInfo();

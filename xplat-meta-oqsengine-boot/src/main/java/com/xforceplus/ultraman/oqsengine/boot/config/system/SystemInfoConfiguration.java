@@ -86,8 +86,8 @@ public class SystemInfoConfiguration {
         SDKAgentConfig sdkAgentConfig = new SDKAgentConfig();
         //  cdc
         sdkAgentConfig.addService(new CanalTypedConfig(cdcHost, cdcDestination));
-        sdkAgentConfig.addService(new RedisTypedConfig(SystemInfoConfigUtils.getSimpleUrl("@", "?", redisLettuceUrl)
-            , Integer.toString(redissonDataBase)));
+        sdkAgentConfig.addService(new RedisTypedConfig(
+            SystemInfoConfigUtils.getSimpleUrl("@", "?", redisLettuceUrl), Integer.toString(redissonDataBase)));
         sdkAgentConfig.addService(new ManticoreTypedConfig(indexSimpleUri, indexSearchName, indexWriteName));
         sdkAgentConfig.addService(new MysqlTypedConfig(masterSimpleUri, masterName));
 
