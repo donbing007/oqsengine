@@ -28,6 +28,7 @@ import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.CacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.DefaultCacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.HealthCheckEntityClass;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.AppSimpleInfo;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.model.AbstractMetaModel;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.model.MetaModel;
@@ -344,8 +345,8 @@ public class StorageMetaManager implements MetaManager {
     }
 
     @Override
-    public Map<String, String> showApplications() {
-        return cacheExecutor.showAppEnv();
+    public List<AppSimpleInfo> showApplications() {
+        return cacheExecutor.showAppInfo();
     }
 
     private void offLineInit(String path) {

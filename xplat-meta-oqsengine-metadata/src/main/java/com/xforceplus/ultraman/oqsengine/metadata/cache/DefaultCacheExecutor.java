@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.metadata.cache;
 
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
 import static com.xforceplus.ultraman.oqsengine.metadata.cache.RedisLuaScript.ACTIVE_VERSION;
+import static com.xforceplus.ultraman.oqsengine.metadata.cache.RedisLuaScript.DEFAULT_METADATA_APP_CODE;
 import static com.xforceplus.ultraman.oqsengine.metadata.cache.RedisLuaScript.DEFAULT_METADATA_APP_ENTITY;
 import static com.xforceplus.ultraman.oqsengine.metadata.cache.RedisLuaScript.DEFAULT_METADATA_APP_ENV;
 import static com.xforceplus.ultraman.oqsengine.metadata.cache.RedisLuaScript.DEFAULT_METADATA_APP_PREPARE;
@@ -37,6 +38,7 @@ import com.xforceplus.ultraman.oqsengine.common.thread.PollingThreadExecutor;
 import com.xforceplus.ultraman.oqsengine.common.watch.RedisLuaScriptWatchDog;
 import com.xforceplus.ultraman.oqsengine.event.payload.meta.MetaChangePayLoad;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.AppSimpleInfo;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.ProfileStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.utils.CacheUtils;
@@ -49,10 +51,12 @@ import io.lettuce.core.RedisClient;
 import io.lettuce.core.ScriptOutputType;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.vavr.Tuple4;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -152,6 +156,17 @@ public class DefaultCacheExecutor implements CacheExecutor {
      */
     private final String appEnvKeys;
 
+
+    /*
+     * version key (AppID-Code信息)
+     * [redis hash key]
+     * key-appCodeKeys
+     * field-appId
+     * value-code
+     */
+    private final String appCodeKeys;
+
+
     /*
      * version key (版本信息)
      * [redis hash key]
@@ -208,7 +223,8 @@ public class DefaultCacheExecutor implements CacheExecutor {
             DEFAULT_METADATA_APP_PREPARE,
             DEFAULT_METADATA_APP_ENTITY,
             DEFAULT_METADATA_ENTITY_APP_REL,
-            DEFAULT_METADATA_APP_VERSIONS_ENTITY_IDS);
+            DEFAULT_METADATA_APP_VERSIONS_ENTITY_IDS,
+            DEFAULT_METADATA_APP_CODE);
     }
 
     /**
@@ -225,7 +241,8 @@ public class DefaultCacheExecutor implements CacheExecutor {
             DEFAULT_METADATA_APP_PREPARE,
             DEFAULT_METADATA_APP_ENTITY,
             DEFAULT_METADATA_ENTITY_APP_REL,
-            DEFAULT_METADATA_APP_VERSIONS_ENTITY_IDS);
+            DEFAULT_METADATA_APP_VERSIONS_ENTITY_IDS,
+            DEFAULT_METADATA_APP_CODE);
     }
 
     /**
@@ -240,11 +257,12 @@ public class DefaultCacheExecutor implements CacheExecutor {
      * @param entityStorageKeys       元信息储存KEY.
      * @param appEntityMappingKey     元信息属性MAP的KEY.
      * @param appEntityCollectionsKey 应用所有元信息的列表KEY.
+     * @param appCodeKeys             应用CODE的KEY.
      */
     public DefaultCacheExecutor(int maxCacheSize, int prepareExpireSeconds, int cacheExpireSeconds,
                                 String appEnvKeys, String appVersionKeys, String appPrepareKeyPrefix,
                                 String entityStorageKeys,
-                                String appEntityMappingKey, String appEntityCollectionsKey) {
+                                String appEntityMappingKey, String appEntityCollectionsKey, String appCodeKeys) {
 
         if (maxCacheSize > NOT_INIT_INTEGER_PARAMETER) {
             this.maxCacheSize = maxCacheSize;
@@ -286,6 +304,11 @@ public class DefaultCacheExecutor implements CacheExecutor {
         this.appEntityCollectionsKey = appEntityCollectionsKey;
         if (this.appEntityCollectionsKey == null || this.appEntityCollectionsKey.isEmpty()) {
             throw new IllegalArgumentException("The appEntityCollections key is invalid.");
+        }
+
+        this.appCodeKeys = appCodeKeys;
+        if (this.appCodeKeys == null || this.appCodeKeys.isEmpty()) {
+            throw new IllegalArgumentException("The appCodeKeys keys is invalid.");
         }
 
         cacheContext = new CacheContext(maxCacheSize, cacheExpireSeconds);
@@ -357,8 +380,12 @@ public class DefaultCacheExecutor implements CacheExecutor {
                     remoteMultiplyLoading(appEntityIdList(appId, oldVersion), oldVersion));
         }
 
+        String appCode = "";
+
         //  set data
         for (EntityClassStorage newStorage : storageList) {
+
+            appCode = newStorage.getAppCode();
 
             //  存入到cache中，并获得entityClass的变更事件
             EntityClassStorage old = null != oldMetas ? oldMetas.remove(newStorage.getId()) : null;
@@ -386,6 +413,10 @@ public class DefaultCacheExecutor implements CacheExecutor {
         if (!resetVersion(appId, version,
             storageList.stream().map(EntityClassStorage::getId).collect(Collectors.toList()))) {
             throw new RuntimeException(String.format("reset version failed, appId : %s, %d", appId, version));
+        }
+
+        if (!appCode.isEmpty()) {
+            saveAppCode(appId, appCode);
         }
 
         return appMetaChangePayLoad;
@@ -766,13 +797,26 @@ public class DefaultCacheExecutor implements CacheExecutor {
     }
 
     @Override
-    public Map<String, String> showAppEnv() {
-        return syncCommands.hgetall(appEnvKeys);
+    public List<AppSimpleInfo> showAppInfo() {
+        List<AppSimpleInfo> infoList = new ArrayList<>();
+        Map<String, String> envs =  syncCommands.hgetall(appEnvKeys);
+        if (null != envs && !envs.isEmpty()) {
+            Map<String, String> versions = syncCommands.hgetall(appVersionKeys);
+            Map<String, String> codes = syncCommands.hgetall(appCodeKeys);
+            envs.forEach(
+                (appId, env) -> {
+                    String version = versions.remove(appId);
+
+                    infoList.add(new AppSimpleInfo(appId, env, codes.remove(appId),
+                        (null != version && !version.isEmpty()) ? Integer.parseInt(version) : NOT_EXIST_VERSION));
+                }
+            );
+        }
+        return infoList;
     }
 
-    private String toNowDateString(LocalDate date) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
-        return formatter.format(date);
+    private void saveAppCode(String appId, String appCode) {
+        syncCommands.hset(appCodeKeys, appId, appCode);
     }
 
     /**
@@ -1052,4 +1096,45 @@ public class DefaultCacheExecutor implements CacheExecutor {
             }
         );
     }
+
+    private Map<String, Integer> versions(List<String> appIds) {
+        Map<String, Integer> ports = new HashMap<>();
+        if (null != appIds && !appIds.isEmpty()) {
+            Map<String, String> kvs = syncCommands.hgetall(appVersionKeys);
+            if (null != kvs) {
+                appIds.forEach(
+                    id -> {
+                        String value = kvs.remove(id);
+                        if (null != value) {
+                            ports.put(id, Integer.parseInt(value));
+                        }
+                    }
+                );
+            }
+        }
+        return ports;
+    }
+
+    private Map<String, String> codes(List<String> appIds) {
+        if (null != appIds && !appIds.isEmpty()) {
+            return syncCommands.hgetall(appCodeKeys);
+        }
+
+        return Collections.EMPTY_MAP;
+    }
+
+    private Map<String, String> envs(List<String> appIds) {
+        if (null != appIds && !appIds.isEmpty()) {
+            return syncCommands.hgetall(appEnvKeys);
+        }
+
+        return Collections.EMPTY_MAP;
+    }
+
+
+    private String toNowDateString(LocalDate date) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+        return formatter.format(date);
+    }
+
 }

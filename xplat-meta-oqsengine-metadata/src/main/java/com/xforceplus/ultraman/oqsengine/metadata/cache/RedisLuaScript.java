@@ -10,6 +10,7 @@ package com.xforceplus.ultraman.oqsengine.metadata.cache;
 public class RedisLuaScript {
 
     public static final String DEFAULT_METADATA_APP_ENV = "com.xforceplus.ultraman.oqsengine.metadata.app.env";
+    public static final String DEFAULT_METADATA_APP_CODE = "com.xforceplus.ultraman.oqsengine.metadata.app.code";
     public static final String DEFAULT_METADATA_APP_VERSIONS = "com.xforceplus.ultraman.oqsengine.metadata.versions";
     public static final String DEFAULT_METADATA_APP_PREPARE = "com.xforceplus.ultraman.oqsengine.metadata.prepare";
 

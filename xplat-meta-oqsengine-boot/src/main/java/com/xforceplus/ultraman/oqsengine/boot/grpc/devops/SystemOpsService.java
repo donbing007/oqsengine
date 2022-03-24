@@ -2,8 +2,9 @@ package com.xforceplus.ultraman.oqsengine.boot.grpc.devops;
 
 import com.xforceplus.ultraman.devops.service.sdk.annotation.DiscoverAction;
 import com.xforceplus.ultraman.devops.service.sdk.annotation.MethodParam;
+import com.xforceplus.ultraman.devops.service.sdk.config.context.AuthContext;
+import com.xforceplus.ultraman.devops.service.transfer.generate.Auth;
 import com.xforceplus.ultraman.oqsengine.boot.config.system.SystemInfoConfiguration;
-import com.xforceplus.ultraman.oqsengine.boot.grpc.devops.dto.ApplicationInfo;
 import com.xforceplus.ultraman.oqsengine.boot.grpc.utils.PrintErrorHelper;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.condition.CdcErrorQueryCondition;
 import com.xforceplus.ultraman.oqsengine.core.service.DevOpsManagementService;
@@ -12,6 +13,7 @@ import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.DevOpsTaskInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.monitor.dto.MetricsLog;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.AppSimpleInfo;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.CdcErrorTask;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -23,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -332,15 +335,28 @@ public class SystemOpsService {
      *
      * @return app->env pairs.
      */
-    @DiscoverAction(describe = "获取当前oqs下所有的app", retClass = ApplicationInfo.class)
-    public ApplicationInfo showApplications() {
+    @DiscoverAction(describe = "获取当前oqs下所有app", retClass = List.class, retInner = AppSimpleInfo.class)
+    public List<AppSimpleInfo> appInfo() {
         try {
-            ApplicationInfo applicationInfo = new ApplicationInfo();
-            applicationInfo.setApplicationEnv(metaManager.showApplications());
-            applicationInfo.setSystemInfo(systemInfoConfiguration.printSystemInfo());
-            return applicationInfo;
+            return metaManager.showApplications();
         } catch (Exception e) {
             PrintErrorHelper.exceptionHandle("show applications exception.", e);
+        }
+        return null;
+    }
+
+
+    /**
+     * 获取当前oqs下所有的app->env.
+     *
+     * @return app->env pairs.
+     */
+    @DiscoverAction(describe = "获取当前oqs下所有系统信息", retClass = Map.class)
+    public Map<String, String> systemInfo() {
+        try {
+            return systemInfoConfiguration.printSystemInfo();
+        } catch (Exception e) {
+            PrintErrorHelper.exceptionHandle("print system-info exception.", e);
         }
         return null;
     }
