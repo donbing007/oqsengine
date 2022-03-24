@@ -53,7 +53,7 @@ public class JdbcBlobOriginalFieldAgent extends AbstractJdbcOriginalFieldAgent {
     public String plainText(IEntityField field, StorageValue data) throws Exception {
         String value = ((StringStorageValue) data).value();
 
-        return String.format("\'%s\'", value);
+        return String.format("'%s'", value);
     }
 
     @Override

@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.original;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.master.mysql.pojo.MapAttributeMasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
@@ -63,7 +64,8 @@ public class OriginalUpdateExecutor extends
         }
     }
 
-    private String buildSql(MapAttributeMasterStorageEntity<IEntityField, StorageValue> storageEntity) throws Exception {
+    private String buildSql(MapAttributeMasterStorageEntity<IEntityField, StorageValue> storageEntity)
+        throws Exception {
         StringBuilder sql = new StringBuilder();
         sql.append("UPDATE ")
             .append(storageEntity.getOriginalTableName())
@@ -82,6 +84,11 @@ public class OriginalUpdateExecutor extends
 
             sql.append(field.name()).append(" = ").append(agent.plainText(field, attributes.get(field)));
         }
+
+        sql.append(" WHERE ")
+            .append(FieldDefine.ID)
+            .append(" = ")
+            .append(storageEntity.getId());
 
         return sql.toString();
     }

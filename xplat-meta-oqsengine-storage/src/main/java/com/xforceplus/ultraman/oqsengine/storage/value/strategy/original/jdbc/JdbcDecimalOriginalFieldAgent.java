@@ -44,12 +44,11 @@ public class JdbcDecimalOriginalFieldAgent extends AbstractJdbcOriginalFieldAgen
 
     @Override
     protected void doWrite(IEntityField field, StorageValue data, WriteJdbcOriginalSource ws) throws Exception {
-        ws.getPreparedStatement().setBigDecimal(ws.getColumnNumber(),
-            new BigDecimal(JdbcOriginalFieldHelper.buildDecimalStorageValuePlainValue(data)));
+        ws.getPreparedStatement().setBigDecimal(ws.getColumnNumber(), new BigDecimal((String) data.value()));
     }
 
     @Override
     public String plainText(IEntityField field, StorageValue data) throws Exception {
-        return JdbcOriginalFieldHelper.buildDecimalStorageValuePlainValue(data);
+        return (String) data.value();
     }
 }

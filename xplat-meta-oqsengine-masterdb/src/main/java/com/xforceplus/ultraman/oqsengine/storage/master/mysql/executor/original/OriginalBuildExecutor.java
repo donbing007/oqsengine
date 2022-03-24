@@ -63,7 +63,7 @@ public class OriginalBuildExecutor extends
         Map<IEntityField, StorageValue> attributes = entity.getAttributes();
         for (IEntityField f : attributes.keySet()) {
             if (buff.length() > emptyLen) {
-                buff.append(",");
+                buff.append(", ");
             }
 
             buff.append(f.name());
@@ -73,7 +73,7 @@ public class OriginalBuildExecutor extends
         buff.append(") ");
 
         buff.append("VALUES (");
-        buff.append(entity.getId());
+        buff.append(entity.getId()).append(", ");
 
         emptyLen = buff.length();
 

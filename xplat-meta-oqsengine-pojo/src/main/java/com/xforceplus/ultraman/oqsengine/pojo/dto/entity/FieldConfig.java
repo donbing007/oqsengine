@@ -503,7 +503,7 @@ public class FieldConfig implements Serializable {
             .withLen(this.getLen())
             .withScale(this.scale())
             .withCalculation(this.getCalculation().clone())
-            .jdbcType(this.getJdbcType())
+            .withJdbcType(this.getJdbcType())
             .build();
     }
 
@@ -710,7 +710,7 @@ public class FieldConfig implements Serializable {
             return this;
         }
 
-        public Builder jdbcType(int jdbcType) {
+        public Builder withJdbcType(int jdbcType) {
             this.jdbcType = jdbcType;
             return this;
         }

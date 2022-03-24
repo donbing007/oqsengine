@@ -76,7 +76,6 @@ public class DateTimeValue extends AbstractValue<LocalDateTime> {
      * 默认的timestamp转LocalDateTime.
      */
     public static LocalDateTime toLocalDateTime(long timestamp) {
-        return
-            LocalDateTime.ofInstant(Instant.ofEpochMilli(timestamp), ZONE_ID);
+        return LocalDateTime.ofInstant(Instant.ofEpochMilli(timestamp), ZONE_ID);
     }
 }

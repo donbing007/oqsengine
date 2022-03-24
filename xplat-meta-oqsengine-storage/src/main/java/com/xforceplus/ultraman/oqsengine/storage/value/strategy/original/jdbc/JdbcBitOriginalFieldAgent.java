@@ -84,7 +84,7 @@ public class JdbcBitOriginalFieldAgent extends AbstractJdbcOriginalFieldAgent {
             return Boolean.toString(value > 0 ? true : false);
         } else {
             String value = ((StringStorageValue) data).value();
-            return String.format("\'%s\'", value);
+            return String.format("'%s'", value);
         }
     }
 }

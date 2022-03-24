@@ -47,6 +47,6 @@ public class JdbcVarcharOriginalFieldAgent extends AbstractJdbcOriginalFieldAgen
     public String plainText(IEntityField field, StorageValue data) throws Exception {
         String value = (String) data.value();
 
-        return String.format("\'%s\'", value);
+        return String.format("'%s'", value);
     }
 }

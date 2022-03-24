@@ -6,7 +6,6 @@ import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.common.mock.ReflectionUtils;
 import com.xforceplus.ultraman.oqsengine.common.mock.SqlInitUtils;
 import com.xforceplus.ultraman.oqsengine.common.selector.NoSelector;
-import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MetaInitialization;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
@@ -16,22 +15,18 @@ import com.xforceplus.ultraman.oqsengine.storage.master.mysql.strategy.condition
 import com.xforceplus.ultraman.oqsengine.storage.master.mysql.strategy.value.MasterDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.master.mysql.strategy.value.MasterStringsStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.master.transaction.SqlConnectionTransactionResourceFactory;
-import com.xforceplus.ultraman.oqsengine.storage.master.unique.UniqueKeyGenerator;
-import com.xforceplus.ultraman.oqsengine.storage.master.unique.impl.SimpleFieldKeyGenerator;
 import com.xforceplus.ultraman.oqsengine.storage.mock.StorageInitialization;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import com.xforceplus.ultraman.oqsengine.tokenizer.DefaultTokenizerFactory;
 import java.lang.reflect.Field;
 import java.util.Collection;
 import javax.sql.DataSource;
-import jdk.nashorn.internal.ir.annotations.Ignore;
 
 /**
  * Created by justin.xu on 06/2021.
  *
  * @since 1.8
  */
-@Ignore
 public class MasterDBInitialization implements BeanInitialization {
 
     private static volatile MasterDBInitialization instance = null;
@@ -86,9 +81,11 @@ public class MasterDBInitialization implements BeanInitialization {
         ReflectionUtils
             .reflectionFieldValue(masterFields, "storageStrategyFactory", masterStorage, masterStorageStrategyFactory);
         ReflectionUtils
-            .reflectionFieldValue(masterFields, "conditionsBuilderFactory", masterStorage, sqlJsonConditionsBuilderFactory);
+            .reflectionFieldValue(masterFields, "conditionsBuilderFactory", masterStorage,
+                sqlJsonConditionsBuilderFactory);
         ReflectionUtils
-            .reflectionFieldValue(masterFields, "metaManager", masterStorage, MetaInitialization.getInstance().getMetaManager());
+            .reflectionFieldValue(masterFields, "metaManager", masterStorage,
+                MetaInitialization.getInstance().getMetaManager());
         ReflectionUtils
             .reflectionFieldValue(masterFields, "masterDataSource", masterStorage, dataSource);
 

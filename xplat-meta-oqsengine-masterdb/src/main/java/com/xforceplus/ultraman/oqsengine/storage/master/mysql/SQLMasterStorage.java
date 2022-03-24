@@ -337,6 +337,13 @@ public class SQLMasterStorage implements MasterStorage {
             return true;
         }
 
+        if (!entity.entityClassRef().equals(entityClass.ref())) {
+            throw new SQLException(
+                String.format(
+                    "The type declared by the current instance does not match the specified type.[%s - %s]",
+                    entity.entityClassRef(), entityClass.ref()));
+        }
+
         boolean result = (boolean) transactionExecutor.execute(
             (tx, resource, hint) -> {
 
@@ -436,6 +443,13 @@ public class SQLMasterStorage implements MasterStorage {
 
         if (!entity.isDirty()) {
             return true;
+        }
+
+        if (!entity.entityClassRef().equals(entityClass.ref())) {
+            throw new SQLException(
+                String.format(
+                    "The type declared by the current instance does not match the specified type.[%s - %s]",
+                    entity.entityClassRef(), entityClass.ref()));
         }
 
         boolean result = (boolean) transactionExecutor.execute(
@@ -1047,8 +1061,7 @@ public class SQLMasterStorage implements MasterStorage {
     private static String buildOriginalTableName(IEntityClass entityClass) {
 
         StringBuilder buff = new StringBuilder();
-        buff.append("oqs_")
-            .append(entityClass.appCode())
+        buff.append(entityClass.appCode())
             .append('_')
             .append(entityClass.code());
         if (!entityClass.profile().equals(OqsProfile.UN_DEFINE_PROFILE)) {

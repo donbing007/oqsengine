@@ -74,7 +74,7 @@ public class GeneralEntityClassStorageBuilder {
             .withFieldSense(FieldConfig.FieldSense.NORMAL)
             .withSearchable(true)
             .withRequired(true)
-            .jdbcType(toJdbcType(fieldType))
+            .withJdbcType(toJdbcType(fieldType))
             .withIdentifie(false);
 
         if (null != calculation) {

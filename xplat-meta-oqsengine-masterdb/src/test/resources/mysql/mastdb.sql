@@ -31,3 +31,14 @@ create table kv (
   unique key unique_key(k, h)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
+CREATE TABLE test_original_table (
+   id bigint(20) COMMENT 'id' ,
+   original_datetime bigint(20) NOT NULL COMMENT 'DATETIME字段' ,
+   original_strings varchar(255) NOT NULL COMMENT 'STRINGS字段' ,
+   original_long bigint(20) NOT NULL COMMENT 'LONG字段' ,
+   original_string varchar(20) NOT NULL COMMENT 'STRING字段' ,
+   original_enum varchar(20) NOT NULL DEFAULT 'a'COMMENT 'ENUM字段' ,
+   original_bool boolean NOT NULL COMMENT 'BOOL字段',
+   original_dec decimal(20, 6) NOT NULL COMMENT 'DECIMAL字段',
+   PRIMARY KEY (`id`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT='静态对象';

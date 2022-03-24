@@ -451,7 +451,7 @@ public class EntityClassStorageBuilderUtils {
             .withUniqueName(fieldConfig.getUniqueName())
             .withCrossSearch(fieldConfig.getCrossSearch())
             .withLen(fieldConfig.getLength())
-            .jdbcType(fieldConfig.getJdbcType());
+            .withJdbcType(fieldConfig.getJdbcType());
 
         if (!isRelationEntity) {
             builder.withCalculation(toCalculator(fieldId, fieldType, calculator));

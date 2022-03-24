@@ -1,13 +1,16 @@
 package com.xforceplus.ultraman.oqsengine.storage.value.strategy.original.jdbc;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.LongStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.original.jdbc.helper.ReadJdbcOriginalSource;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.original.jdbc.helper.WriteJdbcOriginalSource;
 import java.sql.Timestamp;
 import java.sql.Types;
-import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 /**
  * Types.TIMESTAMP 类型支持.
@@ -17,6 +20,9 @@ import java.text.SimpleDateFormat;
  * @since 1.8
  */
 public class JdbcTimestampOriginalFieldAgent extends AbstractJdbcOriginalFieldAgent {
+
+    private DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSS");
+
     @Override
     protected StorageValue doRead(IEntityField field, ReadJdbcOriginalSource rs) throws Exception {
         Timestamp timestamp = rs.getResultSet().getTimestamp(field.name());
@@ -51,9 +57,9 @@ public class JdbcTimestampOriginalFieldAgent extends AbstractJdbcOriginalFieldAg
     @Override
     public String plainText(IEntityField field, StorageValue data) throws Exception {
         long value = (long) data.value();
-        Timestamp timestamp = new Timestamp(value);
+        LocalDateTime localDateTime =
+            LocalDateTime.ofInstant(Instant.ofEpochMilli(value), DateTimeValue.ZONE_ID);
 
-        SimpleDateFormat format = new SimpleDateFormat("YYYY-MM-DD HH:MM:SS");
-        return String.format("\'%s\'", format.format(timestamp));
+        return String.format("'%s'", formatter.format(localDateTime));
     }
 }

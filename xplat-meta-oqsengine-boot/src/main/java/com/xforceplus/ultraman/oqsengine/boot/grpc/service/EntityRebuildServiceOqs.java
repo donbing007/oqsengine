@@ -263,16 +263,9 @@ public class EntityRebuildServiceOqs implements EntityRebuildServicePowerApi {
 
     @Override
     public CompletionStage<OperationResult> cdcSendErrorRecover(CdcRecoverSubmit cdcRecoverSubmit, Metadata metadata) {
-        return async(() -> {
-            try {
-                devOpsManagementService
-                    .cdcSendErrorRecover(cdcRecoverSubmit.getSeqNo(), cdcRecoverSubmit.getRecoverObjectString());
-                return OperationResult.newBuilder().setCode(OperationResult.Code.OK).build();
-            } catch (SQLException ex) {
-                return OperationResult.newBuilder().setCode(OperationResult.Code.EXCEPTION).setMessage(ex.getMessage())
-                    .build();
-            }
-        });
+        return CompletableFuture.completedFuture(
+            OperationResult.newBuilder().setCode(OperationResult.Code.FAILED).build()
+        );
     }
 
     @Override
