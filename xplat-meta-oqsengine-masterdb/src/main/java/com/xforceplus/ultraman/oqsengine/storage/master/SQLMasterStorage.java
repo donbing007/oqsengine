@@ -13,6 +13,7 @@ import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
@@ -43,6 +44,7 @@ import com.xforceplus.ultraman.oqsengine.storage.master.pojo.MapAttributeMasterS
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.MasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.conditions.SQLJsonConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.master.unique.UniqueKeyGenerator;
+import com.xforceplus.ultraman.oqsengine.storage.master.utils.EntityClassHelper;
 import com.xforceplus.ultraman.oqsengine.storage.master.utils.EntityClassRefHelper;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.EntityPackage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
@@ -194,7 +196,15 @@ public class SQLMasterStorage implements MasterStorage {
             Optional<JsonAttributeMasterStorageEntity> masterStorageEntityOptional =
                 QueryExecutor.buildHaveDetail(tableName, resource, queryTimeout).execute(id);
             if (masterStorageEntityOptional.isPresent()) {
-                IEntity entity = buildEntityFromJsonStorageEntity(masterStorageEntityOptional.get());
+                JsonAttributeMasterStorageEntity storageEntity = masterStorageEntityOptional.get();
+                Optional<IEntityClass> entityClassOp = metaManager.load(
+                    storageEntity.getSelfEntityClassId(), storageEntity.getProfile());
+                if (!entityClassOp.isPresent()) {
+                    return Optional.empty();
+                }
+
+                IEntity entity = buildEntityFromJsonStorageEntity(storageEntity, entityClassOp.get());
+
                 entity.neat();
                 return Optional.ofNullable(entity);
             } else {
@@ -254,12 +264,25 @@ public class SQLMasterStorage implements MasterStorage {
                 }
             );
 
+        EntityClassRef[] entityClassRefs = masterStorageEntities.stream().map(st ->
+                EntityClassRef.Builder.anEntityClassRef()
+                    .withEntityClassId(st.getSelfEntityClassId())
+                    .withEntityClassProfile(st.getProfile())
+                    .build())
+            .toArray(EntityClassRef[]::new);
+        IEntityClass[] entityClasses = EntityClassHelper.findLargeEntityClsss(entityClassRefs, metaManager);
+
+        if (entityClasses.length != masterStorageEntities.size()) {
+            throw new SQLException("The expected meta information could not be found.");
+        }
+
         List<IEntity> entities = new ArrayList<>(masterStorageEntities.size());
         IEntity entity;
+        int entityClassIndex = 0;
         for (JsonAttributeMasterStorageEntity masterStorageEntity : masterStorageEntities) {
-            entity = buildEntityFromJsonStorageEntity(masterStorageEntity);
-            entity.neat();
+            entity = buildEntityFromJsonStorageEntity(masterStorageEntity, entityClasses[entityClassIndex++]);
             if (entity != null) {
+                entity.neat();
                 entities.add(entity);
             }
         }
@@ -274,24 +297,48 @@ public class SQLMasterStorage implements MasterStorage {
     )
     @Override
     public Collection<IEntity> selectMultiple(long[] ids, IEntityClass entityClass) throws SQLException {
-        Collection<IEntity> entities = selectMultiple(ids);
-        if (entities.isEmpty()) {
-            return entities;
+        // 排重.
+        long[] useIds = removeDuplicate(ids);
+
+        if (useIds.length == 0) {
+            return Collections.emptyList();
         }
 
-        return entities.stream().filter(e -> {
+        Collection<JsonAttributeMasterStorageEntity> masterStorageEntities =
+            (Collection<JsonAttributeMasterStorageEntity>) transactionExecutor.execute(
+                (tx, resource, hint) -> {
+                    return MultipleQueryExecutor.build(tableName, resource, queryTimeout).execute(useIds);
+                }
+            );
 
-            Optional<IEntityClass> actualEntityClassOp =
-                metaManager.load(e.entityClassRef().getId(), e.entityClassRef().getProfile());
-            if (actualEntityClassOp.isPresent()) {
+        EntityClassRef[] entityClassRefs = masterStorageEntities.stream().map(st ->
+                EntityClassRef.Builder.anEntityClassRef()
+                    .withEntityClassId(st.getSelfEntityClassId())
+                    .withEntityClassProfile(st.getProfile())
+                    .build())
+            .toArray(EntityClassRef[]::new);
+        IEntityClass[] actualEntityClasses = EntityClassHelper.findLargeEntityClsss(entityClassRefs, metaManager);
 
-                return actualEntityClassOp.get().isCompatibility(entityClass.id());
+        if (actualEntityClasses.length != masterStorageEntities.size()) {
+            throw new SQLException("The expected meta information could not be found.");
+        }
 
-            } else {
-                return false;
+        List<IEntity> entities = new ArrayList<>(masterStorageEntities.size());
+        IEntity entity;
+        IEntityClass actualEntityClass;
+        int actualEntityClassIndex = 0;
+        for (JsonAttributeMasterStorageEntity masterStorageEntity : masterStorageEntities) {
+            actualEntityClass = actualEntityClasses[actualEntityClassIndex++];
+            if (actualEntityClass.isCompatibility(entityClass.id())) {
+                entity = buildEntityFromJsonStorageEntity(masterStorageEntity, actualEntityClass);
+                if (entity != null) {
+                    entity.neat();
+                    entities.add(entity);
+                }
             }
+        }
 
-        }).collect(Collectors.toList());
+        return entities;
     }
 
     @Timed(
@@ -828,25 +875,12 @@ public class SQLMasterStorage implements MasterStorage {
     }
 
     // 无法实例化的数据将返回null.
-    private IEntity buildEntityFromJsonStorageEntity(JsonAttributeMasterStorageEntity se) throws SQLException {
+    private IEntity buildEntityFromJsonStorageEntity(JsonAttributeMasterStorageEntity se,
+                                                     IEntityClass actualEntityClass)
+        throws SQLException {
         if (se == null) {
             return null;
         }
-        Optional<IEntityClass> entityClassOp;
-        if (se.getProfile() == null || se.getProfile().isEmpty()) {
-            entityClassOp = metaManager.load(se.getSelfEntityClassId(), "");
-        } else {
-            entityClassOp = metaManager.load(
-                se.getSelfEntityClassId(),
-                se.getProfile()
-            );
-        }
-
-        if (!entityClassOp.isPresent()) {
-            return null;
-        }
-
-        IEntityClass actualEntityClass = entityClassOp.get();
 
         Entity.Builder entityBuilder = Entity.Builder.anEntity()
             .withId(se.getId())

@@ -7,7 +7,6 @@ import com.xforceplus.ultraman.oqsengine.calculation.context.DefaultCalculationC
 import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFactory;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
-import com.xforceplus.ultraman.oqsengine.common.map.MapUtils;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.common.mode.OqsMode;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
@@ -39,14 +38,11 @@ import com.xforceplus.ultraman.oqsengine.status.CDCStatusService;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.ConditionsSelectStorage;
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
-import com.xforceplus.ultraman.oqsengine.storage.executor.ResourceTask;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
+import com.xforceplus.ultraman.oqsengine.storage.master.utils.EntityClassHelper;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.EntityPackage;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import com.xforceplus.ultraman.oqsengine.task.TaskCoordinator;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.Counter;
@@ -55,7 +51,6 @@ import java.sql.SQLException;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -322,7 +317,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             return OqsResult.success();
         }
 
-        IEntityClass[] entityClasses = findLargeEntityClass(entities);
+        IEntityClass[] entityClasses = EntityClassHelper.findLargeEntityClass(entities, metaManager);
         if (entityClasses.length != entities.length) {
             return OqsResult.notExistMeta();
         }
@@ -538,7 +533,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             .filter(e -> e.isDirty() || !e.isDeleted())
             .toArray(IEntity[]::new);
 
-        IEntityClass[] entityClasses = findLargeEntityClass(dirtyEntities);
+        IEntityClass[] entityClasses = EntityClassHelper.findLargeEntityClass(dirtyEntities, metaManager);
         if (entityClasses.length != dirtyEntities.length) {
             return OqsResult.notExistMeta();
         }
@@ -856,7 +851,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     public OqsResult<IEntity[]> delete(IEntity[] entities) throws SQLException {
         checkReady();
 
-        IEntityClass[] entityClasses = findLargeEntityClass(entities);
+        IEntityClass[] entityClasses = EntityClassHelper.findLargeEntityClass(entities, metaManager);
         if (entityClasses.length != entities.length) {
             return OqsResult.notExistMeta();
         }
@@ -1329,43 +1324,5 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         if (entity.time() <= 0) {
             entity.markTime(System.currentTimeMillis());
         }
-    }
-
-    /**
-     * 查找大量的实例entityclass.
-     * 如果返回长度为1,并且value为null,那么表示key存放的对象实例的元信息没有找到.
-     *
-     * @param entities 目标对象实例列表.
-     * @return 查询结果.
-     */
-    private IEntityClass[] findLargeEntityClass(IEntity[] entities) {
-        Map<EntityClassRef, IEntityClass> entityClassCache = new HashMap<>();
-        EntityClassRef entityClassRef;
-        IEntityClass entityClass;
-        Optional<IEntityClass> entityClassOp;
-        IEntityClass[] entityClasses = new IEntityClass[entities.length];
-        IEntity entity;
-        for (int i = 0; i < entities.length; i++) {
-            entity = entities[i];
-            entityClassRef = entity.entityClassRef();
-
-            entityClass = entityClassCache.get(entityClassRef);
-
-            if (entityClass != null) {
-                entityClasses[i] = entityClass;
-            } else {
-                // 缓存中没有找到.
-                entityClassOp = metaManager.load(entityClassRef);
-                if (entityClassOp.isPresent()) {
-                    entityClass = entityClassOp.get();
-                    entityClassCache.put(entityClassRef, entityClass);
-                    entityClasses[i] = entityClass;
-                } else {
-                    return new IEntityClass[0];
-                }
-            }
-        }
-
-        return entityClasses;
     }
 }
