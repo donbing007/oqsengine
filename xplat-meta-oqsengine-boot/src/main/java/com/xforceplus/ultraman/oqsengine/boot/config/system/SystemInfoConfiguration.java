@@ -1,6 +1,13 @@
 package com.xforceplus.ultraman.oqsengine.boot.config.system;
 
 import com.typesafe.config.Config;
+import com.xforceplus.ultraman.devops.service.custom.pojo.config.enums.UTMAgentType;
+import com.xforceplus.ultraman.devops.service.custom.pojo.config.middleware.CanalTypedConfig;
+import com.xforceplus.ultraman.devops.service.custom.pojo.config.middleware.ManticoreTypedConfig;
+import com.xforceplus.ultraman.devops.service.custom.pojo.config.middleware.MysqlTypedConfig;
+import com.xforceplus.ultraman.devops.service.custom.pojo.config.middleware.RedisTypedConfig;
+import com.xforceplus.ultraman.devops.service.custom.pojo.dto.SDKAgentConfig;
+import com.xforceplus.ultraman.devops.service.custom.pojo.utm.UTMAgentConfig;
 import com.xforceplus.ultraman.oqsengine.boot.util.SystemInfoConfigUtils;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
 import java.util.LinkedHashMap;
@@ -38,9 +45,6 @@ public class SystemInfoConfiguration {
     @Value("${redis.redisson.database:}")
     private int redissonDataBase;
 
-    @Value("${redis.redisson.singel.address:-1}")
-    private String redissonSingleAddress;
-
     //  index
     @Value("${storage.index.search.name:}")
     private String indexSearchName;
@@ -76,6 +80,23 @@ public class SystemInfoConfiguration {
     }
 
     /**
+     * 生成system-info.
+     */
+    public SDKAgentConfig generateSystemInfo() {
+        SDKAgentConfig sdkAgentConfig = new SDKAgentConfig();
+        //  cdc
+        sdkAgentConfig.addService(new CanalTypedConfig(cdcHost, cdcDestination));
+        sdkAgentConfig.addService(new RedisTypedConfig(
+            SystemInfoConfigUtils.getSimpleUrl("@", "?", redisLettuceUrl), Integer.toString(redissonDataBase)));
+        sdkAgentConfig.addService(new ManticoreTypedConfig(indexSimpleUri, indexSearchName, indexWriteName));
+        sdkAgentConfig.addService(new MysqlTypedConfig(masterSimpleUri, masterName));
+
+        sdkAgentConfig.addAgentConfig(new UTMAgentConfig(UTMAgentType.BOCP, metaHost, metaPort));
+
+        return sdkAgentConfig;
+    }
+
+    /**
      * 打印系统变量.
      */
     public Map<String, String> printSystemInfo() {
@@ -93,7 +114,6 @@ public class SystemInfoConfiguration {
             //  add redis
             info.put("redisLettuceUrl", SystemInfoConfigUtils.getSimpleUrl("@", "?", redisLettuceUrl));
             info.put("redissonDataBase", Integer.toString(redissonDataBase));
-            info.put("redissonSingleAddress", redissonSingleAddress);
 
             //  add index
             info.put("indexSearchName", indexSearchName);

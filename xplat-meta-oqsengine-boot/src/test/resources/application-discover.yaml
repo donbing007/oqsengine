@@ -224,9 +224,10 @@ discover:
         expired: 60000
         duration: 5000
     agent:
-      serviceId: ${discover.sdk.agent.serviceGroup}-${instance.id}
+      serviceId: oqs-engine-unit-test.0
       serviceGroup: oqs-engine-unit-test
       serviceName: oqs-engine
+      description: "测试OQS-DISCOVER"
     threadPool:
       task: 5
       queue: 100

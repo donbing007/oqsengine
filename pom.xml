@@ -346,7 +346,7 @@
             <dependency>
                 <groupId>com.xforceplus.ultraman</groupId>
                 <artifactId>ultraman-devops-service-sdk</artifactId>
-                <version>release-1.0.1</version>
+                <version>release-1.1.0</version>
             </dependency>
             <dependency>
                 <groupId>org.redisson</groupId>

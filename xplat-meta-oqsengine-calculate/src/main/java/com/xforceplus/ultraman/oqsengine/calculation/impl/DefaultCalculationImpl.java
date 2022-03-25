@@ -584,7 +584,9 @@ public class DefaultCalculationImpl implements Calculation {
             .tags(
                 "logic", logic != null ? logic.getClass().getSimpleName() : "all",
                 "action", action,
-                "exception", ex ? CalculationException.class.getSimpleName() : "none"
+                "exception", ex ? CalculationException.class.getSimpleName() : "none",
+                "class", this.getClass().getSimpleName(),
+                "method", action
             )
             .publishPercentileHistogram(false)
             .publishPercentiles(0.5, 0.9, 0.99)

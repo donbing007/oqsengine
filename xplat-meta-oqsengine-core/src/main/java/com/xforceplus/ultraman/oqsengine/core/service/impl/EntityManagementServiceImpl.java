@@ -38,14 +38,11 @@ import com.xforceplus.ultraman.oqsengine.status.CDCStatusService;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.ConditionsSelectStorage;
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
-import com.xforceplus.ultraman.oqsengine.storage.executor.ResourceTask;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
+import com.xforceplus.ultraman.oqsengine.storage.master.utils.EntityClassHelper;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.EntityPackage;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import com.xforceplus.ultraman.oqsengine.task.TaskCoordinator;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.Counter;
@@ -320,21 +317,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             return OqsResult.success();
         }
 
-        IEntityClass[] entityClasses = new IEntityClass[entities.length];
-        Optional<IEntityClass> entityClassOp;
-        EntityClassRef ref;
-        for (int i = 0; i < entities.length; i++) {
-            ref = entities[i].entityClassRef();
-            entityClassOp = metaManager.load(ref);
-
-            if (!entityClassOp.isPresent()) {
-
-                return OqsResult.notExistMeta(ref);
-
-            } else {
-
-                entityClasses[i] = entityClassOp.get();
-            }
+        IEntityClass[] entityClasses = EntityClassHelper.findLargeEntityClass(entities, metaManager);
+        if (entityClasses.length != entities.length) {
+            return OqsResult.notExistMeta();
         }
 
         OqsResult result = preview(entities, entityClasses, true);
@@ -548,21 +533,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             .filter(e -> e.isDirty() || !e.isDeleted())
             .toArray(IEntity[]::new);
 
-        IEntityClass[] entityClasses = new IEntityClass[dirtyEntities.length];
-        Optional<IEntityClass> entityClassOp;
-        EntityClassRef ref;
-        for (int i = 0; i < dirtyEntities.length; i++) {
-            ref = dirtyEntities[i].entityClassRef();
-            entityClassOp = metaManager.load(ref);
-
-            if (!entityClassOp.isPresent()) {
-
-                return OqsResult.notExistMeta(ref);
-
-            } else {
-
-                entityClasses[i] = entityClassOp.get();
-            }
+        IEntityClass[] entityClasses = EntityClassHelper.findLargeEntityClass(dirtyEntities, metaManager);
+        if (entityClasses.length != dirtyEntities.length) {
+            return OqsResult.notExistMeta();
         }
 
         OqsResult oqsResult = preview(dirtyEntities, entityClasses, false);
@@ -878,21 +851,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     public OqsResult<IEntity[]> delete(IEntity[] entities) throws SQLException {
         checkReady();
 
-        IEntityClass[] entityClasses = new IEntityClass[entities.length];
-        Optional<IEntityClass> entityClassOp;
-        EntityClassRef ref;
-        for (int i = 0; i < entities.length; i++) {
-            ref = entities[i].entityClassRef();
-            entityClassOp = metaManager.load(ref);
-
-            if (!entityClassOp.isPresent()) {
-
-                return OqsResult.notExistMeta(ref);
-
-            } else {
-
-                entityClasses[i] = entityClassOp.get();
-            }
+        IEntityClass[] entityClasses = EntityClassHelper.findLargeEntityClass(entities, metaManager);
+        if (entityClasses.length != entities.length) {
+            return OqsResult.notExistMeta();
         }
 
         for (IEntity entity : entities) {

@@ -36,6 +36,7 @@ import com.google.common.cache.CacheBuilder;
 import com.xforceplus.ultraman.oqsengine.common.watch.RedisLuaScriptWatchDog;
 import com.xforceplus.ultraman.oqsengine.event.payload.meta.MetaChangePayLoad;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.AppSimpleInfo;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.ProfileStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.utils.CacheUtils;
@@ -750,8 +751,21 @@ public class DefaultCacheExecutor implements CacheExecutor {
     }
 
     @Override
-    public Map<String, String> showAppEnv() {
-        return syncCommands.hgetall(appEnvKeys);
+    public List<AppSimpleInfo> showAppInfo() {
+        List<AppSimpleInfo> infoList = new ArrayList<>();
+        Map<String, String> envs =  syncCommands.hgetall(appEnvKeys);
+        if (null != envs && !envs.isEmpty()) {
+            Map<String, String> versions = syncCommands.hgetall(appVersionKeys);
+            envs.forEach(
+                (appId, env) -> {
+                    String version = versions.remove(appId);
+
+                    infoList.add(new AppSimpleInfo(appId, env, "",
+                        (null != version && !version.isEmpty()) ? Integer.parseInt(version) : NOT_EXIST_VERSION));
+                }
+            );
+        }
+        return infoList;
     }
 
     private String toNowDateString(LocalDate date) {

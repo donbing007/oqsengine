@@ -56,7 +56,7 @@ public class MetricsConfiguration {
 
     @Bean
     public TimedAspect timedAspect() {
-        return new TimedAspect(Metrics.globalRegistry, pjp -> Tags.empty());
+        return new TimedAspect();
     }
 
     @Bean
