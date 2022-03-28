@@ -27,14 +27,12 @@ import java.sql.Connection;
 import java.sql.Statement;
 import java.util.Collection;
 import javax.sql.DataSource;
-import jdk.nashorn.internal.ir.annotations.Ignore;
 
 /**
  * Created by justin.xu on 06/2021.
  *
  * @since 1.8
  */
-@Ignore
 public class CdcInitialization implements BeanInitialization {
 
     private static volatile CdcInitialization instance;

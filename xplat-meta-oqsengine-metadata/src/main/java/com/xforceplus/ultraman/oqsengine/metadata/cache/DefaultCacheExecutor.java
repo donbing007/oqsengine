@@ -51,7 +51,6 @@ import io.lettuce.core.RedisClient;
 import io.lettuce.core.ScriptOutputType;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
-import io.vavr.Tuple4;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -1097,7 +1096,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
         );
     }
 
-    private Map<String, Integer> versions(List<String> appIds) {
+    private Map<String, Integer> doVersions(List<String> appIds) {
         Map<String, Integer> ports = new HashMap<>();
         if (null != appIds && !appIds.isEmpty()) {
             Map<String, String> kvs = syncCommands.hgetall(appVersionKeys);

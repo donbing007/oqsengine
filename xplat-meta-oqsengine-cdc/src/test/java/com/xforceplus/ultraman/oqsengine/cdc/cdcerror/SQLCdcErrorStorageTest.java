@@ -36,11 +36,7 @@ public class SQLCdcErrorStorageTest extends AbstractCdcHelper {
 
     @AfterAll
     public static void afterAll() {
-        try {
-            InitializationHelper.destroy();
-        } catch (Exception e) {
-
-        }
+        InitializationHelper.destroy();
     }
 
     @Test
@@ -108,7 +104,8 @@ public class SQLCdcErrorStorageTest extends AbstractCdcHelper {
         //使用所有条件查询
         cdcErrorQueryCondition = new CdcErrorQueryCondition();
         cdcErrorQueryCondition.setBatchId(CdcErrorBuildHelper.expectedBatchId)
-            .setId(CdcErrorBuildHelper.expectedId).setCommitId(CdcErrorBuildHelper.expectedCommitId).setType(ErrorType.DATA_FORMAT_ERROR.getType())
+            .setId(CdcErrorBuildHelper.expectedId).setCommitId(CdcErrorBuildHelper.expectedCommitId)
+            .setType(ErrorType.DATA_FORMAT_ERROR.getType())
             .setStatus(FixedStatus.NOT_FIXED.getStatus()).setEqualStatus(true);
         CdcErrorBuildHelper.queryWithExpected(cdcErrorQueryCondition, FixedStatus.NOT_FIXED);
     }

@@ -95,7 +95,8 @@ public class DefaultCDCMetricsHandler implements CDCMetricsHandler {
 
     @Override
     public void callBackError(CDCMetrics cdcMetrics) {
-        logger.warn("[cdc-metrics] callback error, cdcStatus : {}", cdcMetrics.getCdcAckMetrics().getCdcConsumerStatus());
+        logger.warn("[cdc-metrics] callback error, cdcStatus : {}",
+            cdcMetrics.getCdcAckMetrics().getCdcConsumerStatus());
         callback(cdcMetrics);
     }
 

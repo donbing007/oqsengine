@@ -42,8 +42,9 @@ public class InitializationHelper {
         }
     }
 
-
-
+    /**
+     * 销毁.
+     */
     public static void destroy() {
         CommonInitialization commonInitialization = null;
         try {

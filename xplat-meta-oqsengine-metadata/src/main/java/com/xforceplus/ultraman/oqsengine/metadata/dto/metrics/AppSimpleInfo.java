@@ -11,6 +11,14 @@ public class AppSimpleInfo {
     private String code;
     private Integer version;
 
+    /**
+     * 初始化APP简单信息.
+     *
+     * @param appId 应用标识.
+     * @param env 环境信息.
+     * @param code 代码.
+     * @param version 版本.
+     */
     public AppSimpleInfo(String appId, String env, String code, Integer version) {
         this.appId = appId;
         this.env = env;

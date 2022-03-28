@@ -8,14 +8,12 @@ import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-import jdk.nashorn.internal.ir.annotations.Ignore;
 
 /**
  * Created by justin.xu on 02/2022.
  *
  * @since 1.8
  */
-@Ignore
 public class MockCallBackService implements CDCMetricsCallback {
 
     private CDCAckMetrics ackMetrics;
