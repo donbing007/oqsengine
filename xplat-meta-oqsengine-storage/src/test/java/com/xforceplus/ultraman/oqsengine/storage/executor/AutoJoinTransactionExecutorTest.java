@@ -125,8 +125,7 @@ public class AutoJoinTransactionExecutorTest {
         when(mockDataSource.getConnection()).thenReturn(expectedConn);
         Selector<DataSource> dataSourceSelector = key -> mockDataSource;
 
-        TransactionManager tm = StorageInitialization.getInstance()
-            .getTransactionManager();
+        TransactionManager tm = StorageInitialization.getInstance().getTransactionManager();
 
         Transaction currentT = tm.create();
         tm.bind(currentT.id());
