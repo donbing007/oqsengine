@@ -176,7 +176,8 @@ public class SQLMasterStorageTest {
         .withId(4001)
         .withFieldType(FieldType.STRING)
         .withName("original_string")
-        .withConfig(FieldConfig.Builder.anFieldConfig().withJdbcType(Types.VARCHAR).withSearchable(true).build())
+        .withConfig(FieldConfig.Builder.anFieldConfig().withLen(20).withJdbcType(Types.VARCHAR).withSearchable(true)
+            .build())
         .build();
     private IEntityField originalStringsField = EntityField.Builder.anEntityField()
         .withId(4003)
@@ -240,7 +241,13 @@ public class SQLMasterStorageTest {
         for (String tag : tags) {
             // 初始化动态测试数据.
             if (DYNAMIC_TAG.equals(tag)) {
-                expectedEntitys = initData(storage, 100);
+
+                expectedEntitys = initData(storage, 100, false);
+
+            } else if (ORGINAL_TAG.equals(tag)) {
+
+                expectedEntitys = initData(storage, 100, true);
+
             }
         }
     }
@@ -254,7 +261,13 @@ public class SQLMasterStorageTest {
     @Test
     @Tag(ORGINAL_TAG)
     public void testOriginalDeleteEntity() throws Exception {
+        IEntity targetEntity = expectedEntitys.stream().findFirst().get();
+        Assertions.assertTrue(storage.delete(targetEntity, originalEntityClass));
+        Assertions.assertTrue(targetEntity.isDeleted());
 
+        List<Map<IEntityField, StorageValue>> originalRow =
+            findOriginalRow(originalEntityClass, new long[] { targetEntity.id() });
+        Assertions.assertTrue(originalRow.isEmpty());
     }
 
     @Test
@@ -333,7 +346,7 @@ public class SQLMasterStorageTest {
                 .atZone(DateTimeValue.ZONE_ID).toInstant().toEpochMilli());
         Assertions.assertTrue((Boolean) entityValue.getValue(originaBoolField.id()).get().getValue());
 
-        List<Map<IEntityField, StorageValue>> rows = findOriginalRow(originalEntityClass, new long[] { newEntity.id() });
+        List<Map<IEntityField, StorageValue>> rows = findOriginalRow(originalEntityClass, new long[] {newEntity.id()});
         Assertions.assertEquals(1, rows.size());
 
         Map<IEntityField, StorageValue> row = rows.get(0);
@@ -367,7 +380,7 @@ public class SQLMasterStorageTest {
         Assertions.assertTrue((Boolean) entityValue.getValue(originaBoolField.id()).get().getValue());
 
         // 验证干扰实例的静态数据
-        rows = findOriginalRow(originalEntityClass, new long[] { interferenceEntity.id() });
+        rows = findOriginalRow(originalEntityClass, new long[] {interferenceEntity.id()});
         Assertions.assertEquals(1, rows.size());
 
         row = rows.get(0);
@@ -436,7 +449,7 @@ public class SQLMasterStorageTest {
                 .atZone(DateTimeValue.ZONE_ID).toInstant().toEpochMilli());
         Assertions.assertTrue((Boolean) entityValue.getValue(originaBoolField.id()).get().getValue());
 
-        List<Map<IEntityField, StorageValue>> rows = findOriginalRow(originalEntityClass, new long[] { newEntity.id() });
+        List<Map<IEntityField, StorageValue>> rows = findOriginalRow(originalEntityClass, new long[] {newEntity.id()});
         Assertions.assertEquals(1, rows.size());
 
         Map<IEntityField, StorageValue> row = rows.get(0);
@@ -792,15 +805,16 @@ public class SQLMasterStorageTest {
     }
 
     // 初始化数据
-    private List<IEntity> initData(SQLMasterStorage storage, int size) throws Exception {
+    private List<IEntity> initData(SQLMasterStorage storage, int size, boolean original) throws Exception {
         Transaction tx = transactionManager.create();
         transactionManager.bind(tx.id());
         List<IEntity> expectedEntitys = new ArrayList<>(size);
         EntityPackage entityPackage = new EntityPackage();
+        IEntity entity = null;
         for (int i = 1; i <= size; i++) {
-            IEntity entity = buildEntity(i * size);
+            entity = buildEntity(i * size, original ? originalEntityClass : l2EntityClass);
             expectedEntitys.add(entity);
-            entityPackage.put(entity, l2EntityClass);
+            entityPackage.put(entity, original ? originalEntityClass : l2EntityClass);
         }
 
         try {
@@ -825,28 +839,22 @@ public class SQLMasterStorageTest {
         return expectedEntitys;
     }
 
-    private IEntity buildEntity(long baseId) {
+    private IEntity buildEntity(long baseId, IEntityClass entityClass) {
         IEntity entity = Entity.Builder.anEntity()
             .withId(baseId)
             .withMajor(OqsVersion.MAJOR)
-            .withEntityClassRef(l2EntityClassRef)
+            .withEntityClassRef(entityClass.ref())
             .withVersion(0)
             .build();
-        entity.entityValue().addValues(
-            buildValue(baseId,
-                Arrays.asList(
-                    l0LongField, l0StringField, l0StringsField,
-                    l1LongField, l1StringField,
-                    l2LongField, l2StringField))
-        );
+        entity.entityValue().addValues(buildValue(entityClass.fields()));
         return entity;
     }
 
-    private Collection<IValue> buildValue(long id, Collection<IEntityField> fields) {
+    private Collection<IValue> buildValue(Collection<IEntityField> fields) {
         return fields.stream().map(f -> {
             switch (f.type()) {
                 case STRING: {
-                    String randomString = buildRandomString(10);
+                    String randomString = buildRandomString(f.config().getLen());
                     return new StringValue(f, randomString, randomString);
                 }
                 case STRINGS: {
@@ -856,21 +864,43 @@ public class SQLMasterStorageTest {
                     return new StringsValue(f, new String[] {randomString0, randomString1, randomString2},
                         randomString0);
                 }
-                default: {
+                case ENUM: {
+                    return new StringValue(f, buildRandomString(1));
+                }
+                case DECIMAL: {
+                    long integer = buildRandomLong(1, 1000);
+                    long dec = buildRandomLong(100, 10000);
+                    BigDecimal decimal = new BigDecimal(integer + "." + dec);
+                    return new DecimalValue(f, decimal);
+                }
+                case DATETIME: {
+                    return new DateTimeValue(f, LocalDateTime.now());
+                }
+                case BOOLEAN: {
+                    long value = buildRandomLong(0, 2);
+                    return value > 0 ? new BooleanValue(f, true) : new BooleanValue(f, false);
+                }
+                case LONG: {
                     long randomLong = buildRandomLong(10, 100000);
                     return new LongValue(f, randomLong, Long.toString(randomLong));
+                }
+                default: {
+                    throw new UnsupportedOperationException(
+                        String.format("Unsupported field type.[%s]", f.type().name()));
                 }
             }
         }).collect(Collectors.toList());
     }
 
     private String buildRandomString(int size) {
-        StringBuilder buff = new StringBuilder();
-        Random rand = new Random(47);
+        String str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        Random random = new Random();
+        StringBuffer sb = new StringBuffer();
         for (int i = 0; i < size; i++) {
-            buff.append(rand.nextInt(26) + 'a');
+            int number = random.nextInt(62);
+            sb.append(str.charAt(number));
         }
-        return buff.toString();
+        return sb.toString();
     }
 
     private int buildRandomLong(int min, int max) {
@@ -880,7 +910,8 @@ public class SQLMasterStorageTest {
     }
 
     // 查看原始表中的数据.
-    private List<Map<IEntityField, StorageValue>> findOriginalRow(IEntityClass entityClass, long[] ids) throws Exception {
+    private List<Map<IEntityField, StorageValue>> findOriginalRow(IEntityClass entityClass, long[] ids)
+        throws Exception {
         DataSource ds = MasterDBInitialization.getInstance().getDataSource();
         Connection conn = ds.getConnection();
         String sql = String.format(

@@ -23,12 +23,12 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>com.xforceplus.ultraman</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>xplat-meta-oqsengine-meta-client</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.xforceplus.ultraman</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>xplat-meta-oqsengine-meta-server</artifactId>
             <version>${project.version}</version>
         </dependency>
