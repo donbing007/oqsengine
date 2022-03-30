@@ -11,7 +11,6 @@ import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.DoNothingCacheEventHandler;
 import java.sql.SQLException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -97,7 +96,6 @@ public class TransactionManagementServiceImplTest {
             .withCommitIdGenerator(new IncreasingOrderLongIdGenerator(0))
             .withCommitIdStatusService(commitIdStatusService)
             .withWaitCommitSync(false)
-            .withCacheEventHandler(new DoNothingCacheEventHandler())
             .build();
 
         TransactionManagementServiceImpl impl = new TransactionManagementServiceImpl();
@@ -124,7 +122,6 @@ public class TransactionManagementServiceImplTest {
             .withTxIdGenerator(new IncreasingOrderLongIdGenerator(0))
             .withCommitIdGenerator(new IncreasingOrderLongIdGenerator(0))
             .withCommitIdStatusService(commitIdStatusService)
-            .withCacheEventHandler(new DoNothingCacheEventHandler())
             .withWaitCommitSync(false)
             .build();
 
@@ -154,7 +151,6 @@ public class TransactionManagementServiceImplTest {
                 .withTxIdGenerator(new IncreasingOrderLongIdGenerator(0))
                 .withCommitIdGenerator(new IncreasingOrderLongIdGenerator(0))
                 .withCommitIdStatusService(commitIdStatusService)
-                .withCacheEventHandler(new DoNothingCacheEventHandler())
                 .withWaitCommitSync(false)
                 .build();
 
