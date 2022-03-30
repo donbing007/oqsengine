@@ -3,7 +3,6 @@ package com.xforceplus.ultraman.oqsengine.storage.transaction;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.event.EventBus;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.CacheEventHandler;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -53,7 +52,6 @@ public class DefaultTransactionManager extends AbstractTransactionManager {
         private LongIdGenerator txIdGenerator;
         private LongIdGenerator commitIdGenerator;
         private CommitIdStatusService commitIdStatusService;
-        private CacheEventHandler cacheEventHandler;
         private boolean waitCommitSync = true;
         private EventBus eventBus;
         private int survivalTimeMs = 30000;
@@ -95,11 +93,6 @@ public class DefaultTransactionManager extends AbstractTransactionManager {
             return this;
         }
 
-        public Builder withCacheEventHandler(CacheEventHandler cacheEventHandler) {
-            this.cacheEventHandler = cacheEventHandler;
-            return this;
-        }
-
         /**
          * 构造实例.
          *
@@ -123,10 +116,6 @@ public class DefaultTransactionManager extends AbstractTransactionManager {
                     "The commit number of the transaction needs to support continuous and partial ID generation implementations.");
             }
 
-            if (null == cacheEventHandler) {
-                throw new IllegalArgumentException(
-                    "cacheEventHandler could not be null.");
-            }
             return defaultTransactionManager;
         }
     }
