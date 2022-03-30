@@ -806,7 +806,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
                 (appId, env) -> {
                     String version = versions.remove(appId);
 
-                    infoList.add(new AppSimpleInfo(appId, env, codes.remove(appId),
+                    infoList.add(new AppSimpleInfo(appId, env, (null != codes && !codes.isEmpty()) ? codes.remove(appId) : "",
                         (null != version && !version.isEmpty()) ? Integer.parseInt(version) : NOT_EXIST_VERSION));
                 }
             );
