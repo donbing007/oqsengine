@@ -451,8 +451,8 @@ public class StorageMetaManager implements MetaManager {
 
             //  set type
             String type = keyValues.remove(ELEMENT_TYPE);
-            builder.withType((null == type || type.isEmpty()) ?
-                EntityClassType.DYNAMIC : EntityClassType.getInstance(Integer.parseInt(type)));
+            builder.withType((null == type || type.isEmpty())
+                ? EntityClassType.DYNAMIC : EntityClassType.getInstance(Integer.parseInt(type)));
 
             //  code
             String code = keyValues.remove(ELEMENT_CODE);
