@@ -8,7 +8,6 @@ import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
 import com.xforceplus.ultraman.oqsengine.storage.mock.StorageInitialization;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.accumulator.TransactionAccumulator;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.DoNothingCacheEventHandler;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.RedisContainer;
 import io.lettuce.core.RedisClient;
 import java.lang.reflect.Field;
@@ -218,7 +217,6 @@ public class TestAbstractTransactionManagerTest {
         private LongIdGenerator commitIdGenerator = new IncreasingOrderLongIdGenerator();
         private long waitMs = 0;
         private CommitIdStatusService commitIdStatusService;
-        private DoNothingCacheEventHandler cacheEventHandler;
 
         public MockTransactionManager() {
             this(3000, 0);
@@ -231,7 +229,6 @@ public class TestAbstractTransactionManagerTest {
         public MockTransactionManager(int survivalTimeMs, long waitMs) {
             super(survivalTimeMs);
             this.waitMs = waitMs;
-            this.cacheEventHandler = new DoNothingCacheEventHandler();
         }
 
         public void setCommitIdStatusService(CommitIdStatusService commitIdStatusService) {
