@@ -8,7 +8,6 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 spec:
-  serviceName: {{ template "oqsengine.name" . }}
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
