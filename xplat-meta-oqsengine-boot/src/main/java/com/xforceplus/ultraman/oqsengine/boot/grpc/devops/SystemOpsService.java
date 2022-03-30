@@ -2,8 +2,6 @@ package com.xforceplus.ultraman.oqsengine.boot.grpc.devops;
 
 import com.xforceplus.ultraman.devops.service.sdk.annotation.DiscoverAction;
 import com.xforceplus.ultraman.devops.service.sdk.annotation.MethodParam;
-import com.xforceplus.ultraman.devops.service.sdk.config.context.AuthContext;
-import com.xforceplus.ultraman.devops.service.transfer.generate.Auth;
 import com.xforceplus.ultraman.oqsengine.boot.config.system.SystemInfoConfiguration;
 import com.xforceplus.ultraman.oqsengine.boot.grpc.utils.PrintErrorHelper;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.condition.CdcErrorQueryCondition;
