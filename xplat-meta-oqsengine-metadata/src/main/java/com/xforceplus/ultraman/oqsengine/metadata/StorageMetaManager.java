@@ -445,11 +445,9 @@ public class StorageMetaManager implements MetaManager {
 
             //  set appCode
             String appCode = keyValues.remove(ELEMENT_APPCODE);
-            if (null == appCode || appCode.isEmpty()) {
-                throw new RuntimeException(
-                    String.format("appCode is null from cache, query entityClassId : %d", entityClassId));
+            if (null != appCode && !appCode.isEmpty()) {
+                builder.withAppCode(appCode);
             }
-            builder.withAppCode(appCode);
 
             //  set type
             String type = keyValues.remove(ELEMENT_TYPE);
