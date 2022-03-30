@@ -191,7 +191,7 @@ public interface CacheExecutor {
      * @param profile       租户定制Code
      * @param entityClass   entityClass.
      */
-    void localAdd(long entityClassId, int version, String profile, IEntityClass entityClass);
+    void localStorage(long entityClassId, int version, String profile, IEntityClass entityClass);
 
     /**
      * 展示当前Redis中所有AppId-Env.

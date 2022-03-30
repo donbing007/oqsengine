@@ -653,7 +653,7 @@ public class StorageMetaManager implements MetaManager {
 
                 //  加入本地cache
                 if (null != entityClass) {
-                    cacheExecutor.localAdd(entityClassId, version, profile, entityClass);
+                    cacheExecutor.localStorage(entityClassId, version, profile, entityClass);
                 }
             } catch (Exception e) {
                 logger.warn("load entityClass failed, message : {}", e.getMessage());

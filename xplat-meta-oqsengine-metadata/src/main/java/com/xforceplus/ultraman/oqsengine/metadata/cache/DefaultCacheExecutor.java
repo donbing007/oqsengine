@@ -783,7 +783,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
     }
 
     @Override
-    public void localAdd(long entityClassId, int version, String profile, IEntityClass entityClass) {
+    public void localStorage(long entityClassId, int version, String profile, IEntityClass entityClass) {
         String key = generateEntityCacheKey(entityClassId, version);
         Map<String, IEntityClass> e = cacheContext.entityClassStorageCache().getIfPresent(key);
         if (null == e) {
