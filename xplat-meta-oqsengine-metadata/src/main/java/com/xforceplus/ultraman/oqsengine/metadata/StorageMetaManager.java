@@ -451,11 +451,8 @@ public class StorageMetaManager implements MetaManager {
 
             //  set type
             String type = keyValues.remove(ELEMENT_TYPE);
-            if (null == type || type.isEmpty()) {
-                throw new RuntimeException(
-                    String.format("type is null from cache, query entityClassId : %d", entityClassId));
-            }
-            builder.withType(EntityClassType.getInstance(Integer.parseInt(type)));
+            builder.withType((null == type || type.isEmpty()) ?
+                EntityClassType.DYNAMIC : EntityClassType.getInstance(Integer.parseInt(type)));
 
             //  code
             String code = keyValues.remove(ELEMENT_CODE);
