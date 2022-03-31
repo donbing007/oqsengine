@@ -65,8 +65,8 @@ public class CachedMetricsRecorder implements MetricsRecorder {
     public void error(String code, String key, String message) {
         logger.warn("code: {}, key: {}, message: {}", code, key, message);
         try {
-            Map<String, MetricsLog.Message> r = errorLogs.get(key, LinkedHashMap::new);
-            r.put(code, new MetricsLog.Message(message));
+            Map<String, MetricsLog.Message> r = errorLogs.get(code, LinkedHashMap::new);
+            r.put(key, new MetricsLog.Message(message));
         } catch (ExecutionException e) {
             logger.warn("record message error.");
         }
@@ -76,8 +76,8 @@ public class CachedMetricsRecorder implements MetricsRecorder {
     public void info(String code, String key, String message) {
         logger.info("code: {}, key: {}, message: {}", code, key, message);
         try {
-            Map<String, MetricsLog.Message> r = syncLogs.get(key, LinkedHashMap::new);
-            r.put(code, new MetricsLog.Message(message));
+            Map<String, MetricsLog.Message> r = syncLogs.get(code, LinkedHashMap::new);
+            r.put(key, new MetricsLog.Message(message));
         } catch (ExecutionException e) {
             logger.warn("record message error.");
         }
