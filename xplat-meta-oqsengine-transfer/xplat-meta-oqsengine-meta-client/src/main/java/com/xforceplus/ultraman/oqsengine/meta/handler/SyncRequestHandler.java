@@ -140,8 +140,8 @@ public class SyncRequestHandler implements IRequestHandler {
                     watchElement)) {
 
                     metricsRecorder.error(
-                        w.getAppId(), SyncCode.REGISTER_ERROR.name(),
-                        String.format("send register failed, env %s", w.getEnv())
+                        watchElement.getAppId(), SyncCode.REGISTER_ERROR.name(),
+                        String.format("send register failed, env %s", watchElement.getEnv())
                     );
 
                     return false;
