@@ -104,7 +104,7 @@ public class MetricsLog {
                 value.forEach(
                     (code, error) -> {
                         MetricsLog metricsLog;
-                        if (key.contains(MetricsLog.LINK)) {
+                        if (code.contains(MetricsLog.LINK)) {
                             String[] sp = code.split(MetricsLog.LINK);
                             if (sp.length > 1) {
                                 metricsLog = new MetricsLog(key, sp[0], sp[1], error);
