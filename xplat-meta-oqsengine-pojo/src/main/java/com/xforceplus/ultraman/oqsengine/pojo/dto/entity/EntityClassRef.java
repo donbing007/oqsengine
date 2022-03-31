@@ -69,7 +69,6 @@ public class EntityClassRef implements Serializable, Comparable<EntityClassRef> 
         }
         EntityClassRef that = (EntityClassRef) o;
         return getId() == that.getId()
-            && Objects.equals(getCode(), that.getCode())
             && Objects.equals(profile, that.profile);
     }
 
