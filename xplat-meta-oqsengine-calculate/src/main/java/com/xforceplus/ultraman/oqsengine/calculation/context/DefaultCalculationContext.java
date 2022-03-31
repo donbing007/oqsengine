@@ -364,7 +364,9 @@ public class DefaultCalculationContext implements CalculationContext {
                 .tags(
                     "logic", "all",
                     "action", "persist",
-                    "exception", "none"
+                    "exception", "none",
+                    "class", DefaultCalculationContext.class.getSimpleName(),
+                    "method", "persist"
                 )
                 .publishPercentileHistogram(false)
                 .publishPercentiles(0.5, 0.9, 0.99)
