@@ -43,7 +43,9 @@ public class EntityClassSyncClient implements IBasicSyncExecutor {
 
     private Thread observerStreamMonitorThread;
 
+
     private static String CLIENT_ID = ClientIdUtils.generate();
+    private static String MONITOR_APP_ID = "MONITOR_APP" + CLIENT_ID;
 
     @Override
     @PostConstruct
@@ -91,7 +93,7 @@ public class EntityClassSyncClient implements IBasicSyncExecutor {
                 //  初始化observer，如果失败，说明当前连接不可用，将等待5秒后重试
                 streamObserver = responseEvent(countDownLatch);
             } catch (Exception e) {
-                requestHandler.metricsRecorder().error(CLIENT_ID, SyncCode.INIT_OBSERVER_ERROR.name(),
+                requestHandler.metricsRecorder().error(MONITOR_APP_ID, SyncCode.INIT_OBSERVER_ERROR.name(),
                     String.format("observer init error, message : %s", e.getMessage()));
 
                 TimeWaitUtils.wakeupAfter(grpcParamsConfig.getReconnectDuration(), TimeUnit.MILLISECONDS);

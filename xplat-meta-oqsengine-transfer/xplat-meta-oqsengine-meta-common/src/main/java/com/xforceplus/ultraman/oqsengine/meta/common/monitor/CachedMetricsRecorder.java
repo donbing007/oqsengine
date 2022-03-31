@@ -33,7 +33,11 @@ public class CachedMetricsRecorder implements MetricsRecorder {
     private Cache<String, Map<String, MetricsLog.Message>> errorLogs;
 
     private static final int DEFAULT_MAX_CACHE_SIZE = 1024;
-    private static final int DEFAULT_CACHE_EXPIRE = 86400;
+
+    /**
+     * by default, keep 7 days logs in cache.
+     */
+    private static final int DEFAULT_CACHE_EXPIRE = 86400 * 7;
 
     public CachedMetricsRecorder() {
         this(DEFAULT_MAX_CACHE_SIZE, DEFAULT_CACHE_EXPIRE);
@@ -61,23 +65,24 @@ public class CachedMetricsRecorder implements MetricsRecorder {
             .build();
     }
 
+
     @Override
-    public void error(String code, String key, String message) {
+    public void error(String key, String code, String message) {
         logger.warn("code: {}, key: {}, message: {}", code, key, message);
         try {
-            Map<String, MetricsLog.Message> r = errorLogs.get(code, LinkedHashMap::new);
-            r.put(key, new MetricsLog.Message(message));
+            Map<String, MetricsLog.Message> r = errorLogs.get(key, LinkedHashMap::new);
+            r.put(code, new MetricsLog.Message(message));
         } catch (ExecutionException e) {
             logger.warn("record message error.");
         }
     }
 
     @Override
-    public void info(String code, String key, String message) {
+    public void info(String key, String code, String message) {
         logger.info("code: {}, key: {}, message: {}", code, key, message);
         try {
-            Map<String, MetricsLog.Message> r = syncLogs.get(code, LinkedHashMap::new);
-            r.put(key, new MetricsLog.Message(message));
+            Map<String, MetricsLog.Message> r = syncLogs.get(key, LinkedHashMap::new);
+            r.put(code, new MetricsLog.Message(message));
         } catch (ExecutionException e) {
             logger.warn("record message error.");
         }

@@ -24,11 +24,11 @@ public class CacheMetricsRecorderTest {
 
     @Test
     public void infoTest() {
-        String code = "test-info-code";
+        String appId = "test-info-code";
         String key = "test-info-key";
         String message = "test-info-message";
 
-        cachedMetricsRecorder.info(code, key, message);
+        cachedMetricsRecorder.info(appId, key, message);
 
         List<MetricsLog> metricsLogs = cachedMetricsRecorder.showLogs(MetricsLog.ShowType.INFO);
 
@@ -36,7 +36,7 @@ public class CacheMetricsRecorderTest {
 
         MetricsLog metricsLog = metricsLogs.get(0);
 
-        Assertions.assertEquals(code, metricsLog.getAppId());
+        Assertions.assertEquals(appId, metricsLog.getAppId());
         Assertions.assertEquals(key, metricsLog.getCode());
         Assertions.assertEquals(message, metricsLog.getMessage().getMessage());
 
@@ -66,12 +66,12 @@ public class CacheMetricsRecorderTest {
         Assertions.assertEquals(0, metricsLogs.size());
     }
 
-    private static class TP {
+    private static class SampleLog {
         String id;
         SyncCode key;
         String message;
 
-        public TP(String id, SyncCode key, String message) {
+        public SampleLog(String id, SyncCode key, String message) {
             this.id = id;
             this.key = key;
             this.message = message;
@@ -90,14 +90,13 @@ public class CacheMetricsRecorderTest {
         }
     }
 
-
     @Test
     public void showTest() {
 
-        List<TP> samples = Arrays.asList(
-            new TP("appId1", SyncCode.REGISTER_OK, String.format("register success, uid : %s, env : %s, version : %s success.",
+        List<SampleLog> samples = Arrays.asList(
+            new SampleLog("appId1", SyncCode.REGISTER_OK, String.format("register success, uid : %s, env : %s, version : %s success.",
                 "uid1", "env1", 1)),
-            new TP("appId2", SyncCode.REGISTER_ERROR, String.format("register error, uid : %s, env : %s, version : %s success.",
+            new SampleLog("appId2", SyncCode.REGISTER_ERROR, String.format("register error, uid : %s, env : %s, version : %s success.",
                 "uid2", "env0", 2))
         );
 
@@ -117,7 +116,7 @@ public class CacheMetricsRecorderTest {
         check(samples.get(1), metricsLogs.get(0));
     }
 
-    private void check(TP expected, MetricsLog actual) {
+    private void check(SampleLog expected, MetricsLog actual) {
         Assertions.assertEquals(expected.getId(), actual.getAppId());
         Assertions.assertEquals(expected.getKey().name(), actual.getCode());
         Assertions.assertEquals(expected.getMessage(), actual.getMessage().getMessage());

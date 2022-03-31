@@ -254,7 +254,7 @@ public class SyncResponseHandler implements IResponseHandler {
                 needList = responseWatchExecutor.need(new WatchElement(event.appId(), event.env(), event.version(), Notice));
             } catch (Exception e) {
                 metricsRecorder.error(event.appId(),
-                    MetricsLog.linkKey(event.appId(), SyncCode.PUSH_DATA_CHECK_FAILED.name()),
+                    SyncCode.PUSH_DATA_CHECK_FAILED.name(),
                     String.format("check needList failed, env : %s, version : %d, message : %s",
                         event.env(), event.version(), e.getMessage()));
 
