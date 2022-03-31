@@ -102,17 +102,17 @@ public class MetricsLog {
         raw.forEach(
             (key, value) -> {
                 value.forEach(
-                    (code, error) -> {
+                    (appId, error) -> {
                         MetricsLog metricsLog;
-                        if (code.contains(MetricsLog.LINK)) {
-                            String[] sp = code.split(MetricsLog.LINK);
+                        if (key.contains(MetricsLog.LINK)) {
+                            String[] sp = appId.split(MetricsLog.LINK);
                             if (sp.length > 1) {
-                                metricsLog = new MetricsLog(key, sp[0], sp[1], error);
+                                metricsLog = new MetricsLog(appId, sp[0], sp[1], error);
                             } else {
-                                metricsLog = new MetricsLog(key, code, error);
+                                metricsLog = new MetricsLog(appId, key, error);
                             }
                         }  else {
-                            metricsLog = new MetricsLog(key, code, error);
+                            metricsLog = new MetricsLog(appId, key, error);
                         }
                         metricsLogs.add(metricsLog);
                     }
