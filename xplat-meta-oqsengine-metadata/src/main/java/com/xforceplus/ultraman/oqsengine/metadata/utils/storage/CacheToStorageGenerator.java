@@ -21,6 +21,8 @@ import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.ProfileStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.RelationStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.utils.CacheUtils;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -66,10 +68,11 @@ public class CacheToStorageGenerator {
         EntityClassStorage entityClassStorage = new EntityClassStorage();
         //  appCode
         String appCode = keyValues.remove(ELEMENT_APPCODE);
-        if (null == appCode || appCode.isEmpty()) {
-            throw new RuntimeException("appCode is null from cache.");
+        if (null != appCode && !appCode.isEmpty()) {
+            entityClassStorage.setAppCode(appCode);
+        } else {
+            entityClassStorage.setAppCode("");
         }
-        entityClassStorage.setAppCode(appCode);
 
         //  id
         String id = keyValues.remove(ELEMENT_ID);
@@ -80,10 +83,7 @@ public class CacheToStorageGenerator {
 
         //  type
         String type = keyValues.remove(ELEMENT_TYPE);
-        if (null == type || type.isEmpty()) {
-            throw new RuntimeException("type is null from cache.");
-        }
-        entityClassStorage.setType(Integer.parseInt(type));
+        entityClassStorage.setType((null == type || type.isEmpty()) ? EntityClassType.DYNAMIC.getType() : Integer.parseInt(type));
 
         //  code
         String code = keyValues.remove(ELEMENT_CODE);
