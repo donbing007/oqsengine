@@ -337,7 +337,7 @@ public class SQLMasterStorage implements MasterStorage {
             return true;
         }
 
-        if (!entity.entityClassRef().equals(entityClass.ref())) {
+        if (!entity.entityClassRef().equalsCompatible(entityClass.ref())) {
             throw new SQLException(
                 String.format(
                     "The type declared by the current instance does not match the specified type.[%s - %s]",
@@ -445,7 +445,7 @@ public class SQLMasterStorage implements MasterStorage {
             return true;
         }
 
-        if (!entity.entityClassRef().equals(entityClass.ref())) {
+        if (!entity.entityClassRef().equalsCompatible(entityClass.ref())) {
             throw new SQLException(
                 String.format(
                     "The type declared by the current instance does not match the specified type.[%s - %s]",

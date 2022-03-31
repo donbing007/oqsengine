@@ -72,6 +72,17 @@ public class EntityClassRef implements Serializable, Comparable<EntityClassRef> 
             && Objects.equals(profile, that.profile);
     }
 
+    /**
+     * 以兼容模式进行比较.
+     * 只会进行标识比较.
+     *
+     * @param other 需要比较的.
+     * @return true 一致, false 不一致.
+     */
+    public boolean equalsCompatible(EntityClassRef other) {
+        return getId() == other.getId();
+    }
+
     @Override
     public int hashCode() {
         return Objects.hash(id, code, profile);
