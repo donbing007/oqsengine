@@ -1,6 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.meta.common.monitor;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.monitor.dto.MetricsLog;
+import com.xforceplus.ultraman.oqsengine.meta.common.monitor.dto.SyncCode;
+import java.util.Arrays;
 import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -64,22 +66,59 @@ public class CacheMetricsRecorderTest {
         Assertions.assertEquals(0, metricsLogs.size());
     }
 
+    private static class SampleLog {
+        String id;
+        SyncCode key;
+        String message;
+
+        public SampleLog(String id, SyncCode key, String message) {
+            this.id = id;
+            this.key = key;
+            this.message = message;
+        }
+
+        public String getId() {
+            return id;
+        }
+
+        public SyncCode getKey() {
+            return key;
+        }
+
+        public String getMessage() {
+            return message;
+        }
+    }
+
     @Test
     public void showTest() {
-        cachedMetricsRecorder.info("test-info-code", "test-info-key", "test-info-message");
-        cachedMetricsRecorder.error("test-error-code", "test-error-key", "test-error-message");
+
+        List<SampleLog> samples = Arrays.asList(
+            new SampleLog("appId1", SyncCode.REGISTER_OK, String.format("register success, uid : %s, env : %s, version : %s success.",
+                "uid1", "env1", 1)),
+            new SampleLog("appId2", SyncCode.REGISTER_ERROR, String.format("register error, uid : %s, env : %s, version : %s success.",
+                "uid2", "env0", 2))
+        );
+
+        cachedMetricsRecorder.info(samples.get(0).id, samples.get(0).getKey().name(), samples.get(0).getMessage());
+        cachedMetricsRecorder.error(samples.get(1).id, samples.get(1).getKey().name(), samples.get(1).getMessage());
 
         List<MetricsLog> metricsLogs = cachedMetricsRecorder.showLogs(MetricsLog.ShowType.ALL);
-
         Assertions.assertEquals(2, metricsLogs.size());
 
         metricsLogs = cachedMetricsRecorder.showLogs(MetricsLog.ShowType.INFO);
-
         Assertions.assertEquals(1, metricsLogs.size());
+        check(samples.get(0), metricsLogs.get(0));
+
 
         metricsLogs = cachedMetricsRecorder.showLogs(MetricsLog.ShowType.ERROR);
-
         Assertions.assertEquals(1, metricsLogs.size());
+        check(samples.get(1), metricsLogs.get(0));
+    }
 
+    private void check(SampleLog expected, MetricsLog actual) {
+        Assertions.assertEquals(expected.getId(), actual.getAppId());
+        Assertions.assertEquals(expected.getKey().name(), actual.getCode());
+        Assertions.assertEquals(expected.getMessage(), actual.getMessage().getMessage());
     }
 }
