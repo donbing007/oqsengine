@@ -62,7 +62,7 @@ public class CachedMetricsRecorder implements MetricsRecorder {
     }
 
     @Override
-    public void error(String code, String key, String message) {
+    public void error(String key, String code, String message) {
         logger.warn("code: {}, key: {}, message: {}", code, key, message);
         try {
             Map<String, MetricsLog.Message> r = errorLogs.get(key, LinkedHashMap::new);
@@ -73,7 +73,7 @@ public class CachedMetricsRecorder implements MetricsRecorder {
     }
 
     @Override
-    public void info(String code, String key, String message) {
+    public void info(String key, String code, String message) {
         logger.info("code: {}, key: {}, message: {}", code, key, message);
         try {
             Map<String, MetricsLog.Message> r = syncLogs.get(key, LinkedHashMap::new);

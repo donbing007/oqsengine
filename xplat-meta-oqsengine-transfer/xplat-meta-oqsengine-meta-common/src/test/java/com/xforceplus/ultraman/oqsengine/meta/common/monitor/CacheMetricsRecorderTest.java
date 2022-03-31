@@ -24,11 +24,11 @@ public class CacheMetricsRecorderTest {
 
     @Test
     public void infoTest() {
-        String code = "test-info-code";
+        String appId = "test-info-code";
         String key = "test-info-key";
         String message = "test-info-message";
 
-        cachedMetricsRecorder.info(code, key, message);
+        cachedMetricsRecorder.info(appId, key, message);
 
         List<MetricsLog> metricsLogs = cachedMetricsRecorder.showLogs(MetricsLog.ShowType.INFO);
 
@@ -36,8 +36,8 @@ public class CacheMetricsRecorderTest {
 
         MetricsLog metricsLog = metricsLogs.get(0);
 
-        Assertions.assertEquals(code, metricsLog.getCode());
-        Assertions.assertEquals(key, metricsLog.getAppId());
+        Assertions.assertEquals(appId, metricsLog.getAppId());
+        Assertions.assertEquals(key, metricsLog.getCode());
         Assertions.assertEquals(message, metricsLog.getMessage().getMessage());
 
         metricsLogs = cachedMetricsRecorder.showLogs(MetricsLog.ShowType.ERROR);
@@ -58,8 +58,8 @@ public class CacheMetricsRecorderTest {
 
         MetricsLog metricsLog = metricsLogs.get(0);
 
-        Assertions.assertEquals(code, metricsLog.getCode());
-        Assertions.assertEquals(key, metricsLog.getAppId());
+        Assertions.assertEquals(code, metricsLog.getAppId());
+        Assertions.assertEquals(key, metricsLog.getCode());
         Assertions.assertEquals(message, metricsLog.getMessage().getMessage());
 
         metricsLogs = cachedMetricsRecorder.showLogs(MetricsLog.ShowType.INFO);
