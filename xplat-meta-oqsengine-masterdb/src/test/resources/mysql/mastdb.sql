@@ -31,7 +31,7 @@ create table kv (
   unique key unique_key(k, h)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
-CREATE TABLE test_original_table (
+CREATE TABLE oqs_test_original (
    id bigint(20) COMMENT 'id' ,
    original_datetime bigint(20) NOT NULL COMMENT 'DATETIME字段' ,
    original_strings varchar(255) NOT NULL COMMENT 'STRINGS字段' ,

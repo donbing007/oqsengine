@@ -1061,6 +1061,7 @@ public class SQLMasterStorage implements MasterStorage {
     private static String buildOriginalTableName(IEntityClass entityClass) {
 
         StringBuilder buff = new StringBuilder();
+        buff.append("oqs_");
         buff.append(entityClass.appCode())
             .append('_')
             .append(entityClass.code());
