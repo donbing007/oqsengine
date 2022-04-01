@@ -33,7 +33,11 @@ public class CachedMetricsRecorder implements MetricsRecorder {
     private Cache<String, Map<String, MetricsLog.Message>> errorLogs;
 
     private static final int DEFAULT_MAX_CACHE_SIZE = 1024;
-    private static final int DEFAULT_CACHE_EXPIRE = 86400;
+
+    /**
+     * by default, keep 7 days logs in cache.
+     */
+    private static final int DEFAULT_CACHE_EXPIRE = 86400 * 7;
 
     public CachedMetricsRecorder() {
         this(DEFAULT_MAX_CACHE_SIZE, DEFAULT_CACHE_EXPIRE);
@@ -60,6 +64,7 @@ public class CachedMetricsRecorder implements MetricsRecorder {
             .expireAfterWrite(cacheExpire, TimeUnit.SECONDS)
             .build();
     }
+
 
     @Override
     public void error(String key, String code, String message) {

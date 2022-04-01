@@ -72,10 +72,10 @@ public class DefaultBatchProcessor implements BatchProcessor {
                     consumerService.consumeOneBatch(message.getEntries(), batchId, context.getCdcMetrics());
 
                 //  binlog处理，同步指标到cdcMetrics中
-                synced = saveMetrics(context.getCdcMetrics());
+                synced = saveMetrics(cdcMetrics);
 
                 //  canal状态确认、指标同步
-                finishBatch(context.getCdcMetrics(), connector, context);
+                finishBatch(cdcMetrics, connector, context);
 
                 context.setCdcMetrics(cdcMetrics);
 
