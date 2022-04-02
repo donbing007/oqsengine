@@ -14,6 +14,9 @@ public class UpGradeLog {
     private int currentVersion;
     private long currentTimeStamp;
 
+    public UpGradeLog() {
+    }
+
     /**
      * construct.
      */

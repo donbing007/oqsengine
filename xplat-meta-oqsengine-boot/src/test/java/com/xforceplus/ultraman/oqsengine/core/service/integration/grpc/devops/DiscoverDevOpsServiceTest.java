@@ -9,6 +9,7 @@ import com.xforceplus.ultraman.oqsengine.common.mock.ReflectionUtils;
 import com.xforceplus.ultraman.oqsengine.core.service.integration.grpc.devops.mock.MockedCache;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.StorageMetaManager;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.log.UpGradeLog;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.AppSimpleInfo;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.model.ClientModel;
@@ -104,6 +105,19 @@ public class DiscoverDevOpsServiceTest {
     public void showApplicationTest() {
         Collection<AppSimpleInfo> applicationInfo = discoverDevOpsService.appInfo();
         Assertions.assertEquals(1, applicationInfo.size());
+    }
+
+    @Test
+    public void upGradeLogTest() {
+        Collection<UpGradeLog> upGradeLogs = discoverDevOpsService.upGradeLogs(null, null);
+        Assertions.assertEquals(1, upGradeLogs.size());
+
+        UpGradeLog upGradeLog = upGradeLogs.iterator().next();
+        Assertions.assertEquals(expectedAppId, upGradeLog.getAppId());
+        Assertions.assertEquals(expectedVersion, upGradeLog.getCurrentVersion());
+        Assertions.assertEquals(expectedVersion, upGradeLog.getStartVersion());
+        Assertions.assertTrue(upGradeLog.getCurrentTimeStamp() > 0);
+        Assertions.assertEquals(upGradeLog.getCurrentTimeStamp(), upGradeLog.getStartTimeStamp());
     }
 
     @Test

@@ -837,14 +837,14 @@ public class DefaultCacheExecutor implements CacheExecutor {
     @Override
     public Collection<UpGradeLog> showUpgradeLogs(String appId, String env) throws JsonProcessingException {
         List<UpGradeLog> upGradeLogs = new ArrayList<>();
-        if (null != appId && null != env) {
+        if (null != appId && !appId.isEmpty() && null != env && !env.isEmpty()) {
             String fieldKey = String.format("%s.%s", appId, env);
             UpGradeLog upGradeLog = getUpgradeLog(fieldKey);
             if (null != upGradeLog) {
                 upGradeLogs.add(upGradeLog);
             }
         } else {
-            Map<String, String> vs = syncCommands.hgetall(appEnvKeys);
+            Map<String, String> vs = syncCommands.hgetall(upGradeLogKey);
             if (null != vs) {
                 for (String v : vs.values()) {
                     upGradeLogs.add(OBJECT_MAPPER.readValue(v, UpGradeLog.class));
@@ -855,7 +855,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
     }
 
     private UpGradeLog getUpgradeLog(String fieldKey) throws JsonProcessingException {
-        String v = syncCommands.hget(appEnvKeys, fieldKey);
+        String v = syncCommands.hget(upGradeLogKey, fieldKey);
         if (null != v) {
             return OBJECT_MAPPER.readValue(v, UpGradeLog.class);
         }
@@ -867,15 +867,15 @@ public class DefaultCacheExecutor implements CacheExecutor {
             String fieldKey = String.format("%s.%s", appId, env);
             UpGradeLog upGradeLog = getUpgradeLog(fieldKey);
             if (null == upGradeLog) {
-                upGradeLog = new UpGradeLog(appId, env, currentVersion,
-                    System.currentTimeMillis(), currentVersion, System.currentTimeMillis());
+                long time = System.currentTimeMillis();
+                upGradeLog = new UpGradeLog(appId, env, currentVersion, time, currentVersion, time);
             } else {
                 upGradeLog.setCurrentVersion(currentVersion);
                 upGradeLog.setCurrentTimeStamp(System.currentTimeMillis());
             }
 
             String finalValue = OBJECT_MAPPER.writeValueAsString(upGradeLog);
-            syncCommands.hset(appEnvKeys, fieldKey, finalValue);
+            syncCommands.hset(upGradeLogKey, fieldKey, finalValue);
         } catch (Exception e) {
             logger.warn("add upgrade log failed, appId : {}, env : {}, version : {}, message : {}", appId, env, currentVersion, e.getMessage());
         }
