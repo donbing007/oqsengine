@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.mysql;
 
 import com.google.common.collect.Lists;
+import com.xforceplus.ultraman.oqsengine.common.jdbc.TypesUtils;
 import com.xforceplus.ultraman.oqsengine.common.map.MapUtils;
 import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
@@ -32,6 +33,7 @@ import com.xforceplus.ultraman.oqsengine.storage.pojo.EntityPackage;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
+import com.xforceplus.ultraman.oqsengine.storage.value.strategy.original.OriginalFieldAgent;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.original.jdbc.JdbcOriginalFieldAgent;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.original.jdbc.JdbcOriginalFieldAgentFactory;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.original.jdbc.helper.ReadJdbcOriginalSource;
@@ -931,8 +933,14 @@ public class SQLMasterStorageTest {
                 while (rs.next()) {
                     row = new HashMap<>(MapUtils.calculateInitSize(entityClass.fields().size()));
                     for (IEntityField field : entityClass.fields()) {
-                        JdbcOriginalFieldAgent agent =
-                            (JdbcOriginalFieldAgent) agentFactory.getAgent(field.config().getJdbcType());
+                        Optional<OriginalFieldAgent> agentOp = agentFactory.getAgent(field.config().getJdbcType());
+                        if (!agentOp.isPresent()) {
+                            throw new Exception(String.format(
+                                "Unable to process field %s, unable to find proxy for field. This field declares itself as a primitive type of %s.",
+                                field.name(), TypesUtils.name(field.config().getJdbcType()).orElse("NULL")
+                            ));
+                        }
+                        JdbcOriginalFieldAgent agent = (JdbcOriginalFieldAgent) agentOp.get();
                         int colIndex = -1;
                         try {
                             colIndex = rs.findColumn(field.name());
