@@ -337,13 +337,6 @@ public class SQLMasterStorage implements MasterStorage {
             return true;
         }
 
-        if (!entity.entityClassRef().equalsCompatible(entityClass.ref())) {
-            throw new SQLException(
-                String.format(
-                    "The type declared by the current instance does not match the specified type.[%s - %s]",
-                    entity.entityClassRef(), entityClass.ref()));
-        }
-
         boolean result = (boolean) transactionExecutor.execute(
             (tx, resource, hint) -> {
 
@@ -443,13 +436,6 @@ public class SQLMasterStorage implements MasterStorage {
 
         if (!entity.isDirty()) {
             return true;
-        }
-
-        if (!entity.entityClassRef().equalsCompatible(entityClass.ref())) {
-            throw new SQLException(
-                String.format(
-                    "The type declared by the current instance does not match the specified type.[%s - %s]",
-                    entity.entityClassRef(), entityClass.ref()));
         }
 
         boolean result = (boolean) transactionExecutor.execute(

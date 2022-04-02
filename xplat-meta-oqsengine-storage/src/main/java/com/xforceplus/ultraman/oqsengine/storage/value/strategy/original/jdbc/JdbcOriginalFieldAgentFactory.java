@@ -1,11 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.storage.value.strategy.original.jdbc;
 
-import com.xforceplus.ultraman.oqsengine.storage.value.strategy.original.DoNothingOriginalFieldAgent;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.original.OriginalFieldAgent;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.original.OriginalFieldAgentFactory;
 import java.sql.Types;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * JDBC 原生字段处理代理人工厂.
@@ -58,13 +58,8 @@ public class JdbcOriginalFieldAgentFactory implements OriginalFieldAgentFactory<
     }
 
     @Override
-    public OriginalFieldAgent getAgent(Integer type) {
-        JdbcOriginalFieldAgent agent = agents.get(type);
-        if (agent == null) {
-            return DoNothingOriginalFieldAgent.getInstance();
-        }
-
-        return agent;
+    public Optional<OriginalFieldAgent> getAgent(Integer type) {
+        return Optional.ofNullable(agents.get(type));
     }
 
 

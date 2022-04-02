@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.value.strategy.original;
 
+import java.util.Optional;
+
 /**
  * 原始类型数据读取器工厂.
  *
@@ -15,5 +17,5 @@ public interface OriginalFieldAgentFactory<T> {
      * @param type 原始数据类型.
      * @return 读取器实例.
      */
-    public OriginalFieldAgent getAgent(T type);
+    public Optional<OriginalFieldAgent> getAgent(T type);
 }

@@ -1,15 +1,19 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.original;
 
+import com.xforceplus.ultraman.oqsengine.common.jdbc.TypesUtils;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.master.mysql.pojo.MapAttributeMasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
+import com.xforceplus.ultraman.oqsengine.storage.value.strategy.original.OriginalFieldAgent;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.original.jdbc.JdbcOriginalFieldAgent;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.original.jdbc.JdbcOriginalFieldAgentFactory;
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * 静态对象的更新.
@@ -74,15 +78,27 @@ public class OriginalUpdateExecutor extends
         Map<IEntityField, StorageValue> attributes = storageEntity.getAttributes();
         JdbcOriginalFieldAgentFactory fieldAgentFactory = JdbcOriginalFieldAgentFactory.getInstance();
         int emptyLen = sql.length();
+        Optional<OriginalFieldAgent> agentOp;
+        JdbcOriginalFieldAgent agent;
         for (IEntityField field : attributes.keySet()) {
-            JdbcOriginalFieldAgent agent =
-                (JdbcOriginalFieldAgent) fieldAgentFactory.getAgent(field.config().getJdbcType());
+            agentOp = fieldAgentFactory.getAgent(field.config().getJdbcType());
+            if (agentOp.isPresent()) {
+                agent = (JdbcOriginalFieldAgent) agentOp.get();
+                if (sql.length() > emptyLen) {
+                    sql.append(", ");
+                }
 
-            if (sql.length() > emptyLen) {
-                sql.append(", ");
+                sql.append(field.name()).append(" = ").append(agent.plainText(field, attributes.get(field)));
+            } else {
+
+                Optional<String> typeName = TypesUtils.name(field.config().getJdbcType());
+                throw new SQLException(String.format(
+                    "Unable to process field %s, unable to find proxy for field. "
+                        + "This field declares itself as a primitive type of %s.",
+                    field.name(), typeName.orElse("NULL")
+                ));
+
             }
-
-            sql.append(field.name()).append(" = ").append(agent.plainText(field, attributes.get(field)));
         }
 
         sql.append(" WHERE ")

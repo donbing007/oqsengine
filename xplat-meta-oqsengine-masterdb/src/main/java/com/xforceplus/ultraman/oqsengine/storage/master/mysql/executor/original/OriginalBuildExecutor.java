@@ -1,15 +1,19 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.original;
 
+import com.xforceplus.ultraman.oqsengine.common.jdbc.TypesUtils;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.master.mysql.pojo.MapAttributeMasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
+import com.xforceplus.ultraman.oqsengine.storage.value.strategy.original.OriginalFieldAgent;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.original.jdbc.JdbcOriginalFieldAgent;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.original.jdbc.JdbcOriginalFieldAgentFactory;
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * 静态对象创建.
@@ -82,12 +86,22 @@ public class OriginalBuildExecutor extends
                 buff.append(", ");
             }
 
-            JdbcOriginalFieldAgent agent =
-                (JdbcOriginalFieldAgent) JdbcOriginalFieldAgentFactory.getInstance().getAgent(
-                    field.config().getJdbcType());
-            String plainText = agent.plainText(field, attributes.get(field));
+            Optional<OriginalFieldAgent> agentOp = JdbcOriginalFieldAgentFactory.getInstance().getAgent(
+                field.config().getJdbcType());
+            if (agentOp.isPresent()) {
+                JdbcOriginalFieldAgent agent = (JdbcOriginalFieldAgent) agentOp.get();
+                String plainText = agent.plainText(field, attributes.get(field));
 
-            buff.append(plainText);
+                buff.append(plainText);
+            } else {
+
+                Optional<String> typeName = TypesUtils.name(field.config().getJdbcType());
+                throw new SQLException(String.format(
+                    "Unable to process field %s, unable to find proxy for field. "
+                        + "This field declares itself as a primitive type of %s.",
+                    field.name(), typeName.orElse("NULL")));
+            }
+
         }
 
         buff.append(")");
