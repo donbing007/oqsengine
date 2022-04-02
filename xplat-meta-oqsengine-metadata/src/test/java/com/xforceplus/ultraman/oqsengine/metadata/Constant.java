@@ -22,10 +22,10 @@ public class Constant {
     public static volatile boolean IS_SERVER_OK = false;
     public static volatile boolean IS_CLIENT_CLOSED = false;
 
-    public static final String TEST_APP_ID = "1439061024364003329";
+    public static final String TEST_APP_ID = "1474264648684351490";
     public static final String TEST_ENV = "0";
     public static final int TEST_START_VERSION = 0;
-    public static final long TEST_ENTITY_CLASS_ID = 1434714478818562049L;
+    public static final long TEST_ENTITY_CLASS_ID = 1509459318544179201L;
 
     /**
      * grpc 配置.

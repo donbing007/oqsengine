@@ -20,9 +20,9 @@ public class EnhancedSyncExecutor extends EntityClassSyncExecutor {
      * 同步appId对应的EntityClass package.
      */
     @Override
-    public void sync(String appId, int version, EntityClassSyncRspProto entityClassSyncRspProto) {
+    public void sync(String appId, String env, int version, EntityClassSyncRspProto entityClassSyncRspProto) {
         try {
-            super.sync(appId, version, entityClassSyncRspProto);
+            super.sync(appId, env, version, entityClassSyncRspProto);
         } catch (Exception e) {
             throw e;
         }

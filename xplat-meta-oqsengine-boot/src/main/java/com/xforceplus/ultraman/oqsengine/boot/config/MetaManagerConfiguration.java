@@ -96,7 +96,7 @@ public class MetaManagerConfiguration {
     public SyncExecutor mockSyncExecutor() {
         return new SyncExecutor() {
             @Override
-            public void sync(String appId, int version, EntityClassSyncRspProto entityClassSyncRspProto) {
+            public void sync(String appId, String env, int version, EntityClassSyncRspProto entityClassSyncRspProto) {
                 return;
             }
 

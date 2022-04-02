@@ -20,6 +20,7 @@ public class RedisLuaScript {
     public static final String DEFAULT_METADATA_APP_VERSIONS_ENTITY_IDS =
         "com.xforceplus.ultraman.oqsengine.metadata.app.version.entityIds";
 
+    public static final String DEFAULT_METADATA_UPGRADE_LOG = "com.xforceplus.ultraman.oqsengine.metadata.upgrade.log";
     /**
      * 传入 Key, AppId, ENV 当AppId不存在时将设置成功，反正则不会变化，返回当前ENV.
      */

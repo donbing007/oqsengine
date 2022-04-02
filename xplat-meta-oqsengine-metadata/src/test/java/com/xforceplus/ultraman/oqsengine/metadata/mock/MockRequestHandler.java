@@ -95,7 +95,7 @@ public class MockRequestHandler implements IRequestHandler {
 
     @Override
     public void invoke(EntityClassSyncResponse entityClassSyncResponse, Void unused) {
-        syncExecutor.sync(entityClassSyncResponse.getAppId(), entityClassSyncResponse.getVersion(),
+        syncExecutor.sync(entityClassSyncResponse.getAppId(), entityClassSyncResponse.getEnv(), entityClassSyncResponse.getVersion(),
             entityClassSyncResponse.getEntityClassSyncRspProto());
     }
 

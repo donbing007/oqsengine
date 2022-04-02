@@ -54,7 +54,7 @@ public class EntityClassSyncExecutorTest extends AbstractMetaTestHelper {
         int newVersion = expectedVersion + 1;
 
         MetaInitialization.getInstance().getEntityClassSyncExecutor()
-                .sync(expectedAppId, newVersion, entityClassSyncRspProto);
+                .sync(expectedAppId, "test", newVersion, entityClassSyncRspProto);
 
         Thread.sleep(70_000);
 

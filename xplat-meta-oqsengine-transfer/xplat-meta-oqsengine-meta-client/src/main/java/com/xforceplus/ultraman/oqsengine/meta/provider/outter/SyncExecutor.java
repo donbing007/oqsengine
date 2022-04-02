@@ -14,7 +14,7 @@ public interface SyncExecutor {
     /**
      * 外部实现sync接口.
      */
-    void sync(String appId, int version, EntityClassSyncRspProto entityClassSyncRspProto);
+    void sync(String appId, String env, int version, EntityClassSyncRspProto entityClassSyncRspProto);
 
     /**
      * 外部实现获取版本.

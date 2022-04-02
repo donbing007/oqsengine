@@ -108,7 +108,7 @@ public class CacheExecutorTest {
         entityClassStorageList.add(two);
 
         MetaChangePayLoad metaChangePayLoad =
-            cacheExecutor.save("1", 1, entityClassStorageList);
+            cacheExecutor.save("1", "test",1, entityClassStorageList);
 
         checkMetaPayLoad(metaChangePayLoad, "1", 1, entityClassStorageList);
 
@@ -139,7 +139,7 @@ public class CacheExecutorTest {
         entityClassStorageList.add(doTwo);
 
         metaChangePayLoad =
-            cacheExecutor.save("1", 3, entityClassStorageList);
+            cacheExecutor.save("1", "test",3, entityClassStorageList);
 
         checkMetaPayLoad(metaChangePayLoad, "1", 3, mixedUpdateDeletes);
     }
@@ -355,7 +355,7 @@ public class CacheExecutorTest {
         int expectedVersion = Integer.MAX_VALUE;
 
         //  set storage
-        cacheExecutor.save(expectedAppId, expectedVersion, entityClassStorageList);
+        cacheExecutor.save(expectedAppId, "test", expectedVersion, entityClassStorageList);
 
         check(expectedVersion, expectedEntityStorageList, entityClassStorageList);
 
@@ -373,7 +373,7 @@ public class CacheExecutorTest {
         int expectedVersion = Integer.MAX_VALUE - 1;
 
         //  set storage
-        cacheExecutor.save(expectedAppId, expectedVersion, entityClassStorageList);
+        cacheExecutor.save(expectedAppId, "test", expectedVersion, entityClassStorageList);
 
         check(expectedVersion, expectedEntityStorageList, null);
 

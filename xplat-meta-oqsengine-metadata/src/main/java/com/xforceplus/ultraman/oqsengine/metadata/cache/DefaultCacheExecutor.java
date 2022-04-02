@@ -9,6 +9,7 @@ import static com.xforceplus.ultraman.oqsengine.metadata.cache.RedisLuaScript.DE
 import static com.xforceplus.ultraman.oqsengine.metadata.cache.RedisLuaScript.DEFAULT_METADATA_APP_VERSIONS;
 import static com.xforceplus.ultraman.oqsengine.metadata.cache.RedisLuaScript.DEFAULT_METADATA_APP_VERSIONS_ENTITY_IDS;
 import static com.xforceplus.ultraman.oqsengine.metadata.cache.RedisLuaScript.DEFAULT_METADATA_ENTITY_APP_REL;
+import static com.xforceplus.ultraman.oqsengine.metadata.cache.RedisLuaScript.DEFAULT_METADATA_UPGRADE_LOG;
 import static com.xforceplus.ultraman.oqsengine.metadata.cache.RedisLuaScript.ENTITY_CLASS_STORAGE_INFO;
 import static com.xforceplus.ultraman.oqsengine.metadata.cache.RedisLuaScript.ENTITY_CLASS_STORAGE_INFO_LIST;
 import static com.xforceplus.ultraman.oqsengine.metadata.cache.RedisLuaScript.PREPARE_VERSION_SCRIPT;
@@ -38,6 +39,7 @@ import com.xforceplus.ultraman.oqsengine.common.thread.PollingThreadExecutor;
 import com.xforceplus.ultraman.oqsengine.common.watch.RedisLuaScriptWatchDog;
 import com.xforceplus.ultraman.oqsengine.event.payload.meta.MetaChangePayLoad;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.log.UpGradeLog;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.AppSimpleInfo;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.ProfileStorage;
@@ -212,6 +214,15 @@ public class DefaultCacheExecutor implements CacheExecutor {
     private final String entityStorageKeys;
 
 
+    /*
+     * upGradeLogKey key prefix (当前的entityStorage key前缀)
+     * [redis hash key]
+     * key - upGradeLogKey
+     * field - appId + env
+     * value - upGradeValue
+     */
+    private final String upGradeLogKey;
+
     /**
      * 默认实例化.
      */
@@ -223,7 +234,8 @@ public class DefaultCacheExecutor implements CacheExecutor {
             DEFAULT_METADATA_APP_ENTITY,
             DEFAULT_METADATA_ENTITY_APP_REL,
             DEFAULT_METADATA_APP_VERSIONS_ENTITY_IDS,
-            DEFAULT_METADATA_APP_CODE);
+            DEFAULT_METADATA_APP_CODE,
+            DEFAULT_METADATA_UPGRADE_LOG);
     }
 
     /**
@@ -241,7 +253,8 @@ public class DefaultCacheExecutor implements CacheExecutor {
             DEFAULT_METADATA_APP_ENTITY,
             DEFAULT_METADATA_ENTITY_APP_REL,
             DEFAULT_METADATA_APP_VERSIONS_ENTITY_IDS,
-            DEFAULT_METADATA_APP_CODE);
+            DEFAULT_METADATA_APP_CODE,
+            DEFAULT_METADATA_UPGRADE_LOG);
     }
 
     /**
@@ -261,7 +274,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
     public DefaultCacheExecutor(int maxCacheSize, int prepareExpireSeconds, int cacheExpireSeconds,
                                 String appEnvKeys, String appVersionKeys, String appPrepareKeyPrefix,
                                 String entityStorageKeys,
-                                String appEntityMappingKey, String appEntityCollectionsKey, String appCodeKeys) {
+                                String appEntityMappingKey, String appEntityCollectionsKey, String appCodeKeys, String upGradeLogKey) {
 
         if (maxCacheSize > NOT_INIT_INTEGER_PARAMETER) {
             this.maxCacheSize = maxCacheSize;
@@ -308,6 +321,11 @@ public class DefaultCacheExecutor implements CacheExecutor {
         this.appCodeKeys = appCodeKeys;
         if (this.appCodeKeys == null || this.appCodeKeys.isEmpty()) {
             throw new IllegalArgumentException("The appCodeKeys keys is invalid.");
+        }
+
+        this.upGradeLogKey = upGradeLogKey;
+        if (this.upGradeLogKey == null || this.upGradeLogKey.isEmpty()) {
+            throw new IllegalArgumentException("The upGradeLogKey keys is invalid.");
         }
 
         cacheContext = new CacheContext(maxCacheSize, cacheExpireSeconds);
@@ -364,7 +382,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
      * 存储appId级别的所有EntityClassStorage对象.
      */
     @Override
-    public MetaChangePayLoad save(String appId, int version, List<EntityClassStorage> storageList)
+    public MetaChangePayLoad save(String appId, String env, int version, List<EntityClassStorage> storageList)
         throws JsonProcessingException {
 
         MetaChangePayLoad appMetaChangePayLoad = new MetaChangePayLoad(appId, version);
@@ -417,6 +435,8 @@ public class DefaultCacheExecutor implements CacheExecutor {
         if (!appCode.isEmpty()) {
             saveAppCode(appId, appCode);
         }
+
+        addUpGradeLog(appId, env, version);
 
         return appMetaChangePayLoad;
     }
@@ -812,6 +832,53 @@ public class DefaultCacheExecutor implements CacheExecutor {
             );
         }
         return infoList;
+    }
+
+    @Override
+    public Collection<UpGradeLog> showUpgradeLogs(String appId, String env) throws JsonProcessingException {
+        List<UpGradeLog> upGradeLogs = new ArrayList<>();
+        if (null != appId && null != env) {
+            String fieldKey = String.format("%s.%s", appId, env);
+            UpGradeLog upGradeLog = getUpgradeLog(fieldKey);
+            if (null != upGradeLog) {
+                upGradeLogs.add(upGradeLog);
+            }
+        } else {
+            Map<String, String> vs = syncCommands.hgetall(appEnvKeys);
+            if (null != vs) {
+                for (String v : vs.values()) {
+                    upGradeLogs.add(OBJECT_MAPPER.readValue(v, UpGradeLog.class));
+                }
+            }
+        }
+        return upGradeLogs;
+    }
+
+    private UpGradeLog getUpgradeLog(String fieldKey) throws JsonProcessingException {
+        String v = syncCommands.hget(appEnvKeys, fieldKey);
+        if (null != v) {
+            return OBJECT_MAPPER.readValue(v, UpGradeLog.class);
+        }
+        return null;
+    }
+
+    private void addUpGradeLog(String appId, String env, int currentVersion) {
+        try {
+            String fieldKey = String.format("%s.%s", appId, env);
+            UpGradeLog upGradeLog = getUpgradeLog(fieldKey);
+            if (null == upGradeLog) {
+                upGradeLog = new UpGradeLog(appId, env, currentVersion,
+                    System.currentTimeMillis(), currentVersion, System.currentTimeMillis());
+            } else {
+                upGradeLog.setCurrentVersion(currentVersion);
+                upGradeLog.setCurrentTimeStamp(System.currentTimeMillis());
+            }
+
+            String finalValue = OBJECT_MAPPER.writeValueAsString(upGradeLog);
+            syncCommands.hset(appEnvKeys, fieldKey, finalValue);
+        } catch (Exception e) {
+            logger.warn("add upgrade log failed, appId : {}, env : {}, version : {}, message : {}", appId, env, currentVersion, e.getMessage());
+        }
     }
 
     private void saveAppCode(String appId, String appCode) {

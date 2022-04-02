@@ -79,7 +79,7 @@ public class EntityClassSyncExecutor implements SyncExecutor {
      * 同步appId对应的EntityClass package.
      */
     @Override
-    public void sync(String appId, int version, EntityClassSyncRspProto entityClassSyncRspProto) {
+    public void sync(String appId, String env, int version, EntityClassSyncRspProto entityClassSyncRspProto) {
         int expiredVersion = -1;
         MetaChangePayLoad metaChangePayLoad = null;
 
@@ -112,7 +112,7 @@ public class EntityClassSyncExecutor implements SyncExecutor {
             }
 
             // step3 update new Hash in redis
-            step = save(appId, version, (List<EntityClassStorage>) step.getData());
+            step = save(appId, env, version, (List<EntityClassStorage>) step.getData());
             if (!step.getStepDefinition().equals(SyncStep.StepDefinition.SUCCESS)) {
                 throw new MetaSyncClientException(step.messageFormat(), false);
             }
@@ -159,10 +159,10 @@ public class EntityClassSyncExecutor implements SyncExecutor {
         }
     }
 
-    private SyncStep<MetaChangePayLoad> save(String appId, int version, List<EntityClassStorage> entityClassStorages) {
+    private SyncStep<MetaChangePayLoad> save(String appId, String env, int version, List<EntityClassStorage> entityClassStorages) {
         try {
             MetaChangePayLoad metaChangePayLoad =
-                cacheExecutor.save(appId, version, entityClassStorages);
+                cacheExecutor.save(appId, env, version, entityClassStorages);
             return SyncStep.ok(metaChangePayLoad);
         } catch (Exception e) {
             logger.error(e.getMessage(), e);

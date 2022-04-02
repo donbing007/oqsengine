@@ -102,7 +102,7 @@ public class DiscoverDevOpsServiceTest {
 
     @Test
     public void showApplicationTest() {
-        List<AppSimpleInfo> applicationInfo = discoverDevOpsService.appInfo();
+        Collection<AppSimpleInfo> applicationInfo = discoverDevOpsService.appInfo();
         Assertions.assertEquals(1, applicationInfo.size());
     }
 

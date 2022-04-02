@@ -1,6 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.metadata;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xforceplus.ultraman.oqsengine.meta.common.monitor.dto.MetricsLog;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.log.UpGradeLog;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.AppSimpleInfo;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
@@ -139,7 +141,16 @@ public interface MetaManager {
      *
      * @return appId列表.
      */
-    default List<AppSimpleInfo> showApplications() {
+    default Collection<AppSimpleInfo> showApplications() {
+        return new ArrayList<>();
+    }
+
+    /**
+     * 显示当前oqs中所有正在使用的appId.
+     *
+     * @return appId列表.
+     */
+    default Collection<UpGradeLog> showUpgradeLogs(String appId, String env) throws JsonProcessingException {
         return new ArrayList<>();
     }
 }
