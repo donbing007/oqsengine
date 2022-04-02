@@ -95,7 +95,7 @@ public class OriginalUpdateExecutor extends
                 throw new SQLException(String.format(
                     "Unable to process field %s, unable to find proxy for field. "
                         + "This field declares itself as a primitive type of %s.",
-                    field.name(), typeName.orElse("NULL")
+                    field.name(), typeName.orElse("NULL"), field.config().getJdbcType()
                 ));
 
             }

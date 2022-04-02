@@ -86,8 +86,8 @@ public class OriginalBuildExecutor extends
                 buff.append(", ");
             }
 
-            Optional<OriginalFieldAgent> agentOp = JdbcOriginalFieldAgentFactory.getInstance().getAgent(
-                field.config().getJdbcType());
+            Optional<OriginalFieldAgent> agentOp =
+                JdbcOriginalFieldAgentFactory.getInstance().getAgent(field.config().getJdbcType());
             if (agentOp.isPresent()) {
                 JdbcOriginalFieldAgent agent = (JdbcOriginalFieldAgent) agentOp.get();
                 String plainText = agent.plainText(field, attributes.get(field));
@@ -98,8 +98,8 @@ public class OriginalBuildExecutor extends
                 Optional<String> typeName = TypesUtils.name(field.config().getJdbcType());
                 throw new SQLException(String.format(
                     "Unable to process field %s, unable to find proxy for field. "
-                        + "This field declares itself as a primitive type of %s.",
-                    field.name(), typeName.orElse("NULL")));
+                        + "This field declares itself as a primitive type of %s(%d).",
+                    field.name(), typeName.orElse("NULL"), field.config().getJdbcType()));
             }
 
         }
