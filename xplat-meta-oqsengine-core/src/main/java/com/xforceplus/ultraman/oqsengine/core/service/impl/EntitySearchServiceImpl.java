@@ -111,7 +111,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
     private long maxVisibleTotalCount;
     private int maxJoinEntityNumber;
     private long maxJoinDriverLineNumber;
-    private boolean showResult = false;
+    private boolean debugInfo = false;
 
 
     @PostConstruct
@@ -162,12 +162,12 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         this.maxVisibleTotalCount = maxVisibleTotalCount;
     }
 
-    public boolean isShowResult() {
-        return showResult;
+    public boolean isDebugInfo() {
+        return debugInfo;
     }
 
-    public void setShowResult(boolean showResult) {
-        this.showResult = showResult;
+    public void setDebugInfo(boolean showDebugInfo) {
+        this.debugInfo = showDebugInfo;
     }
 
     @Timed(
@@ -192,7 +192,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             Optional<IEntity> entityOptional = masterStorage.selectOne(id, entityClass);
             if (entityOptional.isPresent()) {
 
-                if (isShowResult()) {
+                if (isDebugInfo()) {
                     logger.info("Select one result: [{}].", entityOptional.get());
                 }
             }
@@ -245,7 +245,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         try {
             Collection<IEntity> entities = masterStorage.selectMultiple(ids, entityClass);
 
-            if (isShowResult()) {
+            if (isDebugInfo()) {
                 entities.stream().forEach(e -> {
                     logger.info("Select multiple result: [{}].", e.toString());
                 });
@@ -302,6 +302,10 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
         if (config == null) {
             throw new SQLException("Invalid search config.");
+        }
+
+        if (this.isDebugInfo()) {
+            logger.info("Conditional query: {}.[entityClass = {}, config = {}]", conditions, entityClassRef, config);
         }
 
         /*
@@ -487,7 +491,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
             Collection<IEntity> entities = buildEntitiesFromRefs(refs, entityClass);
 
-            if (isShowResult()) {
+            if (isDebugInfo()) {
                 if (entities.size() == 0) {
 
                     logger.info("Select conditions result: []");

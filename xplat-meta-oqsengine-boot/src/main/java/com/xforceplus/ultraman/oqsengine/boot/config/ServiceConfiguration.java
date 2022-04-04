@@ -35,7 +35,7 @@ public class ServiceConfiguration {
         impl.setMaxJoinEntityNumber(maxJoinEntityNumber);
         impl.setMaxJoinDriverLineNumber(maxJoinDriverLineNumber);
         impl.setMaxVisibleTotalCount(maxVisibleTotalCount);
-        impl.setShowResult(showSql);
+        impl.setDebugInfo(showSql);
 
         return impl;
     }
