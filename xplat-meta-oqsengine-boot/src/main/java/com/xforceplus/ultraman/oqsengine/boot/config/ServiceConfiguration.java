@@ -30,7 +30,7 @@ public class ServiceConfiguration {
         @Value("${query.maxVisibleTotalCount:10000}") long maxVisibleTotalCount,
         @Value("${query.join.maxJoinEntityNumber:2}") int maxJoinEntityNumber,
         @Value("${query.join.maxJoinDriverLineNumber:1000}") long maxJoinDriverLineNumber,
-        @Value("${debug.showsql:false}") boolean showSql) {
+        @Value("${storage.debug.showsql:false}") boolean showSql) {
         EntitySearchServiceImpl impl = new EntitySearchServiceImpl();
         impl.setMaxJoinEntityNumber(maxJoinEntityNumber);
         impl.setMaxJoinDriverLineNumber(maxJoinDriverLineNumber);
