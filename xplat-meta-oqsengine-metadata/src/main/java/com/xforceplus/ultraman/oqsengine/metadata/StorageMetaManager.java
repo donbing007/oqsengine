@@ -28,6 +28,7 @@ import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.CacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.DefaultCacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.HealthCheckEntityClass;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.log.UpGradeLog;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.AppSimpleInfo;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.model.AbstractMetaModel;
@@ -253,7 +254,7 @@ public class StorageMetaManager implements MetaManager {
             }
 
             try {
-                syncExecutor.sync(appId, version, entityClassSyncRspProto);
+                syncExecutor.sync(appId, env, version, entityClassSyncRspProto);
             } catch (Exception e) {
                 throw new RuntimeException("sync data to EntityClassSyncRspProto failed");
             }
@@ -345,7 +346,7 @@ public class StorageMetaManager implements MetaManager {
     }
 
     @Override
-    public List<AppSimpleInfo> showApplications() {
+    public Collection<AppSimpleInfo> showApplications() {
         return cacheExecutor.showAppInfo();
     }
 
@@ -386,6 +387,10 @@ public class StorageMetaManager implements MetaManager {
         }
 
         logger.warn("load path invalid, nothing would be load from offLine-model.");
+    }
+
+    public Collection<UpGradeLog> showUpgradeLogs(String appId, String env) throws JsonProcessingException {
+        return cacheExecutor.showUpgradeLogs(appId, env);
     }
 
     /**

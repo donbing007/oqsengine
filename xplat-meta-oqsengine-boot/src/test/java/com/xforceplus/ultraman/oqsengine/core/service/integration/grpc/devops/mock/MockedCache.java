@@ -43,7 +43,7 @@ public class MockedCache {
 
         //  set storage
         MetaChangePayLoad metaChangePayLoad =
-            cacheExecutor.save(expectedAppId, expectedVersion, entityClassStorageList);
+            cacheExecutor.save(expectedAppId, "test", expectedVersion, entityClassStorageList);
         if (null == metaChangePayLoad) {
             throw new RuntimeException("save error.");
         }

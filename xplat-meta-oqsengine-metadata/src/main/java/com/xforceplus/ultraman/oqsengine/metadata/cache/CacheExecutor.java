@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.metadata.cache;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xforceplus.ultraman.oqsengine.event.payload.meta.MetaChangePayLoad;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.log.UpGradeLog;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.AppSimpleInfo;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -26,7 +27,7 @@ public interface CacheExecutor {
      * @param storageList 需要保存的元信息.
      * @return true成功, false失败.
      */
-    MetaChangePayLoad save(String appId, int version, List<EntityClassStorage> storageList)
+    MetaChangePayLoad save(String appId, String env, int version, List<EntityClassStorage> storageList)
         throws JsonProcessingException;
 
     /**
@@ -197,4 +198,6 @@ public interface CacheExecutor {
      * 展示当前Redis中所有AppId-Env.
      */
     List<AppSimpleInfo> showAppInfo();
+
+    Collection<UpGradeLog> showUpgradeLogs(String appId, String env) throws JsonProcessingException;
 }

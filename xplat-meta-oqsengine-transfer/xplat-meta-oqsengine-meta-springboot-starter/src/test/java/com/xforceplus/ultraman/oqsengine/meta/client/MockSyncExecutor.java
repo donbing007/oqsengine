@@ -29,7 +29,7 @@ public class MockSyncExecutor implements SyncExecutor {
     public Map<String, RequestStatusVersion> requestStatusHashMap = new HashMap<>();
 
     @Override
-    public void sync(String appId, int version, EntityClassSyncRspProto entityClassSyncRspProto) {
+    public void sync(String appId, String env, int version, EntityClassSyncRspProto entityClassSyncRspProto) {
         Assertions.assertNotNull(entityClassSyncRspProto);
         try {
             if (status.equals(RequestStatus.DATA_ERROR)) {
