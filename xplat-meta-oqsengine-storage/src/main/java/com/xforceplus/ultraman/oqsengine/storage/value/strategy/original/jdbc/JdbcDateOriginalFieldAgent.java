@@ -25,7 +25,7 @@ public class JdbcDateOriginalFieldAgent extends AbstractJdbcOriginalFieldAgent {
 
     @Override
     protected StorageValue doRead(IEntityField field, ReadJdbcOriginalSource rs) throws Exception {
-        Date value = rs.getResultSet().getDate(field.name());
+        Date value = rs.getResultSet().getDate(field.fieldName().originalName().get());
 
         long ms = value.getTime();
 

@@ -20,4 +20,6 @@ public class MapAttributeMasterStorageEntity<K, V> extends BaseMasterStorageEnti
     public void setAttributes(Map<K, V> attributes) {
         this.attributes = attributes;
     }
+
+
 }

@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.original;
 
 import com.xforceplus.ultraman.oqsengine.common.jdbc.TypesUtils;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityFieldName;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.master.mysql.pojo.MapAttributeMasterStorageEntity;
@@ -88,7 +89,18 @@ public class OriginalUpdateExecutor extends
                     sql.append(", ");
                 }
 
-                sql.append(field.name()).append(" = ").append(agent.plainText(field, attributes.get(field)));
+                EntityFieldName fieldName = field.fieldName();
+                Optional<String> origianlName = fieldName.originalName();
+                if (!origianlName.isPresent()) {
+                    throw new Exception(
+                        String.format(
+                            "The field (%s) is not a static field and its corresponding static field name could not be found.",
+                            field.name()
+                        )
+                    );
+                }
+
+                sql.append(origianlName.get()).append(" = ").append(agent.plainText(field, attributes.get(field)));
             } else {
 
                 Optional<String> typeName = TypesUtils.name(field.config().getJdbcType());

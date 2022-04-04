@@ -19,7 +19,7 @@ public class JdbcIntegerOriginalFieldAgent extends AbstractJdbcOriginalFieldAgen
 
     @Override
     protected StorageValue doRead(IEntityField field, ReadJdbcOriginalSource rs) throws Exception {
-        int value = rs.getResultSet().getInt(field.name());
+        int value = rs.getResultSet().getInt(field.fieldName().originalName().get());
 
         return new LongStorageValue(field.idString(), value, true);
     }

@@ -23,7 +23,7 @@ public class JdbcBlobOriginalFieldAgent extends AbstractJdbcOriginalFieldAgent {
 
     @Override
     protected StorageValue doRead(IEntityField field, ReadJdbcOriginalSource rs) throws Exception {
-        Blob blob = rs.getResultSet().getBlob(field.name());
+        Blob blob = rs.getResultSet().getBlob(field.fieldName().originalName().get());
         byte[] value;
         try (InputStream in = blob.getBinaryStream()) {
             ByteArrayOutputStream buff = new ByteArrayOutputStream();

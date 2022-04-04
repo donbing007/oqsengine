@@ -25,7 +25,7 @@ public class JdbcTimestampOriginalFieldAgent extends AbstractJdbcOriginalFieldAg
 
     @Override
     protected StorageValue doRead(IEntityField field, ReadJdbcOriginalSource rs) throws Exception {
-        Timestamp timestamp = rs.getResultSet().getTimestamp(field.name());
+        Timestamp timestamp = rs.getResultSet().getTimestamp(field.fieldName().originalName().get());
 
         long value = timestamp.getTime();
 

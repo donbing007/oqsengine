@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.value.strategy.original.jdbc;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityFieldName;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.original.jdbc.helper.ReadJdbcOriginalSource;
@@ -20,7 +21,18 @@ public abstract class AbstractJdbcOriginalFieldAgent implements JdbcOriginalFiel
     public StorageValue read(IEntityField field, ReadJdbcOriginalSource rs) throws Exception {
         try {
 
-            rs.getResultSet().findColumn(field.name());
+            EntityFieldName fieldName = field.fieldName();
+            Optional<String> originalFieldName = fieldName.originalName();
+
+            if (!originalFieldName.isPresent()) {
+                // 非静态字段,没有静态字段名称.
+                throw new Exception(
+                    String.format("The expected static field name was not found for field (%s).",
+                        fieldName.dynamicName()));
+
+            }
+
+            rs.getResultSet().findColumn(originalFieldName.get());
 
             return doRead(field, rs);
 

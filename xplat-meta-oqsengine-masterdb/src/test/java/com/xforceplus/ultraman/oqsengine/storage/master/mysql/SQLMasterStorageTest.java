@@ -9,6 +9,7 @@ import com.xforceplus.ultraman.oqsengine.common.version.VersionHelp;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MockMetaManagerHolder;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityFieldName;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
@@ -211,6 +212,12 @@ public class SQLMasterStorageTest {
         .withName("original_bool")
         .withConfig(FieldConfig.Builder.anFieldConfig().withJdbcType(Types.BOOLEAN).withSearchable(true).build())
         .build();
+    private IEntityField originalRelationshipField = EntityField.Builder.anEntityField()
+        .withId(4008)
+        .withFieldType(FieldType.LONG)
+        .withName("original_relationship.id")
+        .withConfig(FieldConfig.Builder.anFieldConfig().withJdbcType(Types.BIGINT).withSearchable(true).build())
+        .build();
     private IEntityClass originalEntityClass = EntityClass.Builder.anEntityClass()
         .withId(4)
         .withLevel(0)
@@ -225,6 +232,7 @@ public class SQLMasterStorageTest {
         .withField(originalEnumField)
         .withField(originalDatetimeField)
         .withField(originaBoolField)
+        .withField(originalRelationshipField)
         .build();
 
     private List<IEntity> expectedEntitys;
@@ -415,7 +423,8 @@ public class SQLMasterStorageTest {
                 new DecimalValue(originalDecField, new BigDecimal("100.123")),
                 new EnumValue(originalEnumField, "1"),
                 new DateTimeValue(originalDatetimeField, time),
-                new BooleanValue(originaBoolField, true)
+                new BooleanValue(originaBoolField, true),
+                new LongValue(originalRelationshipField, 3000)
             )
         );
         Assertions.assertTrue(newEntity.isDirty());
@@ -430,6 +439,7 @@ public class SQLMasterStorageTest {
         // 所有值都应该为干净的.
         Assertions.assertEquals(0, newEntity.entityValue().values().stream().filter(v -> v.isDirty()).count());
 
+        //验证结果
         Optional<IEntity> entityOptional = storage.selectOne(newEntity.id(), originalEntityClass);
         Assertions.assertTrue(entityOptional.isPresent());
         IEntity targetEntity = entityOptional.get();
@@ -450,6 +460,7 @@ public class SQLMasterStorageTest {
             ((LocalDateTime) entityValue.getValue(originalDatetimeField.id()).get().getValue())
                 .atZone(DateTimeValue.ZONE_ID).toInstant().toEpochMilli());
         Assertions.assertTrue((Boolean) entityValue.getValue(originaBoolField.id()).get().getValue());
+        Assertions.assertEquals(3000L, entityValue.getValue(originalRelationshipField.id()).get().valueToLong());
 
         List<Map<IEntityField, StorageValue>> rows = findOriginalRow(originalEntityClass, new long[] {newEntity.id()});
         Assertions.assertEquals(1, rows.size());
@@ -466,6 +477,7 @@ public class SQLMasterStorageTest {
         Assertions.assertEquals("1", row.get(originalEnumField).value());
         Assertions.assertEquals(1L, row.get(originaBoolField).value());
         Assertions.assertEquals(timeMilli, row.get(originalDatetimeField).value());
+        Assertions.assertEquals(3000L, row.get(originalRelationshipField).value());
     }
 
     /**
@@ -918,8 +930,9 @@ public class SQLMasterStorageTest {
         Connection conn = ds.getConnection();
         String sql = String.format(
             "SELECT %s FROM %s WHERE id IN (%s)",
-            entityClass.fields().stream().map(f -> f.name()).collect(Collectors.joining(", ")),
-            String.format("%s_%s", entityClass.appCode(), entityClass.code()),
+            entityClass.fields().stream().map(f -> f.fieldName().originalName().get())
+                .collect(Collectors.joining(", ")),
+            String.format("oqs_%s_%s", entityClass.appCode(), entityClass.code()),
             IntStream.range(0, ids.length).mapToObj(i -> "?").collect(Collectors.joining(", ")));
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             for (int i = 0; i < ids.length; i++) {
@@ -940,10 +953,11 @@ public class SQLMasterStorageTest {
                                 field.name(), TypesUtils.name(field.config().getJdbcType()).orElse("NULL")
                             ));
                         }
+                        EntityFieldName fieldName = field.fieldName();
                         JdbcOriginalFieldAgent agent = (JdbcOriginalFieldAgent) agentOp.get();
                         int colIndex = -1;
                         try {
-                            colIndex = rs.findColumn(field.name());
+                            colIndex = rs.findColumn(fieldName.originalName().get());
                         } catch (Exception ex) {
                             colIndex = -1;
                         }

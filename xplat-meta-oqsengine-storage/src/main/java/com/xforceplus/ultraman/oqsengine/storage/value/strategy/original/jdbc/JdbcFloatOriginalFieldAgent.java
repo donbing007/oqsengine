@@ -19,7 +19,7 @@ public class JdbcFloatOriginalFieldAgent extends AbstractJdbcOriginalFieldAgent 
 
     @Override
     protected StorageValue doRead(IEntityField field, ReadJdbcOriginalSource rs) throws Exception {
-        float value = rs.getResultSet().getFloat(field.name());
+        float value = rs.getResultSet().getFloat(field.fieldName().originalName().get());
 
         String plainValue = Float.toString(value);
         return JdbcOriginalFieldHelper.buildDecimalStorageValue(field.idString(), plainValue);

@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.original;
 
 import com.xforceplus.ultraman.oqsengine.common.jdbc.TypesUtils;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityFieldName;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.master.mysql.pojo.MapAttributeMasterStorageEntity;
@@ -70,7 +71,15 @@ public class OriginalBuildExecutor extends
                 buff.append(", ");
             }
 
-            buff.append(f.name());
+            EntityFieldName fieldName = f.fieldName();
+            Optional<String> originalName = fieldName.originalName();
+            if (!originalName.isPresent()) {
+                throw new Exception(String.format(
+                    "The field (%s) is not a static field and its corresponding static field name could not be found.",
+                    f.name()
+                ));
+            }
+            buff.append(originalName.get());
         }
 
         // 字段定义的闭合括号

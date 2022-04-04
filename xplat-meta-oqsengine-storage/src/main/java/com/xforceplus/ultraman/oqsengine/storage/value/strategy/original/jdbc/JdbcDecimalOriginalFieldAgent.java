@@ -20,7 +20,7 @@ public class JdbcDecimalOriginalFieldAgent extends AbstractJdbcOriginalFieldAgen
 
     @Override
     protected StorageValue doRead(IEntityField field, ReadJdbcOriginalSource rs) throws Exception {
-        BigDecimal value = rs.getResultSet().getBigDecimal(field.name());
+        BigDecimal value = rs.getResultSet().getBigDecimal(field.fieldName().originalName().get());
 
         String plainValue = value.toPlainString();
         return JdbcOriginalFieldHelper.buildDecimalStorageValue(field.idString(), plainValue);

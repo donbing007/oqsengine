@@ -17,7 +17,7 @@ import java.sql.Types;
 public class JdbcVarcharOriginalFieldAgent extends AbstractJdbcOriginalFieldAgent {
     @Override
     protected StorageValue doRead(IEntityField field, ReadJdbcOriginalSource rs) throws Exception {
-        String value = rs.getResultSet().getString(field.name());
+        String value = rs.getResultSet().getString(field.fieldName().originalName().get());
         return new StringStorageValue(field.idString(), value, true);
     }
 

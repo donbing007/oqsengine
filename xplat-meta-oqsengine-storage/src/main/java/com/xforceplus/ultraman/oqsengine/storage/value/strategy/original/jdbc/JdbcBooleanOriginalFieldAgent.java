@@ -17,7 +17,7 @@ import java.sql.Types;
 public class JdbcBooleanOriginalFieldAgent extends AbstractJdbcOriginalFieldAgent {
     @Override
     protected StorageValue doRead(IEntityField field, ReadJdbcOriginalSource rs) throws Exception {
-        boolean value = rs.getResultSet().getBoolean(field.name());
+        boolean value = rs.getResultSet().getBoolean(field.fieldName().originalName().get());
 
         return new LongStorageValue(field.idString(), value ? 1 : 0, true);
     }

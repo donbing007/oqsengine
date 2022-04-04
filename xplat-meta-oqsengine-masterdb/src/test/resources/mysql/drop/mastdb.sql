@@ -1,4 +1,4 @@
 use oqsengine;
 drop table oqsbigentity;
 drop table kv;
-drop table test_original_table;
+drop table oqs_test_original;

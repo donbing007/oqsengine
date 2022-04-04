@@ -265,6 +265,9 @@ public class EntityClassSyncProtoBufMocker {
             .build();
     }
 
+    /**
+     * 根据OQS字段类型转换成JDBC类型.
+     */
     public static int toJdbcType(FieldType fieldType) {
         switch (fieldType) {
             case LONG: {

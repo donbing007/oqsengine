@@ -20,14 +20,15 @@ import java.sql.Types;
 public class JdbcBitOriginalFieldAgent extends AbstractJdbcOriginalFieldAgent {
     @Override
     protected StorageValue doRead(IEntityField field, ReadJdbcOriginalSource rs) throws Exception {
+        String originalName = field.fieldName().originalName().get();
         if (field.type() == FieldType.BOOLEAN) {
 
-            boolean value = rs.getResultSet().getBoolean(field.name());
+            boolean value = rs.getResultSet().getBoolean(originalName);
             return new LongStorageValue(field.idString(), value ? 1 : 0, true);
 
         } else {
 
-            byte[] value = rs.getResultSet().getBytes(field.name());
+            byte[] value = rs.getResultSet().getBytes(originalName);
             return new StringStorageValue(field.idString(), new String(value, StandardCharsets.UTF_8), true);
         }
     }

@@ -25,7 +25,7 @@ public class JdbcTimeOriginalFieldAgent extends AbstractJdbcOriginalFieldAgent {
 
     @Override
     protected StorageValue doRead(IEntityField field, ReadJdbcOriginalSource rs) throws Exception {
-        Time time = rs.getResultSet().getTime(field.name());
+        Time time = rs.getResultSet().getTime(field.fieldName().originalName().get());
 
         long value = time.getTime();
 

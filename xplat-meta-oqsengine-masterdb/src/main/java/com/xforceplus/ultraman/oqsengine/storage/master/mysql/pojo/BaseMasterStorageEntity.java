@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.storage.master.mysql.pojo;
 import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
+import java.util.Arrays;
 
 /**
  * 储存实例抽像公共.
@@ -190,5 +191,29 @@ public class BaseMasterStorageEntity {
         }
 
         return this.entityClasses[this.entityClasses.length - 1];
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("BaseMasterStorageEntity{");
+        sb.append("commitid=").append(commitid);
+        sb.append(", createTime=").append(createTime);
+        sb.append(", deleted=").append(deleted);
+        sb.append(", dynamicSuccess=").append(dynamicSuccess);
+        sb.append(", entityClasses=").append(Arrays.toString(entityClasses));
+        sb.append(", entityClassVersion=").append(entityClassVersion);
+        sb.append(", id=").append(id);
+        sb.append(", op=").append(op);
+        sb.append(", oqsMajor=").append(oqsMajor);
+        sb.append(", original=").append(original);
+        sb.append(", originalSucess=").append(originalSucess);
+        sb.append(", originalTableName='").append(originalTableName).append('\'');
+        sb.append(", profile='").append(profile).append('\'');
+        sb.append(", sourceEntity=").append(sourceEntity);
+        sb.append(", tx=").append(tx);
+        sb.append(", updateTime=").append(updateTime);
+        sb.append(", version=").append(version);
+        sb.append('}');
+        return sb.toString();
     }
 }

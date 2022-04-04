@@ -18,7 +18,7 @@ import java.sql.Types;
 public class JdbcDoubleOriginalFieldAgent extends AbstractJdbcOriginalFieldAgent {
     @Override
     protected StorageValue doRead(IEntityField field, ReadJdbcOriginalSource rs) throws Exception {
-        double value = rs.getResultSet().getDouble(field.name());
+        double value = rs.getResultSet().getDouble(field.fieldName().originalName().get());
 
         String plainValue = Double.toString(value);
         return JdbcOriginalFieldHelper.buildDecimalStorageValue(field.idString(), plainValue);

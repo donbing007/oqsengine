@@ -18,7 +18,7 @@ public class JdbcBigintOriginalFieldAgent extends AbstractJdbcOriginalFieldAgent
 
     @Override
     protected StorageValue doRead(IEntityField field, ReadJdbcOriginalSource rs) throws Exception {
-        long value = rs.getResultSet().getLong(field.name());
+        long value = rs.getResultSet().getLong(field.fieldName().originalName().get());
 
         return new LongStorageValue(field.idString(), value, true);
     }
