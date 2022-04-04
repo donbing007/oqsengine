@@ -824,10 +824,18 @@ public class DefaultCacheExecutor implements CacheExecutor {
             Map<String, String> codes = syncCommands.hgetall(appCodeKeys);
             envs.forEach(
                 (appId, env) -> {
-                    String version = versions.remove(appId);
+                    String version = null;
+                    if (null != versions && !versions.isEmpty()) {
+                        version = versions.remove(appId);
+                    }
 
-                    infoList.add(new AppSimpleInfo(appId, env, (null != codes && !codes.isEmpty()) ? codes.remove(appId) : "",
-                        (null != version && !version.isEmpty()) ? Integer.parseInt(version) : NOT_EXIST_VERSION));
+                    String code = null;
+                    if (null != codes && !codes.isEmpty()) {
+                        code = codes.remove(appId);
+                    }
+
+                    infoList.add(new AppSimpleInfo(appId, env, null != code ? code : "",
+                        null != version ? Integer.parseInt(version) : NOT_EXIST_VERSION));
                 }
             );
         }
