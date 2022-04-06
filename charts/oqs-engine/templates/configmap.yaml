@@ -19,11 +19,13 @@ data:
             port: {{ .Values.service.port.grpc }}
         logging:
           level:
-            root: {{ .Values.logger.level }}
-            io:
-              lettuce: info
+            root: info
+            com:
+              xforceplus:
+                ultraman:
+                  oqsengine: {{ .Values.logger.level }}
           pattern:
-            console: "%d{yyyy-MM-dd hhh:mm:ss,SSS} %-5level [%thread] %logger{36} : %msg%n"
+            console: {{ .Values.logger.pattern | quote }}
         management:
           health:
             redis:

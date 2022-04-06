@@ -85,6 +85,7 @@ jmx:
 
 logger:
   level: INFO
+  pattern: "%d{yyyy-MM-dd} %d{hhh:mm:ss},(%d{SSS}) (%-5level) [%thread] (%logger{36}) : %msg%n"
 
 cdc:
   connect:
