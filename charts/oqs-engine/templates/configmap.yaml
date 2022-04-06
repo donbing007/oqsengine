@@ -25,7 +25,7 @@ data:
                 ultraman:
                   oqsengine: {{ .Values.logger.level }}
           pattern:
-            console: {{ .Values.logger.pattern | quote }}
+            console: "%d{yyyy-MM-dd} %d{hhh:mm:ss},%d{SSS} %-5level [%thread] %logger{36} : %msg%n"
         management:
           health:
             redis:
