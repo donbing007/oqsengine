@@ -510,7 +510,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             if (logger.isDebugEnabled()) {
                 if (entities.size() == 0) {
 
-                    logger.debug("Select conditions (%s) result: []", conditions);
+                    logger.debug("Select conditions ({}) result: []", conditions);
 
                 } else {
                     StringBuilder buff = new StringBuilder();
@@ -520,7 +520,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                         }
                     }
                     logger.debug(
-                        "Select conditions (%s) result: [{}],totalCount:[{}]",
+                        "Select conditions ({}) result: [{}],totalCount:[{}]",
                         conditions, buff.toString(), usePage.getTotalCount());
                     // help gc
                     buff = null;

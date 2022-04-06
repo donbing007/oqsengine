@@ -66,6 +66,14 @@ public class LookupCalculationLogic implements CalculationLogic {
 
         Optional<IValue> lookupValueOp = focusEntity.entityValue().getValue(focusField.id());
         if (!lookupValueOp.isPresent()) {
+
+            if (logger.isDebugEnabled()) {
+                logger.debug(
+                    "Unable to instantiate the field that launched the lookup.[entityClass={}, field={}]",
+                    focusEntity.entityClassRef(), focusField.fieldName()
+                );
+            }
+
             return Optional.empty();
         }
 
@@ -86,6 +94,13 @@ public class LookupCalculationLogic implements CalculationLogic {
              */
             if (!LookupValue.class.isInstance(lookupValue)) {
                 // 保持原样.
+
+                if (logger.isDebugEnabled()) {
+                    logger.debug(
+                        "The current state is not maintenance, so the field ({}) remains unchanged.",
+                        focusField.fieldName());
+                }
+
                 return Optional.ofNullable(lookupValue);
 
             } else {
@@ -107,6 +122,12 @@ public class LookupCalculationLogic implements CalculationLogic {
             IValue nowTargetValue = sourceEntity.entityValue().getValue(lookUpFieldId).get();
             if (nowTargetValue.equals(nowLookupValue)) {
                 // 保持原样.
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Recalculation is not required because the values of the current instance "
+                            + "({}) field ({}) and the target instance ({}) field are the same.",
+                        focusEntity.id(), focusField.fieldName(), nowTargetValue.getField().fieldName());
+                }
+
                 return Optional.ofNullable(nowLookupValue);
             }
 
