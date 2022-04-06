@@ -12,10 +12,10 @@ server:
 logging:
   level:
     root: info
-      com:
-        xforceplus:
-          ultraman:
-            oqsengine: info
+    com:
+      xforceplus:
+        ultraman:
+          oqsengine: debug
   pattern:
     console: "%d{yyyy-MM-dd} %d{hhh:mm:ss},%red(%d{SSS}) %green(%-5level) [%thread] %cyan(%logger{36}) : %msg%n"
 

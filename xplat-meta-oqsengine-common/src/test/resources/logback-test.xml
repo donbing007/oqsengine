@@ -19,4 +19,8 @@
     <root level="info">
         <appender-ref ref="STDOUT"/>
     </root>
+
+    <logger name="com.xforceplus.ultraman.oqsengine" level="debug">
+        <appender-ref ref="STDOUT"/>
+    </logger>
 </configuration>

@@ -11,10 +11,11 @@ server:
 
 logging:
   level:
-    root: debug
-    io:
-      lettuce: info
-    com.xforceplus.ultraman.oqsengine.changelog: debug
+    root: info
+    com:
+      xforceplus:
+        ultraman:
+          oqsengine: debug
 
 transaction:
   waitCommitSync: true

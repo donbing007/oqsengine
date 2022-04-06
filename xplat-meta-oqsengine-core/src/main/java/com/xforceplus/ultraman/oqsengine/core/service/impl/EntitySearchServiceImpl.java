@@ -181,6 +181,10 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         IEntityClass entityClass;
         if (!entityClassOp.isPresent()) {
 
+            if (logger.isDebugEnabled()) {
+                logger.debug("Unable to find meta information {}.", entityClassRef);
+            }
+
             return OqsResult.notExistMeta(entityClassRef);
 
         } else {
@@ -192,9 +196,17 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             Optional<IEntity> entityOptional = masterStorage.selectOne(id, entityClass);
             if (entityOptional.isPresent()) {
 
-                if (isDebugInfo()) {
-                    logger.info("Select one result: [{}].", entityOptional.get());
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Query {} instance result of object ({}) : [{}].",
+                        id, entityClassRef, entityOptional.get());
                 }
+
+            } else {
+
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Query {} instance result of object ({}) : [].", id, entityClassRef);
+                }
+
             }
 
             return OqsResult.success(entityOptional.orElse(null));
@@ -236,6 +248,10 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         IEntityClass entityClass;
         if (!entityClassOp.isPresent()) {
 
+            if (logger.isDebugEnabled()) {
+                logger.debug("Unable to find meta information {}.", entityClassRef);
+            }
+
             return OqsResult.notExistMeta(entityClassRef);
 
         } else {
@@ -245,9 +261,9 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         try {
             Collection<IEntity> entities = masterStorage.selectMultiple(ids, entityClass);
 
-            if (isDebugInfo()) {
+            if (logger.isDebugEnabled()) {
                 entities.stream().forEach(e -> {
-                    logger.info("Select multiple result: [{}].", e.toString());
+                    logger.debug("Query {} instance result of object ({}) : [{}].", e.id(), entityClassRef, e);
                 });
             }
 
@@ -491,10 +507,10 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
             Collection<IEntity> entities = buildEntitiesFromRefs(refs, entityClass);
 
-            if (isDebugInfo()) {
+            if (logger.isDebugEnabled()) {
                 if (entities.size() == 0) {
 
-                    logger.info("Select conditions result: []");
+                    logger.debug("Select conditions (%s) result: []", conditions);
 
                 } else {
                     StringBuilder buff = new StringBuilder();
@@ -503,8 +519,9 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                             buff.append(e.toString()).append('\n');
                         }
                     }
-                    logger.info(
-                        "Select conditions result: [{}],totalCount:[{}]", buff.toString(), usePage.getTotalCount());
+                    logger.debug(
+                        "Select conditions (%s) result: [{}],totalCount:[{}]",
+                        conditions, buff.toString(), usePage.getTotalCount());
                     // help gc
                     buff = null;
                 }
@@ -539,6 +556,12 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
         OqsResult<Collection<IEntity>> result = this.selectByConditions(conditions, entityClassRef, countConfig);
         if (result.isSuccess()) {
+
+            if (logger.isDebugEnabled()) {
+                logger.debug("Using object (%s) The result of using (%s) conditional count is %d.",
+                    entityClassRef, conditions, page.getTotalCount());
+            }
+
             return OqsResult.success(page.getTotalCount());
         } else {
             return result.copy(0);

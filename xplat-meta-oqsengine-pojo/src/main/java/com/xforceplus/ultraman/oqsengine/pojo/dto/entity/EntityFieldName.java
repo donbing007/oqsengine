@@ -62,6 +62,15 @@ public class EntityFieldName {
         }
     }
 
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("EntityFieldName{");
+        sb.append("dynamicName=").append(dynamicName());
+        sb.append("originalName=").append(originalName().orElse(""));
+        sb.append('}');
+        return sb.toString();
+    }
+
     private String buildOriginalName() {
         String name = this.field.name();
         if (name.endsWith(RELATIONAL_FIELD_NAME_SUFFIX)) {
