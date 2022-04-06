@@ -329,7 +329,7 @@ public class LookupMaintainingTaskRunnerTest {
 
     class MockMasterStorage implements MasterStorage {
 
-        private Map<Long, com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> data;
+        private Map<Long, IEntity> data;
 
         public MockMasterStorage() {
             data = new ConcurrentHashMap<>();
@@ -402,7 +402,10 @@ public class LookupMaintainingTaskRunnerTest {
 
         @Override
         public Collection<IEntity> selectMultiple(long[] ids, IEntityClass entityClass) throws SQLException {
-            throw new UnsupportedOperationException();
+            return Arrays.stream(ids).mapToObj(id -> data.get(id))
+                .filter(Objects::nonNull)
+                .filter(e -> e.entityClassRef().equalsCompatible(entityClass.ref()))
+                .collect(Collectors.toList());
         }
 
         @Override

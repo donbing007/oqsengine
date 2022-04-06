@@ -169,6 +169,19 @@ public class Entity implements IEntity, Serializable {
         return Objects.hash(id);
     }
 
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("Entity{");
+        sb.append("entityClass=").append(entityClassRef);
+        sb.append(", entityValue=").append(entityValue);
+        sb.append(", id=").append(id);
+        sb.append(", time=").append(time);
+        sb.append(", version=").append(version);
+        sb.append('}');
+        return sb.toString();
+    }
+
+
     /**
      * Builder.
      */

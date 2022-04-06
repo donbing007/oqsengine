@@ -58,7 +58,6 @@ public class DefaultCalculationInitLogicTest {
     @Mock
     private DataIterator<OqsEngineEntity> iterator;
 
-    @Spy
     private ExecutorService worker;
 
     @Spy
@@ -87,6 +86,7 @@ public class DefaultCalculationInitLogicTest {
         initIvalueFactory.setInitIvalueLogicMap(initIvalueLogicMap);
 
         worker = Executors.newFixedThreadPool(5);
+        defaultCalculationInitLogic.setWorker(worker);
 
         MockitoAnnotations.initMocks(this);
         B1 = EntityField.Builder.anEntityField()

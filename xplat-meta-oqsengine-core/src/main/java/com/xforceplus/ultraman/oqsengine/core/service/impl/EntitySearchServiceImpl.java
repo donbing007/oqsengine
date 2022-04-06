@@ -497,14 +497,16 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                     logger.info("Select conditions result: []");
 
                 } else {
-                    entities.stream().forEach(e -> {
-                        if (e == null) {
-                            logger.info("Select conditions result: [NULL]");
-                        } else {
-                            logger.info("Select conditions result: [{}],totalCount:[{}]", e.toString(),
-                                usePage.getTotalCount());
+                    StringBuilder buff = new StringBuilder();
+                    for (IEntity e : entities) {
+                        if (e != null) {
+                            buff.append(e.toString()).append('\n');
                         }
-                    });
+                    }
+                    logger.info(
+                        "Select conditions result: [{}],totalCount:[{}]", buff.toString(), usePage.getTotalCount());
+                    // help gc
+                    buff = null;
                 }
             }
 

@@ -270,6 +270,32 @@ public class SQLMasterStorageTest {
 
     @Test
     @Tag(ORGINAL_TAG)
+    public void testOriginalDeleteEntities() throws Exception {
+        EntityPackage entityPackage = new EntityPackage();
+        expectedEntitys.stream().forEach(e -> entityPackage.put(e, originalEntityClass));
+        // 不应该事先被删除.
+        for (IEntity e : expectedEntitys) {
+            Assertions.assertFalse(e.isDeleted());
+        }
+        // 静态表中也应该仍有记录.
+        List<Map<IEntityField, StorageValue>> rows =
+            findOriginalRow(originalEntityClass, expectedEntitys.stream().mapToLong(e -> e.id()).toArray());
+        Assertions.assertEquals(expectedEntitys.size(), rows.size());
+
+        storage.delete(entityPackage);
+
+        // 应该都被删除了.
+        for (IEntity e : expectedEntitys) {
+            Assertions.assertTrue(e.isDeleted());
+        }
+
+        rows = findOriginalRow(originalEntityClass, expectedEntitys.stream().mapToLong(e -> e.id()).toArray());
+        Assertions.assertEquals(0, rows.size());
+
+    }
+
+    @Test
+    @Tag(ORGINAL_TAG)
     public void testOriginalDeleteEntity() throws Exception {
         IEntity targetEntity = expectedEntitys.stream().findFirst().get();
         Assertions.assertTrue(storage.delete(targetEntity, originalEntityClass));
