@@ -20,7 +20,7 @@
         <appender-ref ref="STDOUT"/>
     </root>
 
-    <logger name="com.xforceplus.ultraman.oqsengine" level="debug">
+    <logger name="com.xforceplus.ultraman.oqsengine" level="true">
         <appender-ref ref="STDOUT"/>
     </logger>
 </configuration>

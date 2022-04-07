@@ -33,7 +33,7 @@
         <appender-ref ref="CONSOLE"/>
     </root>
 
-    <logger name="com.xforceplus.ultraman.oqsengine" level="debug">
+    <logger name="com.xforceplus.ultraman.oqsengine" level="info">
         <appender-ref ref="STDOUT"/>
     </logger>
 
