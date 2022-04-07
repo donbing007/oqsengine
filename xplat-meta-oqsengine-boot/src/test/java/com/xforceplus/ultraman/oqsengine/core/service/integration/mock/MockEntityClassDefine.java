@@ -18,6 +18,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Formul
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Lookup;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -51,6 +52,12 @@ public class MockEntityClassDefine {
     private static long driverEntityClassId = baseClassId - 6;
     private static long lookupEntityClassId = baseClassId - 7;
 
+    private static long odLookupOriginalEntityClassId = baseClassId - 8;
+    private static long odLookupTargetEntityClassId = baseClassId - 9;
+    private static long doLookupEntityClassId = baseClassId - 10;
+    private static long doLookupTargetOriginalEntityClassId = baseClassId - 11;
+    private static long ooLookupOriginalEntityClassId = baseClassId - 12;
+    private static long ooLookupTargetOriginalEntityClassId = baseClassId - 13;
 
     public static IEntityClass L0_ENTITY_CLASS;
     public static IEntityClass L1_ENTITY_CLASS;
@@ -70,6 +77,13 @@ public class MockEntityClassDefine {
 
     // 初始化使用，只有一个静态字段的简单订单
     public static IEntityClass SIMPLE_ORDER_CLASS;
+
+    /*
+    这是一组为了测试动静相互lookup的类型.
+     */
+    // 静态 lookup 动态
+    public static IEntityClass OD_LOOKUP_ORIGINAL_ENTITY_CLASS;
+    public static IEntityClass OD_LOOKUP_TARGET_ENTITY_CLASS;
 
     /**
      * 字段定义.
@@ -151,6 +165,21 @@ public class MockEntityClassDefine {
         orderItemNumFieldId,
         // 订单项时间字段标识.
         orderItemTimeFieldId,
+
+        // 静态-> 动态 的静态发起lookup字段.
+        odLookupFieldId,
+        // 静态-> 动态 的动态被lookup字段.
+        odLookupTargetFieldId,
+        // 静态-> 动态 外键字段
+        odLookupForeignFieldId,
+        // 动态-> 静态 的动态发起lookup字段.
+        doLookupFieldId,
+        // 动态-> 静态 的被lookup字段.
+        doLookupTargetFieldId,
+        // 静态 -> 静态 的静态发起lookup字段.
+        ooLookupFieldId,
+        // 静态 -> 静态 的静态被lookup字段.
+        ooLookupTargetFieldId,
     }
 
     // 用户订单关系字段.
@@ -166,6 +195,15 @@ public class MockEntityClassDefine {
     private static IEntityField orderOrderItemForeignField = EntityField.Builder.anEntityField()
         .withId(Long.MAX_VALUE - FieldId.orderOrderItemForeignFieldId.ordinal())
         .withName("订单项订单关联")
+        .withFieldType(FieldType.LONG)
+        .withConfig(
+            FieldConfig.Builder.anFieldConfig().withSearchable(true).build()
+        ).build();
+
+    // 静态->动态 关系字段.
+    private static IEntityField odLookupForeignField = EntityField.Builder.anEntityField()
+        .withId(Long.MAX_VALUE - FieldId.odLookupForeignFieldId.ordinal())
+        .withName("静态动态lookup关联")
         .withFieldType(FieldType.LONG)
         .withConfig(
             FieldConfig.Builder.anFieldConfig().withSearchable(true).build()
@@ -1051,6 +1089,72 @@ public class MockEntityClassDefine {
                         .withEntityField(orderOrderItemForeignField).build()
                 )
             ).build();
+
+        OD_LOOKUP_ORIGINAL_ENTITY_CLASS = EntityClass.Builder.anEntityClass()
+            .withId(odLookupOriginalEntityClassId)
+            .withCode("od_lookup_original")
+            .withField(
+                EntityField.Builder.anEntityField()
+                    .withId(Long.MAX_VALUE - FieldId.odLookupFieldId.ordinal())
+                    .withFieldType(FieldType.LONG)
+                    .withName("od-lookup-original-long")
+                    .withConfig(
+                        FieldConfig.Builder.anFieldConfig()
+                            .withSearchable(true)
+                            .withLen(Integer.MAX_VALUE)
+                            .withJdbcType(Types.BIGINT)
+                            .withCalculation(
+                                Lookup.Builder.anLookup()
+                                    .withClassId(odLookupTargetEntityClassId)
+                                    .withFieldId(Long.MAX_VALUE - FieldId.odLookupTargetFieldId.ordinal())
+                                    .build()
+                            ).build()
+                    ).build()
+            )
+            .withRelations(
+                Arrays.asList(
+                    Relationship.Builder.anRelationship()
+                        .withId(odLookupForeignField.id())
+                        .withRelationType(Relationship.RelationType.MANY_TO_ONE)
+                        .withBelongToOwner(true)
+                        .withStrong(true)
+                        .withLeftEntityClassId(odLookupOriginalEntityClassId)
+                        .withLeftEntityClassCode("od_lookup_original")
+                        .withRightEntityClassId(odLookupTargetEntityClassId)
+                        .withRightEntityClassLoader((classId, a) -> Optional.of(OD_LOOKUP_TARGET_ENTITY_CLASS))
+                        .withRightFamilyEntityClassLoader((id) -> Arrays.asList(OD_LOOKUP_TARGET_ENTITY_CLASS))
+                        .withEntityField(odLookupForeignField).build()
+                )
+            ).build();
+
+        OD_LOOKUP_TARGET_ENTITY_CLASS = EntityClass.Builder.anEntityClass()
+            .withId(odLookupTargetEntityClassId)
+            .withCode("od_lookup_target")
+            .withField(
+                EntityField.Builder.anEntityField()
+                    .withId(Long.MAX_VALUE - FieldId.odLookupTargetFieldId.ordinal())
+                    .withFieldType(FieldType.LONG)
+                    .withName("od-lookup-target-long")
+                    .withConfig(
+                        FieldConfig.Builder.anFieldConfig()
+                            .withSearchable(true)
+                            .withLen(Integer.MAX_VALUE).build()
+                    ).build()
+            ).withRelations(
+                Arrays.asList(
+                    Relationship.Builder.anRelationship()
+                        .withId(odLookupForeignField.id())
+                        .withRelationType(Relationship.RelationType.ONE_TO_MANY)
+                        .withBelongToOwner(false)
+                        .withStrong(true)
+                        .withLeftEntityClassId(odLookupTargetEntityClassId)
+                        .withLeftEntityClassCode("od_lookup_target")
+                        .withRightEntityClassId(odLookupOriginalEntityClassId)
+                        .withRightEntityClassLoader((classId, a) -> Optional.of(OD_LOOKUP_ORIGINAL_ENTITY_CLASS))
+                        .withRightFamilyEntityClassLoader((id) -> Arrays.asList(OD_LOOKUP_ORIGINAL_ENTITY_CLASS))
+                        .withEntityField(odLookupForeignField).build()
+                )
+            ).build();
     }
 
     /**
@@ -1065,7 +1169,18 @@ public class MockEntityClassDefine {
             LOOKUP_ENTITY_CLASS,
             USER_CLASS,
             ORDER_CLASS,
-            ORDER_ITEM_CLASS
+            ORDER_ITEM_CLASS,
+
+            /*
+            专门为了动静之间测试准备的对象.
+            OD 表示静态->动态
+            DO 表示动态->静态.
+            OO 表示静态->静态.
+             */
+
+            // 静态 lookup 动态
+            OD_LOOKUP_ORIGINAL_ENTITY_CLASS,
+            OD_LOOKUP_TARGET_ENTITY_CLASS,
         };
 
         for (IEntityClass e : es) {

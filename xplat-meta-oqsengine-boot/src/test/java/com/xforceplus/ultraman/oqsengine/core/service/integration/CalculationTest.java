@@ -37,7 +37,6 @@ import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.CanalConta
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.ManticoreContainer;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.MysqlContainer;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.RedisContainer;
-import io.vavr.control.Either;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.sql.Connection;
@@ -207,6 +206,43 @@ public class CalculationTest extends AbstractContainerExtends {
 
     public void initSegment(SegmentInfo info) throws SQLException {
         segmentStorage.build(info);
+    }
+
+    /**
+     * 静态对象 lookup 动态对象的创建更新.
+     */
+    @Test
+    public void testOriginalLookupDynamic() throws Exception {
+        IEntity targetEntity = entityHelper.buildOdLookupTargetEntity();
+        OqsResult<IEntity> results = entityManagementService.build(targetEntity);
+        Assertions.assertEquals(ResultStatus.SUCCESS, results.getResultStatus(), results.getMessage());
+
+        IEntity lookupOrigianlEntity = entityHelper.buildOdLookupEntity(targetEntity);
+        results = entityManagementService.build(lookupOrigianlEntity);
+        Assertions.assertEquals(ResultStatus.SUCCESS, results.getResultStatus(), results.getMessage());
+
+        lookupOrigianlEntity = entitySearchService.selectOne(
+            lookupOrigianlEntity.id(), lookupOrigianlEntity.entityClassRef()).getValue().get();
+
+        Assertions.assertEquals(
+            targetEntity.entityValue().getValue("od-lookup-target-long").get().valueToLong(),
+            lookupOrigianlEntity.entityValue().getValue("od-lookup-original-long").get().valueToLong()
+        );
+
+        targetEntity.entityValue().addValue(
+            new LongValue(
+                MockEntityClassDefine.OD_LOOKUP_TARGET_ENTITY_CLASS.field("od-lookup-target-long").get(),
+                faker.number().numberBetween(100, 10000)
+            )
+        );
+        // 应该在事务内完成的.更新后lookup仍然保持一致.
+        Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.replace(targetEntity).getResultStatus());
+        lookupOrigianlEntity = entitySearchService.selectOne(
+            lookupOrigianlEntity.id(), lookupOrigianlEntity.entityClassRef()).getValue().get();
+        Assertions.assertEquals(
+            targetEntity.entityValue().getValue("od-lookup-target-long").get().valueToLong(),
+            lookupOrigianlEntity.entityValue().getValue("od-lookup-original-long").get().valueToLong()
+        );
     }
 
     /**

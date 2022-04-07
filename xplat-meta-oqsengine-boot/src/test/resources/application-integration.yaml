@@ -12,9 +12,10 @@ server:
 logging:
   level:
     root: info
-    io:
-      lettuce: info
-    com.xforceplus.ultraman.oqsengine.changelog: debug
+    com:
+      xforceplus:
+        ultraman:
+          oqsengine: debug
 
 transaction:
   timeoutMs: 300000
