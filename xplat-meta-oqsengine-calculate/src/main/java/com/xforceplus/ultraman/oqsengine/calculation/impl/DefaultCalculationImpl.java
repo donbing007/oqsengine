@@ -221,6 +221,15 @@ public class DefaultCalculationImpl implements Calculation {
 
                 IEntity[] affectedEntities = loadEntities(context, affectedInfos);
 
+                if (logger.isDebugEnabled()) {
+                    if (affectedEntities.length == 0) {
+                        logger.debug("The number of instances affected by the field {} of entityclass {} is 0.",
+                            participant.getField().fieldName(),
+                            participant.getEntityClass().code()
+                            );
+                    }
+                }
+
                 // 重新计算影响的entity.
                 for (IEntity affectedEntitiy : affectedEntities) {
                     context.focusEntity(affectedEntitiy, participant.getEntityClass());
