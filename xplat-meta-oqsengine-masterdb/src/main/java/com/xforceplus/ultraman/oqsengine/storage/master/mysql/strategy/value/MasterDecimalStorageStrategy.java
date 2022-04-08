@@ -8,6 +8,7 @@ import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StringStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
+import com.xforceplus.ultraman.oqsengine.storage.value.strategy.common.helper.AttachmentHelper;
 import java.math.BigDecimal;
 
 /**
@@ -39,11 +40,16 @@ public class MasterDecimalStorageStrategy implements StorageStrategy {
         String decValue = value.valueToString();
 
         // Ensure correct formatting.
+        StringStorageValue storageValue;
         if (decValue.indexOf('.') < 0) {
-            return new StringStorageValue(Long.toString(value.getField().id()), decValue + ".0", true);
+            storageValue = new StringStorageValue(Long.toString(value.getField().id()), decValue + ".0", true);
         } else {
-            return new StringStorageValue(Long.toString(value.getField().id()), decValue, true);
+            storageValue = new StringStorageValue(Long.toString(value.getField().id()), decValue, true);
         }
+
+        AttachmentHelper.setStorageValueAttachemnt(value, storageValue);
+
+        return storageValue;
     }
 
     @Override

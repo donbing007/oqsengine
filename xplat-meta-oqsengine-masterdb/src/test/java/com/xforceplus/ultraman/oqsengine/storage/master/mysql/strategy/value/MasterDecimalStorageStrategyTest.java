@@ -28,14 +28,15 @@ public class MasterDecimalStorageStrategyTest {
         Assertions.assertFalse(storageStrategy.isMultipleStorageValue());
 
         IEntityField field = new EntityField(1L, "test", FieldType.DECIMAL);
-        IValue logicValue = new DecimalValue(field, new BigDecimal("123.23"));
+        IValue logicValue = new DecimalValue(field, new BigDecimal("123.23"), "attachment");
         StorageValue storageValue = storageStrategy.toStorageValue(logicValue);
         Assertions.assertEquals(StringStorageValue.class, storageValue.getClass());
         Assertions.assertNull(storageValue.next());
         Assertions.assertEquals("123.23", storageValue.value().toString());
         Assertions.assertEquals("1S", storageValue.storageName());
+        Assertions.assertEquals(logicValue.getAttachment().get(), storageValue.getAttachment().value());
 
-        IValue newLogicValue = storageStrategy.toLogicValue(field, storageValue);
+        IValue newLogicValue = storageStrategy.toLogicValue(field, storageValue, "attachment");
         Assertions.assertEquals(logicValue, newLogicValue);
     }
 } 

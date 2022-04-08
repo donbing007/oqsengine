@@ -8,6 +8,7 @@ import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StringStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
+import com.xforceplus.ultraman.oqsengine.storage.value.strategy.common.helper.AttachmentHelper;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -57,7 +58,12 @@ public class MasterStringsStorageStrategy implements StorageStrategy {
         for (String v : stringsValue.getValue()) {
             buff.append(START).append(v).append(END);
         }
-        return new StringStorageValue(Long.toString(value.getField().id()), buff.toString(), true);
+        StringStorageValue storageValue = new StringStorageValue(
+            value.getField().idString(), buff.toString(), true);
+
+        AttachmentHelper.setStorageValueAttachemnt(value, storageValue);
+
+        return storageValue;
     }
 
     @Override

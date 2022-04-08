@@ -8,7 +8,7 @@ import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StringStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
-import java.util.Optional;
+import com.xforceplus.ultraman.oqsengine.storage.value.strategy.common.helper.AttachmentHelper;
 
 /**
  * 逻辑类型为字符串的处理策略.
@@ -40,12 +40,7 @@ public class StringStorageStrategy implements StorageStrategy {
 
         storageValue.notLocationAppend();
 
-        Optional<String> attachment = value.getAttachment();
-        if (attachment.isPresent()) {
-            StringStorageValue attachemntStorageValue =
-                new StringStorageValue(Long.toString(value.getField().id()), attachment.get(), true);
-            storageValue.setAttachment(attachemntStorageValue);
-        }
+        AttachmentHelper.setStorageValueAttachemnt(value, storageValue);
 
         return storageValue;
     }

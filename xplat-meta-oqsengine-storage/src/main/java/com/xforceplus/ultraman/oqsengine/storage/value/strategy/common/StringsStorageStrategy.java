@@ -8,9 +8,9 @@ import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StringStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
+import com.xforceplus.ultraman.oqsengine.storage.value.strategy.common.helper.AttachmentHelper;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * 多字符串转换策略.
@@ -65,12 +65,7 @@ public class StringsStorageStrategy implements StorageStrategy {
             }
         }
 
-        Optional<String> attachment = value.getAttachment();
-        if (attachment.isPresent()) {
-            StringStorageValue attachemntStorageValue =
-                new StringStorageValue(Long.toString(value.getField().id()), attachment.get(), true);
-            head.setAttachment(attachemntStorageValue);
-        }
+        AttachmentHelper.setStorageValueAttachemnt(value, head);
 
         return head;
     }
