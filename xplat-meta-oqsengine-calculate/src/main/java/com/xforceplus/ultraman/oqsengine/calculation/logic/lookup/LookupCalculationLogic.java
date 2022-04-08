@@ -79,7 +79,8 @@ public class LookupCalculationLogic implements CalculationLogic {
 
         long targetEntityClassId = ((Lookup) focusField.config().getCalculation()).getClassId();
         MetaManager metaManager = context.getResourceWithEx(() -> context.getMetaManager());
-        Optional<IEntityClass> targetEntityClassOp = metaManager.load(targetEntityClassId, OqsProfile.UN_DEFINE_PROFILE);
+        Optional<IEntityClass> targetEntityClassOp =
+            metaManager.load(targetEntityClassId, OqsProfile.UN_DEFINE_PROFILE);
         if (!targetEntityClassOp.isPresent()) {
             throw new CalculationException(
                 String.format("The expected target object meta information was not found.[%s]", targetEntityClassId));
@@ -283,7 +284,8 @@ public class LookupCalculationLogic implements CalculationLogic {
     /**
      * 实际进行lookup.
      */
-    private Optional<IValue> doLookup(CalculationContext context, LookupValue lookupValue, IEntityClass targetEntityClass) {
+    private Optional<IValue> doLookup(CalculationContext context, LookupValue lookupValue,
+                                      IEntityClass targetEntityClass) {
         Optional<IEntity> targetEntityOp = findTargetEntity(context, lookupValue.valueToLong(), targetEntityClass);
         if (!targetEntityOp.isPresent()) {
             logger.warn("Unable to find the target of the lookup ({}).", lookupValue.valueToLong());
@@ -320,7 +322,8 @@ public class LookupCalculationLogic implements CalculationLogic {
         }
     }
 
-    private Optional<IEntity> findTargetEntity(CalculationContext context, long targetEntityId, IEntityClass targetEntityClass) {
+    private Optional<IEntity> findTargetEntity(CalculationContext context, long targetEntityId,
+                                               IEntityClass targetEntityClass) {
         Optional<IEntity> targetEntityOp = context.getEntityToCache(targetEntityId);
         if (!targetEntityOp.isPresent()) {
             MasterStorage masterStorage = context.getResourceWithEx(() -> context.getMasterStorage());

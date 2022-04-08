@@ -226,7 +226,7 @@ public class DefaultCalculationImpl implements Calculation {
                         logger.debug("The number of instances affected by the field {} of entityclass {} is 0.",
                             participant.getField().fieldName(),
                             participant.getEntityClass().code()
-                            );
+                        );
                     }
                 }
 
@@ -328,7 +328,6 @@ public class DefaultCalculationImpl implements Calculation {
         if (logger.isDebugEnabled()) {
             logger.debug("Load instance. Identity list [{}]", ids);
         }
-
 
 
         // 过滤掉缓存中已经存在的.
