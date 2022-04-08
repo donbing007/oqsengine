@@ -66,6 +66,7 @@ public class EntityFieldName {
     public String toString() {
         final StringBuilder sb = new StringBuilder("EntityFieldName{");
         sb.append("dynamicName=").append(dynamicName());
+        sb.append(", ");
         sb.append("originalName=").append(originalName().orElse(""));
         sb.append('}');
         return sb.toString();

@@ -166,6 +166,11 @@ public class LookupCalculationLogic implements CalculationLogic {
 
             return Collections.emptyList();
         } else {
+            /*
+            注意: 这里直接使用了 context.getSourceEntity() 作为了目标源.
+            由于lookup类型不允许级连,所以影响树会有二层,第一层为发起操作的对象实例第二层为指向这个对象实例的参与者.
+            这些参与者限制不会再有参与者指向他们.
+             */
 
             // 判断是否为强关系,只有强关系才会在当前事务进行部份更新.
             boolean strong = (boolean) attachmentOp.get();
@@ -176,13 +181,13 @@ public class LookupCalculationLogic implements CalculationLogic {
                 交由异步队列异步处理.
                  */
                 LookupMaintainingTask lookupMaintainingTask = LookupMaintainingTask.Builder.anLookupMaintainingTask()
-                    .withTargetEntityId(context.getFocusEntity().id())
                     .withTargetClassRef(context.getFocusEntity().entityClassRef())
                     .withTargetFieldId(((Lookup) participant.getField().config().getCalculation()).getFieldId())
                     .withLookupClassRef(participant.getEntityClass().ref())
                     .withLookupFieldId(participant.getField().id())
                     .withLastStartLookupEntityId(0)
                     .withMaxSize(TASK_LIMIT_NUMBER)
+                    .withTargetEntityId(context.getSourceEntity().id())
                     .build();
 
 
@@ -207,7 +212,7 @@ public class LookupCalculationLogic implements CalculationLogic {
                 refIter.setCombinedSelectStorage(context.getResourceWithEx(() -> context.getConditionsSelectStorage()));
                 refIter.setEntityClass(participant.getEntityClass());
                 refIter.setField(participant.getField());
-                refIter.setTargetEntityId(context.getFocusEntity().id());
+                refIter.setTargetEntityId(context.getSourceEntity().id());
                 refIter.setStartId(0);
 
                 List<EntityRef> refs = new ArrayList<>();
