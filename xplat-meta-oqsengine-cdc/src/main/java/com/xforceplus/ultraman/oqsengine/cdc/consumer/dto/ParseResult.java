@@ -17,9 +17,14 @@ import java.util.Set;
 public class ParseResult {
 
     /**
+     * 起始ID.
+     */
+    private long startId;
+
+    /**
      * 计数器.
      */
-    int pos;
+    private int pos;
 
     /**
      * 需要最终操作manticore的对象结果集.
@@ -52,16 +57,18 @@ public class ParseResult {
 
         //  pos重置为0
         pos = CDCConstant.START_POS;
+        startId = CDCConstant.NOT_INIT_START_ID;
     }
 
     /**
      * 构造一个解析结果.
      */
     public ParseResult() {
+        this.startId = CDCConstant.NOT_INIT_START_ID;
         this.pos = CDCConstant.START_POS;
         this.finishEntries = new LinkedHashMap<>();
         this.errors = new LinkedHashMap<>();
-        this.commitIds = new LinkedHashSet<>();
+        this.commitIds = new HashSet<>();
     }
 
     public Map<Long, OqsEngineEntity> getFinishEntries() {
@@ -82,6 +89,14 @@ public class ParseResult {
 
     public void finishOne() {
         pos++;
+    }
+
+    public long getStartId() {
+        return startId;
+    }
+
+    public void setStartId(long startId) {
+        this.startId = startId;
     }
 
     /**

@@ -8,5 +8,6 @@ package com.xforceplus.ultraman.oqsengine.cdc.consumer.dto;
 public class CDCConstant {
     public static final int START_POS = 0;
 
+    public static final long NOT_INIT_START_ID = -1;
     public static final int BATCH_WRITE_ERROR_POS = -1;
 }

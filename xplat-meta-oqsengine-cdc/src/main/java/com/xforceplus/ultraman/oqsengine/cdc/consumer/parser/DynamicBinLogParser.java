@@ -24,10 +24,12 @@ import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColum
 import static com.xforceplus.ultraman.oqsengine.storage.master.utils.OriginalEntityUtils.attributesToMap;
 
 import com.alibaba.otter.canal.protocol.CanalEntry;
+import com.xforceplus.ultraman.oqsengine.cdc.consumer.dto.CDCConstant;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.dto.ParseResult;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.CommonUtils;
 import com.xforceplus.ultraman.oqsengine.cdc.context.ParserContext;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.utils.DevOpsUtils;
+import com.xforceplus.ultraman.oqsengine.metadata.constant.Constant;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns;
 import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.DevOpsCdcMetrics;
@@ -57,11 +59,15 @@ public class DynamicBinLogParser implements BinLogParser {
         long id = UN_KNOW_ID;
         long commitId = UN_KNOW_ID;
         try {
+
             //  获取CommitID
             commitId = getLongFromColumn(columns, COMMITID);
 
             //  获取ID
             id = getLongFromColumn(columns, ID);
+            if (parseResult.getStartId() == CDCConstant.NOT_INIT_START_ID) {
+                parseResult.setStartId(id);
+            }
 
             IEntityClass entityClass = getEntityClass(id, columns, parserContext);
 

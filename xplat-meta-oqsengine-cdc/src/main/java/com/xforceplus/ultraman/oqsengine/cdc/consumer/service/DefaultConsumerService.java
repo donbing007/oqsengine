@@ -23,7 +23,9 @@ import com.xforceplus.ultraman.oqsengine.storage.pojo.OqsEngineEntity;
 import io.micrometer.core.annotation.Timed;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Resource;
 import org.slf4j.Logger;
@@ -155,16 +157,19 @@ public class DefaultConsumerService implements ConsumerService {
                 //  通过执行器执行Sphinx同步
                 sphinxQLIndexStorage.saveOrDeleteOriginalEntities(parseResult.getFinishEntries().values());
             } catch (Exception e) {
-                List<Long> ids = parseResult.getFinishEntries().values().stream()
-                            .map(OqsEngineEntity::getId).collect(Collectors.toList());
-
                 String message = String.format(
-                    "write sphinx-batch error, commitIds : %s, ids : %s, message : %s", parseResult.getCommitIds(), ids, e.getMessage());
+                    "write sphinx-batch error, commitIds : %s, startId : %s, message : %s",
+                            parseResult.getCommitIds(), parseResult.getStartId(), e.getMessage());
+
+                Set<Long> errorCommitIds = new HashSet<>(parseResult.getCommitIds());
+                if (hasUnCommitIds(parserContext)) {
+                    errorCommitIds.addAll(parserContext.getCdcMetrics().getCdcUnCommitMetrics().getUnCommitIds());
+                }
 
                 //  加入错误列表.
-                parseResult.addError(ids.get(0), parseResult.getFinishEntries().get(ids.get(0)).getCommitid(),
+                parseResult.addError(parseResult.getStartId(), parseResult.getFinishEntries().get(parseResult.getStartId()).getCommitid(),
                     CDCConstant.BATCH_WRITE_ERROR_POS,
-                    parseResult.getCommitIds().toString(),
+                    errorCommitIds.toString(),
                     String.format("batch : %d consumer columns failed, %s", parserContext.getCdcMetrics().getBatchId(), message));
 
                 throw new SQLException(message);
@@ -201,6 +206,11 @@ public class DefaultConsumerService implements ConsumerService {
         }
     }
 
+
+    private boolean hasUnCommitIds(ParserContext parserContext) {
+        return parserContext.getCdcMetrics().getCdcUnCommitMetrics().getUnCommitIds().size() > EXPECTED_COMMIT_ID_COUNT;
+    }
+
     /**
      * TE时需要处理的逻辑.
      * 1.转移uncommitIds到ackList.
@@ -209,7 +219,7 @@ public class DefaultConsumerService implements ConsumerService {
      * @param parserContext 上下文.
      */
     private void transactionEnd(ParserContext parserContext) {
-        if (parserContext.getCdcMetrics().getCdcUnCommitMetrics().getUnCommitIds().size() > EXPECTED_COMMIT_ID_COUNT) {
+        if (hasUnCommitIds(parserContext)) {
             if (logger.isWarnEnabled()) {
                 logger.warn(
                     "[cdc-consumer] transaction end, batch : {}, one transaction has more than one commitId, ids : {}",
