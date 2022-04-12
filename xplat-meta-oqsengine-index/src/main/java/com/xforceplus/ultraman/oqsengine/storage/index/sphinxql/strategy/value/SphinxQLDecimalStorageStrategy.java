@@ -135,7 +135,7 @@ public class SphinxQLDecimalStorageStrategy implements StorageStrategy {
          * 030450303400000
          */
         String secondStr;
-        if (numberArr.length > 2) {
+        if (numberArr.length == 2) {
             secondStr = numberArr[1];
         } else {
 
