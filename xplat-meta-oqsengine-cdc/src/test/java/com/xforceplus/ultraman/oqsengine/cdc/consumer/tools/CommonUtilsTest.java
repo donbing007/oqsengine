@@ -11,6 +11,10 @@ import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.master.mock.MasterDBInitialization;
 import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -70,6 +74,15 @@ public class CommonUtilsTest extends AbstractCdcHelper {
         IEntityClass staticEntityClass =
             CommonUtils.getEntityClass(ENTITY_CLASS_STATIC.ref(), parserContext);
         check(ENTITY_CLASS_STATIC, staticEntityClass);
+    }
+
+    @Test
+    public void toErrorCommitIdStrTest() {
+        Set<Long> commitIds = new LinkedHashSet<>(Arrays.asList(1L, 3L, 5L));
+        Set<Long> unCommitIds = new LinkedHashSet<>(Arrays.asList(2L, 4L, 6L));
+
+        String result = CommonUtils.toErrorCommitIdStr(commitIds, unCommitIds);
+        Assertions.assertEquals("[1, 3, 5][2, 4, 6]", result);
     }
 
     private void check(IEntityClass expected, IEntityClass actual) {

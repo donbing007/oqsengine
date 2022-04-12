@@ -113,5 +113,5 @@ public class CdcErrorBuildHelper {
 
 
     public static final CdcErrorTask EXPECTED_CDC_ERROR_JSON_TASK = CdcErrorTask.buildErrorTask(66, "66", 6, 6, 6,
-        6, 6, 6, FixedStatus.NOT_FIXED.getStatus(),  String.format("{\"error\": \"%s\"}", "66"), "66");
+        6, 6, 6, FixedStatus.NOT_FIXED.getStatus(),  String.format("{\"commitIds\": \"%s\"}", "[1, 3, 5]|[2, 4, 6]"), "66");
 }

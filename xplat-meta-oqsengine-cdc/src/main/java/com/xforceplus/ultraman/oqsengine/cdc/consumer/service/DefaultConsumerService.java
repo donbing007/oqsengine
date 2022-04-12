@@ -11,6 +11,7 @@ import com.xforceplus.ultraman.oqsengine.cdc.consumer.dto.CDCConstant;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.dto.ParseResult;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.error.ErrorRecorder;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.factory.BinLogParserFactory;
+import com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.CommonUtils;
 import com.xforceplus.ultraman.oqsengine.cdc.context.ParserContext;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsHandler;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
@@ -19,14 +20,10 @@ import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetricsRecorder;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCUnCommitMetrics;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
-import com.xforceplus.ultraman.oqsengine.storage.pojo.OqsEngineEntity;
 import io.micrometer.core.annotation.Timed;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 import javax.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -161,15 +158,10 @@ public class DefaultConsumerService implements ConsumerService {
                     "write sphinx-batch error, commitIds : %s, startId : %s, message : %s",
                             parseResult.getCommitIds(), parseResult.getStartId(), e.getMessage());
 
-                Set<Long> errorCommitIds = new HashSet<>(parseResult.getCommitIds());
-                if (hasUnCommitIds(parserContext)) {
-                    errorCommitIds.addAll(parserContext.getCdcMetrics().getCdcUnCommitMetrics().getUnCommitIds());
-                }
-
                 //  加入错误列表.
                 parseResult.addError(parseResult.getStartId(), parseResult.getFinishEntries().get(parseResult.getStartId()).getCommitid(),
                     CDCConstant.BATCH_WRITE_ERROR_POS,
-                    errorCommitIds.toString(),
+                    CommonUtils.toErrorCommitIdStr(parseResult.getCommitIds(), parserContext.getCdcMetrics().getCdcUnCommitMetrics().getUnCommitIds()),
                     String.format("batch : %d consumer columns failed, %s", parserContext.getCdcMetrics().getBatchId(), message));
 
                 throw new SQLException(message);

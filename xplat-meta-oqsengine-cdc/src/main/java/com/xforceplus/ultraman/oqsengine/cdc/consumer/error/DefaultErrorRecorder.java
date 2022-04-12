@@ -46,16 +46,9 @@ public class DefaultErrorRecorder implements ErrorRecorder {
 
             //  将已存在的去重
             if (!errorTasks.isEmpty()) {
-                //  List<String> es = new ArrayList<>();
                 for (CdcErrorTask cdcErrorTask : errorTasks) {
                     ParseResult.Error e = errors.remove(cdcErrorTask.getUniKey());
-                    //  if (null != e) {
-                    //  es.add(String.format("%s-%s", e.getId(), e.getCommitId()));
-                    //  }
                 }
-                // if (!es.isEmpty()) {
-                // logger.error("record duplicate errors, batchId : {}, es : {}", batchId, es.toString());
-                // }
             }
 
             //  新建错误任务
@@ -66,14 +59,11 @@ public class DefaultErrorRecorder implements ErrorRecorder {
                             .buildErrorTask(seqNoGenerator.next(), key, batchId, value.getId(),
                                 UN_KNOW_ID, UN_KNOW_VERSION, UN_KNOW_OP, value.getCommitId(),
                                 DATA_FORMAT_ERROR.getType(),
-                                String.format("{ \"error\" : \"%s\" }", value.getOperationObjectString()),
+                                String.format("{ \"commitIds\" : \"%s\" }", value.getOperationObjectString()),
                                 (null == value.getMessage()) ? "unKnow error." :
                                     ((value.getMessage().length() <= MAX_MESSAGE_LENGTH)
                                         ? value.getMessage() : value.getMessage().substring(0, MAX_MESSAGE_LENGTH)))
                     );
-
-                    //  logger.error("record error, batchId : {}, id : {}, commitId : {}, message : {}",
-                    //  batchId, value.getId(), value.getCommitId(), value.getMessage());
                 }
             );
 
