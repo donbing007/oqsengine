@@ -9,6 +9,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.devops.CdcErrorTask;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.AfterAll;
@@ -75,5 +76,20 @@ public class CdcErrorBatchQueryExecutorTest  extends AbstractCdcHelper {
 
         Assertions.assertNotNull(result);
         Assertions.assertEquals(expectedSql, result);
+    }
+
+    @Test
+    public void errorBatchQueryJsonTest() throws Exception {
+        List<CdcErrorTask> errorTasks = Collections.singletonList(CdcErrorBuildHelper.EXPECTED_CDC_ERROR_JSON_TASK);
+        CdcErrorStorage cdcErrorStorage = CdcInitialization.getInstance().getCdcErrorStorage();
+        Assertions.assertTrue(cdcErrorStorage.batchInsert(errorTasks));
+
+        List<String> keys = Collections.singletonList(CdcErrorBuildHelper.EXPECTED_CDC_ERROR_JSON_TASK.getUniKey());
+
+        Collection<CdcErrorTask> cdcErrorTasks = CdcErrorBatchQueryExecutor
+            .build(CdcInitialization.CDC_ERRORS, CdcInitialization.getInstance().getDevOpsDataSource(), 10_000L)
+            .execute(keys);
+
+        CdcErrorBuildHelper.checkBatches(errorTasks, cdcErrorTasks);
     }
 }

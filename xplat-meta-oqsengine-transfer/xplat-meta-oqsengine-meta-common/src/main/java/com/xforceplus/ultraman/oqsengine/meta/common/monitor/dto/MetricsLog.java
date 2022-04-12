@@ -16,12 +16,18 @@ public class MetricsLog {
     private String code;
     private Message message;
 
+    /**
+     * construct.
+     */
     public MetricsLog(String appId, String code, Message message) {
         this.appId = appId;
         this.code = code;
         this.message = message;
     }
 
+    /**
+     * construct.
+     */
     public MetricsLog(String appId, String clientId, String code, Message message) {
         this.appId = appId;
         this.clientId = clientId;
@@ -59,7 +65,7 @@ public class MetricsLog {
 
 
     /**
-     * 内部记录错误发生的时间、错误信息
+     * 内部记录错误发生的时间、错误信息.
      */
     public static class Message {
         private long timeStamp;
@@ -79,11 +85,17 @@ public class MetricsLog {
         }
     }
 
+    /**
+     * showType.
+     */
     public static enum ShowType {
         ALL,
         INFO,
         ERROR;
 
+        /**
+         * getInstance.
+         */
         public static ShowType getInstance(String type) {
             if (null != type) {
                 for (ShowType showType : ShowType.values()) {
@@ -97,6 +109,9 @@ public class MetricsLog {
         }
     }
 
+    /**
+     * convert to MetricsLog list.
+     */
     public static List<MetricsLog> toMetricsLogs(Map<String, Map<String, Message>> raw) {
         List<MetricsLog> metricsLogs = new ArrayList<>();
         raw.forEach(
@@ -125,7 +140,9 @@ public class MetricsLog {
 
     public static final String LINK = "__";
 
-
+    /**
+     * lingKeys.
+     */
     public static String linkKey(String... keys) {
         if (null == keys || 0 == keys.length) {
             return "";

@@ -157,6 +157,9 @@ public class CdcInitialization implements BeanInitialization {
         ReflectionUtils.reflectionFieldValue(fields, "cdcMetricsCallback", cdcMetricsHandler, mockCallBackService);
     }
 
+    /**
+     * init.
+     */
     public void initConsumerService() throws Exception {
 
         consumerService = initConsumer();
@@ -195,13 +198,18 @@ public class CdcInitialization implements BeanInitialization {
         return devOpsDataSource;
     }
 
-
+    /**
+     * reset.
+     */
     public void resetConsumerService(ConsumerService consumerService) throws IllegalAccessException {
         this.consumerService = consumerService;
         Collection<Field> fields = ReflectionUtils.printAllMembers(batchProcessor);
         ReflectionUtils.reflectionFieldValue(fields, "consumerService", batchProcessor, this.consumerService);
     }
 
+    /**
+     * init.
+     */
     public ConsumerService initConsumer() throws Exception {
         ConsumerService consumerService = new DefaultConsumerService();
 

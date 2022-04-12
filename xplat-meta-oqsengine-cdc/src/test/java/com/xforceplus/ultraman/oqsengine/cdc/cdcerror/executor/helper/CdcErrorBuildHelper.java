@@ -110,4 +110,8 @@ public class CdcErrorBuildHelper {
             CdcErrorTask.buildErrorTask(5, "5", 5, 5, 5,
                 5, 5, 5, FixedStatus.NOT_FIXED.getStatus(), "5", "5")
         );
+
+
+    public static final CdcErrorTask EXPECTED_CDC_ERROR_JSON_TASK = CdcErrorTask.buildErrorTask(66, "66", 6, 6, 6,
+        6, 6, 6, FixedStatus.NOT_FIXED.getStatus(),  String.format("{\"error\": \"%s\"}", "66"), "66");
 }

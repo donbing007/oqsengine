@@ -169,7 +169,7 @@ public class ErrorConsumerService implements ConsumerService {
                     String.format("batch : %d, pos : %d, parse columns failed, message : %s",
                         parserContext.getCdcMetrics().getBatchId(), parseResult.getPos(), "mock test error"));
 
-                parseResult.finishOne(id);
+                parseResult.finishOne();
             }
         }
     }

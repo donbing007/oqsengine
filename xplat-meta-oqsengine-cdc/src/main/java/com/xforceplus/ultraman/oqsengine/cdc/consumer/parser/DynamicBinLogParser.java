@@ -90,7 +90,7 @@ public class DynamicBinLogParser implements BinLogParser {
         addToReadyChecks(commitId, id, parserContext, parseResult);
 
         //  自增游标
-        parseResult.finishOne(id);
+        parseResult.finishOne();
     }
 
     /**

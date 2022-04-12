@@ -7,6 +7,7 @@ import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.IN
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.otter.canal.protocol.CanalEntry;
+import com.xforceplus.ultraman.oqsengine.cdc.consumer.dto.CDCConstant;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.dto.ParseResult;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.error.ErrorRecorder;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.factory.BinLogParserFactory;
@@ -18,10 +19,12 @@ import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetricsRecorder;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCUnCommitMetrics;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.OqsEngineEntity;
 import io.micrometer.core.annotation.Timed;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -148,8 +151,24 @@ public class DefaultConsumerService implements ConsumerService {
 
         //  批次数据整理完毕，开始执行index写操作。
         if (!parseResult.getFinishEntries().isEmpty()) {
-            //  通过执行器执行Sphinx同步
-            sphinxQLIndexStorage.saveOrDeleteOriginalEntities(parseResult.getFinishEntries().values());
+            try {
+                //  通过执行器执行Sphinx同步
+                sphinxQLIndexStorage.saveOrDeleteOriginalEntities(parseResult.getFinishEntries().values());
+            } catch (Exception e) {
+                List<Long> ids = parseResult.getFinishEntries().values().stream()
+                            .map(OqsEngineEntity::getId).collect(Collectors.toList());
+
+                String message = String.format(
+                    "write sphinx-batch error, commitIds : %s, ids : %s, message : %s", parseResult.getCommitIds(), ids, e.getMessage());
+
+                //  加入错误列表.
+                parseResult.addError(ids.get(0), parseResult.getFinishEntries().get(ids.get(0)).getCommitid(),
+                    CDCConstant.BATCH_WRITE_ERROR_POS,
+                    parseResult.getCommitIds().toString(),
+                    String.format("batch : %d consumer columns failed, %s", parserContext.getCdcMetrics().getBatchId(), message));
+
+                throw new SQLException(message);
+            }
         }
 
         batchLogged(cdcMetrics);

@@ -21,7 +21,7 @@ public class ParseResultTest {
 
         OqsEngineEntity expectedOriginal = new OqsEngineEntity();
         old.getFinishEntries().put(expectedKey, expectedOriginal);
-        old.finishOne(expectedKey);
+        old.finishOne();
 
         old.clean();
 

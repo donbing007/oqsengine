@@ -4,6 +4,7 @@ import com.xforceplus.ultraman.oqsengine.storage.pojo.OqsEngineEntity;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -58,9 +59,9 @@ public class ParseResult {
      */
     public ParseResult() {
         this.pos = CDCConstant.START_POS;
-        this.finishEntries = new HashMap<>();
+        this.finishEntries = new LinkedHashMap<>();
         this.errors = new LinkedHashMap<>();
-        this.commitIds = new HashSet<>();
+        this.commitIds = new LinkedHashSet<>();
     }
 
     public Map<Long, OqsEngineEntity> getFinishEntries() {
@@ -79,7 +80,7 @@ public class ParseResult {
         return pos;
     }
 
-    public void finishOne(long id) {
+    public void finishOne() {
         pos++;
     }
 
@@ -94,7 +95,14 @@ public class ParseResult {
      * generate and addError.
      */
     public void addError(long id, long commitId, String message) {
-        addError(new Error(id, commitId, pos, message));
+        addError(new Error(id, commitId, pos, "", message));
+    }
+
+    /**
+     * generate and addError.
+     */
+    public void addError(long id, long commitId, int pos, String operationObjectString, String message) {
+        addError(new Error(id, commitId, pos, operationObjectString, message));
     }
 
     /**
@@ -105,6 +113,7 @@ public class ParseResult {
         private long commitId;
         private int pos;
         private String message;
+        private String operationObjectString;
 
         /**
          * 构造一个错误.
@@ -114,10 +123,11 @@ public class ParseResult {
          * @param pos      当前读取位置号.
          * @param message  消息.
          */
-        public Error(long id, long commitId, int pos, String message) {
+        public Error(long id, long commitId, int pos, String operationObjectString, String message) {
             this.id = id;
             this.commitId = commitId;
             this.pos = pos;
+            this.operationObjectString = operationObjectString;
             this.message = message;
         }
 
@@ -137,6 +147,9 @@ public class ParseResult {
             return commitId + "_" + id + "_" + pos;
         }
 
+        public String getOperationObjectString() {
+            return operationObjectString;
+        }
 
         @Override
         public boolean equals(Object o) {
