@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.SphinxQLManticoreIndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.value.AnyStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.AttachmentStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.LongStorageValue;
@@ -13,6 +14,8 @@ import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collection;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 索引的高精度浮点转换策略.
@@ -27,6 +30,8 @@ import java.util.Collection;
  * @since 1.8
  */
 public class SphinxQLDecimalStorageStrategy implements StorageStrategy {
+
+    final Logger logger = LoggerFactory.getLogger(SphinxQLManticoreIndexStorage.class);
 
     private static final String DIVIDE = ".";
 
@@ -129,7 +134,17 @@ public class SphinxQLDecimalStorageStrategy implements StorageStrategy {
          * 0303503943
          * 030450303400000
          */
-        String secondStr = numberArr[1];
+        String secondStr;
+        if (numberArr.length > 2) {
+            secondStr = numberArr[1];
+        } else {
+
+            if (logger.isWarnEnabled()) {
+                logger.warn("The decimal is assumed to be 0.[{}]", value);
+            }
+
+            secondStr = "0";
+        }
 
         int i = bitLength(secondStr);
 
