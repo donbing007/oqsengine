@@ -117,6 +117,13 @@ public class SphinxQLDecimalStorageStrategy implements StorageStrategy {
     }
 
     private StorageValue doBuildStorageValue(String logicName, String value) {
+        if (value.isEmpty() || value == null) {
+            StorageValue storageValue = new LongStorageValue(logicName, 0L, true);
+            storageValue.locate(0);
+            storageValue.stick(new LongStorageValue(logicName, 0L, true));
+            return storageValue;
+        }
+
         String number = value;
 
         String[] numberArr = number.split("\\" + DIVIDE);
