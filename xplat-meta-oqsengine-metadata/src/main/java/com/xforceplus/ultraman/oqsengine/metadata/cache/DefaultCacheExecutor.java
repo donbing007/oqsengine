@@ -1090,17 +1090,35 @@ public class DefaultCacheExecutor implements CacheExecutor {
         Map<String, String> appEnvMaps = syncCommands.hgetall(appEntityCollectionsKey);
         appEnvMaps.forEach(
             (key, value) -> {
-                int version = version(key);
+                int version = splitAppVersion(key);
                 if (version > NOT_EXIST_VERSION) {
-                    Collection<Long> entityClassIds = appEntityIdList(key, version);
-                    entityClassIds.forEach(
-                        id -> {
-                            versions.put(id, version);
-                        }
-                    );
+                    try {
+                        List<Long> ids = OBJECT_MAPPER.readValue(value,
+                            OBJECT_MAPPER.getTypeFactory().constructParametricType(List.class, Long.class));
+
+                        ids.forEach(
+                            id -> {
+                                versions.put(id, version);
+                            }
+                        );
+                    } catch (JsonProcessingException e) {
+                        logger.warn("cache version json error, message : {}", e.getMessage());
+                    }
                 }
             }
         );
+    }
+
+    private int splitAppVersion(String key) {
+        try {
+            String[] datas = key.split("\\.");
+            if (datas.length == 2) {
+                return Integer.parseInt(datas[1]);
+            }
+        } catch (Exception e) {
+            logger.warn("key {}, split appVersion failed, message : {}", key, e.getMessage());
+        }
+        return NOT_EXIST_VERSION;
     }
 
 }
