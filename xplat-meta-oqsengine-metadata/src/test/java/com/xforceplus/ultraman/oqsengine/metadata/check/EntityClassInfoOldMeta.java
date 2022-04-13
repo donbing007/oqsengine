@@ -96,7 +96,7 @@ public class EntityClassInfoOldMeta {
         return null;
     }
 
-    public <R extends AbstractCalculation> R toCalculation(AbstractCalculation calculation) {
+    private <R extends AbstractCalculation> R toCalculation(AbstractCalculation calculation) {
         switch (calculation.getCalculationType()) {
             case FORMULA: {
                 Formula f = (Formula) calculation;

@@ -116,8 +116,9 @@ public class EntityClassStorageBuilderUtils {
         //  id
         long id = entityClassInfo.getId();
         if (!CacheUtils.validBusinessId(id)) {
-            throw new MetaSyncClientException("id is invalid.", false);
+            throw new MetaSyncClientException("entityClass-id is invalid.", false);
         }
+
         storage.setId(id);
         //  code
         storage.setCode(entityClassInfo.getCode());
@@ -128,7 +129,7 @@ public class EntityClassStorageBuilderUtils {
         //  version
         int version = entityClassInfo.getVersion();
         if (version <= NOT_EXIST_VERSION) {
-            throw new MetaSyncClientException("version is invalid.", false);
+            throw new MetaSyncClientException("entityClass-version is invalid.", false);
         }
         storage.setVersion(version);
         //  father

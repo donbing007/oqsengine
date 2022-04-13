@@ -424,7 +424,7 @@ public class StorageMetaManagerTest extends AbstractMetaTestHelper {
             entityClassInfos.stream().collect(Collectors.toMap(EntityClassInfo::getId, f1 -> f1, (f1, f2) -> f1));
 
         //  check current appId version
-        Assertions.assertEquals(expectedVersion, MetaInitialization.getInstance().getCacheExecutor().version(entityClass.id()));
+        Assertions.assertEquals(expectedVersion, MetaInitialization.getInstance().getCacheExecutor().version(entityClass.id(), false));
 
         Map<Long, List<EntityFieldInfo>> expectedFields = new HashMap<>();
         for (EntityClassInfo e : entityClassInfos) {

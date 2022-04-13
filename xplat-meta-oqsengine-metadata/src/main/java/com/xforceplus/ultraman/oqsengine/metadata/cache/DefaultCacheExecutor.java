@@ -33,6 +33,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.xforceplus.ultraman.oqsengine.common.thread.PollingThreadExecutor;
 import com.xforceplus.ultraman.oqsengine.common.watch.RedisLuaScriptWatchDog;
 import com.xforceplus.ultraman.oqsengine.event.payload.meta.MetaChangePayLoad;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
@@ -57,6 +58,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
@@ -90,6 +92,10 @@ public class DefaultCacheExecutor implements CacheExecutor {
     private StatefulRedisConnection<String, String> syncConnect;
 
     private RedisCommands<String, String> syncCommands;
+
+    private int maxWait = 10;
+    private int versionCacheRefreshDuration = 10;
+    private PollingThreadExecutor<Void> lifeCycleThread;
 
     /*
      * prepare的超时时间
@@ -205,6 +211,11 @@ public class DefaultCacheExecutor implements CacheExecutor {
     private final Cache<String, List<String>> profileCache;
 
     /**
+     * version cache.
+     */
+    private Map<Long, Integer> versions;
+
+    /**
      * 默认实例化.
      */
     public DefaultCacheExecutor() {
@@ -296,6 +307,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
 
         entityClassStorageCache = initCache();
         profileCache = initCache();
+        versions = new ConcurrentHashMap<>();
     }
 
     public void setMaxCacheSize(int maxCacheSize) {
@@ -346,11 +358,21 @@ public class DefaultCacheExecutor implements CacheExecutor {
             entityClassStorageScriptSha = syncCommands.scriptLoad(ENTITY_CLASS_STORAGE_INFO);
             entityClassStorageListScriptSha = syncCommands.scriptLoad(ENTITY_CLASS_STORAGE_INFO_LIST);
         }
+
+        lifeCycleThread = new PollingThreadExecutor(
+            "metaVersionCached",
+            versionCacheRefreshDuration,
+            TimeUnit.SECONDS, maxWait,
+            (n) -> cachedVersion(),
+            null);
+
+        lifeCycleThread.start();
     }
 
     @PreDestroy
     public void destroy() {
         syncConnect.close();
+        lifeCycleThread.stop();
     }
 
     /**
@@ -412,7 +434,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
     @Override
     public Map<String, String> remoteRead(long entityClassId) throws JsonProcessingException {
         //  这里是一次IO操作REDIS获取当前的版本, 并组装结构
-        int version = version(entityClassId);
+        int version = version(entityClassId, false);
 
         return remoteRead(entityClassId, version);
     }
@@ -466,9 +488,17 @@ public class DefaultCacheExecutor implements CacheExecutor {
      * 通过entityClassId获取当前活动版本.
      */
     @Override
-    public int version(Long entityClassId) {
+    public int version(Long entityClassId, boolean withCache) {
+
         if (null == entityClassId || entityClassId <= 0) {
             return -1;
+        }
+
+        if (withCache) {
+            Integer v = versions.get(entityClassId);
+            if (null != v) {
+                return v;
+            }
         }
 
         String[] keys = {
@@ -485,9 +515,32 @@ public class DefaultCacheExecutor implements CacheExecutor {
     }
 
     @Override
-    public Map<Long, Integer> versions(List<Long> entityClassIds, boolean errorContinue) {
+    public Map<Long, Integer> versions(List<Long> entityClassIds, boolean withCache, boolean errorContinue) {
 
         Map<Long, Integer> vs = new HashMap<>();
+
+        List<Long> notFoundIds;
+        if (withCache) {
+            notFoundIds = new ArrayList<>();
+            //  从缓存读取.
+            entityClassIds.forEach(
+                id -> {
+                    Integer v = versions.get(id);
+                    if (null != v && v > NOT_EXIST_VERSION) {
+                        vs.put(id, v);
+                    } else {
+                        notFoundIds.add(id);
+                    }
+                }
+            );
+        } else {
+            notFoundIds = entityClassIds;
+        }
+
+        //  如果都读到则直接退出.
+        if (notFoundIds.isEmpty()) {
+            return vs;
+        }
 
         //  获取所有entity->app mapping
         Map<String, String> entityAppRelations = syncCommands.hgetall(appEntityMappingKey);
@@ -499,7 +552,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
         if (null != appVersionRelations && !appVersionRelations.isEmpty()
                 && null != entityAppRelations && !entityAppRelations.isEmpty()) {
 
-            for (Long entityClassId : entityClassIds) {
+            for (Long entityClassId : notFoundIds) {
                 String appId = entityAppRelations.get(String.valueOf(entityClassId));
 
                 if (null != appId) {
@@ -657,6 +710,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
     public void invalidateLocal() {
         entityClassStorageCache.invalidateAll();
         profileCache.invalidateAll();
+        versions.clear();
     }
 
     /**
@@ -855,6 +909,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
         try {
             entityClassStorageCache.invalidate(generateEntityCacheKey(entityId, version));
             profileCache.invalidate(generateEntityCacheKey(entityId, version));
+            versions.clear();
         } catch (Exception e) {
             logger.warn("delete local failed, entityId:[{}], version:[{}], message:[{}]", entityId, version,
                 e.getMessage());
@@ -1029,5 +1084,40 @@ public class DefaultCacheExecutor implements CacheExecutor {
 
     private String toCacheSetKey(int version, long id) {
         return entityStorageKeys + "." + version + "." + id;
+    }
+
+    private void cachedVersion() {
+        Map<String, String> appEnvMaps = syncCommands.hgetall(appEntityCollectionsKey);
+        appEnvMaps.forEach(
+            (key, value) -> {
+                int version = version(key);
+                if (version > NOT_EXIST_VERSION) {
+                    Collection<Long> entityClassIds = appEntityIdList(key, version);
+                    entityClassIds.forEach(
+                        id -> {
+                            versions.put(id, version);
+                        }
+                    );
+                }
+            }
+        );
+    }
+
+    private Map<String, Integer> doVersions(List<String> appIds) {
+        Map<String, Integer> ports = new HashMap<>();
+        if (null != appIds && !appIds.isEmpty()) {
+            Map<String, String> kvs = syncCommands.hgetall(appVersionKeys);
+            if (null != kvs) {
+                appIds.forEach(
+                    id -> {
+                        String value = kvs.remove(id);
+                        if (null != value) {
+                            ports.put(id, Integer.parseInt(value));
+                        }
+                    }
+                );
+            }
+        }
+        return ports;
     }
 }

@@ -92,9 +92,10 @@ public interface CacheExecutor {
      * 小于0表示没有相应的元信息.
      *
      * @param entityClassId 元信息版本号标识.
+     * @param withCache 是否从缓存读取version.
      * @return 版本号.
      */
-    int version(Long entityClassId);
+    int version(Long entityClassId, boolean withCache);
 
     /**
      * 批量获取entityClassId集合所对应的版本信息.
@@ -103,7 +104,7 @@ public interface CacheExecutor {
      * @param errorContinue 是否抛出异常，当为false时表示继续获取，忽略当前空值异常.
      * @return entityClassId -> version pair.
      */
-    Map<Long, Integer> versions(List<Long> entityClassIds, boolean errorContinue);
+    Map<Long, Integer> versions(List<Long> entityClassIds, boolean withCache, boolean errorContinue);
 
     /**
      * 重置appId对应的版本信息.
