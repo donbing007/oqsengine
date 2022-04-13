@@ -1103,21 +1103,4 @@ public class DefaultCacheExecutor implements CacheExecutor {
         );
     }
 
-    private Map<String, Integer> doVersions(List<String> appIds) {
-        Map<String, Integer> ports = new HashMap<>();
-        if (null != appIds && !appIds.isEmpty()) {
-            Map<String, String> kvs = syncCommands.hgetall(appVersionKeys);
-            if (null != kvs) {
-                appIds.forEach(
-                    id -> {
-                        String value = kvs.remove(id);
-                        if (null != value) {
-                            ports.put(id, Integer.parseInt(value));
-                        }
-                    }
-                );
-            }
-        }
-        return ports;
-    }
 }
