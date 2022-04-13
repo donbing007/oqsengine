@@ -1158,57 +1158,39 @@ public class DefaultCacheExecutor implements CacheExecutor {
         Map<String, String> appEnvMaps = syncCommands.hgetall(appEntityCollectionsKey);
         appEnvMaps.forEach(
             (key, value) -> {
-                int version = version(key);
+                int version = splitAppVersion(key);
                 if (version > NOT_EXIST_VERSION) {
-                    Collection<Long> entityClassIds = appEntityIdList(key, version);
-                    entityClassIds.forEach(
-                        id -> {
-                            cacheContext.versionCache().put(id, version);
-                        }
-                    );
+                    try {
+                        List<Long> ids = OBJECT_MAPPER.readValue(value,
+                            OBJECT_MAPPER.getTypeFactory().constructParametricType(List.class, Long.class));
+
+                        ids.forEach(
+                            id -> {
+                                cacheContext.versionCache().put(id, version);
+                            }
+                        );
+                    } catch (JsonProcessingException e) {
+                        logger.warn("cache version json error, message : {}", e.getMessage());
+                    }
                 }
             }
         );
     }
 
-    private Map<String, Integer> doVersions(List<String> appIds) {
-        Map<String, Integer> ports = new HashMap<>();
-        if (null != appIds && !appIds.isEmpty()) {
-            Map<String, String> kvs = syncCommands.hgetall(appVersionKeys);
-            if (null != kvs) {
-                appIds.forEach(
-                    id -> {
-                        String value = kvs.remove(id);
-                        if (null != value) {
-                            ports.put(id, Integer.parseInt(value));
-                        }
-                    }
-                );
+    private int splitAppVersion(String key) {
+        try {
+            String[] datas = key.split("\\.");
+            if (datas.length == 2) {
+                return Integer.parseInt(datas[1]);
             }
+        } catch (Exception e) {
+            logger.warn("key {}, split appVersion failed, message : {}", key, e.getMessage());
         }
-        return ports;
+        return NOT_EXIST_VERSION;
     }
-
-    private Map<String, String> codes(List<String> appIds) {
-        if (null != appIds && !appIds.isEmpty()) {
-            return syncCommands.hgetall(appCodeKeys);
-        }
-
-        return Collections.EMPTY_MAP;
-    }
-
-    private Map<String, String> envs(List<String> appIds) {
-        if (null != appIds && !appIds.isEmpty()) {
-            return syncCommands.hgetall(appEnvKeys);
-        }
-
-        return Collections.EMPTY_MAP;
-    }
-
 
     private String toNowDateString(LocalDate date) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
         return formatter.format(date);
     }
-
 }
