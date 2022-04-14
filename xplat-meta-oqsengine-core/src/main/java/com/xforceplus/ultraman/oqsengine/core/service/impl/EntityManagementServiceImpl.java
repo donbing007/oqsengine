@@ -374,7 +374,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
                     if (currentEntity.isDirty()) {
                         dirtyEntities.add(currentEntity);
-                        calculation.maintain(calculationContext);
                     }
 
                 }
@@ -390,6 +389,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     entityPackage.put(dirtyEntities.get(i), entityClasses[i], false);
                 }
 
+                // 主操作
                 masterStorage.build(entityPackage);
 
                 Map.Entry<IEntity, IEntityClass> entityEntry;
@@ -415,6 +415,11 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                             hint.setRollback(true);
                             return OqsResult.unAccumulate();
                         }
+
+                        // 所有维护都必须在主操作之后.
+                        calculationContext.focusSourceEntity(entityEntry.getKey());
+                        calculationContext.focusEntity(entityEntry.getKey(), entityEntry.getValue());
+                        calculation.maintain(calculationContext);
                     }
                 }
 
@@ -505,8 +510,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     return OqsResult.success();
                 }
 
-                calculation.maintain(calculationContext);
-
+                // 主操作
                 masterStorage.build(currentEntity, entityClass);
                 if (currentEntity.isDirty()) {
                     // 仍是"脏"的,表示没有持久化成功.
@@ -518,16 +522,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     return OqsResult.unCreated();
                 }
 
-                if (!calculationContext.persist()) {
-
-                    if (logger.isDebugEnabled()) {
-                        logger.debug("[build] Failed to persist the calculated field maintenance result.");
-                    }
-
-                    hint.setRollback(true);
-                    return OqsResult.conflict("Conflict maintenance.");
-                }
-
                 if (!tx.getAccumulator().accumulateBuild(currentEntity)) {
 
                     if (logger.isDebugEnabled()) {
@@ -536,6 +530,19 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
                     hint.setRollback(true);
                     return OqsResult.unAccumulate();
+                }
+
+                // 需要保证所有维护都在主操作结束后.
+                calculation.maintain(calculationContext);
+
+                if (!calculationContext.persist()) {
+
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("[build] Failed to persist the calculated field maintenance result.");
+                    }
+
+                    hint.setRollback(true);
+                    return OqsResult.conflict("Conflict maintenance.");
                 }
 
                 eventBus.notify(new ActualEvent(EventType.ENTITY_BUILD, new BuildPayload(tx.id(), currentEntity)));
@@ -710,9 +717,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                             setValueChange(calculationContext,
                                 Optional.ofNullable(replaceEntity), Optional.ofNullable(newEntity));
 
-
-                            calculation.maintain(calculationContext);
-
                             replacePayload.addChange(oldEntity,
                                 newEntity.entityValue().values().stream()
                                     .filter(v -> v.isDirty()).toArray(IValue[]::new));
@@ -735,6 +739,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         return OqsResult.success();
                     }
 
+                    // 主操作
                     masterStorage.replace(entityPackage);
                     for (int i = 0; i < entityPackage.size(); i++) {
                         newEntity = entityPackage.getNotSafe(i).getKey();
@@ -758,6 +763,11 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                             hint.setRollback(true);
                             return OqsResult.unAccumulate();
                         }
+
+                        // 维护必须在主操作之后.
+                        calculationContext.focusSourceEntity(newEntity);
+                        calculationContext.focusEntity(newEntity, entityPackage.getNotSafe(i).getValue());
+                        calculation.maintain(calculationContext);
                     }
 
                     if (!calculationContext.persist()) {
@@ -915,12 +925,11 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         return transformVerifierResultToOperationResult(verifyResult, newEntity);
                     }
 
-                    calculation.maintain(calculationContext);
-
                     replacePayload = new ReplacePayload(tx.id());
                     replacePayload.addChange(oldEntity,
                         newEntity.entityValue().values().stream().filter(v -> v.isDirty()).toArray(IValue[]::new));
 
+                    // 主操作
                     masterStorage.replace(newEntity, entityClass);
                     if (newEntity.isDirty()) {
 
@@ -932,17 +941,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         return OqsResult.unReplaced(newEntity.id());
                     }
 
-                    if (!calculationContext.persist()) {
-
-                        if (logger.isDebugEnabled()) {
-                            logger.debug("[replace] Failed to persist the calculated field maintenance result.");
-                        }
-
-                        hint.setRollback(true);
-                        return OqsResult.conflict();
-                    }
-
-
                     //  这里将版本+1，使得外部获取的版本为当前成功版本
                     newEntity.resetVersion(newEntity.version() + ONE_INCREMENT_POS);
 
@@ -953,6 +951,20 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         hint.setRollback(true);
                         return OqsResult.unAccumulate();
                     }
+
+                    // 所有维护动作都必须保证在主操作之后.
+                    calculation.maintain(calculationContext);
+
+                    if (!calculationContext.persist()) {
+
+                        if (logger.isDebugEnabled()) {
+                            logger.debug("[replace] Failed to persist the calculated field maintenance result.");
+                        }
+
+                        hint.setRollback(true);
+                        return OqsResult.conflict();
+                    }
+
                 } finally {
                     resourceLocker.unlock(lockResource);
                 }
@@ -1031,6 +1043,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         try {
             oqsResult = (OqsResult) transactionExecutor.execute((tx, resource, hint) -> {
 
+                calculationContext.focusTx(tx);
+
                 // 过滤已经被标示删除实例.
                 long[] targetIds = Arrays.stream(entities).filter(e -> !e.isDeleted()).mapToLong(e -> e.id()).toArray();
 
@@ -1064,11 +1078,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     for (int i = 0; i < targetEntities.size(); i++) {
                         targetEntity = targetEntities.get(i);
                         entityClass = entityClassTable.get(targetEntity.entityClassRef().getId());
-                        calculationContext.focusTx(tx);
-                        calculationContext.focusSourceEntity(targetEntity);
-                        calculationContext.focusEntity(targetEntity, entityClass);
                         setValueChange(calculationContext, Optional.empty(), Optional.of(targetEntities.get(i)));
-                        calculation.maintain(calculationContext);
                     }
 
                     EntityPackage entityPackage = new EntityPackage();
@@ -1077,6 +1087,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         entityClass = entityClassTable.get(targetEntity.entityClassRef().getId());
                         entityPackage.put(targetEntity, entityClass, false);
                     }
+                    // 主操作
                     masterStorage.delete(entityPackage);
 
                     for (int i = 0; i < entityPackage.size(); i++) {
@@ -1099,6 +1110,11 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                             hint.setRollback(true);
                             return OqsResult.unAccumulate();
                         }
+
+                        calculationContext.focusSourceEntity(targetEntity);
+                        calculationContext.focusEntity(targetEntity, entityPackage.getNotSafe(i).getValue());
+                        calculation.maintain(calculationContext);
+
                     }
 
                     if (!calculationContext.persist()) {
@@ -1204,8 +1220,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     calculationContext.focusSourceEntity(targetEntity);
                     calculationContext.focusEntity(targetEntity, entityClass);
                     setValueChange(calculationContext, Optional.empty(), Optional.of(targetEntity));
-                    calculation.maintain(calculationContext);
 
+                    // 主操作
                     masterStorage.delete(targetEntity, entityClass);
                     if (!targetEntity.isDeleted()) {
                         if (logger.isDebugEnabled()) {
@@ -1223,6 +1239,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         return OqsResult.unAccumulate();
                     }
 
+                    // 维护必须在主操作之后.
+                    calculation.maintain(calculationContext);
 
                     if (!calculationContext.persist()) {
                         if (logger.isDebugEnabled()) {

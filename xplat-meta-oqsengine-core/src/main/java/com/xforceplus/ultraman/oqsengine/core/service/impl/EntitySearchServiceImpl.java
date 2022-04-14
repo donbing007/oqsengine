@@ -468,7 +468,8 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                 // 排序中是否有id排序,如果有就不需要追加id.
                 boolean haveIdSort = false;
                 // 上层不排序,后续的直接视为不排序.
-                if (config.getSort().isPresent()) {
+                Optional<Sort> sortOp = config.getSort();
+                if (sortOp.isPresent() && !sortOp.get().isOutOfOrder()) {
                     if (config.getSort().get().getField().config().isIdentifie()) {
                         haveIdSort = true;
                     }
