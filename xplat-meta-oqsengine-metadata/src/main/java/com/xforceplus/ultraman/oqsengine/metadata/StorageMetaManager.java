@@ -156,6 +156,7 @@ public class StorageMetaManager implements MetaManager {
         }
 
         return entityClassLoadWithVersion(entityClassId, version, profile)._2();
+
     }
 
     @Override
@@ -622,9 +623,8 @@ public class StorageMetaManager implements MetaManager {
             //  缓存中没有,从redis再找一次版本号
             version = cacheExecutor.version(entityClassId, false);
             if (NOT_EXIST_VERSION == version) {
-                throw new RuntimeException(
-                    String.format("load [entityClass : %d, profile : %s] failed, version not exists.", entityClassId,
-                        profile));
+                logger.warn("load [entityClass : {}, profile : {}] failed, version not exists", entityClassId, profile);
+                return new Tuple2<>(NOT_EXIST_VERSION, Optional.empty());
             }
         }
 
