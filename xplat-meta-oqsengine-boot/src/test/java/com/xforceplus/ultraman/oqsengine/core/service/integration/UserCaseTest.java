@@ -172,15 +172,16 @@ public class UserCaseTest {
         Transaction tx = transactionManager.create(5000);
         transactionManager.bind(tx.id());
 
-        com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[] targetEntities = IntStream.range(0, 10).mapToObj(i ->
-            Entity.Builder.anEntity()
-                .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
-                .withValues(
-                    Arrays.asList(
-                        new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 990L)
-                    )
-                ).build()
-        ).toArray(com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[]::new);
+        com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[] targetEntities =
+            IntStream.range(0, 10).mapToObj(i ->
+                Entity.Builder.anEntity()
+                    .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
+                    .withValues(
+                        Arrays.asList(
+                            new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 990L)
+                        )
+                    ).build()
+            ).toArray(com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[]::new);
 
         entityManagementService.build(targetEntities);
 
@@ -831,7 +832,8 @@ public class UserCaseTest {
                     )
                 ).build();
             Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
-            Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.deleteForce(entity).getResultStatus());
+            Assertions.assertEquals(ResultStatus.SUCCESS,
+                entityManagementService.deleteForce(entity).getResultStatus());
 
             Page page = Page.emptyPage();
             entitySearchService.selectByConditions(
@@ -1261,5 +1263,87 @@ public class UserCaseTest {
         Assertions.assertEquals("上海云砺有限公司",
             entities.getValue().get().stream().findFirst().get().entityValue().getValue("l0-string").get()
                 .valueToString());
+    }
+
+    /**
+     * 测试事务内创建并查询.
+     */
+    @Test
+    public void testInTxQuery() throws Exception {
+
+        Transaction tx = transactionManager.create();
+
+        IEntity entity = Entity.Builder.anEntity()
+            .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
+            .withValues(Arrays.asList(
+                    new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 99L),
+                    new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "0")
+                )
+            ).build();
+
+        transactionManager.bind(tx.id());
+        Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
+
+        transactionManager.bind(tx.id());
+        OqsResult<Collection<IEntity>> results = entitySearchService.selectByConditions(
+            Conditions.buildEmtpyConditions()
+                .addAnd(
+                    new Condition(
+                        MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(),
+                        ConditionOperator.EQUALS,
+                        new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 99L))
+                ),
+            MockEntityClassDefine.L2_ENTITY_CLASS.ref(),
+            ServiceSelectConfig.Builder.anSearchConfig().build()
+        );
+        Collection<IEntity> entities = results.getValue().get();
+        Assertions.assertEquals(false, entities.isEmpty());
+        Assertions.assertEquals(entity.id(), entities.stream().findFirst().get().id());
+
+        transactionManager.bind(tx.id());
+        transactionManager.getCurrent().get().rollback();
+        transactionManager.finish();
+    }
+
+    /**
+     * 事务内删除,并查询.
+     */
+    @Test
+    public void testInTxDeleteQuery() throws Exception {
+        IEntity entity = Entity.Builder.anEntity()
+            .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
+            .withValues(Arrays.asList(
+                    new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 99L),
+                    new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "0")
+                )
+            ).build();
+        Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
+        entity = entitySearchService.selectOne(
+            entity.id(), MockEntityClassDefine.L2_ENTITY_CLASS.ref()).getValue().get();
+
+        Transaction tx = transactionManager.create();
+
+        transactionManager.bind(tx.id());
+        Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.delete(entity).getResultStatus());
+
+        transactionManager.bind(tx.id());
+        OqsResult<Collection<IEntity>> results = entitySearchService.selectByConditions(
+            Conditions.buildEmtpyConditions()
+                .addAnd(
+                    new Condition(
+                        MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(),
+                        ConditionOperator.EQUALS,
+                        new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 99L))
+                ),
+            MockEntityClassDefine.L2_ENTITY_CLASS.ref(),
+            ServiceSelectConfig.Builder.anSearchConfig().build()
+        );
+        Collection<IEntity> entities = results.getValue().get();
+        Assertions.assertTrue(entities.isEmpty());
+
+        transactionManager.bind(tx.id());
+        transactionManager.getCurrent().get().rollback();
+        transactionManager.finish();
+
     }
 }

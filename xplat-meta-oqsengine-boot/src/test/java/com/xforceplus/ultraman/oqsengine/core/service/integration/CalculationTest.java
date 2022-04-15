@@ -814,6 +814,43 @@ public class CalculationTest extends AbstractContainerExtends {
     }
 
     @Test
+    public void testLookupChangeTarget() throws Exception {
+        IEntity u0 = entityHelper.buildUserEntity();
+        IEntity u1 = entityHelper.buildUserEntity();
+
+        Assertions.assertEquals(OqsResult.success(), entityManagementService.build(u0));
+        Assertions.assertEquals(OqsResult.success(), entityManagementService.build(u1));
+
+        u0 = entitySearchService.selectOne(u0.id(), MockEntityClassDefine.USER_CLASS.ref()).getValue().get();
+        u1 = entitySearchService.selectOne(u1.id(), MockEntityClassDefine.USER_CLASS.ref()).getValue().get();
+
+        IEntity order = entityHelper.buildOrderEntity(u0);
+        Assertions.assertEquals(OqsResult.halfSuccess().getResultStatus(),
+            entityManagementService.build(order).getResultStatus());
+        order = entitySearchService.selectOne(order.id(), MockEntityClassDefine.ORDER_CLASS.ref()).getValue().get();
+        // 确认原始lookup成功.
+        Assertions.assertEquals(
+            order.entityValue().getValue("用户编号lookup").get().getValue(),
+            u0.entityValue().getValue("用户编号").get().getValue()
+        );
+
+        // 更改成lookupu1.
+        order.entityValue().addValue(
+            new LookupValue(
+                MockEntityClassDefine.ORDER_CLASS.field("用户编号lookup").get(),
+                u1.id()
+            )
+        );
+        Assertions.assertEquals(OqsResult.halfSuccess().getResultStatus(),
+            entityManagementService.replace(order).getResultStatus());
+        order = entitySearchService.selectOne(order.id(), MockEntityClassDefine.ORDER_CLASS.ref()).getValue().get();
+        Assertions.assertEquals(
+            order.entityValue().getValue("用户编号lookup").get().getValue(),
+            u1.entityValue().getValue("用户编号").get().getValue()
+        );
+    }
+
+    @Test
     public void testInitCalculation() throws Exception {
         IEntityClass orderClass = MockEntityClassDefine.ORDER_CLASS;
         IEntityClass orderItemClass = MockEntityClassDefine.ORDER_ITEM_CLASS;
