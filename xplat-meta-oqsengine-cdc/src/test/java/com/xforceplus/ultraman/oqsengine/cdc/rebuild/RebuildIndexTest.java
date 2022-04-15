@@ -81,8 +81,6 @@ public class RebuildIndexTest extends AbstractCdcHelper {
             DateTimeValue.toLocalDateTime(EntityGenerateTooBar.startTime),
             DateTimeValue.toLocalDateTime(EntityGenerateTooBar.endTime));
 
-        Thread.sleep(2_000);
-
         check(taskInfo, "rebuildIndex");
 
         Collection<TaskHandler> taskHandlers =
