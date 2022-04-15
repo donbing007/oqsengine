@@ -15,7 +15,7 @@ public class DefaultDevOpsTaskInfo implements DevOpsTaskInfo {
     private long entity;
     private long starts;
     private long ends;
-    private long batchSize;
+    private volatile long batchSize;
     private volatile int finishSize;
     private volatile int errorSize;
     private volatile int status;
