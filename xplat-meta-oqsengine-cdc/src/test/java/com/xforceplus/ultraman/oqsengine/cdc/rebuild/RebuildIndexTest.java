@@ -131,7 +131,7 @@ public class RebuildIndexTest extends AbstractCdcHelper {
 
         while (true) {
 
-            if (taskHandler.isDone()) {
+            if (taskHandler.isDone() && taskHandler.devOpsTaskInfo().getBatchSize() > 0) {
                 break;
             }
 
@@ -140,10 +140,8 @@ public class RebuildIndexTest extends AbstractCdcHelper {
             wakeUp += sleepForWaitStatusOk(wakeUp, errorFunction);
         }
 
-        if (taskHandler.devOpsTaskInfo().getBatchSize() > 0) {
-            Assertions.assertTrue(taskHandler.isDone());
-            Assertions.assertEquals(ONE_HUNDRED_PERCENT, taskHandler.getProgressPercentage());
-        }
+        Assertions.assertTrue(taskHandler.isDone());
+        Assertions.assertEquals(ONE_HUNDRED_PERCENT, taskHandler.getProgressPercentage());
     }
 
     private int sleepForWaitStatusOk(int wakeUp, String errorFunction) throws InterruptedException {
