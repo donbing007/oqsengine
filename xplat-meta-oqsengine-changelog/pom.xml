@@ -64,5 +64,6 @@
 
     <properties>
         <checkstyle.skip>true</checkstyle.skip>
+        <test.skip>true</test.skip>
     </properties>
 </project>
