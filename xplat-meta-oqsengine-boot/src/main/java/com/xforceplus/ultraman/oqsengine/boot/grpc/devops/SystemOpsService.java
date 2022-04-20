@@ -165,12 +165,13 @@ public class SystemOpsService {
      * @return true成功, false失败.
      */
     @DiscoverAction(describe = "删除commitId", retClass = boolean.class)
-    public boolean removeCommitIds(@MethodParam(name = "ids", klass = List.class, inner = Long.class, required = true) List<Long> ids) {
+    public boolean removeCommitIds(@MethodParam(name = "ids", klass = List.class, inner = String.class, required = true) List<String> ids) {
         try {
             if (null == ids || ids.size() == 0) {
                 return false;
             }
-            devOpsManagementService.removeCommitIds(ids.toArray(new Long[ids.size()]));
+
+            devOpsManagementService.removeCommitIds(ids.stream().map(Long::parseLong).toArray(Long[]::new));
             return true;
         } catch (Exception e) {
             PrintErrorHelper.exceptionHandle(
