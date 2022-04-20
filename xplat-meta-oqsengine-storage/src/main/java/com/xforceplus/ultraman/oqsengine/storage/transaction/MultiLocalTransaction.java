@@ -462,7 +462,6 @@ public class MultiLocalTransaction implements Transaction {
             .tags(
                 "initiator", "commit",
                 "action", "wait",
-                "class", "none",
                 "exception", "none"
             )
             .publishPercentileHistogram(false)
