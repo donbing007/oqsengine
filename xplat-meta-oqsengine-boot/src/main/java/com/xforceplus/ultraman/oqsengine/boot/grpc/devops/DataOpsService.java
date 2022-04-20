@@ -21,19 +21,26 @@ import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.AbstractCalculation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Lookup;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.facet.Facet;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LookupValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.ValueWithEmpty;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.pojo.utils.IValueUtils;
+import io.vavr.Tuple;
+import io.vavr.Tuple2;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -43,6 +50,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.apache.commons.lang.StringUtils;
@@ -238,23 +246,22 @@ public class DataOpsService {
 
         entityValue.addAll(buildCreateInfoField(entityClassOptl.get()));
 
-        data.keySet().stream().forEach(fieldCode -> {
-            Optional<IEntityField> entityFieldOptl = entityClassOptl.get().fields()
-                .stream().filter(field -> fieldCode.equals(field.name())).findAny();
-            if (entityFieldOptl.isPresent()) {
-                Optional<IValue> valueOptl = entityFieldOptl.get().type()
-                    .toTypedValue(entityFieldOptl.get(), String.valueOf(data.get(fieldCode)));
-                if (valueOptl.isPresent()) {
-                    entityValue.add(valueOptl.get());
-                } else {
-                    entityValue.add(new EmptyTypedValue(entityFieldOptl.get()));
-                }
+        entityClassOptl.get().fields().forEach(field -> {
+            if (data.containsKey(field.name())) {
+                IValue value = IValueUtils.toIValue(field,
+                        DevOpsOmDataUtils.convertDataObject(field, data.get(field.name())));
+                entityValue.add(value);
             }
         });
+
         IEntity targetEntity = Entity.Builder.anEntity()
             .withEntityClassRef(entityClassOptl.get().ref())
-            .withTime(System.currentTimeMillis())
             .withValues(entityValue).build();
+
+        /*
+         * do auto fill
+         */
+        autoFillLookUp(targetEntity, entityClassOptl.get());
 
         OqsResult<IEntity> oqsResult = OqsResult.unknown();
         try {
@@ -291,20 +298,24 @@ public class DataOpsService {
 
         entityValue.addAll(buildUpdateInfoField(entityClassOptl.get()));
 
-        data.keySet().forEach(fieldCode -> {
-            Optional<IEntityField> entityFieldOptl = entityClassOptl.get().fields()
-                .stream().filter(field -> fieldCode.equals(field.name())).findAny();
-            if (entityFieldOptl.isPresent()) {
-                IValue value = IValueUtils.toIValue(entityFieldOptl.get(),
-                    DevOpsOmDataUtils.convertDataObject(entityFieldOptl.get(), data.get(fieldCode)));
+        entityClassOptl.get().fields().forEach(field -> {
+            if (data.containsKey(field.name())) {
+                IValue value = IValueUtils.toIValue(field,
+                        DevOpsOmDataUtils.convertDataObject(field, data.get(field.name())));
                 entityValue.add(value);
             }
         });
+
         IEntity targetEntity = Entity.Builder.anEntity()
             .withEntityClassRef(entityClassOptl.get().ref())
             .withId(entityValueId)
             .withTime(System.currentTimeMillis())
             .withValues(entityValue).build();
+
+        /*
+         * do auto fill
+         */
+        autoFillLookUp(targetEntity, entityClassOptl.get());
 
         OqsResult<Map.Entry<IEntity, IValue[]>> oqsResult = OqsResult.unknown();
         try {
@@ -339,7 +350,6 @@ public class DataOpsService {
         IEntity targetEntity = Entity.Builder.anEntity()
             .withEntityClassRef(entityClassOptl.get().ref())
             .withId(entityValueId)
-            .withTime(System.currentTimeMillis())
             .build();
 
         OqsResult<IEntity> oqsResult = OqsResult.unknown();
@@ -395,20 +405,24 @@ public class DataOpsService {
 
             entityValue.addAll(buildCreateInfoField(entityClassOptl.get()));
 
-            map.keySet().forEach(fieldCode -> {
-                Optional<IEntityField> entityFieldOptl = entityClassOptl.get().fields()
-                        .stream().filter(field -> fieldCode.equals(field.name())).findAny();
-                if (entityFieldOptl.isPresent()) {
-                    IValue value = IValueUtils.toIValue(entityFieldOptl.get(),
-                            DevOpsOmDataUtils.convertDataObject(entityFieldOptl.get(), map.get(fieldCode)));
+            entityClassOptl.get().fields().forEach(field -> {
+                if (map.containsKey(field.name())) {
+                    IValue value = IValueUtils.toIValue(field,
+                            DevOpsOmDataUtils.convertDataObject(field, map.get(field.name())));
                     entityValue.add(value);
                 }
             });
 
-            return Entity.Builder.anEntity()
+            IEntity targetEntity = Entity.Builder.anEntity()
                     .withEntityClassRef(entityClassOptl.get().ref())
-                    .withTime(System.currentTimeMillis())
                     .withValues(entityValue).build();
+
+            /*
+             * do auto fill
+             */
+            autoFillLookUp(targetEntity, entityClassOptl.get());
+
+            return targetEntity;
         }).collect(Collectors.toList());
 
         OqsResult<IEntity[]> oqsResult = OqsResult.unknown();
@@ -470,22 +484,24 @@ public class DataOpsService {
 
             entityValue.addAll(buildUpdateInfoField(entityClassOptl.get()));
 
-            map.keySet().stream().filter(fieldCode -> !"id".equals(fieldCode)).forEach(fieldCode -> {
-                Optional<IEntityField> entityFieldOptl = entityClassOptl.get().fields()
-                        .stream().filter(field -> fieldCode.equals(field.name())).findAny();
-                if (entityFieldOptl.isPresent()) {
-                    IValue value = IValueUtils.toIValue(entityFieldOptl.get(),
-                            DevOpsOmDataUtils.convertDataObject(entityFieldOptl.get(), map.get(fieldCode)));
+            entityClassOptl.get().fields().forEach(field -> {
+                if (map.containsKey(field.name())) {
+                    IValue value = IValueUtils.toIValue(field,
+                            DevOpsOmDataUtils.convertDataObject(field, map.get(field.name())));
                     entityValue.add(value);
                 }
             });
 
-            long entityValueId = Long.valueOf((String) map.get("id"));
-            return Entity.Builder.anEntity()
+            IEntity targetEntity = Entity.Builder.anEntity()
                     .withEntityClassRef(entityClassOptl.get().ref())
-                    .withId(entityValueId)
-                    .withTime(System.currentTimeMillis())
+                    .withId(Long.valueOf((String) map.get("id")))
                     .withValues(entityValue).build();
+            /*
+             * do auto fill
+             */
+            autoFillLookUp(targetEntity, entityClassOptl.get());
+
+            return targetEntity;
         }).collect(Collectors.toList());
 
         OqsResult<Map<IEntity, IValue[]>> oqsResult = OqsResult.unknown();
@@ -541,7 +557,6 @@ public class DataOpsService {
             Entity.Builder.anEntity()
                     .withEntityClassRef(entityClassOptl.get().ref())
                     .withId(Long.valueOf(idStr))
-                    .withTime(System.currentTimeMillis())
                     .build()
         ).collect(Collectors.toList());
 
@@ -645,7 +660,6 @@ public class DataOpsService {
 
             IEntity targetEntity = Entity.Builder.anEntity()
                     .withEntityClassRef(entityClassOptl.get().ref())
-                    .withTime(System.currentTimeMillis())
                     .withValues(entityValue)
                     .build();
             try {
@@ -757,6 +771,110 @@ public class DataOpsService {
             }
         });
         return entityValue;
+    }
+
+    /**
+     * auto fill lookup fields.
+     */
+    private void autoFillLookUp(IEntity entity, IEntityClass entityClass) {
+
+        /*
+         * find all relation in this entityClass
+         */
+        Collection<Relationship> relationships = entityClass.relationship();
+
+        /*
+         * find all related values
+         * caution value can be empty !
+         * relationId -> value
+         * TODO
+         */
+        Map<Long, Object> relationValueMapping = entity.entityValue().values()
+                .stream().map(val -> {
+                    /*
+                     * TODO
+                     * cuz currently we have no reference related field
+                     * all the field is generated by the relation
+                     * once the reference related field is done
+                     * we should change the logic here to use another way to find out the relation
+                     */
+                    Optional<Relationship> relationship = relationships.stream().filter(x -> {
+                        Relationship.RelationType relationType = x.getRelationType();
+                        //only deal with toOne relation
+                        return relationType == Relationship.RelationType.MANY_TO_ONE
+                                || relationType == Relationship.RelationType.ONE_TO_ONE;
+                    }).filter(rel -> {
+                        long id = rel.getEntityField().id();
+                        return val.getField().id() == id;
+                    }).findFirst();
+
+                    return relationship.map(value -> Tuple.of(value, val.getValue())).orElse(null);
+                }).filter(Objects::nonNull).collect(Collectors.toMap(x -> x._1.getId(), Tuple2::_2, (a, b) -> {
+                    logger.error("Should not merge here " + a + " " + b);
+                    return b;
+                }));
+
+        /*
+         * remove field
+         */
+        List<IEntityField> removeList = new ArrayList<>();
+
+        /*
+         * add value
+         */
+        List<IValue> updatedValue = new ArrayList<>();
+
+        /*
+         * find all related
+         */
+        entityClass.fields().forEach(field -> {
+            if (field.calculationType() != null) {
+                CalculationType calculationType = field.calculationType();
+                if (calculationType == CalculationType.LOOKUP) {
+
+                    AbstractCalculation calculation = field.config().getCalculation();
+                    Lookup lookup = (Lookup) calculation;
+
+                    long relationId = lookup.getRelationId();
+
+                    boolean containsKey = relationValueMapping.containsKey(relationId);
+
+                    if (containsKey) {
+                        Object o = relationValueMapping.get(relationId);
+                        if (o == null) {
+                            //remove
+                            removeList.add(field);
+                        } else {
+                            try {
+                                if (ValueWithEmpty.isEmpty(o.toString())) {
+                                    updatedValue.add(new EmptyTypedValue(field));
+                                } else {
+                                    long id = Long.parseLong(o.toString());
+                                    updatedValue.add(new LookupValue(field, id));
+                                }
+
+                            } catch (Exception ex) {
+                                logger.error("{}", ex);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        /*
+         * add
+         */
+        updatedValue.forEach(x -> {
+            entity.entityValue().addValue(x);
+        });
+
+        /*
+         * remove
+         */
+        removeList.forEach(x -> {
+            entity.entityValue().remove(x);
+        });
     }
 
     /**

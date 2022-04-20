@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.devops.om.util;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import com.xforceplus.ultraman.oqsengine.pojo.utils.TimeUtils;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -35,9 +36,6 @@ public class DevOpsOmDataUtils {
                     }
                     return result;
                 }
-                case ENUM: {
-                    return result;
-                }
                 case DATETIME: {
                     if (result instanceof Date) {
                         return TimeUtils.convert((Date) result).toInstant(ZoneOffset.ofHours(8)).toEpochMilli();
@@ -56,15 +54,18 @@ public class DevOpsOmDataUtils {
                     }
                     return result;
                 }
+                case ENUM:
                 case STRING: {
                     return result;
                 }
                 case STRINGS: {
-                    return result;
+                    return StringsValue.toStrings((String) result);
                 }
                 case DECIMAL: {
                     if (result instanceof Integer) {
                         result = new BigDecimal(result.toString());
+                    } else if (result instanceof Double) {
+                        result = BigDecimal.valueOf(((Double) result).doubleValue());
                     } else if (result instanceof String) {
                         result = new BigDecimal((String) result);
                     }
@@ -75,7 +76,7 @@ public class DevOpsOmDataUtils {
                 }
             }
         } catch (Exception e) {
-            throw new IllegalArgumentException(String.format("toIValue failed, message [%s]", e.getMessage()));
+            throw new IllegalArgumentException(String.format("field[%s-%s] toIValue failed, message [%s]", field.name(), field.type(), e.getMessage()));
         }
     }
 
@@ -103,6 +104,10 @@ public class DevOpsOmDataUtils {
                 return ConditionOperator.LESS_THAN;
             case "le":
                 return ConditionOperator.LESS_THAN_EQUALS;
+            case "exists":
+                return ConditionOperator.IS_NOT_NULL;
+            case "nil":
+                return ConditionOperator.IS_NULL;
             default:
                 return null;
         }
