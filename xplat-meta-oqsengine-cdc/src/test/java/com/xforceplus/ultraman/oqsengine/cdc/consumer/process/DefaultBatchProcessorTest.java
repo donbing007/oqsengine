@@ -101,7 +101,7 @@ public class DefaultBatchProcessorTest extends AbstractCdcHelper {
 
         Assertions.assertEquals(0, runnerContext.getCdcMetrics().getDevOpsMetrics().size());
         Assertions.assertEquals(0, runnerContext.getCdcMetrics().getCdcAckMetrics().getExecuteRows());
-        Assertions.assertEquals(1, runnerContext.getCdcMetrics().getCdcAckMetrics().getCommitList().size());
+        Assertions.assertEquals(0, runnerContext.getCdcMetrics().getCdcAckMetrics().getCommitList().size());
         Assertions.assertEquals(0, runnerContext.getCdcMetrics().getCdcUnCommitMetrics().getUnCommitIds().size());
     }
 
