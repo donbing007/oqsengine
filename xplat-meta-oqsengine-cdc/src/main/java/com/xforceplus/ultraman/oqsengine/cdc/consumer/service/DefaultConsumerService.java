@@ -70,7 +70,7 @@ public class DefaultConsumerService implements ConsumerService {
 
     @Timed(
         value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
-        extraTags = {"initiator", "cdc", "action", "cdc-consume"}
+        extraTags = {"initiator", "cdc", "action", "consume"}
     )
     @Override
     public CDCMetrics consumeOneBatch(List<CanalEntry.Entry> entries, long batchId, CDCMetrics cdcMetrics)
