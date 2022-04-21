@@ -80,12 +80,12 @@ public class DynamicBinLogParserTest extends AbstractCdcHelper {
             if (!DevOpsUtils.isMaintainRecord(expected[i].getCommitId())) {
                 Assertions.assertTrue(parserContext.getCdcMetrics().getCdcUnCommitMetrics().getUnCommitIds()
                     .contains(expected[i].getCommitId()));
-            }
 
-            OqsEngineEntity oqsEngineEntity =
-                parseResult.getFinishEntries().get(expected[i].getId());
-            Assertions.assertNotNull(oqsEngineEntity);
-            ParseResultCheckHelper.dynamicCheck(expected[i], oqsEngineEntity);
+                OqsEngineEntity oqsEngineEntity =
+                    parseResult.getFinishEntries().get(expected[i].getId());
+                Assertions.assertNotNull(oqsEngineEntity);
+                ParseResultCheckHelper.dynamicCheck(expected[i], oqsEngineEntity);
+            }
         }
     }
 
