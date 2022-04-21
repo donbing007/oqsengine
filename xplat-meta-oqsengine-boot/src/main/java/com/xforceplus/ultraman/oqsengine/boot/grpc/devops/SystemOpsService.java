@@ -308,6 +308,24 @@ public class SystemOpsService {
     }
 
     /**
+     * 取消任务.
+     *
+     * @param taskId 任务标识.
+     * @return true取消成功, false取消失败.
+     */
+    @DiscoverAction(describe = "取消任务", retClass = boolean.class)
+    public boolean cancel(
+        @MethodParam(name = "taskId", klass = String.class, required = true) String taskId) {
+        try {
+            devOpsManagementService.cancel(taskId);
+            return true;
+        } catch (Exception e) {
+            PrintErrorHelper.exceptionHandle(String.format("cancel task exception, [%s]", taskId), e);
+        }
+        return false;
+    }
+
+    /**
      * 获取meta同步日志.
      *
      * @param type 需要查看的日志ALL/INFO/ERROR类型.
