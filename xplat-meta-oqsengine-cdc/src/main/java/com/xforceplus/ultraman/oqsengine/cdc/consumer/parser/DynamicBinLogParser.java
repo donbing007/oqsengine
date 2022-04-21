@@ -116,8 +116,6 @@ public class DynamicBinLogParser implements BinLogParser {
 
         //  主键ID
         builder.withId(id);
-        //  提交号
-        builder.withCommitid(commitId);
         //  entityClass
         builder.withEntityClass(entityClass);
         //  entityClassRef
@@ -146,7 +144,12 @@ public class DynamicBinLogParser implements BinLogParser {
                 parserContext.getCdcMetrics().getDevOpsMetrics()
                     .computeIfAbsent(txId, f -> new DevOpsCdcMetrics()).incrementByStatus(true);
             }
+            //  运维时提交号为0
+            builder.withCommitid(NO_TRANSACTION_COMMIT_ID);
             builder.withMaintainid(txId);
+        } else {
+            //  提交号
+            builder.withCommitid(commitId);
         }
 
         //  other info
@@ -233,29 +236,20 @@ public class DynamicBinLogParser implements BinLogParser {
              *  检查是否为跳过不处理的commitId满足commitId > skipCommitId || (commitId == 0 && skipCommitId != 0)
              * 否则跳过.
              */
-            if (!parseResult.getCommitIds().contains(commitId)) {
-                if (commitId > parserContext.getSkipCommitId()
-                    || (commitId == NO_TRANSACTION_COMMIT_ID
-                    && parserContext.getSkipCommitId() != NO_TRANSACTION_COMMIT_ID)
-                    || (DevOpsUtils.isMaintainRecord(commitId))) {
 
-                    //  不需要checkReady的情况.
-                    if (parserContext.isCheckCommitReady()
-                        && !DevOpsUtils.isMaintainRecord(commitId)
-                        && commitId != NO_TRANSACTION_COMMIT_ID) {
-
-                        parseResult.getCommitIds().add(commitId);
-                    }
-
-                    //  加入未同步列表
-                    parserContext.getCdcMetrics().getCdcUnCommitMetrics().getUnCommitIds().add(commitId);
-                } else {
-                    logger.warn(
-                        "[dynamic-binlog-parser] batch : {}, ignore commitId less than skipCommitId, "
-                            + "current id : {}, commitId : {}, skipCommitId : {}",
-                        parserContext.getCdcMetrics(), id, commitId, parserContext.getSkipCommitId());
-                }
+            //  维护id不需要等待isReady 或者 没有transaction的commitId & 跳过的commitId
+            if (DevOpsUtils.isMaintainRecord(commitId) || commitId == NO_TRANSACTION_COMMIT_ID) {
+                return;
             }
+
+            //  commitId必须满足大于0 且 大于skipCommitId的情况，才回加入检查isReady列表
+            if (parserContext.isCheckCommitReady()
+                && (commitId > parserContext.getSkipCommitId() || parserContext.getSkipCommitId() <= NO_TRANSACTION_COMMIT_ID)) {
+                parseResult.isReadyCommitIds().add(commitId);
+            }
+
+            //  加入未同步列表
+            parserContext.getCdcMetrics().getCdcUnCommitMetrics().getUnCommitIds().add(commitId);
         }
     }
 }

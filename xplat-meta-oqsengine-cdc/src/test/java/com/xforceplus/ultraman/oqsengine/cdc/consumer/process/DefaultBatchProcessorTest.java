@@ -62,7 +62,7 @@ public class DefaultBatchProcessorTest extends AbstractCdcHelper {
 
         final int expectedDevOpsSize = 1;
         final int expectedExecuteSize = 2;
-        final int expectedCommitIdSize = 2;
+        final int expectedCommitIdSize = 1;
         final int expectedUnCommitIdSize = 0;
 
         Assertions.assertEquals(expectedDevOpsSize, runnerContext.getCdcMetrics().getDevOpsMetrics().size());
@@ -89,7 +89,7 @@ public class DefaultBatchProcessorTest extends AbstractCdcHelper {
         final int expectedDevOpsSize = 1;
         final int expectedExecuteSize = 2;
         final int expectedCommitIdSize = 1;
-        final int expectedUnCommitIdSize = 1;
+        final int expectedUnCommitIdSize = 0;
 
         Assertions.assertEquals(expectedDevOpsSize, runnerContext.getCdcMetrics().getDevOpsMetrics().size());
         Assertions.assertEquals(expectedExecuteSize, runnerContext.getCdcMetrics().getCdcAckMetrics().getExecuteRows());

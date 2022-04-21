@@ -11,6 +11,7 @@ import com.xforceplus.ultraman.oqsengine.cdc.testhelp.cases.DynamicCanalEntryCas
 import com.xforceplus.ultraman.oqsengine.cdc.testhelp.generator.DynamicCanalEntryGenerator;
 import com.xforceplus.ultraman.oqsengine.cdc.testhelp.repo.DynamicCanalEntryRepo;
 import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
+import com.xforceplus.ultraman.oqsengine.devops.rebuild.utils.DevOpsUtils;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MetaInitialization;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.storage.master.mock.MasterDBInitialization;
@@ -71,7 +72,9 @@ public class DynamicBinLogParserTest extends AbstractCdcHelper {
 
         //  check commitId size.
         Assertions.assertEquals(
-            Arrays.stream(expected).map(DynamicCanalEntryCase::getCommitId).collect(Collectors.toSet()).size(), parserContext.getCdcMetrics().getCdcUnCommitMetrics().getUnCommitIds().size());
+            Arrays.stream(expected).map(DynamicCanalEntryCase::getCommitId).filter(e -> {
+                return !DevOpsUtils.isMaintainRecord(e);
+            }).collect(Collectors.toSet()).size(), parserContext.getCdcMetrics().getCdcUnCommitMetrics().getUnCommitIds().size());
 
         for (int i = 0; i < expected.length; i++) {
             Assertions.assertTrue(parserContext.getCdcMetrics().getCdcUnCommitMetrics().getUnCommitIds().contains(expected[i].getCommitId()));
