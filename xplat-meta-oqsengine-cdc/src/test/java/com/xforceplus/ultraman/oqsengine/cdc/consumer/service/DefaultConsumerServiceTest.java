@@ -96,7 +96,7 @@ public class DefaultConsumerServiceTest extends AbstractCdcHelper {
         Assertions.assertEquals(expectedBatchId, cdcMetricsOver.getBatchId());
         Assertions.assertEquals(0, cdcMetricsOver.getDevOpsMetrics().size());
         Assertions.assertEquals(0, cdcMetricsOver.getCdcAckMetrics().getExecuteRows());
-        Assertions.assertEquals(1, cdcMetricsOver.getCdcAckMetrics().getCommitList().size());
+        Assertions.assertEquals(0, cdcMetricsOver.getCdcAckMetrics().getCommitList().size());
         Assertions.assertEquals(0, cdcMetricsOver.getCdcUnCommitMetrics().getUnCommitIds().size());
     }
 
