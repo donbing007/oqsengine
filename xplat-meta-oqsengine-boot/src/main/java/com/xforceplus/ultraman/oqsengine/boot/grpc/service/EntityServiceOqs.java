@@ -361,12 +361,127 @@ public class EntityServiceOqs implements EntityServicePowerApi {
      */
     @Override
     public CompletionStage<OperationResult> build(EntityUp in, Metadata metadata) {
-        return asyncWrite(() -> OperationResult
-                .newBuilder()
-                .addIds(100L)
-                .setCode(OperationResult.Code.OK)
-                .setOriginStatus(SUCCESS.name()).build()
-        );
+        return asyncWrite(() -> {
+
+            String profile = extractProfile(metadata).orElse("");
+
+            //check entityRef
+            EntityClassRef entityClassRef = EntityClassHelper.toEntityClassRef(in, profile);
+            IEntityClass entityClass;
+            try {
+                entityClass = checkedEntityClassRef(entityClassRef);
+            } catch (Exception ex) {
+                return exceptional(ex);
+            }
+
+            boolean success;
+            try {
+                success = tryRestoreTransaction(metadata);
+            } catch (Exception ex) {
+                return exceptional(ex);
+            }
+            if (!success) {
+                OperationResult.newBuilder()
+                    .setAffectedRow(0)
+                    .setCode(OperationResult.Code.FAILED)
+                    .setMessage(String.format("Invalid transaction, transaction may have timed out."))
+                    .buildPartial();
+            }
+
+            OperationResult result;
+
+            try {
+                IEntity entity = toEntity(entityClassRef, entityClass, in);
+
+                /*
+                 * do auto fill
+                 */
+                autoFillLookUp(entity, entityClass);
+
+                OqsResult<IEntity> oqsResult = entityManagementService.build(entity);
+                ResultStatus createStatus = oqsResult.getResultStatus();
+                Optional<IEntity> valueOp = oqsResult.getValue();
+
+
+                if (createStatus == null) {
+                    result = OperationResult.newBuilder()
+                        .setAffectedRow(0)
+                        .setCode(OperationResult.Code.EXCEPTION)
+                        .setOriginStatus(UNKNOWN.name())
+                        .setMessage(
+                            other("Unknown response status"))
+                        .buildPartial();
+                } else {
+                    switch (createStatus) {
+                        case SUCCESS: {
+                            OperationResult.Builder builder = OperationResult
+                                .newBuilder()
+                                .addIds(entity.id())
+                                .setCode(OperationResult.Code.OK)
+                                .setOriginStatus(SUCCESS.name());
+
+                            //add ret value
+                            valueOp.ifPresent(value -> builder.addQueryResult(toEntityUp(value)));
+
+                            result = builder.buildPartial();
+                            break;
+                        }
+                        case HALF_SUCCESS: {
+                            Map<String, String> failedMap = hintsToFails(oqsResult.getHints());
+                            String failedValues = "";
+                            try {
+                                failedValues = mapper.writeValueAsString(failedMap);
+                            } catch (Exception ex) {
+                                logger.error("{}", ex);
+                            }
+
+                            OperationResult.Builder builder = OperationResult
+                                .newBuilder()
+                                .addIds(entity.id())
+                                .setCode(OperationResult.Code.OTHER)
+                                .setMessage(failedValues)
+                                .setOriginStatus(HALF_SUCCESS.name());
+
+                            //add ret value
+                            valueOp.ifPresent(value -> builder.addQueryResult(toEntityUp(value)));
+
+                            result = builder.buildPartial();
+                            break;
+                        }
+                        case ELEVATEFAILED:
+                        case FIELD_MUST:
+                        case FIELD_TOO_LONG:
+                        case FIELD_HIGH_PRECISION:
+                            result = OperationResult.newBuilder()
+                                .setAffectedRow(0)
+                                .setCode(OperationResult.Code.FAILED)
+                                .setOriginStatus(createStatus.name())
+                                .setMessage(oqsResult.getMessage())
+                                .buildPartial();
+                            break;
+                        default:
+                            result = OperationResult.newBuilder()
+                                .setAffectedRow(0)
+                                .setCode(OperationResult.Code.FAILED)
+                                .setOriginStatus(createStatus.name())
+                                .setMessage(
+                                    other(String.format("Unknown response status %s.", createStatus.name())))
+                                .buildPartial();
+                    }
+                }
+            } catch (Exception e) {
+                logger.error(e.getMessage(), e);
+                result = OperationResult.newBuilder()
+                    .setCode(OperationResult.Code.EXCEPTION)
+                    .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
+                    .buildPartial();
+            } finally {
+                extractTransaction(metadata).ifPresent(id -> {
+                    transactionManager.unbind();
+                });
+            }
+            return result;
+        });
     }
 
     /**
