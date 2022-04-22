@@ -61,6 +61,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
+import org.checkerframework.checker.nullness.Opt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -651,32 +652,33 @@ public class StorageMetaManager implements MetaManager {
      * @param version       当前的版本.
      */
     private Collection<IEntityClass> doWithProfilesLoad(long entityClassId, int version) {
-        try {
-            List<IEntityClass> entityClassList = new ArrayList<>();
+        List<IEntityClass> entityClassList = new ArrayList<>();
 
-            //  当传入版本>-1时，实际版本为传入版本.
-            //  由于存在传入不存在的版本,需要返回当前实际的版本.
-            Tuple2<Integer, Optional<IEntityClass>> entityClassOp =
-                entityClassLoadWithVersion(entityClassId, version, null);
+        //  当传入版本>-1时，实际版本为传入版本.
+        //  由于存在传入不存在的版本,需要返回当前实际的版本.
+        Tuple2<Integer, Optional<IEntityClass>> entityClassOp =
+            entityClassLoadWithVersion(entityClassId, version, null);
 
-            if (entityClassOp._2().isPresent()) {
-                entityClassList.add(entityClassOp._2().get());
+        //  修正版本.
+        version = entityClassOp._1();
+        Optional<IEntityClass> entityClassOP = entityClassOp._2();
+        if (NOT_EXIST_VERSION < version && entityClassOP.isPresent()) {
+            entityClassList.add(entityClassOP.get());
 
-                //  修正版本.
-                version = entityClassOp._1();
-                List<String> profiles = cacheExecutor.readProfileCodes(entityClassId, version);
+            List<String> profiles = null;
+            try {
+                profiles = cacheExecutor.readProfileCodes(entityClassId, version);
                 if (!profiles.isEmpty()) {
                     for (String profile : profiles) {
                         Optional<IEntityClass> ecOp = load(entityClassId, version, profile);
                         ecOp.ifPresent(entityClassList::add);
                     }
                 }
+            } catch (Exception e) {
+                logger.warn("readProfileCodes [{}, {}] error, message [{}]", entityClassId, profiles, e.getMessage());
             }
-
-            return entityClassList;
-        } catch (Exception e) {
-            logger.warn("load entityClass [{}] error, message [{}]", entityClassId, e.getMessage());
         }
-        return new ArrayList<>();
+
+        return entityClassList;
     }
 }
