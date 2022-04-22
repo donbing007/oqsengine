@@ -8,6 +8,7 @@ import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUt
 import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.getLongFromColumn;
 import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.getStringFromColumn;
 import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.getStringWithoutNullCheck;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.NO_TRANSACTION_COMMIT_ID;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.UN_KNOW_ID;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.UN_KNOW_OP;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.UN_KNOW_VERSION;
@@ -376,13 +377,15 @@ public class SphinxSyncExecutor implements SyncExecutor {
             .withCreateTime(getLongFromColumn(columns, CREATETIME))
             .withUpdateTime(getLongFromColumn(columns, UPDATETIME))
             .withTx(tx)
-            .withCommitid(commitId)
             .withEntityClass(entityClass)
             .withAttributes(attributes);
 
         //  由于主库删除了maintainid,所以当commitId标记为维护ID时,使用txid作为maintainid
         if (CommonUtils.isMaintainRecord(commitId)) {
+            builder.withCommitid(NO_TRANSACTION_COMMIT_ID);
             builder.withMaintainid(tx);
+        } else {
+            builder.withCommitid(commitId);
         }
 
         return builder.build();

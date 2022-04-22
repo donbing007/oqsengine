@@ -165,16 +165,30 @@ public class SystemOpsService {
      * @return true成功, false失败.
      */
     @DiscoverAction(describe = "删除commitId", retClass = boolean.class)
-    public boolean removeCommitIds(@MethodParam(name = "ids", klass = Long[].class, required = true) Long[] ids) {
+    public boolean removeCommitIds(
+        @MethodParam(name = "ids", klass = List.class, inner = String.class, required = false) List<String> ids,
+        @MethodParam(name = "start", klass = Long.class, required = false) Long startId,
+        @MethodParam(name = "end", klass = Long.class, required = false) Long endId) {
         try {
-            if (null == ids || ids.length == 0) {
+
+            Long[] longIds = null;
+            if (null != ids && ids.size() > 0) {
+                longIds = ids.stream().map(Long::parseLong).toArray(Long[]::new);
+            } else if (null != startId && null != endId && endId > startId) {
+                longIds = new Long[(int) (endId - startId) + 1];
+                int j = 0;
+                for (long i = startId; i <= endId; i++) {
+                    longIds[j++] = i;
+                }
+            } else {
                 return false;
             }
-            devOpsManagementService.removeCommitIds(ids);
+
+            devOpsManagementService.removeCommitIds(longIds);
             return true;
         } catch (Exception e) {
             PrintErrorHelper.exceptionHandle(
-                String.format("removeCommitIds exception, [%s]", Arrays.stream(ids).collect(Collectors.toList())), e);
+                String.format("removeCommitIds exception, [%s]", ids), e);
         }
         return false;
     }

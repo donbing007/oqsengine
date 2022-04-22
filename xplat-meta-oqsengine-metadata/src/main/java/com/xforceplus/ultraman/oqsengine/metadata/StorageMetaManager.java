@@ -61,6 +61,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
+import org.checkerframework.checker.nullness.Opt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -585,34 +586,35 @@ public class StorageMetaManager implements MetaManager {
      */
     private Tuple2<Integer, Optional<IEntityClass>> entityClassLoadWithVersion(long entityClassId, int version,
                                                                                String profile) {
+        try {
+            //  当没有传入版本时，默认用最简便的方式读取一次
+            if (NOT_EXIST_VERSION == version) {
+                //  从缓存中找一次版本号
+                version = cacheExecutor.version(entityClassId, true);
+                if (NOT_EXIST_VERSION != version) {
+                    Optional<IEntityClass> op = internalLoad(entityClassId, profile, version);
+                    //  从缓存读取到的version存在
+                    if (op.isPresent()) {
+                        return new Tuple2<>(version, op);
+                    }
+                }
 
-        //  当没有传入版本时，默认用最简便的方式读取一次
-        if (NOT_EXIST_VERSION == version) {
-            //  从缓存中找一次版本号
-            version = cacheExecutor.version(entityClassId, true);
-            if (NOT_EXIST_VERSION != version) {
+                //  缓存中没有,从redis再找一次版本号
+                version = cacheExecutor.version(entityClassId, false);
+            }
+
+            if (NOT_EXIST_VERSION < version) {
+                //  兜底再根据版本号找一次
                 Optional<IEntityClass> op = internalLoad(entityClassId, profile, version);
-                //  从缓存读取到的version存在
                 if (op.isPresent()) {
                     return new Tuple2<>(version, op);
                 }
             }
-
-            //  缓存中没有,从redis再找一次版本号
-            version = cacheExecutor.version(entityClassId, false);
-            if (NOT_EXIST_VERSION == version) {
-                throw new RuntimeException(
-                    String.format("load [entityClass : %d, profile : %s] failed, version not exists.", entityClassId,
-                        profile));
-            }
+        } catch (Exception e) {
+            logger.warn("entityClass Load with version failed, message : {}", e.getMessage());
         }
 
-        //  兜底再根据版本号找一次
-        Optional<IEntityClass> op = internalLoad(entityClassId, profile, version);
-        if (op.isPresent()) {
-            return new Tuple2<>(version, op);
-        }
-
+        logger.warn("load [entityClass : {}, profile : {}] failed, version or entityClass not exists.", entityClassId, profile);
         return new Tuple2<>(NOT_EXIST_VERSION, Optional.empty());
     }
 
@@ -650,32 +652,33 @@ public class StorageMetaManager implements MetaManager {
      * @param version       当前的版本.
      */
     private Collection<IEntityClass> doWithProfilesLoad(long entityClassId, int version) {
-        try {
-            List<IEntityClass> entityClassList = new ArrayList<>();
+        List<IEntityClass> entityClassList = new ArrayList<>();
 
-            //  当传入版本>-1时，实际版本为传入版本.
-            //  由于存在传入不存在的版本,需要返回当前实际的版本.
-            Tuple2<Integer, Optional<IEntityClass>> entityClassOp =
-                entityClassLoadWithVersion(entityClassId, version, null);
+        //  当传入版本>-1时，实际版本为传入版本.
+        //  由于存在传入不存在的版本,需要返回当前实际的版本.
+        Tuple2<Integer, Optional<IEntityClass>> entityClassOp =
+            entityClassLoadWithVersion(entityClassId, version, null);
 
-            if (entityClassOp._2().isPresent()) {
-                entityClassList.add(entityClassOp._2().get());
+        //  修正版本.
+        version = entityClassOp._1();
+        Optional<IEntityClass> entityClassOP = entityClassOp._2();
+        if (NOT_EXIST_VERSION < version && entityClassOP.isPresent()) {
+            entityClassList.add(entityClassOP.get());
 
-                //  修正版本.
-                version = entityClassOp._1();
-                List<String> profiles = cacheExecutor.readProfileCodes(entityClassId, version);
+            List<String> profiles = null;
+            try {
+                profiles = cacheExecutor.readProfileCodes(entityClassId, version);
                 if (!profiles.isEmpty()) {
                     for (String profile : profiles) {
                         Optional<IEntityClass> ecOp = load(entityClassId, version, profile);
                         ecOp.ifPresent(entityClassList::add);
                     }
                 }
+            } catch (Exception e) {
+                logger.warn("readProfileCodes [{}, {}] error, message [{}]", entityClassId, profiles, e.getMessage());
             }
-
-            return entityClassList;
-        } catch (Exception e) {
-            logger.warn("load entityClass [{}] error, message [{}]", entityClassId, e.getMessage());
         }
-        return new ArrayList<>();
+
+        return entityClassList;
     }
 }
