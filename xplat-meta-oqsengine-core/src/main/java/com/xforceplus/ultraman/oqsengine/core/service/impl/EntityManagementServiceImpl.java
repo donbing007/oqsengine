@@ -432,8 +432,89 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     public OqsResult<IEntity> build(IEntity entity) throws SQLException {
         checkReady();
 
-        entity.resetId(100);
-        return OqsResult.success(entity);
+        Optional<IEntityClass> entityClassOp = metaManager.load(entity.entityClassRef());
+        IEntityClass entityClass;
+        if (!entityClassOp.isPresent()) {
+            EntityClassRef ref = entity.entityClassRef();
+            return OqsResult.notExistMeta(ref);
+        } else {
+            entityClass = entityClassOp.get();
+        }
+
+        OqsResult oqsResult = preview(entity, entityClass, true);
+        if (!oqsResult.isSuccess()) {
+            return oqsResult;
+        }
+
+        if (entity.isDeleted()) {
+            return OqsResult.conflict("It has been deleted.");
+        }
+
+        CalculationContext calculationContext = buildCalculationContext(CalculationScenarios.BUILD);
+        try {
+            oqsResult = (OqsResult) transactionExecutor.execute((tx, resource, hint) -> {
+
+                calculationContext.focusTx(tx);
+                calculationContext.focusSourceEntity(entity);
+                calculationContext.focusEntity(entity, entityClass);
+                IEntity currentEntity = calculation.calculate(calculationContext);
+                setValueChange(calculationContext, Optional.of(currentEntity), Optional.empty());
+
+                Map.Entry<VerifierResult, IEntityField> verify = verifyFields(entityClass, currentEntity);
+                if (VerifierResult.OK != verify.getKey()) {
+                    return transformVerifierResultToOperationResult(verify, entity);
+                }
+
+                // 非脏,不需要继续.
+                if (!entity.isDirty()) {
+                    return OqsResult.success();
+                }
+
+                calculation.maintain(calculationContext);
+
+                masterStorage.build(currentEntity, entityClass);
+                if (currentEntity.isDirty()) {
+                    // 仍是"脏"的,表示没有持久化成功.
+                    hint.setRollback(true);
+                    return OqsResult.unCreated();
+                }
+
+                if (!calculationContext.persist()) {
+                    hint.setRollback(true);
+                    return OqsResult.conflict("Conflict maintenance.");
+                }
+
+                if (!tx.getAccumulator().accumulateBuild(currentEntity)) {
+                    hint.setRollback(true);
+                    return OqsResult.unAccumulate();
+                }
+
+                eventBus.notify(new ActualEvent(EventType.ENTITY_BUILD, new BuildPayload(tx.id(), currentEntity)));
+
+                return OqsResult.success(currentEntity);
+            });
+
+            if (calculationContext.hasHint()) {
+                oqsResult.addHints(calculationContext.getHints());
+            }
+
+            return oqsResult;
+        } catch (Exception ex) {
+
+            logger.error(ex.getMessage(), ex);
+
+            failCountTotal.increment();
+            throw ex;
+
+        } finally {
+
+            // 保证必须清理
+            if (calculationContext != null) {
+                calculationContext.destroy();
+            }
+
+            inserCountTotal.increment();
+        }
     }
 
     @Timed(
