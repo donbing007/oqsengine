@@ -585,34 +585,35 @@ public class StorageMetaManager implements MetaManager {
      */
     private Tuple2<Integer, Optional<IEntityClass>> entityClassLoadWithVersion(long entityClassId, int version,
                                                                                String profile) {
+        try {
+            //  当没有传入版本时，默认用最简便的方式读取一次
+            if (NOT_EXIST_VERSION == version) {
+                //  从缓存中找一次版本号
+                version = cacheExecutor.version(entityClassId, true);
+                if (NOT_EXIST_VERSION != version) {
+                    Optional<IEntityClass> op = internalLoad(entityClassId, profile, version);
+                    //  从缓存读取到的version存在
+                    if (op.isPresent()) {
+                        return new Tuple2<>(version, op);
+                    }
+                }
 
-        //  当没有传入版本时，默认用最简便的方式读取一次
-        if (NOT_EXIST_VERSION == version) {
-            //  从缓存中找一次版本号
-            version = cacheExecutor.version(entityClassId, true);
-            if (NOT_EXIST_VERSION != version) {
+                //  缓存中没有,从redis再找一次版本号
+                version = cacheExecutor.version(entityClassId, false);
+            }
+
+            if (NOT_EXIST_VERSION < version) {
+                //  兜底再根据版本号找一次
                 Optional<IEntityClass> op = internalLoad(entityClassId, profile, version);
-                //  从缓存读取到的version存在
                 if (op.isPresent()) {
                     return new Tuple2<>(version, op);
                 }
             }
-
-            //  缓存中没有,从redis再找一次版本号
-            version = cacheExecutor.version(entityClassId, false);
-            if (NOT_EXIST_VERSION == version) {
-                throw new RuntimeException(
-                    String.format("load [entityClass : %d, profile : %s] failed, version not exists.", entityClassId,
-                        profile));
-            }
+        } catch (Exception e) {
+            logger.warn("entityClass Load with version failed, message : {}", e.getMessage());
         }
 
-        //  兜底再根据版本号找一次
-        Optional<IEntityClass> op = internalLoad(entityClassId, profile, version);
-        if (op.isPresent()) {
-            return new Tuple2<>(version, op);
-        }
-
+        logger.warn("load [entityClass : {}, profile : {}] failed, version or entityClass not exists.", entityClassId, profile);
         return new Tuple2<>(NOT_EXIST_VERSION, Optional.empty());
     }
 
