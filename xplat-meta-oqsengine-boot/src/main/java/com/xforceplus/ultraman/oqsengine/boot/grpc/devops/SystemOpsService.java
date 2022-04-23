@@ -256,6 +256,41 @@ public class SystemOpsService {
         return null;
     }
 
+    /**
+     * 重建索引.
+     *
+     * @param entityClassIds 目标entityClassIds.
+     * @param start         开始时间.
+     * @param end           结束时间.
+     * @return 任务详情.
+     */
+    @DiscoverAction(describe = "重建索引", retClass = DevOpsTaskInfo.class)
+    public Collection<DevOpsTaskInfo> rebuildIndexes(
+        @MethodParam(name = "entityClassId", klass = List.class, inner = String.class, required = true) List<String> entityClassIds,
+        @MethodParam(name = "start", klass = String.class, required = true) String start,
+        @MethodParam(name = "end", klass = String.class, required = true) String end) {
+        try {
+            Collection<IEntityClass> entityClasses = new ArrayList<>();
+            entityClassIds.forEach(
+                entityClassId -> {
+                    Optional<IEntityClass> entityClassOp = metaManager.load(Long.parseLong(entityClassId), "");
+                    entityClassOp.ifPresent(entityClasses::add);
+                }
+            );
+
+            if (entityClasses.size() > 0) {
+                return devOpsManagementService.rebuildIndexes(entityClasses,
+                    LocalDateTime.parse(start, dateTimeFormatter),
+                    LocalDateTime.parse(end, dateTimeFormatter));
+            }
+            return null;
+        } catch (Exception e) {
+            PrintErrorHelper.exceptionHandle(String.format("rebuildIndex exception, [%s-%s-%s]",
+                entityClassIds, start, end), e);
+        }
+        return null;
+    }
+
 
     /**
      * 重建索引任务列表页查询.

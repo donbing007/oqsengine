@@ -10,6 +10,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -34,6 +35,21 @@ public interface RebuildIndexExecutor extends Lifecycle {
      * @throws DevopsTaskExistException 表示任务已经存在不可能再增加.
      */
     DevOpsTaskInfo rebuildIndex(IEntityClass entityClass, LocalDateTime start, LocalDateTime end) throws Exception;
+
+    /**
+     * 重新创建索引.
+     * 重新创建会让此entityClass进入只读模式.
+     * 所以有写入事务都会被拒绝.
+     * 如果有正在活动的EntityClass任务,那么后续的相同entityClass调用将造成异常.
+     *
+     * @param entityClasses 目标entityClasses.
+     * @param start       开始时间.
+     * @param end         结束时间.
+     * @return 任务表示.
+     * @throws DevopsTaskExistException 表示任务已经存在不可能再增加.
+     */
+    Collection<DevOpsTaskInfo> rebuildIndexes(Collection<IEntityClass> entityClasses,
+                               LocalDateTime start, LocalDateTime end) throws Exception;
 
     /**
      * 终止一个任务.

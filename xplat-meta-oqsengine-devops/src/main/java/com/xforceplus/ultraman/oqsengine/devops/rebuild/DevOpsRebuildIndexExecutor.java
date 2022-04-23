@@ -24,6 +24,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -79,6 +80,60 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
     }
 
     @Override
+    public Collection<DevOpsTaskInfo> rebuildIndexes(Collection<IEntityClass> entityClasses, LocalDateTime start,
+                                                     LocalDateTime end) throws Exception {
+        List<DevOpsTaskInfo> devOps = new ArrayList<>();
+
+        for (IEntityClass entityClass : entityClasses) {
+            DefaultDevOpsTaskInfo devOpsTaskInfo = pending(entityClass, start, end);
+
+            logger.info("pending rebuildIndex task, maintainId {}, entityClass {}, start {}, end {}",
+                devOpsTaskInfo.id(), entityClass.id(), start, end
+            );
+
+            if (NULL_UPDATE != sqlTaskStorage.build(devOpsTaskInfo)) {
+                devOps.add(devOpsTaskInfo);
+            }
+        }
+
+        asyncThreadPool.submit(() -> {
+            devOps.forEach(
+                devOpsTaskInfo -> {
+                    try {
+                        //  执行主表更新
+                        int rebuildCount =
+                            masterStorage.rebuild(devOpsTaskInfo.getEntity(), devOpsTaskInfo.getMaintainid(),
+                                devOpsTaskInfo.getStarts(), devOpsTaskInfo.getEnds());
+
+                        if (rebuildCount > 0) {
+                            devOpsTaskInfo.setBatchSize(rebuildCount);
+                            devOpsTaskInfo.resetStatus(RUNNING.getCode());
+                            devOpsTaskInfo.resetMessage("TASK PROCESSING");
+                        } else {
+                            devOpsTaskInfo.setBatchSize(0);
+                            devOpsTaskInfo.resetStatus(DONE.getCode());
+                            devOpsTaskInfo.resetMessage("TASK END");
+                        }
+
+                        sqlTaskStorage.update(devOpsTaskInfo);
+
+                    } catch (Exception e) {
+                        devOpsTaskInfo.resetMessage(e.getMessage());
+                        try {
+                            sqlTaskStorage.error(devOpsTaskInfo);
+                        } catch (SQLException ex) {
+                            ex.printStackTrace();
+                        }
+                    }
+                }
+            );
+        });
+
+
+        return devOps;
+    }
+
+    @Override
     public DevOpsTaskInfo rebuildIndex(IEntityClass entityClass, LocalDateTime start, LocalDateTime end) throws Exception {
 
         //  init
@@ -123,6 +178,8 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
 
         return devOpsTaskInfo;
     }
+
+
 
     @Override
     public boolean cancel(long maintainId) throws Exception {
