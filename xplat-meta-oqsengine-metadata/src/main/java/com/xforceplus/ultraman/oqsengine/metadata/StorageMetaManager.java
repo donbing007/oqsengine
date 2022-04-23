@@ -671,7 +671,11 @@ public class StorageMetaManager implements MetaManager {
                 if (!profiles.isEmpty()) {
                     for (String profile : profiles) {
                         Optional<IEntityClass> ecOp = load(entityClassId, version, profile);
-                        ecOp.ifPresent(entityClassList::add);
+                        if (ecOp.isPresent()) {
+                            entityClassList.add(ecOp.get());
+                        } else {
+                            logger.warn("entity-profile [{}, {}] not found.", entityClassId, profiles);
+                        }
                     }
                 }
             } catch (Exception e) {

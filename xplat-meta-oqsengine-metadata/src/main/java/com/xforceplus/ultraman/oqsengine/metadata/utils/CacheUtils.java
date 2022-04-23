@@ -108,7 +108,8 @@ public class CacheUtils {
      * 为了兼容目前redis中的结构不抛NullPointException，需要对某些自增编号字段设默认值.
      */
     public static EntityField resetAutoFill(EntityField entityField) {
-        if (entityField.calculationType().equals(CalculationType.AUTO_FILL)) {
+        if (null != entityField.calculationType()
+            && entityField.calculationType().equals(CalculationType.AUTO_FILL)) {
             AutoFill autoFill = (AutoFill) entityField.config().getCalculation();
             if (autoFill.getDomainNoType() == null) {
                 autoFill.setDomainNoType(AutoFill.DomainNoType.NORMAL);
