@@ -30,7 +30,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -353,8 +352,6 @@ public class DefaultCalculationImpl implements Calculation {
 
         Timer.Sample allSample = Timer.start(Metrics.globalRegistry);
 
-        AtomicInteger scopeCount = new AtomicInteger(0);
-
         try {
             // 得到按优先级排序好的计算字段.并且过滤只处理改变的字段.
             Collection<IEntityField> calculationFields = parseChangeFields(context, false);
@@ -450,8 +447,6 @@ public class DefaultCalculationImpl implements Calculation {
 
                             Timer.Sample sample = Timer.start(Metrics.globalRegistry);
 
-                            scopeCount.incrementAndGet();
-
                             logic.scope(context, infuence);
 
                             processTimer(
@@ -478,7 +473,6 @@ public class DefaultCalculationImpl implements Calculation {
             return infuences;
 
         } finally {
-            logger.info("after function, scopeCount is : {}", scopeCount.get());
 
             processTimer(
                 null, allSample, MetricsDefine.CALCULATION_LOGIC_DELAY_LATENCY_SECONDS, "scope", false);
