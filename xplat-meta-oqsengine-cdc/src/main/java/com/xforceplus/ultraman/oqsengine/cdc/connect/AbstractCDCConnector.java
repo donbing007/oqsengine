@@ -133,4 +133,8 @@ public abstract class AbstractCDCConnector {
     public void setBatchSize(int batchSize) {
         this.batchSize = batchSize;
     }
+
+    public int getBatchSize() {
+        return batchSize;
+    }
 }

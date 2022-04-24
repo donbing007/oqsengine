@@ -297,6 +297,10 @@ public class FieldConfig implements Serializable {
         return calculation;
     }
 
+    public AbstractCalculation resetCalculation(AbstractCalculation calculation) {
+        return this.calculation = calculation;
+    }
+
     /**
      * 字符串:     最小字符个数.
      * 数字:       最小的数字.

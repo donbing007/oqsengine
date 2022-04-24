@@ -2,8 +2,6 @@ package com.xforceplus.ultraman.oqsengine.boot.grpc.devops;
 
 import com.xforceplus.ultraman.devops.service.sdk.annotation.DiscoverAction;
 import com.xforceplus.ultraman.devops.service.sdk.annotation.MethodParam;
-import com.xforceplus.ultraman.devops.service.sdk.config.context.AuthContext;
-import com.xforceplus.ultraman.devops.service.transfer.generate.Auth;
 import com.xforceplus.ultraman.oqsengine.boot.config.system.SystemInfoConfiguration;
 import com.xforceplus.ultraman.oqsengine.boot.grpc.utils.PrintErrorHelper;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.condition.CdcErrorQueryCondition;
@@ -22,12 +20,12 @@ import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -38,6 +36,8 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class SystemOpsService {
+
+    private final Logger logger = LoggerFactory.getLogger(SystemOpsService.class);
 
     private DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
 
@@ -273,8 +273,18 @@ public class SystemOpsService {
             Collection<IEntityClass> entityClasses = new ArrayList<>();
             entityClassIds.forEach(
                 entityClassId -> {
-                    Optional<IEntityClass> entityClassOp = metaManager.load(Long.parseLong(entityClassId), "");
-                    entityClassOp.ifPresent(entityClasses::add);
+                    Long classId = null;
+                    try {
+                        classId = Long.parseLong(entityClassId);
+                        Optional<IEntityClass> entityClassOp = metaManager.load(classId, "");
+                        if (entityClassOp.isPresent()) {
+                            entityClasses.add(entityClassOp.get());
+                        } else {
+                            logger.warn("entityClassId {} not match IEntityClass, will ignore... please check.", entityClassId);
+                        }
+                    } catch (Exception e) {
+                        logger.warn("entityClassId {} rebuild error, message {}, will ignore... please check.", entityClassId, e.getMessage());
+                    }
                 }
             );
 
