@@ -18,7 +18,7 @@ public class CDCDaemonServiceTest extends AbstractCDCTestHelper {
 
     private CDCDaemonService cdcDaemonService;
 
-    private boolean isTest = false;
+    private boolean isTest = true;
 
     private MockRedisCallbackService testCallbackService;
 

@@ -65,6 +65,7 @@ public abstract class AbstractCDCTestHelper extends AbstractContainerExtends {
         ReflectionTestUtils.setField(cdcDaemonService, "consumerService", CdcInitialization.getInstance().getConsumerService());
         ReflectionTestUtils.setField(cdcDaemonService, "cdcMetricsService", cdcMetricsService);
         ReflectionTestUtils.setField(cdcDaemonService, "abstractCdcConnector", CdcInitialization.getInstance().getSingleCDCConnector());
+        ReflectionTestUtils.setField(cdcDaemonService, "rebuildIndexExecutor", RebuildInitialization.getInstance().getTaskExecutor());
 
         return cdcDaemonService;
     }
