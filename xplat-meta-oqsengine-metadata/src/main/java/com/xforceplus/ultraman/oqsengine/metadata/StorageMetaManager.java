@@ -509,12 +509,12 @@ public class StorageMetaManager implements MetaManager {
         while (iterator.hasNext()) {
             Map.Entry<String, String> entry = iterator.next();
             if (entry.getKey().startsWith(ELEMENT_FIELDS + ".")) {
-                fields.add(CacheUtils.resetAutoFill(OBJECT_MAPPER.readValue(entry.getValue(), EntityField.class)));
+                fields.add(CacheUtils.resetCalculation(OBJECT_MAPPER.readValue(entry.getValue(), EntityField.class)));
             } else if (entry.getKey().startsWith(ELEMENT_PROFILES + "." + ELEMENT_FIELDS)) {
                 String key = parseOneKeyFromProfileEntity(entry.getKey());
                 if (key.equals(profile)) {
                     profileFound = true;
-                    fields.add(CacheUtils.resetAutoFill(OBJECT_MAPPER.readValue(entry.getValue(), EntityField.class)));
+                    fields.add(CacheUtils.resetCalculation(OBJECT_MAPPER.readValue(entry.getValue(), EntityField.class)));
                 }
             } else if (entry.getKey().startsWith(ELEMENT_PROFILES + "." + ELEMENT_RELATIONS)) {
                 if (!profile.equals(OqsProfile.UN_DEFINE_PROFILE)) {

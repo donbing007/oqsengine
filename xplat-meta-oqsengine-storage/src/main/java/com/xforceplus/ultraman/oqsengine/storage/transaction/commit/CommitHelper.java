@@ -11,6 +11,9 @@ public class CommitHelper {
 
     private static long UNCOMMIT_ID = Long.MAX_VALUE;
 
+    //  rebuild的维护COMMITID
+    private static final long MAINTAIN_COMMIT_ID = -1;
+
     /**
      * 校验提交号是否可用合法.
      * 是否可以用事务提交的提交号.
@@ -37,5 +40,9 @@ public class CommitHelper {
      */
     public static long getUncommitId() {
         return UNCOMMIT_ID;
+    }
+
+    public static long getMaintainCommitId() {
+        return MAINTAIN_COMMIT_ID;
     }
 }
