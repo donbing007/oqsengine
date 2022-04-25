@@ -48,7 +48,7 @@ public class DefaultBatchProcessor implements BatchProcessor {
 
             batchId = message.getId();
 
-            if (duration > MESSAGE_GET_WARM_INTERVAL && batchId != EMPTY_BATCH_ID) {
+            if (duration > MESSAGE_GET_WARM_INTERVAL) {
                 logger.info(
                     "[batchProcess] read message from canal server use too much times, use timeMs : {}, batchId : {}",
                     duration, message.getId());
