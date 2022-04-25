@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.cdc.testhelp.repo;
 import com.xforceplus.ultraman.oqsengine.cdc.testhelp.meta.EntityClassBuilder;
 import com.xforceplus.ultraman.oqsengine.cdc.testhelp.cases.DynamicCanalEntryCase;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper;
 
 /**
  * Created by justin.xu on 02/2022.
@@ -68,7 +69,7 @@ public class DynamicCanalEntryRepo {
         .withCreate(System.currentTimeMillis())
         .withUpdate(System.currentTimeMillis())
         .withTx(1)
-        .withCommitId(CDCConstant.MAINTAIN_COMMIT_ID)
+        .withCommitId(CommitHelper.getMaintainCommitId())
         .withAttr(AttributeRepo.attrs[2])
         .withEntityId(EntityClassBuilder.ENTITY_CLASS_2.id())
         .withProfile("");

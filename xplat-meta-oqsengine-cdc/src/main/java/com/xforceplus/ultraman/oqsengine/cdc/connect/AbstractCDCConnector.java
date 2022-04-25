@@ -32,7 +32,6 @@ public abstract class AbstractCDCConnector {
     protected String userName;
     protected String password;
 
-
     /**
      * 构造器.
      */
