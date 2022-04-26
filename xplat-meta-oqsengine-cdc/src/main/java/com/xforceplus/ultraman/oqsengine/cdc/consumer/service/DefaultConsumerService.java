@@ -70,7 +70,7 @@ public class DefaultConsumerService implements ConsumerService {
 
     @Timed(
         value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
-        extraTags = {"initiator", "cdc", "action", "cdc-consume"}
+        extraTags = {"initiator", "cdc", "action", "consume"}
     )
     @Override
     public CDCMetrics consumeOneBatch(List<CanalEntry.Entry> entries, long batchId, CDCMetrics cdcMetrics)
@@ -144,8 +144,8 @@ public class DefaultConsumerService implements ConsumerService {
         }
 
         //  等待isReady
-        if (!parseResult.getCommitIds().isEmpty()) {
-            cdcMetricsHandler.isReady(new ArrayList<>(parseResult.getCommitIds()));
+        if (!parseResult.isReadyCommitIds().isEmpty()) {
+            cdcMetricsHandler.isReady(new ArrayList<>(parseResult.isReadyCommitIds()));
         }
 
         //  批次数据整理完毕，开始执行index写操作。
@@ -156,12 +156,12 @@ public class DefaultConsumerService implements ConsumerService {
             } catch (Exception e) {
                 String message = String.format(
                     "write sphinx-batch error, commitIds : %s, startId : %s, message : %s",
-                            parseResult.getCommitIds(), parseResult.getStartId(), e.getMessage());
+                            parseResult.isReadyCommitIds(), parseResult.getStartId(), e.getMessage());
 
                 //  加入错误列表.
                 parseResult.addError(parseResult.getStartId(), parseResult.getFinishEntries().get(parseResult.getStartId()).getCommitid(),
                     CDCConstant.BATCH_WRITE_ERROR_POS,
-                    CommonUtils.toErrorCommitIdStr(parseResult.getCommitIds(), parserContext.getCdcMetrics().getCdcUnCommitMetrics().getUnCommitIds()),
+                    CommonUtils.toErrorCommitIdStr(parseResult.isReadyCommitIds(), parserContext.getCdcMetrics().getCdcUnCommitMetrics().getUnCommitIds()),
                     String.format("batch : %d consumer columns failed, %s", parserContext.getCdcMetrics().getBatchId(), message));
 
                 throw new SQLException(message);

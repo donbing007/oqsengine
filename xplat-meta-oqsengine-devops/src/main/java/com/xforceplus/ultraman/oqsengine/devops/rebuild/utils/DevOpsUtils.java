@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.devops.rebuild.utils;
 
-import com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper;
 
 /**
  * Created by justin.xu on 03/2022.
@@ -17,6 +17,6 @@ public class DevOpsUtils {
      * @return true/false.
      */
     public static boolean isMaintainRecord(long commitId) {
-        return commitId == CDCConstant.MAINTAIN_COMMIT_ID;
+        return commitId == CommitHelper.getMaintainCommitId();
     }
 }

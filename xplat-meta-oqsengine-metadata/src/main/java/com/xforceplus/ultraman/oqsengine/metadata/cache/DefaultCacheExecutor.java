@@ -328,11 +328,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
             throw new IllegalArgumentException("The upGradeLogKey keys is invalid.");
         }
 
-        cacheContext = new CacheContext(maxCacheSize, cacheExpireSeconds);
-    }
-
-    public void setPrepareExpire(int prepareExpire) {
-        this.prepareExpire = prepareExpire;
+        cacheContext = new CacheContext(this.maxCacheSize,  this.cacheExpire);
     }
 
     @PostConstruct
@@ -1169,6 +1165,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
                                 cacheContext.versionCache().put(id, version);
                             }
                         );
+
                     } catch (JsonProcessingException e) {
                         logger.warn("cache version json error, message : {}", e.getMessage());
                     }

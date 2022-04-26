@@ -53,8 +53,8 @@ public class DefaultConsumerServiceTest extends AbstractCdcHelper {
         final long expectedBatchId = 2001;
         final int expectedDevOpsSize = 1;
         final int expectedExecuteSize = 2;
-        final int expectedCommitIdSize = 2;
-        final int expectedUnCommitIdSize = 0;
+        final int expectedCommitIdSize = 1;     //  维护ID不在计入统计.
+        final int expectedUnCommitIdSize = 0;   //
 
         CDCMetrics cdcMetrics =
             CdcInitialization.getInstance().getConsumerService().consumeOneBatch(CanalEntryBuilder.initAll(expectedDynamic), expectedBatchId, new CDCMetrics());
@@ -73,7 +73,7 @@ public class DefaultConsumerServiceTest extends AbstractCdcHelper {
         final int expectedDevOpsSize = 1;
         final int expectedExecuteSize = 2;
         final int expectedCommitIdSize = 1;
-        final int expectedUnCommitIdSize = 1;
+        final int expectedUnCommitIdSize = 0;   //  维护ID不在加入统计
 
         Tuple2<List<CanalEntry.Entry>, CanalEntry.Entry> tuple2 = CanalEntryBuilder.initOverBatch(expectedDynamic);
 
@@ -96,7 +96,7 @@ public class DefaultConsumerServiceTest extends AbstractCdcHelper {
         Assertions.assertEquals(expectedBatchId, cdcMetricsOver.getBatchId());
         Assertions.assertEquals(0, cdcMetricsOver.getDevOpsMetrics().size());
         Assertions.assertEquals(0, cdcMetricsOver.getCdcAckMetrics().getExecuteRows());
-        Assertions.assertEquals(1, cdcMetricsOver.getCdcAckMetrics().getCommitList().size());
+        Assertions.assertEquals(0, cdcMetricsOver.getCdcAckMetrics().getCommitList().size());
         Assertions.assertEquals(0, cdcMetricsOver.getCdcUnCommitMetrics().getUnCommitIds().size());
     }
 

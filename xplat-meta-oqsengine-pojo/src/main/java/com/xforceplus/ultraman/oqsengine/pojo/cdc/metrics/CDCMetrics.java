@@ -100,11 +100,8 @@ public class CDCMetrics {
             this.cdcAckMetrics.setCommitList(temp.getCdcAckMetrics().getCommitList());
         }
 
-        if (temp.getCdcAckMetrics().getMaxSyncUseTime() > ZERO) {
-            this.cdcAckMetrics.setExecuteRows(temp.getCdcAckMetrics().getExecuteRows());
-            this.cdcAckMetrics.setMaxSyncUseTime(temp.getCdcAckMetrics().getMaxSyncUseTime());
-            this.cdcAckMetrics.setTotalUseTime(temp.getCdcAckMetrics().getTotalUseTime());
-        }
+        this.cdcAckMetrics.setExecuteRows(temp.getCdcAckMetrics().getExecuteRows());
+        this.cdcAckMetrics.setTotalUseTime(temp.getCdcAckMetrics().getTotalUseTime());
     }
 
     public void error(CDCStatus cdcStatus) {

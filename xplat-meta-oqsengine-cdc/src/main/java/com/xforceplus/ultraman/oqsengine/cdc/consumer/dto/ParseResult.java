@@ -45,7 +45,7 @@ public class ParseResult {
     /**
      * 需要checkReady的commitIds.
      */
-    private Set<Long> commitIds;
+    private Set<Long> isReadyCommitIds;
 
     /**
      * 清除.
@@ -53,7 +53,7 @@ public class ParseResult {
     public void clean() {
         finishEntries.clear();
         errors.clear();
-        commitIds.clear();
+        isReadyCommitIds.clear();
 
         //  pos重置为0
         pos = CDCConstant.START_POS;
@@ -68,7 +68,7 @@ public class ParseResult {
         this.pos = CDCConstant.START_POS;
         this.finishEntries = new LinkedHashMap<>();
         this.errors = new LinkedHashMap<>();
-        this.commitIds = new HashSet<>();
+        this.isReadyCommitIds = new HashSet<>();
     }
 
     public Map<Long, OqsEngineEntity> getFinishEntries() {
@@ -79,8 +79,8 @@ public class ParseResult {
         return errors;
     }
 
-    public Set<Long> getCommitIds() {
-        return commitIds;
+    public Set<Long> isReadyCommitIds() {
+        return isReadyCommitIds;
     }
 
     public int getPos() {

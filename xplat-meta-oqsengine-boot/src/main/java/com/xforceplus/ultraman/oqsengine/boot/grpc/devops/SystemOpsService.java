@@ -21,12 +21,12 @@ import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -37,6 +37,8 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class SystemOpsService {
+
+    private final Logger logger = LoggerFactory.getLogger(SystemOpsService.class);
 
     private DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
 
@@ -156,7 +158,6 @@ public class SystemOpsService {
         return ids;
     }
 
-
     /**
      * 清理提交号.
      *
@@ -164,16 +165,30 @@ public class SystemOpsService {
      * @return true成功, false失败.
      */
     @DiscoverAction(describe = "删除commitId", retClass = boolean.class)
-    public boolean removeCommitIds(@MethodParam(name = "ids", klass = Long[].class, required = true) Long[] ids) {
+    public boolean removeCommitIds(
+        @MethodParam(name = "ids", klass = List.class, inner = String.class, required = false) List<String> ids,
+        @MethodParam(name = "start", klass = Long.class, required = false) Long startId,
+        @MethodParam(name = "end", klass = Long.class, required = false) Long endId) {
         try {
-            if (null == ids || ids.length == 0) {
+
+            Long[] longIds = null;
+            if (null != ids && ids.size() > 0) {
+                longIds = ids.stream().map(Long::parseLong).toArray(Long[]::new);
+            } else if (null != startId && null != endId && endId > startId) {
+                longIds = new Long[(int) (endId - startId) + 1];
+                int j = 0;
+                for (long i = startId; i <= endId; i++) {
+                    longIds[j++] = i;
+                }
+            } else {
                 return false;
             }
-            devOpsManagementService.removeCommitIds(ids);
+
+            devOpsManagementService.removeCommitIds(longIds);
             return true;
         } catch (Exception e) {
             PrintErrorHelper.exceptionHandle(
-                String.format("removeCommitIds exception, [%s]", Arrays.stream(ids).collect(Collectors.toList())), e);
+                String.format("removeCommitIds exception, [%s]", ids), e);
         }
         return false;
     }
@@ -241,6 +256,51 @@ public class SystemOpsService {
         return null;
     }
 
+    /**
+     * 重建索引.
+     *
+     * @param entityClassIds 目标entityClassIds.
+     * @param start         开始时间.
+     * @param end           结束时间.
+     * @return 任务详情.
+     */
+    @DiscoverAction(describe = "重建索引", retClass = DevOpsTaskInfo.class)
+    public Collection<DevOpsTaskInfo> rebuildIndexes(
+        @MethodParam(name = "entityClassId", klass = List.class, inner = String.class, required = true) List<String> entityClassIds,
+        @MethodParam(name = "start", klass = String.class, required = true) String start,
+        @MethodParam(name = "end", klass = String.class, required = true) String end) {
+        try {
+            Collection<IEntityClass> entityClasses = new ArrayList<>();
+            entityClassIds.forEach(
+                entityClassId -> {
+                    Long classId = null;
+                    try {
+                        classId = Long.parseLong(entityClassId);
+                        Optional<IEntityClass> entityClassOp = metaManager.load(classId, "");
+                        if (entityClassOp.isPresent()) {
+                            entityClasses.add(entityClassOp.get());
+                        } else {
+                            logger.warn("entityClassId {} not match IEntityClass, will ignore... please check.", entityClassId);
+                        }
+                    } catch (Exception e) {
+                        logger.warn("entityClassId {} rebuild error, message {}, will ignore... please check.", entityClassId, e.getMessage());
+                    }
+                }
+            );
+
+            if (entityClasses.size() > 0) {
+                return devOpsManagementService.rebuildIndexes(entityClasses,
+                    LocalDateTime.parse(start, dateTimeFormatter),
+                    LocalDateTime.parse(end, dateTimeFormatter));
+            }
+            return null;
+        } catch (Exception e) {
+            PrintErrorHelper.exceptionHandle(String.format("rebuildIndex exception, [%s-%s-%s]",
+                entityClassIds, start, end), e);
+        }
+        return null;
+    }
+
 
     /**
      * 重建索引任务列表页查询.
@@ -292,6 +352,24 @@ public class SystemOpsService {
         }
 
         return null;
+    }
+
+    /**
+     * 取消任务.
+     *
+     * @param taskId 任务标识.
+     * @return true取消成功, false取消失败.
+     */
+    @DiscoverAction(describe = "取消任务", retClass = boolean.class)
+    public boolean cancel(
+        @MethodParam(name = "taskId", klass = String.class, required = true) String taskId) {
+        try {
+            devOpsManagementService.cancel(taskId);
+            return true;
+        } catch (Exception e) {
+            PrintErrorHelper.exceptionHandle(String.format("cancel task exception, [%s]", taskId), e);
+        }
+        return false;
     }
 
     /**

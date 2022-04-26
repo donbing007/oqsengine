@@ -7,6 +7,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.master.utils.EntityClassHelper;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import javax.sql.DataSource;
@@ -57,7 +58,7 @@ public class DevOpsRebuildExecutor implements Executor<IEntityClass, Integer> {
 
             st.setLong(1, System.currentTimeMillis());
             st.setLong(2, maintainId);
-            st.setLong(3, CDCConstant.MAINTAIN_COMMIT_ID);
+            st.setLong(3, CommitHelper.getMaintainCommitId());
             st.setInt(4, OperationType.UPDATE.getValue());
             st.setLong(5, startTime);
             st.setLong(6, endTime);

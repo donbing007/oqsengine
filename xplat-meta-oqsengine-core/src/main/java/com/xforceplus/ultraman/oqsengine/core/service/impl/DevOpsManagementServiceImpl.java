@@ -69,6 +69,12 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
     }
 
     @Override
+    public Collection<DevOpsTaskInfo> rebuildIndexes(Collection<IEntityClass> entityClasses, LocalDateTime start, LocalDateTime end)
+        throws Exception {
+        return devOpsRebuildIndexExecutor.rebuildIndexes(entityClasses, start, end);
+    }
+
+    @Override
     public Collection<DevOpsTaskInfo> listActiveTasks(Page page) throws SQLException {
         Collection<TaskHandler> collections = devOpsRebuildIndexExecutor.listActiveTasks(page);
         if (collections.isEmpty()) {

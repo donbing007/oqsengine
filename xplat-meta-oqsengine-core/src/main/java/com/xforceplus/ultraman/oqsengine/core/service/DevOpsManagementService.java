@@ -33,6 +33,17 @@ public interface DevOpsManagementService {
         throws Exception;
 
     /**
+     * 重建索引.
+     *
+     * @param entityClasses 需要重建的EntityClasses
+     * @param start       开始时间
+     * @param end         结束时间
+     * @return IDevOpsTaskInfo 当前任务信息
+     * @throws Exception 执行发生异常.
+     */
+    Collection<DevOpsTaskInfo> rebuildIndexes(Collection<IEntityClass> entityClasses, LocalDateTime start, LocalDateTime end) throws Exception;
+
+    /**
      * 看出当前活动状态下的任务列表.
      *
      * @param page 翻页对象
