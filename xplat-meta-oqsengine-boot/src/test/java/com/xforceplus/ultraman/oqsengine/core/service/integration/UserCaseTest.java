@@ -1346,4 +1346,35 @@ public class UserCaseTest {
         transactionManager.finish();
 
     }
+
+    /**
+     * 测试多值字符串,相同数量更新.
+     */
+    @Test
+    public void testStringsUpdate() throws Exception {
+        IEntity entity = Entity.Builder.anEntity()
+            .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
+            .withValue(
+                new StringsValue(
+                    MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-strings").get(), "a", "b")
+            ).build();
+        Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
+
+        // 重新加载.
+        entity = entitySearchService.selectOne(
+            entity.id(), MockEntityClassDefine.L2_ENTITY_CLASS.ref()).getValue().get();
+
+        // 相同数量更新
+        entity.entityValue().addValue(
+            new StringsValue(
+                MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-strings").get(), "a", "c")
+        );
+        Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.replace(entity).getResultStatus());
+
+        // 重新加载.
+        entity = entitySearchService.selectOne(
+            entity.id(), MockEntityClassDefine.L2_ENTITY_CLASS.ref()).getValue().get();
+
+        Assertions.assertEquals("a,c", entity.entityValue().getValue("l2-strings").get().valueToString());
+    }
 }

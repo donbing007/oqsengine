@@ -230,7 +230,7 @@ public class CommonConfiguration {
             0L, TimeUnit.MILLISECONDS,
             new ArrayBlockingQueue<>(useQueue),
             ExecutorHelper.buildNameThreadFactory(namePrefix, daemon),
-            new ThreadPoolExecutor.CallerRunsPolicy()
+            new ThreadPoolExecutor.AbortPolicy()
         );
     }
 

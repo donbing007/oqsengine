@@ -95,6 +95,7 @@ public class MockEntityClassDefine {
         l1LongFieldId,
         l1StringFieldId,
         l2StringFieldId,
+        l2StringsFieldId,
         l2TimeFieldId,
         l2EnumFieldId,
         l2DecFieldId,
@@ -268,6 +269,11 @@ public class MockEntityClassDefine {
             .withId(l2EntityClassId)
             .withLevel(2)
             .withCode("l2")
+            .withField(EntityField.Builder.anEntityField()
+                .withId(Long.MAX_VALUE - FieldId.l2StringsFieldId.ordinal())
+                .withFieldType(FieldType.STRINGS)
+                .withName("l2-strings")
+                .withConfig(FieldConfig.Builder.anFieldConfig().withLen(100).withSearchable(true).build()).build())
             .withField(EntityField.Builder.anEntityField()
                 .withId(Long.MAX_VALUE - FieldId.l2StringFieldId.ordinal())
                 .withFieldType(FieldType.STRING)
