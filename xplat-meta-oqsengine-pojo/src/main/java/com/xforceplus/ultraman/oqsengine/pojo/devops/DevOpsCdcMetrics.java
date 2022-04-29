@@ -28,6 +28,14 @@ public class DevOpsCdcMetrics {
         this.fails = fails;
     }
 
+    public void addFails(int fails) {
+        this.fails += fails;
+    }
+
+    public void addSuccess(int success) {
+        this.success += success;
+    }
+
     /**
      * 根据标记位确定成功/失败 +1.
      */
