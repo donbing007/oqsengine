@@ -6,7 +6,6 @@ import static com.xforceplus.ultraman.oqsengine.devops.rebuild.constant.Constant
 import static com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.BatchStatus.DONE;
 import static com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.BatchStatus.ERROR;
 import static com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.BatchStatus.RUNNING;
-import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.DEFAULT_BATCH_SIZE;
 
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
@@ -21,7 +20,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
-import io.vavr.Tuple2;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -33,10 +31,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -71,14 +67,9 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
 
     private ExecutorService asyncThreadPool;
 
-    //  最小的check数，即cdc一次同步批次的最大数
-    private long doubleCheckDistance = DEFAULT_BATCH_SIZE;
-
     private PollingThreadExecutor executor;
 
     private Map<Long, List<DevOpsCdcMetrics>> tasks;
-
-    private static final int MAX_QUEUE_SIZE = 1048 * 100;
 
     /**
      * construct.
@@ -94,7 +85,7 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
         executor = new PollingThreadExecutor(
             "taskHandler",
             10,
-            TimeUnit.MILLISECONDS, 10,
+            TimeUnit.MILLISECONDS, 5,
             (n) -> taskUpdate(),
             null);
 
@@ -242,81 +233,96 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
     //  提交到异步执行.
     private void taskUpdate() {
         Set<Long> keys = tasks.keySet();
+
+        if (keys.isEmpty()) {
+            return;
+        }
+
         keys.forEach(
             key -> {
                 List<DevOpsCdcMetrics> internalTasks = tasks.remove(key);
-                asyncThreadPool.submit(
-                    () -> {
-                        internalTasks.forEach(
-                            task -> {
-                                Optional<DevOpsTaskInfo> devOpsTaskInfoOp = null;
+                if (null != internalTasks && !internalTasks.isEmpty()) {
+                    //  合并数据.
+                    DevOpsCdcMetrics devOps = metricsMerge(internalTasks);
+
+                    Optional<DevOpsTaskInfo> devOpsTaskInfoOp;
+                    try {
+                        devOpsTaskInfoOp = sqlTaskStorage.selectUnique(key);
+                    } catch (SQLException ex) {
+                        logger.warn("query task exception, maintainId {}.", key);
+                        return;
+                    }
+
+                    if (devOpsTaskInfoOp.isPresent()) {
+                        DevOpsTaskInfo dt = devOpsTaskInfoOp.get();
+                        if (dt.isEnd()) {
+                            if (dt.isDone() && dt.getStatus() != DONE.getCode()) {
                                 try {
-                                    devOpsTaskInfoOp = sqlTaskStorage.selectUnique(key);
-                                } catch (SQLException ex) {
-                                    logger.warn("query task exception, maintainId {}.", key);
-                                    return;
-                                }
-
-                                if (devOpsTaskInfoOp.isPresent()) {
-                                    DevOpsTaskInfo dt = devOpsTaskInfoOp.get();
-                                    if (dt.isEnd()) {
-                                        if (dt.isDone() && dt.getStatus() != DONE.getCode()) {
-                                            try {
-                                                done(dt);
-                                            } catch (Exception e) {
-                                                logger.warn("done task exception, maintainId {}, message {}.", key, e.getMessage());
-                                            }
-                                        }
-                                        return;
-                                    }
-
-                                    boolean needUpdate = false;
-
-                                    if (task.getSuccess() > 0) {
-                                        needUpdate = true;
-                                        dt.resetIncrementSize(task.getSuccess());
-
-                                        //  完成数量
-                                        dt.addFinishSize(task.getSuccess());
-                                    }
-
-                                    if (task.getFails() > 0) {
-                                        needUpdate = true;
-                                        dt.addErrorSize(task.getFails());
-                                    }
-
-                                    if (needUpdate) {
-                                        //  任务存在失败数据.
-                                        if (dt.getErrorSize() > 0) {
-                                            try {
-                                                dt.resetMessage("task end with error.");
-                                                sqlTaskStorage.error(dt);
-                                            } catch (SQLException ex) {
-                                                logger.warn("do task-error exception, maintainId {}.", dt.getMaintainid());
-                                            }
-                                        } else {
-                                            try {
-                                                //  任务已完成.
-                                                long distance = dt.getBatchSize() - dt.getFinishSize();
-
-                                                if (distance <= 0) {
-                                                    done(dt);
-                                                } else {
-                                                    dt.resetStatus(RUNNING.getCode());
-                                                    sqlTaskStorage.update(dt);
-                                                }
-                                            } catch (SQLException ex) {
-                                                logger.warn("do task-update exception, maintainId {}.", dt.getMaintainid());
-                                            }
-                                        }
-                                    }
+                                    done(dt);
+                                } catch (Exception e) {
+                                    logger.warn("done task exception, maintainId {}, message {}.", key,
+                                        e.getMessage());
                                 }
                             }
-                        );
+                            return;
+                        }
+
+                        boolean needUpdate = false;
+
+                        if (devOps.getSuccess() > 0) {
+                            needUpdate = true;
+                            dt.resetIncrementSize(devOps.getSuccess());
+
+                            //  完成数量
+                            dt.addFinishSize(devOps.getSuccess());
+                        }
+
+                        if (devOps.getFails() > 0) {
+                            needUpdate = true;
+                            dt.addErrorSize(devOps.getFails());
+                        }
+
+                        if (needUpdate) {
+                            //  任务存在失败数据.
+                            if (dt.getErrorSize() > 0) {
+                                try {
+                                    dt.resetMessage("task end with error.");
+                                    sqlTaskStorage.error(dt);
+                                } catch (SQLException ex) {
+                                    logger.warn("do task-error exception, maintainId {}.",
+                                        dt.getMaintainid());
+                                }
+                            } else {
+                                try {
+                                    //  任务已完成.
+                                    if (dt.getBatchSize() - dt.getFinishSize() <= 0) {
+                                        done(dt);
+                                    } else {
+                                        dt.resetStatus(RUNNING.getCode());
+                                        sqlTaskStorage.update(dt);
+                                    }
+                                } catch (SQLException ex) {
+                                    logger.warn("do task-update exception, maintainId {}.",
+                                        dt.getMaintainid());
+                                }
+                            }
+                        }
                     }
-                );
+                }
             }
         );
+    }
+
+    private DevOpsCdcMetrics metricsMerge(List<DevOpsCdcMetrics> devOpsCdcMetrics) {
+        DevOpsCdcMetrics devOps = new DevOpsCdcMetrics();
+        devOpsCdcMetrics.forEach(
+            devOpsMetric -> {
+                devOps.addFails(devOps.getFails());
+                devOps.addSuccess(devOps.getSuccess());
+            }
+        );
+
+        return devOps;
     }
 
     @Override
