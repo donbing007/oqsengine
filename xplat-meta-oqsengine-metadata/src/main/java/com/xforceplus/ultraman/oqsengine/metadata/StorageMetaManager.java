@@ -392,9 +392,8 @@ public class StorageMetaManager implements MetaManager {
      * @return 版本号.
      */
     private int waitForMetaSync(String appId) {
+        int ver = NOT_EXIST_VERSION;
         try {
-            int ver;
-
             /*
              * 这里每10毫秒获取一次当前版本、直到获取到版本或者超时
              */
@@ -407,14 +406,19 @@ public class StorageMetaManager implements MetaManager {
                         break;
                     }
                 } else {
-                    return ver;
+                    break;
                 }
             }
-            return NOT_EXIST_VERSION;
         } catch (Exception e) {
             logger.warn(e.getMessage());
             throw e;
         }
+
+        if (ver <= NOT_EXIST_VERSION) {
+            throw new RuntimeException(
+                String.format("get version of appId [%s] failed, reach max wait time", appId));
+        }
+        return ver;
     }
 
     /**
