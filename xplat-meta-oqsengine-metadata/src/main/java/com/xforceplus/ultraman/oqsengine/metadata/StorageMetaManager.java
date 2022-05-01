@@ -56,10 +56,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -87,18 +84,14 @@ public class StorageMetaManager implements MetaManager {
     @Resource(name = "grpcSyncExecutor")
     private SyncExecutor syncExecutor;
 
-    @Resource(name = "taskThreadPool")
-    private ExecutorService asyncDispatcher;
-
     private AbstractMetaModel metaModel;
+
+    private static int NEED_MAX_WAIT_LOOPS = 60;
 
     public StorageMetaManager(AbstractMetaModel metaModel) {
         this.metaModel = metaModel;
     }
 
-    private <T> CompletableFuture<T> async(Supplier<T> supplier) {
-        return CompletableFuture.supplyAsync(supplier, asyncDispatcher);
-    }
 
     @PostConstruct
     public void init() {
@@ -206,7 +199,7 @@ public class StorageMetaManager implements MetaManager {
                     requestHandler.register(watchElement);
                 }
 
-                if (version <= NOT_EXIST_VERSION) {
+                if (reset || version <= NOT_EXIST_VERSION) {
                     version = waitForMetaSync(appId);
                 }
             } else {
@@ -324,9 +317,7 @@ public class StorageMetaManager implements MetaManager {
 
                 cacheExecutor.appEnvRemove(appId);
 
-                need(appId, env, true);
-
-                version = waitForMetaSync(appId);
+                version = need(appId, env, true);
             }
 
             return version;
@@ -401,16 +392,17 @@ public class StorageMetaManager implements MetaManager {
      * @return 版本号.
      */
     private int waitForMetaSync(String appId) {
-        CompletableFuture<Integer> future = async(() -> {
+        try {
             int ver;
+
             /*
              * 这里每10毫秒获取一次当前版本、直到获取到版本或者超时
              */
-            while (true) {
+            for (int i = 0; i < NEED_MAX_WAIT_LOOPS; i++) {
                 ver = cacheExecutor.version(appId);
-                if (ver < 0) {
+                if (ver <= NOT_EXIST_VERSION) {
                     try {
-                        Thread.sleep(10);
+                        Thread.sleep(1_000);
                     } catch (InterruptedException e) {
                         break;
                     }
@@ -419,18 +411,9 @@ public class StorageMetaManager implements MetaManager {
                 }
             }
             return NOT_EXIST_VERSION;
-        });
-
-        try {
-            int version = future.get(COMMON_WAIT_TIME_OUT, TimeUnit.MILLISECONDS);
-            if (version == NOT_EXIST_VERSION) {
-                throw new RuntimeException(
-                    String.format("get version of appId [%s] failed, reach max wait time", appId));
-            }
-            return version;
-        } catch (InterruptedException | ExecutionException | TimeoutException e) {
+        } catch (Exception e) {
             logger.warn(e.getMessage());
-            throw new RuntimeException(e.getMessage());
+            throw e;
         }
     }
 
