@@ -7,6 +7,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.SqlKeywordDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLHelper;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.AbstractSphinxQLConditionBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
@@ -50,18 +51,44 @@ public class MeqNotMatchConditionBuilder extends AbstractSphinxQLConditionBuilde
                     break;
                 }
                 default: {
-                    buff.append(FieldDefine.ATTRIBUTE).append(".").append(storageValue.shortStorageName().toString());
+                    // nothing.
                 }
             }
         }
-        buff.append(" IN (");
-        buff.append(buildConditionValue(storageValue, storageStrategy));
 
-        Arrays.stream(condition.getValues()).skip(1).map(v -> storageStrategy.toStorageValue(v)).forEach(s -> {
-            buff.append(",").append(buildConditionValue(s, storageStrategy));
-        });
+        if (StorageType.STRING == storageStrategy.storageType()) {
+            /*
+            字符串由于manticore不支持 in 过滤,所以这里选择使用OR连接.
+             */
+            buff.append("(");
 
-        buff.append(")");
+            // 首个
+            buff.append(FieldDefine.ATTRIBUTE).append(".").append(storageValue.shortStorageName().toString())
+                .append(" = ")
+                .append(buildConditionValue(storageValue, storageStrategy));
+
+            Arrays.stream(condition.getValues()).skip(1).map(v -> storageStrategy.toStorageValue(v)).forEach(s -> {
+                buff.append(" ")
+                    .append(SqlKeywordDefine.OR)
+                    .append(" ")
+                    .append(FieldDefine.ATTRIBUTE).append(".").append(storageValue.shortStorageName().toString())
+                    .append(" = ").append(buildConditionValue(s, storageStrategy));
+            });
+
+            buff.append(")");
+
+        } else {
+            buff.append(FieldDefine.ATTRIBUTE).append(".").append(storageValue.shortStorageName().toString());
+
+            buff.append(" IN (");
+            buff.append(buildConditionValue(storageValue, storageStrategy));
+
+            Arrays.stream(condition.getValues()).skip(1).map(v -> storageStrategy.toStorageValue(v)).forEach(s -> {
+                buff.append(",").append(buildConditionValue(s, storageStrategy));
+            });
+
+            buff.append(")");
+        }
 
         return buff.toString();
     }
