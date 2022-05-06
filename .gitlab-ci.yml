@@ -1,4 +1,4 @@
-image: registry.cn-hangzhou.aliyuncs.com/xforceplus/cibase-new:0.0.2
+image: registry.cn-hangzhou.aliyuncs.com/xforceplus/cibase-new:0.0.3
 
 
 stages:
