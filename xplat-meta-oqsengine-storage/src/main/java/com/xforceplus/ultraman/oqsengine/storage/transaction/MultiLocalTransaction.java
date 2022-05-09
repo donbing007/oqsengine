@@ -160,6 +160,10 @@ public class MultiLocalTransaction implements Transaction {
                         }
                     }
 
+                    /*
+                    以下会对提交号进行操作,要尽可能保证不能阻塞.
+                    因为主库已经提交,对象信息已经生效.单个对象的查询已经可以找到最新值.
+                    */
                     commitIdStatusService.save(commitId, true);
 
                     /*

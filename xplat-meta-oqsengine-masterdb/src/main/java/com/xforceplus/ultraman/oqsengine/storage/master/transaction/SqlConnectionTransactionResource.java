@@ -55,23 +55,17 @@ public class SqlConnectionTransactionResource extends AbstractConnectionTransact
 
     // 当前所有事务的所有写记录都更新成最新的提交号.
     private void updateCommitId(long txId, long commitId) throws SQLException {
-        PreparedStatement stat = null;
-        try {
-            stat = value().prepareStatement(updateCommitIdSql);
+        try (PreparedStatement stat = value().prepareStatement(updateCommitIdSql)) {
             stat.setLong(1, commitId);
             stat.setLong(2, txId);
 
             stat.executeUpdate();
 
             if (logger.isDebugEnabled()) {
-                logger.debug("Update the commit number in the new change data in the transaction ({}) to {}.",
-                    txId, commitId);
+                logger.debug("Update the commit number in the new change data in the transaction ({}) to {}.", txId,
+                    commitId);
             }
-        } finally {
-            if (stat != null) {
-                stat.close();
-            }
-        }
 
+        }
     }
 }
