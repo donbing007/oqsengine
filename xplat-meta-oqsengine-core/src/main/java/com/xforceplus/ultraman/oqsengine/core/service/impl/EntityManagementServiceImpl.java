@@ -365,7 +365,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     calculationContext.focusSourceEntity(currentEntity);
                     calculationContext.focusEntity(currentEntity, currentEntityClass);
                     calculation.calculate(calculationContext);
-                    setValueChange(calculationContext, Optional.of(currentEntity), Optional.empty());
+                    setValueChange(calculationContext, currentEntity, null);
 
                     verify = verifyFields(currentEntityClass, currentEntity);
                     if (VerifierResult.OK != verify.getKey()) {
@@ -493,7 +493,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 calculationContext.focusSourceEntity(entity);
                 calculationContext.focusEntity(entity, entityClass);
                 IEntity currentEntity = calculation.calculate(calculationContext);
-                setValueChange(calculationContext, Optional.of(currentEntity), Optional.empty());
+                setValueChange(calculationContext, currentEntity, null);
 
                 Map.Entry<VerifierResult, IEntityField> verify = verifyFields(entityClass, currentEntity);
                 if (VerifierResult.OK != verify.getKey()) {
@@ -714,8 +714,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                             calculationContext.focusSourceEntity(newEntity);
                             calculationContext.focusEntity(newEntity, entityClass);
                             newEntity = calculation.calculate(calculationContext);
-                            setValueChange(calculationContext,
-                                Optional.ofNullable(replaceEntity), Optional.ofNullable(newEntity));
+                            setValueChange(calculationContext, newEntity, oldEntity);
 
                             replacePayload.addChange(oldEntity,
                                 newEntity.entityValue().values().stream()
@@ -917,7 +916,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     calculationContext.focusSourceEntity(newEntity);
                     calculationContext.focusEntity(newEntity, entityClass);
                     newEntity = calculation.calculate(calculationContext);
-                    setValueChange(calculationContext, Optional.of(newEntity), Optional.of(oldEntity));
+                    setValueChange(calculationContext, newEntity, oldEntity);
 
                     Map.Entry<VerifierResult, IEntityField> verifyResult = verifyFields(entityClass, newEntity);
                     if (VerifierResult.OK != verifyResult.getKey()) {
@@ -1075,15 +1074,11 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 try {
                     IEntity targetEntity;
                     IEntityClass entityClass;
-                    for (int i = 0; i < targetEntities.size(); i++) {
-                        targetEntity = targetEntities.get(i);
-                        entityClass = entityClassTable.get(targetEntity.entityClassRef().getId());
-                        setValueChange(calculationContext, Optional.empty(), Optional.of(targetEntities.get(i)));
-                    }
 
                     EntityPackage entityPackage = new EntityPackage();
                     for (int i = 0; i < targetEntities.size(); i++) {
                         targetEntity = targetEntities.get(i);
+                        setValueChange(calculationContext, null, targetEntity);
                         entityClass = entityClassTable.get(targetEntity.entityClassRef().getId());
                         entityPackage.put(targetEntity, entityClass, false);
                     }
@@ -1219,7 +1214,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     calculationContext.focusTx(tx);
                     calculationContext.focusSourceEntity(targetEntity);
                     calculationContext.focusEntity(targetEntity, entityClass);
-                    setValueChange(calculationContext, Optional.empty(), Optional.of(targetEntity));
+                    setValueChange(calculationContext, null, targetEntity);
 
                     // 主操作
                     masterStorage.delete(targetEntity, entityClass);
@@ -1431,31 +1426,33 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             .build();
     }
 
-    // 设置改变的值.
+    /**
+     * 设置当前操作造成的值改变.
+     *
+     * @param context 当前计算上下文.
+     * @param newEntity 变更后的实例,没有需要设置为null.
+     * @param oldEntity 变更前的实例,没有需要设置为null.
+     */
     private void setValueChange(
-        CalculationContext context, Optional<IEntity> newEntityOp, Optional<IEntity> oldEntityOp) {
-        if (!newEntityOp.isPresent() && !oldEntityOp.isPresent()) {
+        CalculationContext context, IEntity newEntity, IEntity oldEntity) {
+        if (newEntity == null && oldEntity == null) {
             return;
         }
 
-        if (newEntityOp.isPresent() && !oldEntityOp.isPresent()) {
+        if (newEntity != null && oldEntity == null) {
             // build
-            IEntity newEntity = newEntityOp.get();
             newEntity.entityValue().scan(v -> {
                 IEntityField field = v.getField();
                 context.addValueChange(ValueChange.build(newEntity.id(), new EmptyTypedValue(field), v));
             });
-        } else if (!newEntityOp.isPresent() && oldEntityOp.isPresent()) {
+        } else if (newEntity == null && oldEntity != null) {
             // delete
-            IEntity oldEntity = oldEntityOp.get();
             oldEntity.entityValue().scan(v -> {
                 IEntityField field = v.getField();
                 context.addValueChange(ValueChange.build(oldEntity.id(), v, new EmptyTypedValue(field)));
             });
         } else {
             // replace
-            IEntity oldEntity = oldEntityOp.get();
-            IEntity newEntity = newEntityOp.get();
             IValue oldValue;
             IEntityField field;
             for (IValue newValue : newEntity.entityValue().values()) {
