@@ -94,8 +94,6 @@ public class DiscoverRemoteServiceTest {
                 cacheExecutor);
             ReflectionUtils.reflectionFieldValue(cacheFields, "syncExecutor", metaManager,
                 MetaInitialization.getInstance().getEntityClassSyncExecutor());
-            ReflectionUtils.reflectionFieldValue(cacheFields, "asyncDispatcher", metaManager,
-                CommonInitialization.getInstance().getRunner());
 
             Collection<Field> discoverFields = ReflectionUtils.printAllMembers(discoverDevOpsService);
             ReflectionUtils.reflectionFieldValue(discoverFields, "metaManager", discoverDevOpsService, metaManager);
