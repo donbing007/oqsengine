@@ -50,6 +50,8 @@ annotations:
 # -XX:+UseG1GC  使用G1 GC.
 # -XX:MaxGCPauseMillis=200 最大GC停顿时间为200毫秒(尽量)
 # -XX:ParallelGCThreads=4 可用以GC的线程数量,建议和CPU数量一致.
+# -XX:ConcGCThreads=4 可用以GC的线程数量,和ParallelGCThreads只是处于GC不同阶段时使用.
+# 上述两项不设计后,JVM将使用启发式的方法动态调整,只有当效果不好时才指定.
 # -XX:+UseCompressedOops 启用压缩指针
 # -XX:+UseStringDeduplication 启用字符串重复合并, 减少堆空间占用.
 # -XX:ReservedCodeCacheSize=256m JIT编译的代码储存空间.
@@ -64,11 +66,8 @@ jvm:
   - -server
   - -Xms4096M
   - -Xmx4096M
-  - -XX:+UseG1GC
-  - -XX:MaxGCPauseMillis=200
-  - -XX:ParallelGCThreads=4
+  - -XX:+UseZGC
   - -XX:+UseCompressedOops
-  - -XX:+UseStringDeduplication
   - -XX:ReservedCodeCacheSize=256m
   - -XX:+UseTLAB
   - -XX:+ZeroTLAB
