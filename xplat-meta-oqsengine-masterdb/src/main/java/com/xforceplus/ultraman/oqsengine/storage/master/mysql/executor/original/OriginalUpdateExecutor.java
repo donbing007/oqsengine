@@ -100,7 +100,17 @@ public class OriginalUpdateExecutor extends
                     );
                 }
 
-                sql.append(origianlName.get()).append(" = ").append(agent.plainText(field, attributes.get(field)));
+                sql.append(origianlName.get()).append(" = ");
+
+                StorageValue data = attributes.get(field);
+                if (data.isEmpty()) {
+                    // 表示需要删除
+                    sql.append("null");
+                } else {
+
+                    sql.append(agent.plainText(field, attributes.get(field)));
+
+                }
             } else {
 
                 Optional<String> typeName = TypesUtils.name(field.config().getJdbcType());

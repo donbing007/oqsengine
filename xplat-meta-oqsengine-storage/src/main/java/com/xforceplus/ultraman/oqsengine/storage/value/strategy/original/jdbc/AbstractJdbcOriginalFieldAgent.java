@@ -7,6 +7,8 @@ import com.xforceplus.ultraman.oqsengine.storage.value.strategy.original.jdbc.he
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.original.jdbc.helper.WriteJdbcOriginalSource;
 import java.sql.SQLException;
 import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 抽像的JDBC代理实现.
@@ -16,6 +18,8 @@ import java.util.Optional;
  * @since 1.8
  */
 public abstract class AbstractJdbcOriginalFieldAgent implements JdbcOriginalFieldAgent {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractJdbcOriginalFieldAgent.class);
 
     @Override
     public StorageValue read(IEntityField field, ReadJdbcOriginalSource rs) throws Exception {
@@ -37,6 +41,8 @@ public abstract class AbstractJdbcOriginalFieldAgent implements JdbcOriginalFiel
             return doRead(field, rs);
 
         } catch (SQLException ex) {
+
+            LOGGER.warn(ex.getMessage(), ex);
 
             return doReadNothing(field);
         }
@@ -66,8 +72,8 @@ public abstract class AbstractJdbcOriginalFieldAgent implements JdbcOriginalFiel
      * 写入默认值.
      *
      * @param field 目标字段.
-     * @param s 默认值.由子类解释.
-     * @param ws 写入源.
+     * @param s     默认值.由子类解释.
+     * @param ws    写入源.
      */
     protected abstract void doWriteDefault(IEntityField field, String s, WriteJdbcOriginalSource ws) throws Exception;
 
@@ -75,8 +81,8 @@ public abstract class AbstractJdbcOriginalFieldAgent implements JdbcOriginalFiel
      * 写入原生类型.
      *
      * @param field 目标字段.
-     * @param data OQS储存表示.
-     * @param ws 写入源.
+     * @param data  OQS储存表示.
+     * @param ws    写入源.
      */
     protected abstract void doWrite(IEntityField field, StorageValue data, WriteJdbcOriginalSource ws) throws Exception;
 
@@ -84,7 +90,7 @@ public abstract class AbstractJdbcOriginalFieldAgent implements JdbcOriginalFiel
      * 实际读取实现.
      *
      * @param field 目标OQSEngine字段.
-     * @param rs JDBC数据读取器.
+     * @param rs    JDBC数据读取器.
      * @return 物理储存值.
      * @throws Exception 异常.
      */

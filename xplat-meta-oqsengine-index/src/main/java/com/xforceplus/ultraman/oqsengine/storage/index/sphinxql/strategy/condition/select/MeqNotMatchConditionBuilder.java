@@ -34,28 +34,6 @@ public class MeqNotMatchConditionBuilder extends AbstractSphinxQLConditionBuilde
         StorageValue storageValue = storageStrategy.toStorageValue(firstValue);
         StringBuilder buff = new StringBuilder();
 
-        FieldConfig fieldConfig = condition.getField().config();
-        if (fieldConfig.isIdentifie()) {
-
-            buff.append(FieldDefine.ID);
-
-        } else {
-
-            switch (fieldConfig.getFieldSense()) {
-                case CREATE_TIME: {
-                    buff.append(FieldDefine.CREATE_TIME);
-                    break;
-                }
-                case UPDATE_TIME: {
-                    buff.append(FieldDefine.UPDATE_TIME);
-                    break;
-                }
-                default: {
-                    // nothing.
-                }
-            }
-        }
-
         if (StorageType.STRING == storageStrategy.storageType()) {
             /*
             字符串由于manticore不支持 in 过滤,所以这里选择使用OR连接.
@@ -78,7 +56,28 @@ public class MeqNotMatchConditionBuilder extends AbstractSphinxQLConditionBuilde
             buff.append(")");
 
         } else {
-            buff.append(FieldDefine.ATTRIBUTE).append(".").append(storageValue.shortStorageName().toString());
+
+            FieldConfig fieldConfig = condition.getField().config();
+            if (fieldConfig.isIdentifie()) {
+
+                buff.append(FieldDefine.ID);
+
+            } else {
+
+                switch (fieldConfig.getFieldSense()) {
+                    case CREATE_TIME: {
+                        buff.append(FieldDefine.CREATE_TIME);
+                        break;
+                    }
+                    case UPDATE_TIME: {
+                        buff.append(FieldDefine.UPDATE_TIME);
+                        break;
+                    }
+                    default: {
+                        buff.append(FieldDefine.ATTRIBUTE).append(".").append(storageValue.shortStorageName().toString());
+                    }
+                }
+            }
 
             buff.append(" IN (");
             buff.append(buildConditionValue(storageValue, storageStrategy));

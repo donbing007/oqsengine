@@ -62,7 +62,8 @@ public class MeqNotMatchConditionBuilderTest {
                     new EnumValue(new EntityField(9223372036854775807L, "test", FieldType.ENUM), "0"),
                     new EnumValue(new EntityField(9223372036854775807L, "test", FieldType.ENUM), "1")
                 ),
-                FieldDefine.ATTRIBUTE + "." + "1y2p0ij32e8e7" + "S IN ('0','1')"
+                String.format("(%s.1y2p0ij32e8e7S = '0' OR %s.1y2p0ij32e8e7S = '1')",
+                    FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTE)
             ),
             new Case(
                 new Condition(
@@ -107,7 +108,7 @@ public class MeqNotMatchConditionBuilderTest {
                         new EntityField(9223372036854775807L, "test", FieldType.STRING),
                         "!@#$%^&*()300")
                 ),
-                FieldDefine.ATTRIBUTE + ".1y2p0ij32e8e7S IN ('!@#$%^&*()300')"
+                "(attr.1y2p0ij32e8e7S = '!@#$%^&*()300')"
             ),
             new Case(
                 new Condition(
