@@ -104,8 +104,8 @@ public class MeqMatchConditionBuilderTest {
                 }
             ),
 
-            /**
-             * 这个测试为了测试超长的strings分割后的结果是否正确.
+            /*
+             这个测试为了测试超长的strings分割后的结果是否正确.
              */
             new Case(
                 new Condition(

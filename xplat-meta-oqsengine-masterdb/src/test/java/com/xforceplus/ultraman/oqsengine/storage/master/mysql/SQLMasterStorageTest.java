@@ -218,6 +218,12 @@ public class SQLMasterStorageTest {
         .withName("original_relationship.id")
         .withConfig(FieldConfig.Builder.anFieldConfig().withJdbcType(Types.BIGINT).withSearchable(true).build())
         .build();
+    private IEntityField originalIdField = EntityField.Builder.anEntityField()
+        .withId(4009)
+        .withFieldType(FieldType.LONG)
+        .withName("id")
+        .withConfig(FieldConfig.Builder.anFieldConfig().withJdbcType(Types.BIGINT).withSearchable(true).build())
+        .build();
     private IEntityClass originalEntityClass = EntityClass.Builder.anEntityClass()
         .withId(4)
         .withLevel(0)
@@ -233,6 +239,7 @@ public class SQLMasterStorageTest {
         .withField(originalDatetimeField)
         .withField(originaBoolField)
         .withField(originalRelationshipField)
+        .withField(originalIdField)
         .build();
 
     private List<IEntity> expectedEntitys;
@@ -322,7 +329,9 @@ public class SQLMasterStorageTest {
                 new DecimalValue(originalDecField, new BigDecimal("100.123")),
                 new EnumValue(originalEnumField, "1"),
                 new DateTimeValue(originalDatetimeField, time),
-                new BooleanValue(originaBoolField, true)
+                new BooleanValue(originaBoolField, true),
+                // 这是一个应该被过滤掉的属性.
+                new LongValue(originalIdField, 1000)
             )
         );
         Assertions.assertTrue(newEntity.isDirty());
@@ -354,12 +363,14 @@ public class SQLMasterStorageTest {
         );
         Assertions.assertTrue(storage.build(interferenceEntity, originalEntityClass));
 
-        // 更新目标实例浮点数.
+        // 更新目标实例浮点数,并且将originalDatetimeField删除.
         IEntity updateEntity = Entity.Builder.anEntity()
             .withId(newEntity.id())
             .withEntityClassRef(originalEntityClass.ref())
             .withValue(new DecimalValue(originalDecField, new BigDecimal("200.123")))
             .withValue(new StringValue(originalStringField, "original-change"))
+            .withValue(new EmptyTypedValue(originaBoolField))
+            .withValue(new EmptyTypedValue(originalIdField))
             .build();
         Assertions.assertTrue(storage.replace(updateEntity, originalEntityClass));
         updateEntity = storage.selectOne(updateEntity.id()).get();
@@ -380,14 +391,12 @@ public class SQLMasterStorageTest {
         Assertions.assertEquals(timeMilli,
             ((LocalDateTime) entityValue.getValue(originalDatetimeField.id()).get().getValue())
                 .atZone(DateTimeValue.ZONE_ID).toInstant().toEpochMilli());
-        Assertions.assertTrue((Boolean) entityValue.getValue(originaBoolField.id()).get().getValue());
+        Assertions.assertFalse(entityValue.getValue(originaBoolField.id()).isPresent());
 
         List<Map<IEntityField, StorageValue>> rows = findOriginalRow(originalEntityClass, new long[] {newEntity.id()});
         Assertions.assertEquals(1, rows.size());
 
         Map<IEntityField, StorageValue> row = rows.get(0);
-        Collection<IEntityField> fields = originalEntityClass.fields();
-        Assertions.assertEquals(fields.size(), row.size());
         Assertions.assertEquals(100L, row.get(originalLongField).value());
         Assertions.assertEquals("original-change", row.get(originalStringField).value());
         Assertions.assertEquals("[v1][v2][v3]", row.get(originalStringsField).value());
@@ -395,8 +404,9 @@ public class SQLMasterStorageTest {
         Assertions.assertEquals(200L, row.get(originalDecField).value());
         Assertions.assertEquals(123000L, row.get(originalDecField).next().value());
         Assertions.assertEquals("1", row.get(originalEnumField).value());
-        Assertions.assertEquals(1L, row.get(originaBoolField).value());
         Assertions.assertEquals(timeMilli, row.get(originalDatetimeField).value());
+        Assertions.assertEquals(null, row.get(originaBoolField));
+        Assertions.assertEquals(100000L, row.get(originalIdField).value());
 
         // 验证干扰数据不变
         interferenceEntity = storage.selectOne(interferenceEntity.id()).get();
@@ -420,8 +430,6 @@ public class SQLMasterStorageTest {
         Assertions.assertEquals(1, rows.size());
 
         row = rows.get(0);
-        fields = originalEntityClass.fields();
-        Assertions.assertEquals(fields.size(), row.size());
         Assertions.assertEquals(100L, row.get(originalLongField).value());
         Assertions.assertEquals("original", row.get(originalStringField).value());
         Assertions.assertEquals("[v1][v2][v3]", row.get(originalStringsField).value());
@@ -991,6 +999,9 @@ public class SQLMasterStorageTest {
                             row.put(field, null);
                         } else {
                             row.put(field, agent.read(field, new ReadJdbcOriginalSource(colIndex, rs)));
+                            if (rs.wasNull()) {
+                                row.remove(field);
+                            }
                         }
                     }
 

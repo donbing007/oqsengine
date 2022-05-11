@@ -25,6 +25,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
+import com.xforceplus.ultraman.oqsengine.storage.ReservedFieldNameWord;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.dynamic.DynamicBatchQueryCountExecutor;
@@ -791,6 +792,11 @@ public class SQLMasterStorage implements MasterStorage {
             storageValue = null;
 
             if (!logicValue.isDirty()) {
+                continue;
+            }
+            
+            // 保留字的属性将被过滤.
+            if (ReservedFieldNameWord.isReservedWorkd(logicValue.getField().name())) {
                 continue;
             }
 
