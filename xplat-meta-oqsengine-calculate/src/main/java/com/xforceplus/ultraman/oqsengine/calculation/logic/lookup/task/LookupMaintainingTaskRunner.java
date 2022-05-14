@@ -116,7 +116,7 @@ public class LookupMaintainingTaskRunner implements TaskRunner {
         try {
             // 进行一次更新
             if (withTx) {
-                transactionExecutor.execute((transaction, resource, hint) -> {
+                transactionExecutor.execute((transaction, resource) -> {
                     adjustLookupEntities(
                         transaction,
                         lookupMaintainingTask,

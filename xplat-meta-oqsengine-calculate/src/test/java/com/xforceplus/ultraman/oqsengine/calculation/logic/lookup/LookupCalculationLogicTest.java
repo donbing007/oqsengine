@@ -33,6 +33,7 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionExclusiv
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResourceType;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.accumulator.TransactionAccumulator;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.hint.TransactionHint;
 import com.xforceplus.ultraman.oqsengine.task.Task;
 import com.xforceplus.ultraman.oqsengine.task.TaskCoordinator;
 import com.xforceplus.ultraman.oqsengine.task.TaskRunner;
@@ -322,9 +323,15 @@ public class LookupCalculationLogicTest {
             .withValue(
                 new LongValue(targetLongField, 100)
             ).build();
+
+
+        context.focusSourceEntity(targetEntity);
+        context.focusEntity(targetEntity, targetEntityClass);
+        context.focusField(targetLongField);
+
         Infuence infuence = new Infuence(
             targetEntity,
-                CalculationParticipant.Builder.anParticipant()
+            CalculationParticipant.Builder.anParticipant()
                 .withEntityClass(targetEntityClass)
                 .withField(targetLongField)
                 .withAffectedEntities(Arrays.asList(targetEntity)).build(),
@@ -333,11 +340,6 @@ public class LookupCalculationLogicTest {
                 new LongValue(targetLongField, 50L),
                 new LongValue(targetLongField, 100L))
         );
-
-        context.focusSourceEntity(targetEntity);
-        context.focusEntity(targetEntity, targetEntityClass);
-        context.focusField(targetLongField);
-
         LookupCalculationLogic logic = new LookupCalculationLogic();
         logic.scope(context, infuence);
 
@@ -602,6 +604,11 @@ public class LookupCalculationLogicTest {
 
         @Override
         public TransactionAccumulator getAccumulator() {
+            return null;
+        }
+
+        @Override
+        public TransactionHint getHint() {
             return null;
         }
 

@@ -156,7 +156,7 @@ public class SQLMasterStorage implements MasterStorage {
 
         SelectConfig useConfig = optimizeToOrder(config);
 
-        return (Collection<EntityRef>) transactionExecutor.execute((tx, resource, hint) -> {
+        return (Collection<EntityRef>) transactionExecutor.execute((tx, resource) -> {
             return DynamicQueryByConditionsExecutor.build(
                 dynamicTableName,
                 resource,
@@ -174,7 +174,7 @@ public class SQLMasterStorage implements MasterStorage {
         extraTags = {"initiator", "master", "action", "exist"})
     @Override
     public int exist(long id) throws SQLException {
-        return (int) transactionExecutor.execute(((tx, resource, hint) ->
+        return (int) transactionExecutor.execute(((tx, resource) ->
             DynamicExistExecutor.build(dynamicTableName, resource, queryTimeout).execute(id)));
     }
 
@@ -184,7 +184,7 @@ public class SQLMasterStorage implements MasterStorage {
         extraTags = {"initiator", "master", "action", "one"})
     @Override
     public Optional<IEntity> selectOne(long id) throws SQLException {
-        return (Optional<IEntity>) transactionExecutor.execute((tx, resource, hint) -> {
+        return (Optional<IEntity>) transactionExecutor.execute((tx, resource) -> {
             Optional<JsonAttributeMasterStorageEntity> masterStorageEntityOptional =
                 DynamicQueryExecutor.buildHaveDetail(dynamicTableName, resource, queryTimeout).execute(id);
             if (masterStorageEntityOptional.isPresent()) {
@@ -242,8 +242,7 @@ public class SQLMasterStorage implements MasterStorage {
 
         Collection<JsonAttributeMasterStorageEntity> masterStorageEntities =
             (Collection<JsonAttributeMasterStorageEntity>) transactionExecutor.execute(
-                (tx, resource, hint) -> {
-
+                (tx, resource) -> {
                     return DynamicMultipleQueryExecutor.build(dynamicTableName, resource, queryTimeout).execute(useIds);
                 }
             );
@@ -339,7 +338,7 @@ public class SQLMasterStorage implements MasterStorage {
         }
 
         boolean result = (boolean) transactionExecutor.execute(
-            (tx, resource, hint) -> {
+            (tx, resource) -> {
 
                 BaseMasterStorageEntity storageEntity = buildDeleteMasterStorageEntity(entity, entityClass, resource);
                 BaseMasterStorageEntity[] storageEntities = new BaseMasterStorageEntity[] {
@@ -381,7 +380,7 @@ public class SQLMasterStorage implements MasterStorage {
             (int) entityPackage.stream().filter(e -> e.getValue().type() == EntityClassType.ORIGINAL).count();
         List<BaseMasterStorageEntity> originalEntities = new ArrayList<>(originalCount);
 
-        transactionExecutor.execute((tx, resource, hint) -> {
+        transactionExecutor.execute((tx, resource) -> {
 
             BaseMasterStorageEntity[] storageEntities = entityPackage.stream()
                 .filter(er -> !er.getKey().isDeleted())
@@ -440,7 +439,7 @@ public class SQLMasterStorage implements MasterStorage {
         }
 
         boolean result = (boolean) transactionExecutor.execute(
-            (tx, resource, hint) -> {
+            (tx, resource) -> {
 
                 MapAttributeMasterStorageEntity<IEntityField, StorageValue> storageEntity =
                     build
@@ -498,7 +497,7 @@ public class SQLMasterStorage implements MasterStorage {
             = new ArrayList<>(originalCount);
 
         transactionExecutor.execute(
-            (tx, resource, hint) -> {
+            (tx, resource) -> {
 
                 MapAttributeMasterStorageEntity<IEntityField, StorageValue>[] storageEntities = entityPackage.stream()
                     .filter(er -> er.getKey().isDirty())
@@ -621,7 +620,7 @@ public class SQLMasterStorage implements MasterStorage {
         }
 
         private void load() throws Exception {
-            transactionExecutor.execute((tx, resource, hint) -> {
+            transactionExecutor.execute((tx, resource) -> {
                 Collection<MasterStorageEntity> storageEntities =
                     DynamicBatchQueryExecutor
                         .build(dynamicTableName, resource, queryTimeout, entityClass, startTime, endTime, pageSize)
@@ -674,7 +673,7 @@ public class SQLMasterStorage implements MasterStorage {
         @Override
         public long size() {
             try {
-                return (int) transactionExecutor.execute((tx, resource, hint) -> {
+                return (int) transactionExecutor.execute((tx, resource) -> {
                     return DynamicBatchQueryCountExecutor
                         .build(dynamicTableName, resource, queryTimeout, entityClass, startTime, endTime)
                         .execute(0L);
@@ -794,7 +793,7 @@ public class SQLMasterStorage implements MasterStorage {
             if (!logicValue.isDirty()) {
                 continue;
             }
-            
+
             // 保留字的属性将被过滤.
             if (ReservedFieldNameWord.isReservedWorkd(logicValue.getField().name())) {
                 continue;

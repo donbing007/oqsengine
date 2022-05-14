@@ -13,6 +13,8 @@ import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.accumulator.DefaultTransactionAccumulator;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.accumulator.TransactionAccumulator;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.hint.DefaultTransactionHint;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.hint.TransactionHint;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.Timer;
 import java.sql.SQLException;
@@ -61,20 +63,21 @@ public class MultiLocalTransaction implements Transaction {
     主要用以后台任务中,不需要真的对累加器进行更新.
      */
     private boolean notReadOnly;
-    private long id;
-    private long attachment;
-    private List<TransactionResource> transactionResourceHolder;
     private boolean committed;
     private boolean rollback;
+    private long id;
+    private long attachment;
+    private long maxWaitCommitIdSyncMs;
+    private String msg;
     private Lock lock = new ReentrantLock();
     private LongIdGenerator longIdGenerator;
     private CommitIdStatusService commitIdStatusService;
-    private long maxWaitCommitIdSyncMs;
     private TransactionAccumulator accumulator;
-    private String msg;
+    private TransactionHint hint;
     private EventBus eventBus;
     private Collection<Consumer<Transaction>> commitHooks;
     private Collection<Consumer<Transaction>> rollbackHooks;
+    private List<TransactionResource> transactionResourceHolder;
     /**
      * 一个标记,最终提交时是否进行过等待提交号同步.
      */
@@ -91,6 +94,7 @@ public class MultiLocalTransaction implements Transaction {
         startMs = System.currentTimeMillis();
         transactionResourceHolder = new LinkedList<>();
         this.accumulator = new DefaultTransactionAccumulator(id);
+        this.hint = new DefaultTransactionHint();
 
         if (eventBus == null) {
             eventBus = DoNothingEventBus.getInstance();
@@ -167,26 +171,10 @@ public class MultiLocalTransaction implements Transaction {
                     commitIdStatusService.save(commitId, true);
 
                     /*
-                     * 事务中存在更新操作,需要等待提交号同步.
+                    判断当前是否需要等待CDC同步当前提交号.
                      */
-                    if (accumulator.getReplaceNumbers() > 0 || accumulator.getDeleteNumbers() > 0) {
-                        waitedSync = true;
-                        long waitMs = awitCommitSync(commitId);
+                    awitCommitSync(commitId);
 
-                        if (logger.isDebugEnabled()) {
-                            logger.debug(
-                                "The transaction {} contains an update operation, the wait commit number {} synchronizes successfully. Wait {} milliseconds.",
-                                id, commitId, waitMs);
-                        }
-                    } else {
-
-                        if (logger.isDebugEnabled()) {
-                            logger.debug(
-                                "Transaction {} has no update operation, no need to wait for the commit number {} to synchronize successfully.",
-                                id, commitId
-                            );
-                        }
-                    }
                 } catch (Exception ex) {
                     logger.error(ex.getMessage(), ex);
                 }
@@ -319,6 +307,11 @@ public class MultiLocalTransaction implements Transaction {
     }
 
     @Override
+    public TransactionHint getHint() {
+        return this.hint;
+    }
+
+    @Override
     public void exclusiveAction(TransactionExclusiveAction action) throws SQLException {
         lock.lock();
         try {
@@ -433,9 +426,17 @@ public class MultiLocalTransaction implements Transaction {
     }
 
     // 等待提交号被同步成功或者超时.
-    private long awitCommitSync(long commitId) {
-        if (maxWaitCommitIdSyncMs <= 0) {
-            return 0;
+    private void awitCommitSync(long commitId) {
+        /*
+        如果外部指定最大等待时间小于等于0,表示需要提交号CDC等待.
+        这时即使当前事务声明需要等待也不会进行等待.
+        只有全局设定为需要等待,同时当前事务也提示需要等待时才会进行等待.
+        最多等待 maxWaitCommitIdSyncMs 毫秒.
+         */
+        if (!hint.isCanWaitCommitSync() || maxWaitCommitIdSyncMs <= 0) {
+            return;
+        } else {
+            this.waitedSync = true;
         }
 
         int maxLoop = 1;
@@ -449,7 +450,12 @@ public class MultiLocalTransaction implements Transaction {
 
             if (commitIdStatusService.isObsolete(commitId)) {
 
-                return i * checkCommitIdSyncMs;
+                if (logger.isDebugEnabled()) {
+                    logger.debug(
+                        "The transaction {} contains an update operation, the wait commit number {} synchronizes successfully. Wait {} milliseconds.",
+                        id, commitId, i * checkCommitIdSyncMs);
+                }
+                return;
 
             } else {
 
@@ -473,7 +479,11 @@ public class MultiLocalTransaction implements Transaction {
             .register(Metrics.globalRegistry));
 
 
-        return maxWaitCommitIdSyncMs;
+        if (logger.isDebugEnabled()) {
+            logger.debug(
+                "The transaction {} contains an update operation, the wait commit number {} synchronizes successfully. Wait {} milliseconds.",
+                id, commitId, maxWaitCommitIdSyncMs);
+        }
     }
 
     private void throwSQLExceptionIfNecessary(List<SQLException> exHolder) throws SQLException {

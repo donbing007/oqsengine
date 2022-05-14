@@ -214,7 +214,9 @@ public class DefaultCalculationImpl implements Calculation {
                     if (affectedEntityIds.length > 0) {
                         if (!context.tryLocksEntity(affectedEntityIds)) {
                             throw new CalculationException(
-                                "Conflicts are calculated and the attempt limit is reached. To give up!");
+                                String.format(
+                                    "Conflicts are calculated and the attempt limit is reached [%d ms]. To give up!",
+                                    context.getLockTimeoutMs()));
                         }
                     }
                 }

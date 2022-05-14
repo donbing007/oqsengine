@@ -344,7 +344,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
         CalculationContext calculationContext = buildCalculationContext(CalculationScenarios.BUILD);
         try {
-            result = (OqsResult) transactionExecutor.execute((tx, resource, hint) -> {
+            result = (OqsResult) transactionExecutor.execute((tx, resource) -> {
 
                 calculationContext.focusTx(tx);
 
@@ -402,7 +402,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                             logger.debug("[builds] Entity {} failed to be created.", entityEntry.getKey().toString());
                         }
 
-                        hint.setRollback(true);
+                        tx.getHint().setRollback(true);
                         return OqsResult.unCreated();
                     } else {
 
@@ -412,7 +412,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                                 logger.debug("[builds] Transaction accumulator processing failed.");
                             }
 
-                            hint.setRollback(true);
+                            tx.getHint().setRollback(true);
                             return OqsResult.unAccumulate();
                         }
 
@@ -429,9 +429,12 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         logger.debug("[builds] Failed to persist the calculated field maintenance result.");
                     }
 
-                    hint.setRollback(true);
+                    tx.getHint().setRollback(true);
                     return OqsResult.unAccumulate();
                 }
+
+                //批量设置为不进行CDC等待.
+                tx.getHint().setCanWaitCommitSync(false);
 
                 IEntity[] actualEntities = dirtyEntities.stream().toArray(IEntity[]::new);
                 eventBus.notify(new ActualEvent(EventType.ENTITY_BUILD,
@@ -487,7 +490,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
         CalculationContext calculationContext = buildCalculationContext(CalculationScenarios.BUILD);
         try {
-            oqsResult = (OqsResult) transactionExecutor.execute((tx, resource, hint) -> {
+            oqsResult = (OqsResult) transactionExecutor.execute((tx, resource) -> {
 
                 calculationContext.focusTx(tx);
                 calculationContext.focusSourceEntity(entity);
@@ -518,7 +521,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         logger.debug("[build] Entity {} failed to be created.", currentEntity.toString());
                     }
 
-                    hint.setRollback(true);
+                    tx.getHint().setRollback(true);
                     return OqsResult.unCreated();
                 }
 
@@ -528,7 +531,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         logger.debug("[build] Transaction accumulator processing failed.");
                     }
 
-                    hint.setRollback(true);
+                    tx.getHint().setRollback(true);
                     return OqsResult.unAccumulate();
                 }
 
@@ -541,11 +544,14 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         logger.debug("[build] Failed to persist the calculated field maintenance result.");
                     }
 
-                    hint.setRollback(true);
+                    tx.getHint().setRollback(true);
                     return OqsResult.conflict("Conflict maintenance.");
                 }
 
                 eventBus.notify(new ActualEvent(EventType.ENTITY_BUILD, new BuildPayload(tx.id(), currentEntity)));
+
+                // 单个操作需要等待同步.
+                tx.getHint().setCanWaitCommitSync(true);
 
                 return OqsResult.success(currentEntity);
             });
@@ -629,7 +635,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
         CalculationContext calculationContext = buildCalculationContext(CalculationScenarios.REPLACE);
         try {
-            oqsResult = (OqsResult) transactionExecutor.execute((tx, resource, hint) -> {
+            oqsResult = (OqsResult) transactionExecutor.execute((tx, resource) -> {
 
                 calculationContext.focusTx(tx);
 
@@ -749,7 +755,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                                 logger.debug("[replace] Failed to update instance ({}).", newEntity.id());
                             }
 
-                            hint.setRollback(true);
+                            tx.getHint().setRollback(true);
                             return OqsResult.unReplaced(newEntity.id());
                         }
 
@@ -759,7 +765,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                                 logger.debug("[replaces] Transaction accumulator processing failed.");
                             }
 
-                            hint.setRollback(true);
+                            tx.getHint().setRollback(true);
                             return OqsResult.unAccumulate();
                         }
 
@@ -775,9 +781,12 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                             logger.debug("[replaces] Failed to persist the calculated field maintenance result.");
                         }
 
-                        hint.setRollback(true);
+                        tx.getHint().setRollback(true);
                         return OqsResult.conflict("Conflict maintenance.");
                     }
+
+                    //批量设置为不进行CDC等待.
+                    tx.getHint().setCanWaitCommitSync(false);
 
                 } finally {
                     resourceLocker.unlocks(resoruces);
@@ -858,7 +867,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
         CalculationContext calculationContext = buildCalculationContext(CalculationScenarios.REPLACE);
         try {
-            oqsResult = (OqsResult) transactionExecutor.execute((tx, resource, hint) -> {
+            oqsResult = (OqsResult) transactionExecutor.execute((tx, resource) -> {
                 String lockResource = IEntitys.resource(entity.id());
                 boolean lockResult = resourceLocker.tryLock(lockTimeoutMs, lockResource);
                 if (!lockResult) {
@@ -906,7 +915,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     if (!newEntity.isDirty()) {
 
                         if (logger.isDebugEnabled()) {
-                            logger.debug("The instance ({}) is unchanged and does not need to be updated.", entity.id());
+                            logger.debug("The instance ({}) is unchanged and does not need to be updated.",
+                                entity.id());
                         }
 
                         return OqsResult.success();
@@ -920,7 +930,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
                     Map.Entry<VerifierResult, IEntityField> verifyResult = verifyFields(entityClass, newEntity);
                     if (VerifierResult.OK != verifyResult.getKey()) {
-                        hint.setRollback(true);
+                        tx.getHint().setRollback(true);
                         return transformVerifierResultToOperationResult(verifyResult, newEntity);
                     }
 
@@ -936,7 +946,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                             logger.debug("[replace] Failed to update instance ({}).", newEntity.id());
                         }
 
-                        hint.setRollback(true);
+                        tx.getHint().setRollback(true);
                         return OqsResult.unReplaced(newEntity.id());
                     }
 
@@ -947,7 +957,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         if (logger.isDebugEnabled()) {
                             logger.debug("[replace] Transaction accumulator processing failed.");
                         }
-                        hint.setRollback(true);
+                        tx.getHint().setRollback(true);
                         return OqsResult.unAccumulate();
                     }
 
@@ -960,13 +970,15 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                             logger.debug("[replace] Failed to persist the calculated field maintenance result.");
                         }
 
-                        hint.setRollback(true);
+                        tx.getHint().setRollback(true);
                         return OqsResult.conflict();
                     }
 
                 } finally {
                     resourceLocker.unlock(lockResource);
                 }
+
+                tx.getHint().setCanWaitCommitSync(true);
 
                 eventBus.notify(new ActualEvent(EventType.ENTITY_REPLACE, replacePayload));
 
@@ -1040,7 +1052,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
         OqsResult oqsResult;
         try {
-            oqsResult = (OqsResult) transactionExecutor.execute((tx, resource, hint) -> {
+            oqsResult = (OqsResult) transactionExecutor.execute((tx, resource) -> {
 
                 calculationContext.focusTx(tx);
 
@@ -1094,7 +1106,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                                 logger.debug("[deletes] Failed to deletes instance ({}).", targetEntity.id());
                             }
 
-                            hint.setRollback(true);
+                            tx.getHint().setRollback(true);
                             return OqsResult.unDeleted(targetEntity.id());
                         }
 
@@ -1102,7 +1114,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                             if (logger.isDebugEnabled()) {
                                 logger.debug("[deletes] Transaction accumulator processing failed.");
                             }
-                            hint.setRollback(true);
+                            tx.getHint().setRollback(true);
                             return OqsResult.unAccumulate();
                         }
 
@@ -1118,7 +1130,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                             logger.debug("[deletes] Failed to persist the calculated field maintenance result.");
                         }
 
-                        hint.setRollback(true);
+                        tx.getHint().setRollback(true);
                         return OqsResult.conflict("Conflict maintenance.");
                     }
 
@@ -1127,6 +1139,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 }
 
                 Arrays.stream(entities).forEach(e -> e.delete());
+
+                tx.getHint().setCanWaitCommitSync(false);
 
                 DeletePayload deletePayload =
                     new DeletePayload(tx.id(), targetEntities.stream().toArray(IEntity[]::new));
@@ -1189,7 +1203,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
         CalculationContext calculationContext = buildCalculationContext(CalculationScenarios.DELETE);
         try {
-            return (OqsResult) transactionExecutor.execute((tx, resource, hint) -> {
+            return (OqsResult) transactionExecutor.execute((tx, resource) -> {
 
                 Optional<IEntity> targetEntityOp = masterStorage.selectOne(entity.id(), entityClass);
                 if (!targetEntityOp.isPresent()) {
@@ -1222,7 +1236,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         if (logger.isDebugEnabled()) {
                             logger.debug("[delete] Failed to deletes instance ({}).", targetEntity.id());
                         }
-                        hint.setRollback(true);
+                        tx.getHint().setRollback(true);
                         return OqsResult.unDeleted(targetEntity.id());
                     }
 
@@ -1230,7 +1244,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         if (logger.isDebugEnabled()) {
                             logger.debug("[delete] Transaction accumulator processing failed.");
                         }
-                        hint.setRollback(true);
+                        tx.getHint().setRollback(true);
                         return OqsResult.unAccumulate();
                     }
 
@@ -1241,8 +1255,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         if (logger.isDebugEnabled()) {
                             logger.debug("[delete] Failed to persist the calculated field maintenance result.");
                         }
-                        
-                        hint.setRollback(true);
+
+                        tx.getHint().setRollback(true);
                         return OqsResult.conflict("Conflict maintenance.");
                     }
 
@@ -1251,6 +1265,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 }
 
                 entity.delete();
+
+                tx.getHint().setCanWaitCommitSync(true);
 
                 eventBus.notify(new ActualEvent(
                     EventType.ENTITY_DELETE,
@@ -1429,7 +1445,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     /**
      * 设置当前操作造成的值改变.
      *
-     * @param context 当前计算上下文.
+     * @param context   当前计算上下文.
      * @param newEntity 变更后的实例,没有需要设置为null.
      * @param oldEntity 变更前的实例,没有需要设置为null.
      */

@@ -435,7 +435,7 @@ public class CalculationTest extends AbstractContainerExtends {
         IEntity user = entityHelper.buildUserEntity();
         entityManagementService.build(user);
 
-        int size = 30;
+        int size = 3;
         long userId = user.id();
         CountDownLatch startLatch = new CountDownLatch(1);
         CountDownLatch finishLatch = new CountDownLatch(size);

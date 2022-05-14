@@ -1,7 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.storage.executor;
 
-import com.xforceplus.ultraman.oqsengine.storage.executor.hint.DefaultExecutorHint;
-import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import java.sql.SQLException;
@@ -40,14 +38,13 @@ public class AutoCreateTransactionExecutor implements TransactionExecutor {
             localTx = false;
         }
 
-        ExecutorHint hint = new DefaultExecutorHint();
         try {
 
-            Object res = resourceTask.run(tx, null, hint);
+            Object res = resourceTask.run(tx, null);
 
             if (localTx) {
 
-                if (hint.isRollback()) {
+                if (tx.getHint().isRollback()) {
                     tx.rollback();
                 } else {
                     tx.commit();

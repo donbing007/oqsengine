@@ -6,7 +6,6 @@ import com.xforceplus.ultraman.oqsengine.lock.ResourceLocker;
 import com.xforceplus.ultraman.oqsengine.storage.KeyValueStorage;
 import com.xforceplus.ultraman.oqsengine.storage.executor.ResourceTask;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
 import com.xforceplus.ultraman.oqsengine.storage.kv.sql.executor.DeleteTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.kv.sql.executor.ExistTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.kv.sql.executor.GetTaskExecutor;
@@ -87,7 +86,7 @@ public class SqlKeyValueStorage implements KeyValueStorage {
         try {
             size = (long) transactionExecutor.execute(new ResourceTask() {
                 @Override
-                public Object run(Transaction transaction, TransactionResource resource, ExecutorHint hint)
+                public Object run(Transaction transaction, TransactionResource resource)
                     throws Exception {
                     return new SaveTaskExecutor(tableName, resource, timeout, false, false).execute(
                         Arrays.asList(new AbstractMap.SimpleEntry<>(key, value == null ? EMPTY_VALUES : value)));
@@ -120,7 +119,7 @@ public class SqlKeyValueStorage implements KeyValueStorage {
         try {
             return (long) transactionExecutor.execute(new ResourceTask() {
                 @Override
-                public Object run(Transaction transaction, TransactionResource resource, ExecutorHint hint)
+                public Object run(Transaction transaction, TransactionResource resource)
                     throws Exception {
                     return new SaveTaskExecutor(tableName, resource, timeout, false, false)
                         .execute(keyValues);
@@ -144,7 +143,7 @@ public class SqlKeyValueStorage implements KeyValueStorage {
         try {
             size = (long) transactionExecutor.execute(new ResourceTask() {
                 @Override
-                public Object run(Transaction transaction, TransactionResource resource, ExecutorHint hint)
+                public Object run(Transaction transaction, TransactionResource resource)
                     throws Exception {
                     return new SaveTaskExecutor(tableName, resource, timeout, true, false).execute(
                         Arrays.asList(new AbstractMap.SimpleEntry<>(key, value == null ? EMPTY_VALUES : value)));
@@ -183,7 +182,7 @@ public class SqlKeyValueStorage implements KeyValueStorage {
         try {
             size = (long) transactionExecutor.execute(new ResourceTask() {
                 @Override
-                public Object run(Transaction transaction, TransactionResource resource, ExecutorHint hint)
+                public Object run(Transaction transaction, TransactionResource resource)
                     throws Exception {
                     return new SaveTaskExecutor(tableName, resource, timeout, true, false).execute(keyValues);
                 }
@@ -218,7 +217,7 @@ public class SqlKeyValueStorage implements KeyValueStorage {
         try {
             return (boolean) transactionExecutor.execute(new ResourceTask() {
                 @Override
-                public Object run(Transaction transaction, TransactionResource resource, ExecutorHint hint)
+                public Object run(Transaction transaction, TransactionResource resource)
                     throws SQLException {
                     return new ExistTaskExecutor(tableName, resource, timeout).execute(key);
                 }
@@ -240,7 +239,7 @@ public class SqlKeyValueStorage implements KeyValueStorage {
         try {
             return (Optional<byte[]>) transactionExecutor.execute(new ResourceTask() {
                 @Override
-                public Object run(Transaction transaction, TransactionResource resource, ExecutorHint hint)
+                public Object run(Transaction transaction, TransactionResource resource)
                     throws SQLException {
                     byte[] data = new GetTaskExecutor(tableName, resource, timeout).execute(key);
 
@@ -271,7 +270,7 @@ public class SqlKeyValueStorage implements KeyValueStorage {
         try {
             results = (Collection<Map.Entry<String, byte[]>>) transactionExecutor.execute(new ResourceTask() {
                 @Override
-                public Object run(Transaction transaction, TransactionResource resource, ExecutorHint hint)
+                public Object run(Transaction transaction, TransactionResource resource)
                     throws SQLException {
 
                     return new GetsTaskExecutor(tableName, resource, timeout).execute(keys);
@@ -309,7 +308,7 @@ public class SqlKeyValueStorage implements KeyValueStorage {
         try {
             transactionExecutor.execute(new ResourceTask() {
                 @Override
-                public Object run(Transaction transaction, TransactionResource resource, ExecutorHint hint)
+                public Object run(Transaction transaction, TransactionResource resource)
                     throws SQLException {
                     return new DeleteTaskExecutor(tableName, resource, timeout).execute(keys);
                 }
@@ -355,7 +354,7 @@ public class SqlKeyValueStorage implements KeyValueStorage {
         try {
             return (long) transactionExecutor.execute(new ResourceTask() {
                 @Override
-                public Object run(Transaction transaction, TransactionResource resource, ExecutorHint hint)
+                public Object run(Transaction transaction, TransactionResource resource)
                     throws Exception {
                     IncrTaskExecutor executor = new IncrTaskExecutor(tableName, resource, timeout, useKey);
                     return executor.execute(step);
@@ -450,7 +449,7 @@ public class SqlKeyValueStorage implements KeyValueStorage {
             try {
                 keys = (Collection<String>) transactionExecutor.execute(new ResourceTask() {
                     @Override
-                    public Object run(Transaction transaction, TransactionResource resource, ExecutorHint hint)
+                    public Object run(Transaction transaction, TransactionResource resource)
                         throws SQLException {
                         SelectKeysTaskExecutor task = new SelectKeysTaskExecutor(tableName, resource, timeout);
                         task.setLastKey(lastKey);

@@ -8,6 +8,7 @@ import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
 import com.xforceplus.ultraman.oqsengine.storage.mock.StorageInitialization;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.accumulator.TransactionAccumulator;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.hint.TransactionHint;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.RedisContainer;
 import io.lettuce.core.RedisClient;
 import java.lang.reflect.Field;
@@ -334,6 +335,11 @@ public class TestAbstractTransactionManagerTest {
         @Override
         public TransactionAccumulator getAccumulator() {
             return transaction.getAccumulator();
+        }
+
+        @Override
+        public TransactionHint getHint() {
+            return transaction.getHint();
         }
 
         @Override

@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction;
 
 import com.xforceplus.ultraman.oqsengine.storage.transaction.accumulator.TransactionAccumulator;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.hint.TransactionHint;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Optional;
@@ -127,6 +128,13 @@ public interface Transaction {
      * @return Accumulator instance, not NULL.
      */
     TransactionAccumulator getAccumulator();
+
+    /**
+     * return the transaction hint.
+     *
+     * @return hint instance, not NULL.
+     */
+    TransactionHint getHint();
 
     /**
      * Exclusive actions ensure that only one thread executes per transaction.

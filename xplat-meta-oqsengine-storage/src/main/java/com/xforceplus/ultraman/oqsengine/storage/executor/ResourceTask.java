@@ -1,6 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.storage.executor;
 
-import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import java.sql.SQLException;
@@ -20,11 +19,10 @@ public interface ResourceTask<R> {
      *
      * @param transaction 相关事务.
      * @param resource    相关资源.
-     * @param hint        执行器提示器.
      * @return 执行结果.
      * @throws SQLException 执行异常.
      */
-    R run(Transaction transaction, TransactionResource resource, ExecutorHint hint) throws Exception;
+    R run(Transaction transaction, TransactionResource resource) throws Exception;
 
     /**
      * 判断是否依附在 master 资源上.

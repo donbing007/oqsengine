@@ -18,7 +18,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.AnyEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.executor.ResourceTask;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.executor.CleanExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.executor.OriginEntitiesDeleteIndexExecutor;
@@ -140,7 +139,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
     @Override
     public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, SelectConfig config)
         throws SQLException {
-        return (Collection<EntityRef>) searchTransactionExecutor.execute((tx, resource, hint) -> {
+        return (Collection<EntityRef>) searchTransactionExecutor.execute((tx, resource) -> {
             Set<Long> useFilterIds = null;
 
             if (resource.getTransaction().isPresent()) {
@@ -175,7 +174,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
     @Override
     public Collection<EntityRef> search(SearchConfig config, IEntityClass... entityClasses)
         throws SQLException {
-        return (Collection<EntityRef>) searchTransactionExecutor.execute((tx, resource, hint) -> {
+        return (Collection<EntityRef>) searchTransactionExecutor.execute((tx, resource) -> {
             return SearchExecutor
                 .build(getSearchIndexName(), resource, sphinxQLConditionsBuilderFactory, getTimeoutMs())
                 .execute(Tuple.of(config, entityClasses));
@@ -335,7 +334,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
 
             return (int) writeTransactionExecutor.execute(new ResourceTask() {
                 @Override
-                public Object run(Transaction tx, TransactionResource resource, ExecutorHint hint) throws SQLException {
+                public Object run(Transaction tx, TransactionResource resource) throws SQLException {
                     if (OperationType.CREATE == op) {
                         return SaveIndexExecutor.buildCreate(indexName, resource)
                             .execute(manticoreStorageEntities);
@@ -359,7 +358,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
             throws SQLException {
             return (int) writeTransactionExecutor.execute(new ResourceTask() {
                 @Override
-                public Object run(Transaction tx, TransactionResource resource, ExecutorHint hint) throws SQLException {
+                public Object run(Transaction tx, TransactionResource resource) throws SQLException {
                     return OriginEntitiesDeleteIndexExecutor.builder(indexName, resource).execute(originalEntities);
                 }
 

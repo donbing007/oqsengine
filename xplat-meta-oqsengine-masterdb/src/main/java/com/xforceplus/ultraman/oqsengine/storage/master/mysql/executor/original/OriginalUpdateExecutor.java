@@ -41,6 +41,13 @@ public class OriginalUpdateExecutor extends
     public boolean[] execute(MapAttributeMasterStorageEntity<IEntityField, StorageValue>[] storageEntities)
         throws Exception {
 
+        for (MapAttributeMasterStorageEntity s : storageEntities) {
+            if (s.getAttributes() == null || s.getAttributes().isEmpty()) {
+                throw new SQLException(
+                    String.format("Static object instance %d attempted an empty property update.", s.getId()));
+            }
+        }
+
         boolean single = storageEntities.length == 1;
         try (Statement st = getResource().value().createStatement()) {
             checkTimeout(st);

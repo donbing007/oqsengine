@@ -1870,7 +1870,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         return asyncRead(() -> {
             return OperationResult
                 .newBuilder()
-                .setCode(OperationResult.Code.UNRECOGNIZED)
+                .setCode(OperationResult.Code.OTHER)
                 .setMessage("Not Implemented")
                 .build();
         });
@@ -1882,7 +1882,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         return asyncRead(() -> {
             return OperationResult
                 .newBuilder()
-                .setCode(OperationResult.Code.UNRECOGNIZED)
+                .setCode(OperationResult.Code.OTHER)
                 .setMessage("Not Implemented")
                 .build();
         });

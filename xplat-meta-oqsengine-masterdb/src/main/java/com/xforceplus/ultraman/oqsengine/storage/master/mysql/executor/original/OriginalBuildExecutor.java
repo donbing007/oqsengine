@@ -38,6 +38,14 @@ public class OriginalBuildExecutor extends
     @Override
     public boolean[] execute(MapAttributeMasterStorageEntity<IEntityField, StorageValue>[] storageEntities)
         throws Exception {
+
+        for (MapAttributeMasterStorageEntity s : storageEntities) {
+            if (s.getAttributes() == null || s.getAttributes().isEmpty()) {
+                throw new SQLException(
+                    String.format("Static object instance %d attempted an empty property build.", s.getId()));
+            }
+        }
+
         /*
         构造SQL,和字段的填需要保证同样的迭代顺序.
         这里依赖IEntityClass.fields() 方法的迭代顺序,多次迭代需要是顺序一致的.

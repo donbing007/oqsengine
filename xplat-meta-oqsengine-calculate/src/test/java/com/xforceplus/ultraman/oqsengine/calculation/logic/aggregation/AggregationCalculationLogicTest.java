@@ -42,6 +42,7 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionExclusiv
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResourceType;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.accumulator.TransactionAccumulator;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.hint.TransactionHint;
 import com.xforceplus.ultraman.oqsengine.task.Task;
 import com.xforceplus.ultraman.oqsengine.task.TaskCoordinator;
 import com.xforceplus.ultraman.oqsengine.task.TaskRunner;
@@ -898,6 +899,11 @@ public class AggregationCalculationLogicTest {
 
         @Override
         public TransactionAccumulator getAccumulator() {
+            return null;
+        }
+
+        @Override
+        public TransactionHint getHint() {
             return null;
         }
 

@@ -1,8 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.executor;
 
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
-import com.xforceplus.ultraman.oqsengine.storage.executor.hint.DefaultExecutorHint;
-import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
@@ -97,12 +95,11 @@ public class AutoJoinTransactionExecutor implements TransactionExecutor {
             resource = buildResource(targetDataSource, dbKey, true);
         }
 
-        ExecutorHint hint = new DefaultExecutorHint();
         try {
             if (txOp.isPresent()) {
-                return resourceTask.run(txOp.get(), resource, hint);
+                return resourceTask.run(txOp.get(), resource);
             } else {
-                return resourceTask.run(null, resource, hint);
+                return resourceTask.run(null, resource);
             }
         } catch (Exception ex) {
             throw new SQLException(ex.getMessage(), ex);
