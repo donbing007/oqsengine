@@ -212,6 +212,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
 
         Collection<OriginalEntitySection> sections = split(originalEntities);
 
+
         /*
          * 失败重试间隔毫秒.
          */

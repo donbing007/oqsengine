@@ -66,8 +66,11 @@ jvm:
   - -server
   - -Xms4096M
   - -Xmx4096M
-  - -XX:+UseZGC
+  - -XX:+UseG1GC
+  - -XX:MaxGCPauseMillis=200
+  - -XX:ParallelGCThreads=4
   - -XX:+UseCompressedOops
+  - -XX:+UseStringDeduplication
   - -XX:ReservedCodeCacheSize=256m
   - -XX:+UseTLAB
   - -XX:+ZeroTLAB
