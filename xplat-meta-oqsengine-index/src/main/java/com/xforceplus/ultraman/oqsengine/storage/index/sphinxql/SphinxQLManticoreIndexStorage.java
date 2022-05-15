@@ -53,7 +53,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 import java.util.stream.Collectors;
@@ -216,14 +218,22 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
          */
         final long retryDurationMs = 3000;
 
+        List<Future<Boolean>> futures = new ArrayList<>(sections.size());
         for (OriginalEntitySection section : sections) {
-            try {
-                new HandlerTask(section, retryDurationMs, true).call();
-            } catch (Exception e) {
-                throw new SQLException(e.getMessage(), e);
-            }
+            futures.add(threadPool.submit(new HandlerTask(section, retryDurationMs, true)));
         }
 
+        for (Future<Boolean> f : futures) {
+            try {
+                if (!f.get()) {
+                    throw new SQLException("Failed to save for unknown reason.");
+                }
+            } catch (InterruptedException e) {
+                throw new SQLException(e.getCause());
+            } catch (ExecutionException e) {
+                throw new SQLException(e.getCause());
+            }
+        }
     }
 
     private void verifyOriginalEntites(Collection<OqsEngineEntity> originalEntities) throws SQLException {
