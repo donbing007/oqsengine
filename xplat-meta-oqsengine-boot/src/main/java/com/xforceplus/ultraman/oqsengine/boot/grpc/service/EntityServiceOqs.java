@@ -984,6 +984,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     } catch (SQLException e) {
                         //TODO
                         logger.error(e.getMessage(), e);
+                        throw e;
                     }
 
                 } else {
