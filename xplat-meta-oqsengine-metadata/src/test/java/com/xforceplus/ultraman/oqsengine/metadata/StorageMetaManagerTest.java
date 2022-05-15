@@ -43,6 +43,7 @@ import org.apache.commons.compress.utils.Lists;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -290,6 +291,28 @@ public class StorageMetaManagerTest extends AbstractMetaTestHelper {
                 .id(GeneralConstant.PROFILE_CODE_2.getValue() * expectedId + EXPECTED_PROFILE_FOUR_GEN.getA(), true))
             .isPresent()
         );
+    }
+
+    @Disabled(value = "用来测试是否运行在cache上，平时不打开")
+    @Test
+    public void loadInCacheTest() throws IllegalAccessException {
+        String expectedAppId = "testLoad";
+        String expectedAppCode = "loadTest";
+        int expectedVersion = 1;
+        long expectedId = 1 + 3600;
+        List<ExpectedEntityStorage> expectedEntityStorageList =
+            EntityClassSyncProtoBufMocker.mockSelfFatherAncestorsGenerate(expectedId);
+
+        EntityClassSyncResponse entityClassSyncResponse =
+            EntityClassSyncProtoBufMocker.Response
+                .entityClassSyncResponseGenerator(expectedAppId, expectedAppCode, expectedVersion, expectedEntityStorageList);
+        mockRequestHandler.invoke(entityClassSyncResponse, null);
+
+        Optional<IEntityClass> entityClassOp = MetaInitialization.getInstance().getMetaManager().load(expectedId, "");
+        Assertions.assertTrue(entityClassOp.isPresent());
+        Assertions.assertEquals(expectedAppCode, entityClassOp.get().appCode());
+
+        entityClassOp = MetaInitialization.getInstance().getMetaManager().load(expectedId, "");
     }
 
     @Test
