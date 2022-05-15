@@ -40,17 +40,17 @@ public class ParserContext {
     private CDCMetrics cdcMetrics;
 
     /**
-     * 中间结果集
+     * 中间结果集.
      */
     private Map<Long, Tuple2<Long, List<CanalEntry.Column>>> parseMiddleResult;
 
     /**
-     * entityClassMap
+     * entityClassMap.
      */
     private Map<String, IEntityClass> entityClasses;
 
     /**
-     * 当前check-error-pos
+     * 当前check-error-pos.
      */
     private int currentCheckPos;
 
@@ -104,6 +104,11 @@ public class ParserContext {
         return entityClasses;
     }
 
+    /**
+     * 获取entityClassKey.
+     * @param entityClassRef 对象参考.
+     * @return key.
+     */
     public static String entityClassKey(EntityClassRef entityClassRef) {
         return entityClassRef.getId() + "." + entityClassRef.getProfile();
     }
