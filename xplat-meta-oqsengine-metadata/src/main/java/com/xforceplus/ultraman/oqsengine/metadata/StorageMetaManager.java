@@ -131,6 +131,10 @@ public class StorageMetaManager implements MetaManager {
         }
     }
 
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        extraTags = {"initiator", "meta", "action", "load"}
+    )
     @Override
     public Optional<IEntityClass> load(long entityClassId, String profile) {
         //  这里是一次IO操作REDIS获取当前的版本, 并组装结构
@@ -167,8 +171,6 @@ public class StorageMetaManager implements MetaManager {
      * @param reset 是否为重置.
      * @return 版本号.
      */
-    @Override
-    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "meta", "action", "need"})
     public int need(String appId, String env, boolean reset) {
         try {
             cacheExecutor.appEnvSet(appId, env);
