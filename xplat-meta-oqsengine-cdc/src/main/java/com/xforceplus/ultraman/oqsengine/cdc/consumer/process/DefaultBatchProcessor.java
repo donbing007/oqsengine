@@ -11,9 +11,11 @@ import com.alibaba.otter.canal.protocol.Message;
 import com.xforceplus.ultraman.oqsengine.cdc.connect.AbstractCDCConnector;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.service.ConsumerService;
 import com.xforceplus.ultraman.oqsengine.cdc.context.RunnerContext;
+import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.RebuildIndexExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
+import io.micrometer.core.annotation.Timed;
 import java.sql.SQLException;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Resource;
@@ -35,6 +37,10 @@ public class DefaultBatchProcessor implements BatchProcessor {
     @Resource
     private RebuildIndexExecutor rebuildIndexExecutor;
 
+    @Timed(
+        value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        extraTags = {"initiator", "cdc", "action", "oneBatch"}
+    )
     @Override
     public void executeOneBatch(AbstractCDCConnector connector, RunnerContext context) throws SQLException {
         Message message = null;
@@ -49,7 +55,7 @@ public class DefaultBatchProcessor implements BatchProcessor {
             batchId = message.getId();
 
             if (duration > MESSAGE_GET_WARM_INTERVAL) {
-                logger.info(
+                logger.debug(
                     "[batchProcess] read message from canal server use too much times, use timeMs : {}, batchId : {}",
                     duration, message.getId());
             }
