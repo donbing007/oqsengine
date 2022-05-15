@@ -40,6 +40,7 @@ public class CDCRunner extends Thread {
      * 实例化.
      */
     public CDCRunner(BatchProcessor batchProcessor, AbstractCDCConnector connector) {
+        this.setName("cdcRunner");
 
         this.batchProcessor = batchProcessor;
         this.connector = connector;
