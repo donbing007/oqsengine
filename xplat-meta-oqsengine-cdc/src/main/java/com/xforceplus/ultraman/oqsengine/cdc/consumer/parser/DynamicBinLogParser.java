@@ -29,7 +29,6 @@ import com.xforceplus.ultraman.oqsengine.cdc.consumer.dto.ParseResult;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.CommonUtils;
 import com.xforceplus.ultraman.oqsengine.cdc.context.ParserContext;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.utils.DevOpsUtils;
-import com.xforceplus.ultraman.oqsengine.metadata.constant.Constant;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns;
 import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.DevOpsCdcMetrics;
@@ -37,6 +36,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OqsEngineEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper;
+import io.vavr.Tuple2;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
@@ -55,7 +55,46 @@ public class DynamicBinLogParser implements BinLogParser {
     final Logger logger = LoggerFactory.getLogger(DynamicBinLogParser.class);
 
     @Override
-    public void parse(List<CanalEntry.Column> columns, ParserContext parserContext, ParseResult parseResult) {
+    public void parser(ParserContext parserContext, ParseResult parseResult) {
+        for (Map.Entry<Long, Tuple2<Long, List<CanalEntry.Column>>> entry : parserContext.getParseMiddleResult().entrySet()) {
+
+            //  获取commitId
+            long commitId = entry.getValue()._1();
+            //  获取columns
+            List<CanalEntry.Column> columns = entry.getValue()._2();
+            //  获取id
+            long id = entry.getKey();
+
+            try {
+                //  获取CommitID
+                commitId = getLongFromColumn(columns, COMMITID);
+
+                IEntityClass entityClass = getEntityClass(id, columns, parserContext);
+
+                //  生成执行对象
+                OqsEngineEntity oqsEngineEntity =
+                    toOriginalEntity(entityClass, id, commitId, columns, parserContext);
+
+                //  动态结构直接加入到结果对象中
+                parseResult.getFinishEntries().put(id, oqsEngineEntity);
+            } catch (Exception e) {
+                if (commitId != CommitHelper.getUncommitId()) {
+                    parserContext.getCdcMetrics().getCdcUnCommitMetrics().getUnCommitIds().add(commitId);
+
+                    //  加入错误列表.
+                    parseResult.addError(id, commitId,
+                        String.format("batch : %d, pos : %d, parser columns failed, message : %s",
+                            parserContext.getCdcMetrics().getBatchId(), parseResult.getPos(), e.getMessage()));
+                }
+            }
+
+            //  自增游标
+            parseResult.finishOne();
+        }
+    }
+
+    @Override
+    public void merge(List<CanalEntry.Column> columns, ParserContext parserContext, ParseResult parseResult) {
         long id = UN_KNOW_ID;
         long commitId = UN_KNOW_ID;
         try {
@@ -68,14 +107,8 @@ public class DynamicBinLogParser implements BinLogParser {
                 parseResult.setStartId(id);
             }
 
-            IEntityClass entityClass = getEntityClass(id, columns, parserContext);
+            parserContext.getParseMiddleResult().put(id, new Tuple2<>(commitId, columns));
 
-            //  生成执行对象
-            OqsEngineEntity oqsEngineEntity =
-                toOriginalEntity(entityClass, id, commitId, columns, parserContext);
-
-            //  动态结构直接加入到结果对象中
-            parseResult.getFinishEntries().put(id, oqsEngineEntity);
         } catch (Exception e) {
             if (commitId != CommitHelper.getUncommitId()) {
                 if (commitId != UN_KNOW_ID) {
@@ -84,18 +117,16 @@ public class DynamicBinLogParser implements BinLogParser {
 
                 //  加入错误列表.
                 parseResult.addError(id, commitId,
-                    String.format("batch : %d, pos : %d, parse columns failed, message : %s",
-                        parserContext.getCdcMetrics().getBatchId(), parseResult.getPos(), e.getMessage()));
+                    String.format("batch : %d, pos : %d, merge columns failed, message : %s",
+                        parserContext.getCdcMetrics().getBatchId(), parserContext.currentCheckPos(), e.getMessage()));
             }
-
-            return;
         }
+
+        //  pos++
+        parserContext.incrementCurrentCheckPos();
 
         //  判断当前的commitId是否需要readyCheck
         addToReadyChecks(commitId, id, parserContext, parseResult);
-
-        //  自增游标
-        parseResult.finishOne();
     }
 
     /**
@@ -192,14 +223,14 @@ public class DynamicBinLogParser implements BinLogParser {
      */
     private IEntityClass getEntityClass(long id, List<CanalEntry.Column> columns, ParserContext parserContext)
         throws SQLException {
-        long entityId = entityClassId(columns);
-        if (entityId < 0) {
+        long entityClassId = entityClassId(columns);
+        if (entityClassId < 0) {
             throw new SQLException(
                 String.format("[dynamic-binlog-parser] id : %d has no entityClass...", id));
         }
         String profile = getStringWithoutNullCheck(columns, PROFILE);
 
-        return CommonUtils.getEntityClass(new EntityClassRef(entityId, "", profile), parserContext);
+        return CommonUtils.getEntityClass(new EntityClassRef(entityClassId, "", profile), parserContext);
     }
 
 
@@ -216,7 +247,6 @@ public class DynamicBinLogParser implements BinLogParser {
         }
         return UN_KNOW_ID;
     }
-
 
     /**
      * 检查commitId是否ready，将数据加入到结果集中.

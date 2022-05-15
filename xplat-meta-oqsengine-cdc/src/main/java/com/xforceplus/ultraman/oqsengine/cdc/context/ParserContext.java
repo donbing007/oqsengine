@@ -1,8 +1,15 @@
 package com.xforceplus.ultraman.oqsengine.cdc.context;
 
+import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
+import io.vavr.Tuple2;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by justin.xu on 02/2022.
@@ -33,6 +40,21 @@ public class ParserContext {
     private CDCMetrics cdcMetrics;
 
     /**
+     * 中间结果集
+     */
+    private Map<Long, Tuple2<Long, List<CanalEntry.Column>>> parseMiddleResult;
+
+    /**
+     * entityClassMap
+     */
+    private Map<String, IEntityClass> entityClasses;
+
+    /**
+     * 当前check-error-pos
+     */
+    private int currentCheckPos;
+
+    /**
      * 构造新的实例.
      *
      * @param skipCommitId     需要跳过的提交号.
@@ -45,6 +67,9 @@ public class ParserContext {
         this.checkCommitReady = checkCommitReady;
         this.cdcMetrics = cdcMetrics;
         this.metaManager = metaManager;
+        this.parseMiddleResult = new HashMap<>();
+        this.entityClasses = new HashMap<>();
+        this.currentCheckPos = 0;
     }
 
     public long getSkipCommitId() {
@@ -61,5 +86,25 @@ public class ParserContext {
 
     public MetaManager getMetaManager() {
         return metaManager;
+    }
+
+    public Map<Long, Tuple2<Long, List<CanalEntry.Column>>> getParseMiddleResult() {
+        return parseMiddleResult;
+    }
+
+    public int currentCheckPos() {
+        return currentCheckPos;
+    }
+
+    public void incrementCurrentCheckPos() {
+        this.currentCheckPos++;
+    }
+
+    public Map<String, IEntityClass> entityClasses() {
+        return entityClasses;
+    }
+
+    public static String entityClassKey(EntityClassRef entityClassRef) {
+        return entityClassRef.getId() + "." + entityClassRef.getProfile();
     }
 }

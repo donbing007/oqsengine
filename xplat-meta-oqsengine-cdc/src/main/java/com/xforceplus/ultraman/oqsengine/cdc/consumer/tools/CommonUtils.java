@@ -21,13 +21,22 @@ public class CommonUtils {
     public static IEntityClass getEntityClass(EntityClassRef entityClassRef, ParserContext parserContext) throws
         SQLException {
 
+        String key = ParserContext.entityClassKey(entityClassRef);
+
+        IEntityClass entityClass = parserContext.entityClasses().get(key);
+        if (null != entityClass) {
+            return entityClass;
+        }
+
         Optional<IEntityClass>
             entityClassOptional =
             parserContext.getMetaManager().load(entityClassRef.getId(), entityClassRef.getProfile());
 
         if (entityClassOptional.isPresent()) {
+            entityClass = entityClassOptional.get();
 
-            return entityClassOptional.get();
+            parserContext.entityClasses().put(key, entityClass);
+            return entityClass;
         }
 
         throw new SQLException(

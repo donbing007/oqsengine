@@ -4,6 +4,7 @@ import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.dto.ParseResult;
+import com.xforceplus.ultraman.oqsengine.cdc.consumer.factory.BinLogParserFactory;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.parser.helper.ParseResultCheckHelper;
 import com.xforceplus.ultraman.oqsengine.cdc.context.ParserContext;
 import com.xforceplus.ultraman.oqsengine.cdc.testhelp.AbstractCdcHelper;
@@ -14,7 +15,6 @@ import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.utils.DevOpsUtils;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MetaInitialization;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
-import com.xforceplus.ultraman.oqsengine.storage.master.mock.MasterDBInitialization;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OqsEngineEntity;
 import java.util.Arrays;
 import java.util.List;
@@ -67,7 +67,10 @@ public class DynamicBinLogParserTest extends AbstractCdcHelper {
             CanalEntry.RowChange rowChange = CanalEntry.RowChange.parseFrom(entry.getStoreValue());
             List<CanalEntry.Column> columns = rowChange.getRowDatasList().get(0).getAfterColumnsList();
 
-            dynamicBinLogParser.parse(columns, parserContext, parseResult);
+            //  合并id相同记录.
+            BinLogParserFactory.getInstance().dynamicParser().merge(columns, parserContext, parseResult);
+            //  解析
+            dynamicBinLogParser.parser(parserContext, parseResult);
         }
 
         //  check commitId size.

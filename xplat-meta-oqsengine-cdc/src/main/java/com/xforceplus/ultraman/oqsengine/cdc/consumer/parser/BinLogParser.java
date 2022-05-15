@@ -13,13 +13,20 @@ import java.util.List;
  */
 public interface BinLogParser {
 
+
+    /**
+     * 合并ID相同的记录.
+     * @param columns 原始数据集.
+     * @param parserContext 上下文.
+     * @param parseResult 解析结果.
+     */
+    void merge(List<CanalEntry.Column> columns, ParserContext parserContext, ParseResult parseResult);
+
     /**
      * 将rowChange按照 动态/静态 分类.
      *
-     * @param columns       原始数据集.
      * @param parserContext 上下文.
      * @param parseResult   结果集.
      */
-    void parse(List<CanalEntry.Column> columns, ParserContext parserContext, ParseResult parseResult);
-
+    void parser(ParserContext parserContext, ParseResult parseResult);
 }

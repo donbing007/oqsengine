@@ -143,6 +143,9 @@ public class DefaultConsumerService implements ConsumerService {
             }
         }
 
+        //  消费columns
+        BinLogParserFactory.getInstance().dynamicParser().parser(parserContext, parseResult);
+
         //  等待isReady
         if (!parseResult.isReadyCommitIds().isEmpty()) {
             cdcMetricsHandler.isReady(new ArrayList<>(parseResult.isReadyCommitIds()));
@@ -264,11 +267,13 @@ public class DefaultConsumerService implements ConsumerService {
                             parserContext.getCdcMetrics().getBatchId()));
                 }
 
-                //  消费columns
-                BinLogParserFactory.getInstance().dynamicParser().parse(columns, parserContext, parseResult);
+                //  合并id相同记录.
+                BinLogParserFactory.getInstance().dynamicParser().merge(columns, parserContext, parseResult);
             }
+
         }
     }
+
 
     /**
      * 只支持逻辑删除，实际上是进行了UPDATE操作.
