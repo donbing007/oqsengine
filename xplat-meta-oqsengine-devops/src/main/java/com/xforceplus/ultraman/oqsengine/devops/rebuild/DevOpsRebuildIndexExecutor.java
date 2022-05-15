@@ -317,8 +317,8 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
         DevOpsCdcMetrics devOps = new DevOpsCdcMetrics();
         devOpsCdcMetrics.forEach(
             devOpsMetric -> {
-                devOps.addFails(devOps.getFails());
-                devOps.addSuccess(devOps.getSuccess());
+                devOps.addFails(devOpsMetric.getFails());
+                devOps.addSuccess(devOpsMetric.getSuccess());
             }
         );
 

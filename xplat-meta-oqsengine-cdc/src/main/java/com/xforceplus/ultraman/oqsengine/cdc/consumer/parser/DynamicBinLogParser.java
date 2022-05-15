@@ -59,7 +59,6 @@ public class DynamicBinLogParser implements BinLogParser {
         long id = UN_KNOW_ID;
         long commitId = UN_KNOW_ID;
         try {
-
             //  获取CommitID
             commitId = getLongFromColumn(columns, COMMITID);
 
@@ -140,10 +139,8 @@ public class DynamicBinLogParser implements BinLogParser {
 
         //  如果是维护的commitId，需要设置devOps指标逻辑.
         if (DevOpsUtils.isMaintainRecord(commitId)) {
-            if (entityClass.isDynamic()) {
-                parserContext.getCdcMetrics().getDevOpsMetrics()
-                    .computeIfAbsent(txId, f -> new DevOpsCdcMetrics()).incrementByStatus(true);
-            }
+            parserContext.getCdcMetrics().getDevOpsMetrics()
+                .computeIfAbsent(txId, f -> new DevOpsCdcMetrics()).incrementByStatus(true);
             //  运维时提交号为0
             builder.withCommitid(NO_TRANSACTION_COMMIT_ID);
             builder.withMaintainid(txId);
@@ -242,7 +239,8 @@ public class DynamicBinLogParser implements BinLogParser {
                 return;
             }
 
-            //  commitId必须满足大于0 且 大于skipCommitId的情况，才回加入检查isReady列表
+            //  commitId需要check
+            //  commitId > skipId,或者当skipId不启用(<= 0)
             if (parserContext.isCheckCommitReady()
                 && (commitId > parserContext.getSkipCommitId() || parserContext.getSkipCommitId() <= NO_TRANSACTION_COMMIT_ID)) {
                 parseResult.isReadyCommitIds().add(commitId);
