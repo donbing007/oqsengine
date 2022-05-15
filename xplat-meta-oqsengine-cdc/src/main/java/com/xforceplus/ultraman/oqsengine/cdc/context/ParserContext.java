@@ -5,7 +5,6 @@ import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import io.vavr.Tuple2;
 import java.util.HashMap;
 import java.util.List;
@@ -29,10 +28,6 @@ public class ParserContext {
      * metaManager适配器.
      */
     private MetaManager metaManager;
-    /**
-     * metaManager适配器.
-     */
-    private MasterStorage masterStorage;
 
     /**
      * 当前指标对象.
@@ -106,6 +101,7 @@ public class ParserContext {
 
     /**
      * 获取entityClassKey.
+     *
      * @param entityClassRef 对象参考.
      * @return key.
      */

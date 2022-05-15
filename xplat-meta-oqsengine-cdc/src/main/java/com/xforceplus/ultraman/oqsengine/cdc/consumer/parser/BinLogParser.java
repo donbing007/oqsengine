@@ -16,6 +16,7 @@ public interface BinLogParser {
 
     /**
      * 合并ID相同的记录.
+     *
      * @param columns 原始数据集.
      * @param parserContext 上下文.
      * @param parseResult 解析结果.
