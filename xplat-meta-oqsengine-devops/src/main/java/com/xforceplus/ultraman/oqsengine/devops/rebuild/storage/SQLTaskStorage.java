@@ -42,11 +42,14 @@ public class SQLTaskStorage implements TaskStorage {
     @Override
     public Integer build(DevOpsTaskInfo taskInfo) throws SQLException {
         Collection<DevOpsTaskInfo> collection = selectActive(taskInfo.getEntity());
-        if (EMPTY_COLLECTION_SIZE == collection.size()) {
-            return new TaskStorageCommand(table).build(devOpsDataSource, taskInfo);
+        //  每一次重建都会使之前已经开始的相同entityClassIds的任务取消.
+        if (EMPTY_COLLECTION_SIZE != collection.size()) {
+            for (DevOpsTaskInfo devOpsTaskInfo : collection) {
+                cancel(devOpsTaskInfo.getMaintainid());
+            }
         }
-        logger.warn("build result is empty, reIndex has already been begun, ignore...");
-        return NULL_UPDATE;
+
+        return new TaskStorageCommand(table).build(devOpsDataSource, taskInfo);
     }
 
     @Override

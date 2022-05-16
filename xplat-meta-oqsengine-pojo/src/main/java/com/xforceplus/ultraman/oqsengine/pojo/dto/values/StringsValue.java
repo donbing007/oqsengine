@@ -52,13 +52,9 @@ public class StringsValue extends AbstractValue<String[]> {
             return false;
         }
 
-        if (Objects.equals(this.getAttachment(), ((StringsValue) o).getAttachment())) {
-            return true;
-        }
-
         boolean found;
         for (String v : this.getValue()) {
-            found = true;
+            found = false;
             for (String tv : thatValues) {
                 if (tv.equals(v)) {
                     // found,so next.
@@ -67,11 +63,12 @@ public class StringsValue extends AbstractValue<String[]> {
                 }
             }
             if (!found) {
+                // 没有找到相同的,表示不会相同.
                 return false;
             }
         }
 
-        return true;
+        return this.getAttachment().equals(((StringsValue) o).getAttachment());
     }
 
 

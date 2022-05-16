@@ -10,10 +10,10 @@ import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientExc
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.AutoFill;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.StaticCalculation;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -107,16 +107,20 @@ public class CacheUtils {
     /**
      * 为了兼容目前redis中的结构不抛NullPointException，需要对某些自增编号字段设默认值.
      */
-    public static EntityField resetAutoFill(EntityField entityField) {
-        if (entityField.calculationType().equals(CalculationType.AUTO_FILL)) {
-            AutoFill autoFill = (AutoFill) entityField.config().getCalculation();
-            if (autoFill.getDomainNoType() == null) {
-                autoFill.setDomainNoType(AutoFill.DomainNoType.NORMAL);
-            }
+    public static EntityField resetCalculation(EntityField entityField) {
+        if (null != entityField.calculationType()) {
+            if (entityField.calculationType().equals(CalculationType.AUTO_FILL)) {
+                AutoFill autoFill = (AutoFill) entityField.config().getCalculation();
+                if (autoFill.getDomainNoType() == null) {
+                    autoFill.setDomainNoType(AutoFill.DomainNoType.NORMAL);
+                }
 
-            if (autoFill.getLevel() == 0) {
-                autoFill.setLevel(DEFAULT_LEVEL);
+                if (autoFill.getLevel() == 0) {
+                    autoFill.setLevel(DEFAULT_LEVEL);
+                }
             }
+        } else {
+            entityField.config().resetCalculation(StaticCalculation.Builder.anStaticCalculation().build());
         }
 
         return entityField;

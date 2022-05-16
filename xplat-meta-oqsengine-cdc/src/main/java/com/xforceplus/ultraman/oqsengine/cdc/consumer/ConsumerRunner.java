@@ -56,6 +56,8 @@ public class ConsumerRunner extends Thread {
         this.cdcMetricsService = cdcMetricsService;
         this.connector = connector;
         this.rebuildIndexExecutor = rebuildIndexExecutor;
+
+        this.rebuildIndexExecutor.resetDoubleCheckDistance(connector.getBatchSize());
     }
 
     /**

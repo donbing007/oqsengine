@@ -31,11 +31,11 @@ public class RemoteRedisTest {
     private StorageMetaManager storageMetaManager;
 
 
-    private static final String password = "8eSf4M97VLhP6hq8";
+    private static final String password = "8eSf4M97VLhP6hq9";
     private static final String ip = "localhost";
     private static final int port = 6379;
 
-    private static final long entityClassId = 1422422995802726402L;
+    private static final long entityClassId = 1295238550381510657L;
 
     @BeforeEach
     public void before() throws Exception {

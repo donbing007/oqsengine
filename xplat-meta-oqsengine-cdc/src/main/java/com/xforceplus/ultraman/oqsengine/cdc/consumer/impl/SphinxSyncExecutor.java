@@ -299,7 +299,12 @@ public class SphinxSyncExecutor implements SyncExecutor {
         long entityClassId = getEntity(columns);
 
         if (entityClassId > ZERO) {
-            String profile = getStringWithoutNullCheck(columns, PROFILE);
+            String profile = "";
+            try {
+                profile = getStringWithoutNullCheck(columns, PROFILE);
+            } catch (Exception e) {
+                //  兼容1.2.0 profile字段没有的情况
+            }
             String key = toClassKeyWithProfile(entityClassId, profile);
 
             //  读取当前批次cache

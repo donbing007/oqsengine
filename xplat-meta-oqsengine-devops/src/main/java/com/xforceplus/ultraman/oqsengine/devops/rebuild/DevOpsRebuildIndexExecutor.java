@@ -4,7 +4,9 @@ import static com.xforceplus.ultraman.oqsengine.devops.rebuild.constant.Constant
 import static com.xforceplus.ultraman.oqsengine.devops.rebuild.constant.ConstantDefine.MAX_ALLOW_ACTIVE;
 import static com.xforceplus.ultraman.oqsengine.devops.rebuild.constant.ConstantDefine.NULL_UPDATE;
 import static com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.BatchStatus.DONE;
+import static com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.BatchStatus.ERROR;
 import static com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.BatchStatus.RUNNING;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.DEFAULT_BATCH_SIZE;
 
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
@@ -24,6 +26,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -61,6 +64,10 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
 
     private ExecutorService asyncThreadPool;
 
+    //  最小的check数，即cdc一次同步批次的最大数
+    private long doubleCheckDistance = DEFAULT_BATCH_SIZE;
+
+
     /**
      * construct.
      */
@@ -71,11 +78,55 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
             ExecutorHelper.buildNameThreadFactory("task-threads", false));
     }
 
+    /**
+     * set value.
+     */
+    public void resetDoubleCheckDistance(long distance) {
+        if (distance > DEFAULT_BATCH_SIZE) {
+            doubleCheckDistance = distance;
+        }
+    }
+
     @Override
     public void destroy() throws Exception {
         if (null != asyncThreadPool) {
             ExecutorHelper.shutdownAndAwaitTermination(asyncThreadPool, 3600);
         }
+    }
+
+    @Override
+    public Collection<DevOpsTaskInfo> rebuildIndexes(Collection<IEntityClass> entityClasses, LocalDateTime start,
+                                                     LocalDateTime end) throws Exception {
+        List<DevOpsTaskInfo> devOps = new ArrayList<>();
+        List<DevOpsTaskInfo> errorTasks = new ArrayList<>();
+        for (IEntityClass entityClass : entityClasses) {
+            DefaultDevOpsTaskInfo devOpsTaskInfo = pending(entityClass, start, end);
+
+            logger.info("pending rebuildIndex task, maintainId {}, entityClass {}, start {}, end {}",
+                devOpsTaskInfo.id(), entityClass.id(), start, end
+            );
+            try {
+                if (NULL_UPDATE == sqlTaskStorage.build(devOpsTaskInfo)) {
+                    devOpsTaskInfo.resetMessage("init task failed...");
+                    devOpsTaskInfo.resetStatus(ERROR.getCode());
+                    errorTasks.add(devOpsTaskInfo);
+                } else {
+                    devOps.add(devOpsTaskInfo);
+                }
+            } catch (Exception e) {
+                devOpsTaskInfo.resetMessage("init task failed...");
+                devOpsTaskInfo.resetStatus(ERROR.getCode());
+                errorTasks.add(devOpsTaskInfo);
+            }
+        }
+
+        asyncThreadPool.submit(() -> {
+            devOps.forEach(this::handleTask);
+        });
+
+        devOps.addAll(errorTasks);
+
+        return devOps;
     }
 
     @Override
@@ -93,35 +144,39 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
         }
 
         asyncThreadPool.submit(() -> {
-            try {
-                //  执行主表更新
-                int rebuildCount =
-                    masterStorage.rebuild(devOpsTaskInfo.getEntity(), devOpsTaskInfo.getMaintainid(),
-                        devOpsTaskInfo.getStarts(), devOpsTaskInfo.getEnds());
-
-                if (rebuildCount > 0) {
-                    devOpsTaskInfo.setBatchSize(rebuildCount);
-                    devOpsTaskInfo.resetStatus(RUNNING.getCode());
-                    devOpsTaskInfo.resetMessage("TASK PROCESSING");
-                } else {
-                    devOpsTaskInfo.setBatchSize(0);
-                    devOpsTaskInfo.resetStatus(DONE.getCode());
-                    devOpsTaskInfo.resetMessage("TASK END");
-                }
-
-                sqlTaskStorage.update(devOpsTaskInfo);
-
-            } catch (Exception e) {
-                devOpsTaskInfo.resetMessage(e.getMessage());
-                try {
-                    sqlTaskStorage.error(devOpsTaskInfo);
-                } catch (SQLException ex) {
-                    ex.printStackTrace();
-                }
-            }
+            handleTask(devOpsTaskInfo);
         });
 
         return devOpsTaskInfo;
+    }
+
+    private void handleTask(DevOpsTaskInfo devOpsTaskInfo) {
+        try {
+            //  执行主表更新
+            int rebuildCount =
+                masterStorage.rebuild(devOpsTaskInfo.getEntity(), devOpsTaskInfo.getMaintainid(),
+                    devOpsTaskInfo.getStarts(), devOpsTaskInfo.getEnds());
+
+            if (rebuildCount > 0) {
+                devOpsTaskInfo.setBatchSize(rebuildCount);
+                devOpsTaskInfo.resetStatus(RUNNING.getCode());
+                devOpsTaskInfo.resetMessage("TASK PROCESSING");
+            } else {
+                devOpsTaskInfo.setBatchSize(0);
+                devOpsTaskInfo.resetStatus(DONE.getCode());
+                devOpsTaskInfo.resetMessage("TASK END");
+            }
+
+            sqlTaskStorage.update(devOpsTaskInfo);
+        } catch (Exception e) {
+            devOpsTaskInfo.resetMessage(e.getMessage());
+
+            try {
+                sqlTaskStorage.error(devOpsTaskInfo);
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
     }
 
     @Override
@@ -180,6 +235,13 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
                     if (devOpsTaskInfoOp.isPresent()) {
                         DevOpsTaskInfo dt = devOpsTaskInfoOp.get();
                         if (dt.isEnd()) {
+                            if (dt.isDone() && dt.getStatus() != DONE.getCode()) {
+                                try {
+                                    done(dt);
+                                } catch (Exception e) {
+                                    logger.warn("done task exception, maintainId {}, message {}.", maintainId, e.getMessage());
+                                }
+                            }
                             return;
                         }
 
@@ -210,11 +272,27 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
                             } else {
                                 try {
                                     //  任务已完成.
-                                    if (dt.getBatchSize() > 0 && dt.getFinishSize() >= dt.getBatchSize()) {
+                                    long distance = dt.getBatchSize() - dt.getFinishSize();
+
+                                    if (distance <= 0) {
                                         done(dt);
                                     } else {
                                         dt.resetStatus(RUNNING.getCode());
                                         sqlTaskStorage.update(dt);
+                                        //  当条数小于 2048 后启动更新后复检，这样哪怕并发造成状态不同步，最终也会由一个线程完成Done.
+                                        if (distance < doubleCheckDistance) {
+                                            try {
+                                                devOpsTaskInfoOp = sqlTaskStorage.selectUnique(maintainId);
+                                                if (devOpsTaskInfoOp.isPresent()) {
+                                                    if (devOpsTaskInfoOp.get().getBatchSize()
+                                                        <= devOpsTaskInfoOp.get().getFinishSize()) {
+                                                        done(devOpsTaskInfoOp.get());
+                                                    }
+                                                }
+                                            } catch (SQLException ex) {
+                                                logger.warn("query task exception, maintainId {}.", maintainId);
+                                            }
+                                        }
                                     }
                                 } catch (SQLException ex) {
                                     logger.warn("do task-update exception, maintainId {}.", dt.getMaintainid());
@@ -247,9 +325,8 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
 
         //  更新状态为完成
         devOpsTaskInfo.resetMessage("success");
-        boolean isDone = sqlTaskStorage.done(devOpsTaskInfo) > NULL_UPDATE;
 
-        if (isDone) {
+        if (sqlTaskStorage.done(devOpsTaskInfo) > NULL_UPDATE) {
             logger.info("task done, maintainId {}, finish batchSize {}",
                 devOpsTaskInfo.getMaintainid(), devOpsTaskInfo.getFinishSize());
             ((DefaultDevOpsTaskInfo) devOpsTaskInfo).setStatus(DONE.getCode());
@@ -257,7 +334,7 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
             logger.warn("task done error, task update finish status error, maintainId {}",
                 devOpsTaskInfo.getMaintainid());
         }
-        return isDone;
+        return true;
     }
 
     private TaskHandler newTaskHandler(DevOpsTaskInfo taskInfo) {

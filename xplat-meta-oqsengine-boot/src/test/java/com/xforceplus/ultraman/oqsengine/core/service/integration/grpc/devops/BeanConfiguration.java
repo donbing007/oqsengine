@@ -85,8 +85,6 @@ public class BeanConfiguration {
 //        });
 //        ReflectionUtils.reflectionFieldValue(cacheFields, "syncExecutor", metaManager,
 //            MetaInitialization.getInstance().getEntityClassSyncExecutor());
-//        ReflectionUtils.reflectionFieldValue(cacheFields, "asyncDispatcher", metaManager,
-//            CommonInitialization.getInstance().getRunner());
 //
 //        return metaManager;
 //    }
