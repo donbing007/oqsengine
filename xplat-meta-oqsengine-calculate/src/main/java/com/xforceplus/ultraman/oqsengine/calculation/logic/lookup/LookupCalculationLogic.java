@@ -114,10 +114,10 @@ public class LookupCalculationLogic implements CalculationLogic {
      */
     @Override
     public Collection<AffectedInfo> getMaintainTarget(
-        CalculationContext context, Participant abstractParticipant, Collection<IEntity> triggerEntities)
+        CalculationContext context, Participant participant, Collection<IEntity> triggerEntities)
         throws CalculationException {
 
-        Optional attachmentOp = abstractParticipant.getAttachment();
+        Optional attachmentOp = participant.getAttachment();
         if (!attachmentOp.isPresent()) {
             return Collections.emptyList();
         } else {
@@ -131,13 +131,13 @@ public class LookupCalculationLogic implements CalculationLogic {
                 交由异步队列异步处理.
                  */
                 LookupMaintainingTask lookupMaintainingTask = LookupMaintainingTask.Builder.anLookupMaintainingTask()
-                    .withTargetEntityId(context.getFocusEntity().id())
                     .withTargetClassRef(context.getFocusEntity().entityClassRef())
-                    .withTargetFieldId(((Lookup) abstractParticipant.getField().config().getCalculation()).getFieldId())
-                    .withLookupClassRef(abstractParticipant.getEntityClass().ref())
-                    .withLookupFieldId(abstractParticipant.getField().id())
+                    .withTargetFieldId(((Lookup) participant.getField().config().getCalculation()).getFieldId())
+                    .withLookupClassRef(participant.getEntityClass().ref())
+                    .withLookupFieldId(participant.getField().id())
                     .withLastStartLookupEntityId(0)
                     .withMaxSize(TASK_LIMIT_NUMBER)
+                    .withTargetEntityId(context.getSourceEntity().id())
                     .build();
 
 
@@ -153,9 +153,9 @@ public class LookupCalculationLogic implements CalculationLogic {
                 LookupEntityRefIterator refIter =
                     new LookupEntityRefIterator(TRANSACTION_LIMIT_NUMBER, TRANSACTION_LIMIT_NUMBER);
                 refIter.setCombinedSelectStorage(context.getResourceWithEx(() -> context.getConditionsSelectStorage()));
-                refIter.setEntityClass(abstractParticipant.getEntityClass());
-                refIter.setField(abstractParticipant.getField());
-                refIter.setTargetEntityId(context.getFocusEntity().id());
+                refIter.setEntityClass(participant.getEntityClass());
+                refIter.setField(participant.getField());
+                refIter.setTargetEntityId(context.getSourceEntity().id());
                 refIter.setStartId(0);
 
                 List<EntityRef> refs = new ArrayList<>();
@@ -174,9 +174,9 @@ public class LookupCalculationLogic implements CalculationLogic {
                             .withTargetEntityId(context.getFocusEntity().id())
                             .withTargetClassRef(context.getFocusEntity().entityClassRef())
                             .withTargetFieldId(
-                                ((Lookup) abstractParticipant.getField().config().getCalculation()).getFieldId())
-                            .withLookupClassRef(abstractParticipant.getEntityClass().ref())
-                            .withLookupFieldId(abstractParticipant.getField().id())
+                                ((Lookup) participant.getField().config().getCalculation()).getFieldId())
+                            .withLookupClassRef(participant.getEntityClass().ref())
+                            .withLookupFieldId(participant.getField().id())
                             .withLastStartLookupEntityId(
                                 affectedInfos.get(affectedInfos.size() - 1).getAffectedEntityId())
                             .withMaxSize(TASK_LIMIT_NUMBER)
