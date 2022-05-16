@@ -741,6 +741,22 @@ public class CalculationTest extends AbstractContainerExtends {
         Assertions.assertEquals(new BigDecimal("100.000000"),
             order.entityValue().getValue("订单项平均价格formula").get().getValue()
         );
+
+        // 判断lookup的用户编码 order 是否顺利更新.
+        String newUserCode = "U" + idGenerator.next();
+        user = Entity.Builder.anEntity()
+            .withId(user.id())
+            .withEntityClassRef(MockEntityClassDefine.USER_CLASS.ref())
+            .withValue(
+                new StringValue(
+                    MockEntityClassDefine.USER_CLASS.field("用户编号").get(), newUserCode)
+            ).build();
+        oqsResult = entityManagementService.replace(user);
+        Assertions.assertEquals(ResultStatus.SUCCESS, oqsResult.getResultStatus(), oqsResult.getMessage());
+
+        order = entitySearchService.selectOne(order.id(), MockEntityClassDefine.ORDER_CLASS.ref()).getValue().get();
+        Assertions.assertEquals(newUserCode,
+            order.entityValue().getValue("用户编号lookup").get().valueToString());
     }
 
     @Test
