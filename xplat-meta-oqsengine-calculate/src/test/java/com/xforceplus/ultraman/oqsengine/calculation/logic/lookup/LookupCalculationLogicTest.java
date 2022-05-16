@@ -334,6 +334,7 @@ public class LookupCalculationLogicTest {
                 new LongValue(targetLongField, 100L))
         );
 
+        context.focusSourceEntity(targetEntity);
         context.focusEntity(targetEntity, targetEntityClass);
         context.focusField(targetLongField);
 
@@ -403,6 +404,7 @@ public class LookupCalculationLogicTest {
             .withTaskExecutorService(TASK_POOL)
             .withConditionsSelectStorage(conditionsSelectStorage)
             .build();
+        context.focusSourceEntity(targetEntity);
         context.focusEntity(targetEntity, targetEntityClass);
         context.focusField(targetStringField);
 
