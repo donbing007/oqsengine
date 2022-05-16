@@ -1,6 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.metadata.mock;
 
-import com.xforceplus.ultraman.oqsengine.common.mock.CommonInitialization;
 import com.xforceplus.ultraman.oqsengine.common.mock.ReflectionUtils;
 import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
@@ -44,8 +43,6 @@ public class MockMetaManagerHolder {
             ReflectionUtils.reflectionFieldValue(cacheFields, "requestHandler", metaManager, requestHandler);
             ReflectionUtils.reflectionFieldValue(cacheFields, "syncExecutor", metaManager,
                 MetaInitialization.getInstance().getEntityClassSyncExecutor());
-            ReflectionUtils.reflectionFieldValue(cacheFields, "asyncDispatcher", metaManager,
-                CommonInitialization.getInstance().getRunner());
 
             MetaInitialization.getInstance().setMetaManager(metaManager);
         }

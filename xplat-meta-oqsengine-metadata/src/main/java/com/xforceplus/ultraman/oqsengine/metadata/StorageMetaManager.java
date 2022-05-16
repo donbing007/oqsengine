@@ -2,7 +2,6 @@ package com.xforceplus.ultraman.oqsengine.metadata;
 
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
 import static com.xforceplus.ultraman.oqsengine.metadata.cache.DefaultCacheExecutor.OBJECT_MAPPER;
-import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.COMMON_WAIT_TIME_OUT;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_CODE;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_FATHER;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_FIELDS;
@@ -51,17 +50,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
-import org.checkerframework.checker.nullness.Opt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,17 +76,12 @@ public class StorageMetaManager implements MetaManager {
     @Resource(name = "grpcSyncExecutor")
     private SyncExecutor syncExecutor;
 
-    @Resource(name = "taskThreadPool")
-    private ExecutorService asyncDispatcher;
-
     private AbstractMetaModel metaModel;
+
+    private static final int NEED_MAX_WAIT_LOOPS = 60;
 
     public StorageMetaManager(AbstractMetaModel metaModel) {
         this.metaModel = metaModel;
-    }
-
-    private <T> CompletableFuture<T> async(Supplier<T> supplier) {
-        return CompletableFuture.supplyAsync(supplier, asyncDispatcher);
     }
 
     @PostConstruct
@@ -204,7 +191,7 @@ public class StorageMetaManager implements MetaManager {
                     requestHandler.register(watchElement);
                 }
 
-                if (version <= NOT_EXIST_VERSION) {
+                if (overWrite || version <= NOT_EXIST_VERSION) {
                     version = waitForMetaSync(appId);
                 }
             } else {
@@ -322,9 +309,7 @@ public class StorageMetaManager implements MetaManager {
 
                 cacheExecutor.appEnvRemove(appId);
 
-                need(appId, env, true);
-
-                version = waitForMetaSync(appId);
+                version = need(appId, env, true);
             }
 
             return version;
@@ -395,37 +380,34 @@ public class StorageMetaManager implements MetaManager {
      * @return 版本号.
      */
     private int waitForMetaSync(String appId) {
-        CompletableFuture<Integer> future = async(() -> {
-            int ver;
+
+        int ver = NOT_EXIST_VERSION;
+        try {
             /*
              * 这里每10毫秒获取一次当前版本、直到获取到版本或者超时
              */
-            while (true) {
+            for (int i = 0; i < NEED_MAX_WAIT_LOOPS; i++) {
                 ver = cacheExecutor.version(appId);
-                if (ver < 0) {
+                if (ver <= NOT_EXIST_VERSION) {
                     try {
-                        Thread.sleep(10);
+                        Thread.sleep(1_000);
                     } catch (InterruptedException e) {
                         break;
                     }
                 } else {
-                    return ver;
+                    break;
                 }
             }
-            return NOT_EXIST_VERSION;
-        });
-
-        try {
-            int version = future.get(COMMON_WAIT_TIME_OUT, TimeUnit.MILLISECONDS);
-            if (version == NOT_EXIST_VERSION) {
-                throw new RuntimeException(
-                    String.format("get version of appId [%s] failed, reach max wait time", appId));
-            }
-            return version;
-        } catch (InterruptedException | ExecutionException | TimeoutException e) {
+        } catch (Exception e) {
             logger.warn(e.getMessage());
-            throw new RuntimeException(e.getMessage());
+            throw e;
         }
+
+        if (ver <= NOT_EXIST_VERSION) {
+            throw new RuntimeException(
+                String.format("get version of appId [%s] failed, reach max wait time", appId));
+        }
+        return ver;
     }
 
     /**
