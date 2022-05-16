@@ -359,7 +359,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
                     if (currentEntity.isDirty()) {
                         dirtyEntities.add(currentEntity);
-                        calculation.maintain(calculationContext);
                     }
 
                 }
@@ -390,6 +389,10 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                             hint.setRollback(true);
                             return OqsResult.unAccumulate();
                         }
+
+                        calculationContext.focusSourceEntity(entityEntry.getKey());
+                        calculationContext.focusEntity(entityEntry.getKey(), entityEntry.getValue());
+                        calculation.maintain(calculationContext);
                     }
                 }
 
@@ -470,7 +473,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     return OqsResult.success();
                 }
 
-                calculation.maintain(calculationContext);
 
                 masterStorage.build(currentEntity, entityClass);
                 if (currentEntity.isDirty()) {
@@ -478,6 +480,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     hint.setRollback(true);
                     return OqsResult.unCreated();
                 }
+
+                calculation.maintain(calculationContext);
 
                 if (!calculationContext.persist()) {
                     hint.setRollback(true);
@@ -633,9 +637,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                             setValueChange(calculationContext,
                                 Optional.ofNullable(replaceEntity), Optional.ofNullable(newEntity));
 
-
-                            calculation.maintain(calculationContext);
-
                             replacePayload.addChange(oldEntity,
                                 newEntity.entityValue().values().stream()
                                     .filter(v -> v.isDirty()).toArray(IValue[]::new));
@@ -665,6 +666,10 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                             hint.setRollback(true);
                             return OqsResult.unAccumulate();
                         }
+
+                        calculationContext.focusSourceEntity(newEntity);
+                        calculationContext.focusEntity(newEntity, entityPackage.getNotSafe(i).getValue());
+                        calculation.maintain(calculationContext);
                     }
 
                     if (!calculationContext.persist()) {
@@ -787,8 +792,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         return transformVerifierResultToOperationResult(verifyResult, newEntity);
                     }
 
-                    calculation.maintain(calculationContext);
-
                     replacePayload = new ReplacePayload(tx.id());
                     replacePayload.addChange(oldEntity,
                         newEntity.entityValue().values().stream().filter(v -> v.isDirty()).toArray(IValue[]::new));
@@ -799,11 +802,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         return OqsResult.unReplaced(newEntity.id());
                     }
 
-                    if (!calculationContext.persist()) {
-                        hint.setRollback(true);
-                        return OqsResult.conflict();
-                    }
-
 
                     //  这里将版本+1，使得外部获取的版本为当前成功版本
                     newEntity.resetVersion(newEntity.version() + ONE_INCREMENT_POS);
@@ -811,6 +809,13 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     if (!tx.getAccumulator().accumulateReplace(oldEntity)) {
                         hint.setRollback(true);
                         return OqsResult.unAccumulate();
+                    }
+
+                    calculation.maintain(calculationContext);
+
+                    if (!calculationContext.persist()) {
+                        hint.setRollback(true);
+                        return OqsResult.conflict();
                     }
                 } finally {
                     resourceLocker.unlock(lockResource);
@@ -894,22 +899,14 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 try {
                     IEntity targetEntity;
                     IEntityClass entityClass;
-                    for (int i = 0; i < targetEntities.size(); i++) {
-                        targetEntity = targetEntities.get(i);
-                        entityClass = entityClassTable.get(targetEntity.entityClassRef().getId());
-                        calculationContext.focusTx(tx);
-                        calculationContext.focusSourceEntity(targetEntity);
-                        calculationContext.focusEntity(targetEntity, entityClass);
-                        setValueChange(calculationContext, Optional.empty(), Optional.of(targetEntities.get(i)));
-                        calculation.maintain(calculationContext);
-                    }
-
                     EntityPackage entityPackage = new EntityPackage();
                     for (int i = 0; i < targetEntities.size(); i++) {
                         targetEntity = targetEntities.get(i);
+                        setValueChange(calculationContext, Optional.empty(), Optional.of(targetEntity));
                         entityClass = entityClassTable.get(targetEntity.entityClassRef().getId());
                         entityPackage.put(targetEntity, entityClass, false);
                     }
+                    // 主操作
                     masterStorage.delete(entityPackage);
 
                     for (int i = 0; i < entityPackage.size(); i++) {
@@ -924,6 +921,10 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                             hint.setRollback(true);
                             return OqsResult.unAccumulate();
                         }
+
+                        calculationContext.focusSourceEntity(targetEntity);
+                        calculationContext.focusEntity(targetEntity, entityPackage.getNotSafe(i).getValue());
+                        calculation.maintain(calculationContext);
                     }
 
                     if (!calculationContext.persist()) {
@@ -1015,7 +1016,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     calculationContext.focusSourceEntity(targetEntity);
                     calculationContext.focusEntity(targetEntity, entityClass);
                     setValueChange(calculationContext, Optional.empty(), Optional.of(targetEntity));
-                    calculation.maintain(calculationContext);
 
                     masterStorage.delete(targetEntity, entityClass);
                     if (!targetEntity.isDeleted()) {
@@ -1028,6 +1028,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         return OqsResult.unAccumulate();
                     }
 
+                    calculation.maintain(calculationContext);
 
                     if (!calculationContext.persist()) {
                         hint.setRollback(true);
