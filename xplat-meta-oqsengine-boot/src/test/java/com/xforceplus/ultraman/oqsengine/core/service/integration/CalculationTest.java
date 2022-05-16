@@ -55,6 +55,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
+import java.util.stream.IntStream;
 import javax.annotation.Resource;
 import javax.sql.DataSource;
 import org.junit.jupiter.api.AfterEach;
@@ -777,7 +778,7 @@ public class CalculationTest extends AbstractContainerExtends {
         Assertions.assertFalse(user.isDirty());
         user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).getValue().get();
 
-        com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[] orders = new com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[10];
+        IEntity[] orders = new IEntity[10];
         for (int i = 0; i < orders.length; i++) {
             orders[i] = entityHelper.buildOrderEntity(user);
         }
@@ -790,6 +791,33 @@ public class CalculationTest extends AbstractContainerExtends {
         Assertions.assertEquals(
             orders.length,
             user.entityValue().getValue("订单总数count").get().valueToLong());
+    }
+
+    @Test
+    public void testBatchReplaceCalculation() throws Exception {
+        IEntity[] users = IntStream.range(0, 10).mapToObj(i -> entityHelper.buildUserEntity()).toArray(IEntity[]::new);
+        entityManagementService.build(users);
+
+        IEntity[] orders = Arrays.stream(users).map(u -> entityHelper.buildOrderEntity(u)).toArray(IEntity[]::new);
+        entityManagementService.build(orders);
+
+        String newUserCode = "U" + idGenerator.next();
+        for (IEntity user : users) {
+            user.entityValue().clear().addValue(
+                new StringValue(
+                    MockEntityClassDefine.USER_CLASS.field("用户编号").get(), newUserCode)
+            );
+        }
+        entityManagementService.replace(users);
+
+        Collection<IEntity> replaceOrders = entitySearchService.selectMultiple(
+            Arrays.stream(orders).mapToLong(o -> o.id()).toArray(), MockEntityClassDefine.ORDER_CLASS.ref())
+            .getValue().get();
+
+        for (IEntity o : replaceOrders) {
+            Assertions.assertEquals(newUserCode, o.entityValue().getValue("用户编号lookup").get().valueToString());
+        }
+
     }
 
     @Test

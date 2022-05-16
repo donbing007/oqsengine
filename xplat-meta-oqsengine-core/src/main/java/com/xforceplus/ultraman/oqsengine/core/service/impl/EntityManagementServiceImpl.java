@@ -634,8 +634,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                             calculationContext.focusSourceEntity(newEntity);
                             calculationContext.focusEntity(newEntity, entityClass);
                             newEntity = calculation.calculate(calculationContext);
-                            setValueChange(calculationContext,
-                                Optional.ofNullable(replaceEntity), Optional.ofNullable(newEntity));
+                            setValueChange(calculationContext, Optional.of(newEntity), Optional.of(oldEntity));
 
                             replacePayload.addChange(oldEntity,
                                 newEntity.entityValue().values().stream()
