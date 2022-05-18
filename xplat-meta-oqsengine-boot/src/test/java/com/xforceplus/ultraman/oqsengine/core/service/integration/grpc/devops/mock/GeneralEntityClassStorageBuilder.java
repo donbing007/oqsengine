@@ -32,6 +32,8 @@ import java.util.Map;
  */
 public class GeneralEntityClassStorageBuilder {
 
+    private static String APP_CODE = "GeneralEntityClassStorageBuilder";
+
     /**
      * 生成.
      */
@@ -54,6 +56,7 @@ public class GeneralEntityClassStorageBuilder {
 
         EntityClassStorage entityClassStorage = new EntityClassStorage();
         entityClassStorage.setId(expectedEntityStorage.getSelf());
+        entityClassStorage.setAppCode(APP_CODE);
         entityClassStorage.setVersion(GeneralConstant.DEFAULT_VERSION);
 
 

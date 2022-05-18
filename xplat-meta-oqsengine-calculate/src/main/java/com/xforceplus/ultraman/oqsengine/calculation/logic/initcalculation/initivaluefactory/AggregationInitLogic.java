@@ -125,7 +125,7 @@ public class AggregationInitLogic implements InitIvalueLogic {
 
 
             // 得到所有聚合明细
-            Collection<IEntity> entities = masterStorage.selectMultiple(combinedIds);
+            Collection<IEntity> entities = masterStorage.selectMultiple(combinedIds, sourceEntityClass);
 
             IEntityField sourceField = participant.getSourceFields().size() > 0 ? ((ArrayList<IEntityField>) participant.getSourceFields()).get(0) : EntityField.Builder.anEntityField().build();
             //获取符合条件的所有明细值
@@ -140,7 +140,7 @@ public class AggregationInitLogic implements InitIvalueLogic {
                     Collection<EntityRef> refCollection = indexStorage.select(conditions, sourceEntityClass, SelectConfig.Builder.anSelectConfig().withSort(
                             Sort.buildAscSort(EntityField.ID_ENTITY_FIELD)).withPage(page).withCommitId(minUnSyncCommitId).withExcludedIds(ids).build());
                     entities = masterStorage.selectMultiple(refCollection.stream().map(EntityRef::getId).collect(Collectors.toSet())
-                            .stream().mapToLong(Long::longValue).toArray());
+                            .stream().mapToLong(Long::longValue).toArray(), sourceEntityClass);
                     count += entities.size();
                     ivalues.addAll(entities.stream().map(i -> i.entityValue().getValue(sourceField.id())).collect(Collectors.toList()));
                 }

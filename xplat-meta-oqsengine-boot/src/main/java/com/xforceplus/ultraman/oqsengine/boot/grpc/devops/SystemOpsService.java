@@ -11,6 +11,7 @@ import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.DevOpsTaskInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.monitor.dto.MetricsLog;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.log.UpGradeLog;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.AppSimpleInfo;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.CdcErrorTask;
@@ -156,7 +157,6 @@ public class SystemOpsService {
         }
         return ids;
     }
-
 
     /**
      * 清理提交号.
@@ -394,8 +394,8 @@ public class SystemOpsService {
      *
      * @return app->env pairs.
      */
-    @DiscoverAction(describe = "获取当前oqs下所有app", retClass = List.class, retInner = AppSimpleInfo.class)
-    public List<AppSimpleInfo> appInfo() {
+    @DiscoverAction(describe = "获取当前oqs下所有app", retClass = Collection.class, retInner = AppSimpleInfo.class)
+    public Collection<AppSimpleInfo> appInfo() {
         try {
             return metaManager.showApplications();
         } catch (Exception e) {
@@ -419,4 +419,22 @@ public class SystemOpsService {
         }
         return null;
     }
+
+    /**
+     * 获取当前oqs下的meta更新履历.
+     *
+     * @return app->env pairs.
+     */
+    @DiscoverAction(describe = "获取当前oqs下的meta更新履历", retClass = Collection.class, retInner = UpGradeLog.class)
+    public Collection<UpGradeLog> upGradeLogs(
+        @MethodParam(name = "appId", klass = String.class, required = false) String appId,
+        @MethodParam(name = "env", klass = String.class, required = false) String env) {
+        try {
+            return metaManager.showUpgradeLogs(appId, env);
+        } catch (Exception e) {
+            PrintErrorHelper.exceptionHandle("show applications exception.", e);
+        }
+        return null;
+    }
+
 }

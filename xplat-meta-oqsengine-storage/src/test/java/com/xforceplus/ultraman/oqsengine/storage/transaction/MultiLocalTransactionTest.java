@@ -96,17 +96,15 @@ public class MultiLocalTransactionTest {
         }
     }
 
-    /**
-     * 提交时应该进行等等同步.
-     */
     @Test
-    public void testCommitWaitSync() throws Exception {
+    public void testCommitNotSync() throws Exception {
         LongIdGenerator idGenerator = new IncreasingOrderLongIdGenerator();
 
         MultiLocalTransaction tx = MultiLocalTransaction.Builder.anMultiLocalTransaction()
             .withId(1)
             .withLongIdGenerator(idGenerator)
             .withCommitIdStatusService(commitIdStatusService)
+            .withMaxWaitCommitIdSyncMs(6)
             .build();
 
         List<MockResource> resources = buildResources(10, false);
@@ -118,6 +116,8 @@ public class MultiLocalTransactionTest {
         tx.getAccumulator().accumulateReplace(
             Entity.Builder.anEntity().withId(1).withVersion(0)
                 .withEntityClassRef(EntityClassRef.Builder.anEntityClassRef().withEntityClassId(3L).build()).build());
+
+        tx.getHint().setCanWaitCommitSync(false);
         // 没有真实的操作,这里手动填入一个提交号.
         commitIdStatusService.save(1, true);
 
@@ -125,8 +125,52 @@ public class MultiLocalTransactionTest {
             LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(200));
             commitIdStatusService.obsoleteAll();
         });
-        tx.commit();
 
+        tx.commit();
+        // 小于目标需要等待的6毫秒,表示没有进行等待.
+        Assertions.assertFalse(tx.isWaitedSync());
+
+        for (MockResource resource : resources) {
+            Assertions.assertTrue(resource.isCommitted());
+        }
+    }
+
+    /**
+     * 提交时应该进行等等同步.
+     */
+    @Test
+    public void testCommitWaitSync() throws Exception {
+        LongIdGenerator idGenerator = new IncreasingOrderLongIdGenerator();
+
+        MultiLocalTransaction tx = MultiLocalTransaction.Builder.anMultiLocalTransaction()
+            .withId(1)
+            .withLongIdGenerator(idGenerator)
+            .withCommitIdStatusService(commitIdStatusService)
+            .withMaxWaitCommitIdSyncMs(6)
+            .build();
+
+        List<MockResource> resources = buildResources(10, false);
+
+        for (MockResource resource : resources) {
+            tx.join(resource);
+        }
+
+        tx.getAccumulator().accumulateReplace(
+            Entity.Builder.anEntity().withId(1).withVersion(0)
+                .withEntityClassRef(EntityClassRef.Builder.anEntityClassRef().withEntityClassId(3L).build()).build());
+
+        tx.getHint().setCanWaitCommitSync(true);
+        // 没有真实的操作,这里手动填入一个提交号.
+        commitIdStatusService.save(1, true);
+
+        CompletableFuture.runAsync(() -> {
+            LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(200));
+            commitIdStatusService.obsoleteAll();
+        });
+        long start = System.currentTimeMillis();
+        tx.commit();
+        // 大于目标需要等待的6毫秒,表示实际进行了等待.
+        Assertions.assertTrue(System.currentTimeMillis() - start >= 6);
         Assertions.assertTrue(tx.isWaitedSync());
 
         for (MockResource resource : resources) {

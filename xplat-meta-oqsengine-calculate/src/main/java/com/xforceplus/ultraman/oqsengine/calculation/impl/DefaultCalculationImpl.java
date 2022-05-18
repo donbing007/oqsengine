@@ -214,12 +214,23 @@ public class DefaultCalculationImpl implements Calculation {
                     if (affectedEntityIds.length > 0) {
                         if (!context.tryLocksEntity(affectedEntityIds)) {
                             throw new CalculationException(
-                                "Conflicts are calculated and the attempt limit is reached. To give up!");
+                                String.format(
+                                    "Conflicts are calculated and the attempt limit is reached [%d ms]. To give up!",
+                                    context.getLockTimeoutMs()));
                         }
                     }
                 }
 
                 IEntity[] affectedEntities = loadEntities(context, affectedInfos);
+
+                if (logger.isDebugEnabled()) {
+                    if (affectedEntities.length == 0) {
+                        logger.debug("The number of instances affected by the field {} of entityclass {} is 0.",
+                            participant.getField().fieldName(),
+                            participant.getEntityClass().code()
+                        );
+                    }
+                }
 
                 // 重新计算影响的entity.
                 for (IEntity affectedEntitiy : affectedEntities) {
@@ -319,7 +330,6 @@ public class DefaultCalculationImpl implements Calculation {
         if (logger.isDebugEnabled()) {
             logger.debug("Load instance. Identity list [{}]", ids);
         }
-
 
 
         // 过滤掉缓存中已经存在的.

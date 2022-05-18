@@ -20,6 +20,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
+import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import java.math.BigDecimal;
 import java.sql.SQLException;
@@ -41,12 +42,18 @@ public class MinFunctionStrategy implements FunctionStrategy {
     final Logger logger = LoggerFactory.getLogger(MinFunctionStrategy.class);
 
     @Override
-    public Optional<IValue> excute(Optional<IValue> agg, Optional<IValue> o, Optional<IValue> n, CalculationContext context) {
+    public Optional<IValue> excute(
+        Optional<IValue> currentValue,
+        Optional<IValue> oldValue,
+        Optional<IValue> newValue,
+        CalculationContext context) {
+
         if (logger.isDebugEnabled()) {
-            logger.debug("begin excuteMin agg:{}, o-value:{}, n-value:{}",
-                agg.get().valueToString(), o.get().valueToString(), n.get().valueToString());
+            logger.debug("begin excuteMin current:{}, o-value:{}, n-value:{}",
+                currentValue.get().valueToString(), oldValue.get().valueToString(), newValue.get().valueToString());
         }
-        Optional<IValue> aggValue = Optional.of(agg.get().copy());
+
+        Optional<IValue> aggValue = Optional.of(currentValue.get().copy());
         //焦点字段
         Aggregation aggregation = ((Aggregation) context.getFocusField().config().getCalculation());
         AggregationFunction function =
@@ -58,16 +65,16 @@ public class MinFunctionStrategy implements FunctionStrategy {
 
             if (logger.isDebugEnabled()) {
                 logger.debug("minExcute Count:{}, agg-value:{}, n-value:{}", count,
-                    aggValue.get().valueToString(), n.get().valueToString());
+                    aggValue.get().valueToString(), newValue.get().valueToString());
             }
 
             if ((context.getScenariso()).equals(CalculationScenarios.BUILD)) {
                 if (count == 0) {
-                    aggValue.get().setStringValue(n.get().valueToString());
+                    aggValue.get().setStringValue(newValue.get().valueToString());
 
                     if (logger.isDebugEnabled()) {
                         logger.debug("第一条数据计算 - return agg-value:{}, n-value:{}",
-                            aggValue.get().valueToString(), n.get().valueToString());
+                            aggValue.get().valueToString(), newValue.get().valueToString());
                     }
 
                     Optional<IValue> attAggValue = Optional.of(attachmentReplace(aggValue.get(), "1", "0"));
@@ -76,16 +83,16 @@ public class MinFunctionStrategy implements FunctionStrategy {
             }
         }
         // 当聚合值和操作数据的旧值相同，则需要特殊处理 - 这里已经过滤掉第一条数据的特殊场景
-        if (aggValue.get().valueToString().equals(o.get().valueToString())) {
+        if (aggValue.get().valueToString().equals(oldValue.get().valueToString())) {
             if (aggregation.getClassId() == context.getSourceEntity().entityClassRef().getId()) {
                 if (context.getScenariso().equals(CalculationScenarios.BUILD)) {
 
                     if (logger.isDebugEnabled()) {
                         logger.debug("后续数据计算，聚合和老数据相同 - return agg-value:{}, n-value:{}, o-value:{}",
-                            aggValue.get().valueToString(), n.get().valueToString(), o.get().valueToString());
+                            aggValue.get().valueToString(), newValue.get().valueToString(), oldValue.get().valueToString());
                     }
                     Optional<IValue> attAggValue = Optional.of(attachmentReplace(aggValue.get(), "1", "0"));
-                    return function.excute(attAggValue, o, n);
+                    return function.excute(attAggValue, oldValue, newValue);
                 } else if (context.getScenariso().equals(CalculationScenarios.DELETE)) {
                     // 删除最小值，需要重新查找最小值-将最小值返回
                     Optional<IValue> minValue = null;
@@ -108,9 +115,9 @@ public class MinFunctionStrategy implements FunctionStrategy {
                     }
                 } else {
                     // 聚合值和该数据的老数据相同，则进行特殊判断
-                    if (checkMaxValue(o.get(), n.get())) {
+                    if (checkMaxValue(oldValue.get(), newValue.get())) {
                         // 如果新数据小于老数据，在求最小值的时候，直接用该值替换聚合信息
-                        aggValue.get().setStringValue(n.get().valueToString());
+                        aggValue.get().setStringValue(newValue.get().valueToString());
                         return aggValue;
                     } else {
                         // 如果新数据大于老数据，则需要在数据库中进行一次检索，查出最小数据，用该数据和新值进行比对，然后进行替换
@@ -124,16 +131,16 @@ public class MinFunctionStrategy implements FunctionStrategy {
                             if (logger.isDebugEnabled()) {
                                 logger.debug("找到最小数据 - minValue:{}", minValue.get().valueToString());
                             }
-                            if (checkMaxValue(minValue.get(), n.get())) {
+                            if (checkMaxValue(minValue.get(), newValue.get())) {
                                 // 如果新数据小于老数据，在求最小值的时候，直接用该值替换聚合信息
-                                aggValue.get().setStringValue(n.get().valueToString());
+                                aggValue.get().setStringValue(newValue.get().valueToString());
                                 return aggValue;
                             } else {
                                 aggValue.get().setStringValue(minValue.get().valueToString());
                                 return aggValue;
                             }
                         } else {
-                            aggValue.get().setStringValue(n.get().valueToString());
+                            aggValue.get().setStringValue(newValue.get().valueToString());
                             return aggValue;
                         }
                     }
@@ -141,9 +148,9 @@ public class MinFunctionStrategy implements FunctionStrategy {
             } else {
                 //属于第二层以上树的操作，都按replace来计算
                 // 聚合值和该数据的老数据相同，则进行特殊判断
-                if (checkMaxValue(o.get(), n.get())) {
+                if (checkMaxValue(oldValue.get(), newValue.get())) {
                     // 如果新数据小于老数据，在求最小值的时候，直接用该值替换聚合信息
-                    aggValue.get().setStringValue(n.get().valueToString());
+                    aggValue.get().setStringValue(newValue.get().valueToString());
                     return aggValue;
                 } else {
                     // 如果新数据大于老数据，则需要在数据库中进行一次检索，查出最小数据，用该数据和新值进行比对，然后进行替换
@@ -154,16 +161,16 @@ public class MinFunctionStrategy implements FunctionStrategy {
                         e.printStackTrace();
                     }
                     if (minValue.isPresent()) {
-                        if (checkMaxValue(minValue.get(), n.get())) {
+                        if (checkMaxValue(minValue.get(), newValue.get())) {
                             // 如果新数据小于老数据，在求最小值的时候，直接用该值替换聚合信息
-                            aggValue.get().setStringValue(n.get().valueToString());
+                            aggValue.get().setStringValue(newValue.get().valueToString());
                             return aggValue;
                         } else {
                             aggValue.get().setStringValue(minValue.get().valueToString());
                             return aggValue;
                         }
                     } else {
-                        aggValue.get().setStringValue(n.get().valueToString());
+                        aggValue.get().setStringValue(newValue.get().valueToString());
                         return aggValue;
                     }
                 }
@@ -175,14 +182,14 @@ public class MinFunctionStrategy implements FunctionStrategy {
             return attAggValue;
         } else if (context.getScenariso().equals(CalculationScenarios.BUILD)) {
             Optional<IValue> attAggValue = Optional.of(attachmentReplace(aggValue.get(), "1", "0"));
-            return function.excute(attAggValue, o, n);
+            return function.excute(attAggValue, oldValue, newValue);
         }
 
         if (logger.isDebugEnabled()) {
             logger.debug("无特殊情况数据计算 - return agg-value:{}, n-value:{}, o-value:{}",
-                aggValue.get().valueToString(), n.get().valueToString(), o.get().valueToString());
+                aggValue.get().valueToString(), newValue.get().valueToString(), oldValue.get().valueToString());
         }
-        return function.excute(aggValue, o, n);
+        return function.excute(aggValue, oldValue, newValue);
     }
 
     /**
@@ -259,10 +266,15 @@ public class MinFunctionStrategy implements FunctionStrategy {
      */
     private Optional<IValue> minAggregationEntity(Aggregation aggregation, CalculationContext context,
                                                   CalculationScenarios calculationScenarios) throws SQLException {
+        MasterStorage masterStorage = context.getResourceWithEx(() -> context.getMasterStorage());
         // 得到最大值
         Optional<IEntityClass> aggEntityClass =
-                context.getMetaManager().get().load(aggregation.getClassId(), context.getFocusEntity().entityClassRef().getProfile());
+                context.getMetaManager().get().load(
+                    aggregation.getClassId(), context.getFocusEntity().entityClassRef().getProfile());
         if (aggEntityClass.isPresent()) {
+
+            IEntityClass entityClass = aggEntityClass.get();
+
             Conditions conditions = Conditions.buildEmtpyConditions();
             // 根据关系id得到关系字段
             Optional<IEntityField> entityField = aggEntityClass.get().field(aggregation.getRelationId());
@@ -289,12 +301,13 @@ public class MinFunctionStrategy implements FunctionStrategy {
                         if (calculationScenarios.equals(CalculationScenarios.REPLACE)) {
                             return Optional.empty();
                         }
-                        Optional<IEntity> entity =
-                            context.getMasterStorage().get().selectOne(entityRefs.get(0).getId());
+                        Optional<IEntity> entity = masterStorage.selectOne(entityRefs.get(0).getId(), entityClass);
+
                         if (logger.isDebugEnabled()) {
                             logger.info("minAggregationEntity:entityRefs:{}",
                                 entity.get().entityValue().values().stream().toArray());
                         }
+
                         if (entity.isPresent()) {
                             return entity.get().entityValue().getValue(aggregation.getFieldId());
                         }
@@ -302,12 +315,13 @@ public class MinFunctionStrategy implements FunctionStrategy {
                     return Optional.empty();
                 }
                 if (calculationScenarios.equals(CalculationScenarios.DELETE)) {
-                    Optional<IEntity> entity = context.getMasterStorage().get().selectOne(entityRefs.get(0).getId());
+                    Optional<IEntity> entity = masterStorage.selectOne(entityRefs.get(0).getId(), entityClass);
+
                     if (entity.isPresent()) {
                         return entity.get().entityValue().getValue(aggregation.getFieldId());
                     }
                 }
-                Optional<IEntity> entity = context.getMasterStorage().get().selectOne(entityRefs.get(1).getId());
+                Optional<IEntity> entity = masterStorage.selectOne(entityRefs.get(1).getId(), entityClass);
                 if (logger.isDebugEnabled()) {
                     logger.debug("minAggregationEntity:entityRefs:{}",
                         entity.get().entityValue().values().stream().toArray());

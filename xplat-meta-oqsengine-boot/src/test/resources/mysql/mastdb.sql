@@ -31,8 +31,7 @@ create table kv (
   unique key unique_key(k, h)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
-CREATE TABLE `segment`
-(
+CREATE TABLE `segment`(
     `id`          bigint(20)                                                   NOT NULL AUTO_INCREMENT COMMENT '主键',
     `biz_type`    varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '业务标签，例如可以用来标识业务序列号的的对象字段,objectCode:fieldName',
     `begin_id`    bigint(20)                                                   NOT NULL DEFAULT 1 COMMENT '号段起始ID',
@@ -46,10 +45,12 @@ CREATE TABLE `segment`
     `create_time` timestamp(3)                                                 NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
     `update_time` timestamp(3)                                                 NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '更新时间',
     PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB
-  AUTO_INCREMENT = 1
-  CHARACTER SET = utf8mb4
-  COLLATE = utf8mb4_general_ci
-  ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+
+CREATE TABLE `oqs_od_lookup_original` (
+    id bigint(20) COMMENT 'id' ,
+    od-lookup-original-long bigint(20) COMMENT 'lookup字段',
+    primary key (id)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 comment '静态lookup动态的静态对象表'
 
 

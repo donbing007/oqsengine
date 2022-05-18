@@ -116,7 +116,7 @@ public class LookupMaintainingTaskRunner implements TaskRunner {
         try {
             // 进行一次更新
             if (withTx) {
-                transactionExecutor.execute((transaction, resource, hint) -> {
+                transactionExecutor.execute((transaction, resource) -> {
                     adjustLookupEntities(
                         transaction,
                         lookupMaintainingTask,
@@ -190,7 +190,8 @@ public class LookupMaintainingTaskRunner implements TaskRunner {
             Optional<IValue> replayTargetValueOp = findTargetValue(task);
 
             try {
-                needReplayEntities = masterStorage.selectMultiple(notSuccessIds).stream().collect(Collectors.toList());
+                needReplayEntities = masterStorage.selectMultiple(notSuccessIds, lookupEntityClass)
+                    .stream().collect(Collectors.toList());
             } catch (SQLException e) {
                 logger.error(e.getMessage(), e);
                 continue;

@@ -10,6 +10,7 @@ package com.xforceplus.ultraman.oqsengine.metadata.cache;
 public class RedisLuaScript {
 
     public static final String DEFAULT_METADATA_APP_ENV = "com.xforceplus.ultraman.oqsengine.metadata.app.env";
+    public static final String DEFAULT_METADATA_APP_CODE = "com.xforceplus.ultraman.oqsengine.metadata.app.code";
     public static final String DEFAULT_METADATA_APP_VERSIONS = "com.xforceplus.ultraman.oqsengine.metadata.versions";
     public static final String DEFAULT_METADATA_APP_PREPARE = "com.xforceplus.ultraman.oqsengine.metadata.prepare";
 
@@ -19,6 +20,7 @@ public class RedisLuaScript {
     public static final String DEFAULT_METADATA_APP_VERSIONS_ENTITY_IDS =
         "com.xforceplus.ultraman.oqsengine.metadata.app.version.entityIds";
 
+    public static final String DEFAULT_METADATA_UPGRADE_LOG = "com.xforceplus.ultraman.oqsengine.metadata.upgrade.log";
     /**
      * 传入 Key, AppId, ENV 当AppId不存在时将设置成功，反正则不会变化，返回当前ENV.
      */

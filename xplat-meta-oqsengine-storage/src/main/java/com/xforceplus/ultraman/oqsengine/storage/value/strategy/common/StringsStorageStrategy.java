@@ -8,6 +8,7 @@ import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StringStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
+import com.xforceplus.ultraman.oqsengine.storage.value.strategy.common.helper.AttachmentHelper;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -51,8 +52,8 @@ public class StringsStorageStrategy implements StorageStrategy {
         }
 
 
-        StorageValue head = null;
-        StorageValue point;
+        StringStorageValue head = null;
+        StringStorageValue point;
         for (String v : values) {
             point = new StringStorageValue(Long.toString(value.getField().id()), v, true);
 
@@ -60,16 +61,18 @@ public class StringsStorageStrategy implements StorageStrategy {
                 head = point;
                 head.locate(0);
             } else {
-                head = head.stick(point);
+                head = (StringStorageValue) head.stick(point);
             }
         }
+
+        AttachmentHelper.setStorageValueAttachemnt(value, head);
 
         return head;
     }
 
     @Override
     public StorageValue toEmptyStorageValue(IEntityField field) {
-        return new StringStorageValue(Long.toString(field.id()), "", true);
+        return new StringStorageValue(Long.toString(field.id()),  true);
     }
 
     @Override

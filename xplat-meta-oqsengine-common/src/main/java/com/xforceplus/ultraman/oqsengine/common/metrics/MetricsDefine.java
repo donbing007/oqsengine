@@ -20,13 +20,11 @@ public class MetricsDefine {
      */
     public static final String READ_THREAD_POOL = ".read-call";
 
-
     /**
      * 任务线程池.名称由于之前版本原因继承.
      * 实际这里包括了所有后台任务的执行.
      */
     public static final String WRITE_THREAD_POOL = ".write-call";
-
 
     /**
      * 写入的总数.

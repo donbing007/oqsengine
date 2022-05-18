@@ -1,6 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.pojo.devops;
 
 
+import java.util.StringJoiner;
+
 /**
  * desc :.
  * name : CdcErrorTask
@@ -161,5 +163,25 @@ public class CdcErrorTask {
 
     public void setUniKey(String uniKey) {
         this.uniKey = uniKey;
+    }
+
+    @Override
+    public String toString() {
+        return new StringJoiner(", ", CdcErrorTask.class.getSimpleName() + "[", "]")
+            .add("seqNo=" + seqNo)
+            .add("uniKey='" + uniKey + "'")
+            .add("batchId=" + batchId)
+            .add("id=" + id)
+            .add("entity=" + entity)
+            .add("version=" + version)
+            .add("op=" + op)
+            .add("commitId=" + commitId)
+            .add("errorType=" + errorType)
+            .add("status=" + status)
+            .add("operationObject='" + operationObject + "'")
+            .add("executeTime=" + executeTime)
+            .add("fixedTime=" + fixedTime)
+            .add("message='" + message + "'")
+            .toString();
     }
 }

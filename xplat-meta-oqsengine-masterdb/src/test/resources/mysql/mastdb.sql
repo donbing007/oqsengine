@@ -31,3 +31,15 @@ create table kv (
   unique key unique_key(k, h)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
+CREATE TABLE oqs_test_original (
+   id bigint(20) COMMENT 'id' ,
+   original_datetime bigint(20) COMMENT 'DATETIME字段' ,
+   original_strings varchar(255) COMMENT 'STRINGS字段' ,
+   original_long bigint(20) COMMENT 'LONG字段' ,
+   original_string varchar(20) COMMENT 'STRING字段' ,
+   original_enum varchar(20) DEFAULT 'a'COMMENT 'ENUM字段' ,
+   original_bool boolean COMMENT 'BOOL字段',
+   original_dec decimal(20, 6)  COMMENT 'DECIMAL字段',
+   original_relationship_id bigint(20) COMMENT '关系字段',
+   PRIMARY KEY (`id`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT='静态对象';

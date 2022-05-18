@@ -21,6 +21,7 @@ public abstract class AbstractStorageValue<V> implements StorageValue<V> {
     static final int FIRST_LOCATION = 0;
 
     private StorageValue<V> next;
+    private StorageValue<String> attachment;
     private String logicName;
     private int location;
     private StorageType type;
@@ -29,13 +30,43 @@ public abstract class AbstractStorageValue<V> implements StorageValue<V> {
     private int partition;
 
     /**
-     * 使用物理字段名和名构造一个储存值实例.
+     * 构造一个空值表示.
      *
-     * @param name      字段名称.
-     * @param value     储存的值.
-     * @param logicName true 逻辑名称,false 物理储存名称.
+     * @param name 字段名称.
+     * @param logicName true 逻辑值, false物理值.
+     * @param type 物理类型.
+     */
+    public AbstractStorageValue(String name, boolean logicName, StorageType type) {
+        if (logicName) {
+            this.logicName = name;
+            this.location = StorageValue.NOT_LOCATION;
+        } else {
+            this.logicName = parseLocigName(name);
+            this.location = parseStorageFieldLocation(name);
+        }
+        this.type = type;
+    }
+
+    /**
+     * 构造一个物理值表示,不含有附件.
+     *
+     * @param name 字段名称.
+     * @param value 值.
+     * @param logicName true name 表示逻辑名称, false name 表示物理名称.
      */
     public AbstractStorageValue(String name, V value, boolean logicName) {
+        this(name, value, null, logicName);
+    }
+
+    /**
+     * 构造一个物理值表示,不含有附件.
+     *
+     * @param name 字段名称.
+     * @param value 值.
+     * @param attachment 附件.
+     * @param logicName true name 表示逻辑名称, false name 表示物理名称.
+     */
+    public AbstractStorageValue(String name, V value, StorageValue<String> attachment, boolean logicName) {
         if (logicName) {
             this.logicName = name;
             this.location = StorageValue.NOT_LOCATION;
@@ -46,6 +77,7 @@ public abstract class AbstractStorageValue<V> implements StorageValue<V> {
             this.type = parseStorageType(name);
         }
         this.value = value;
+        this.attachment = attachment;
         this.partition = StorageValue.NOT_PARTITION;
     }
 
@@ -192,6 +224,15 @@ public abstract class AbstractStorageValue<V> implements StorageValue<V> {
         return this.location;
     }
 
+    /**
+     * 设置一个新的附件.
+     *
+     * @param attachment 附件物理表示.
+     */
+    public void setAttachment(StorageValue<String> attachment) {
+        this.attachment = attachment;
+    }
+
     // 根据值类型解析.
     private static StorageType parseValueType(Object value) {
         if (value == null) {
@@ -214,6 +255,21 @@ public abstract class AbstractStorageValue<V> implements StorageValue<V> {
     @Override
     public void partition(int partition) {
         this.partition = partition;
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return value == null;
+    }
+
+    @Override
+    public StorageValue<String> getAttachment() {
+        return this.attachment;
+    }
+
+    @Override
+    public boolean haveAttachment() {
+        return this.attachment != null;
     }
 
     // 解析逻辑字段名.

@@ -2,7 +2,6 @@ package com.xforceplus.ultraman.oqsengine.common.mock;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.junit.jupiter.api.Disabled;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,7 +10,6 @@ import org.slf4j.LoggerFactory;
  *
  * @since 1.8
  */
-@Disabled
 public class InitializationHelper {
 
     static final Logger LOGGER = LoggerFactory.getLogger(InitializationHelper.class);
@@ -42,8 +40,9 @@ public class InitializationHelper {
         }
     }
 
-
-
+    /**
+     * 销毁.
+     */
     public static void destroy() {
         CommonInitialization commonInitialization = null;
         try {

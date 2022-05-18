@@ -20,9 +20,11 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
+import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import java.math.BigDecimal;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
@@ -41,12 +43,12 @@ public class MaxFunctionStrategy implements FunctionStrategy {
     final Logger logger = LoggerFactory.getLogger(MaxFunctionStrategy.class);
 
     @Override
-    public Optional<IValue> excute(Optional<IValue> agg, Optional<IValue> o, Optional<IValue> n, CalculationContext context) {
+    public Optional<IValue> excute(Optional<IValue> currentValue, Optional<IValue> oldValue, Optional<IValue> newValue, CalculationContext context) {
         if (logger.isDebugEnabled()) {
             logger.debug("begin excuteMax agg:{}, o-value:{}, n-value:{}",
-                agg.get().valueToString(), o.get().valueToString(), n.get().valueToString());
+                currentValue.get().valueToString(), oldValue.get().valueToString(), newValue.get().valueToString());
         }
-        Optional<IValue> aggValue = Optional.of(agg.get().copy());
+        Optional<IValue> aggValue = Optional.of(currentValue.get().copy());
         //焦点字段
         Aggregation aggregation = ((Aggregation) context.getFocusField().config().getCalculation());
         AggregationFunction function =
@@ -57,19 +59,19 @@ public class MaxFunctionStrategy implements FunctionStrategy {
             count = countAggregationByAttachment(aggValue.get());
             if (context.getScenariso().equals(CalculationScenarios.BUILD)) {
                 if (count == 0) {
-                    aggValue.get().setStringValue(n.get().valueToString());
+                    aggValue.get().setStringValue(newValue.get().valueToString());
                     Optional<IValue> attAggValue = Optional.of(attachmentReplace(aggValue.get(), "1", "0"));
                     return attAggValue;
                 }
             }
         }
         // 当聚合值和操作数据的旧值相同，则需要特殊处理 - 这里已经过滤掉第一条数据的特殊场景
-        if (aggValue.get().valueToString().equals(o.get().valueToString())) {
+        if (aggValue.get().valueToString().equals(oldValue.get().valueToString())) {
             if (aggregation.getClassId() == context.getSourceEntity().entityClassRef().getId()) {
                 //属于第二层树的操作，按实际操作方式判断
                 if (context.getScenariso().equals(CalculationScenarios.BUILD)) {
                     Optional<IValue> attAggValue = Optional.of(attachmentReplace(aggValue.get(), "1", "0"));
-                    return function.excute(attAggValue, o, n);
+                    return function.excute(attAggValue, oldValue, newValue);
                 } else if (context.getScenariso().equals(CalculationScenarios.DELETE)) {
                     // 删除最大值，需要重新查找最大值-将最大值返回
                     Optional<IValue> maxValue = null;
@@ -90,7 +92,7 @@ public class MaxFunctionStrategy implements FunctionStrategy {
                     }
                 } else {
                     // 如果新数据小于老数据，则需要在数据库中进行一次检索，查出最大数据，用该数据和新值进行比对，然后进行替换
-                    if (checkMaxValue(o.get(), n.get())) {
+                    if (checkMaxValue(oldValue.get(), newValue.get())) {
                         Optional<IValue> maxValue = null;
                         try {
                             maxValue = maxAggregationEntity(aggregation, context, CalculationScenarios.REPLACE);
@@ -99,28 +101,28 @@ public class MaxFunctionStrategy implements FunctionStrategy {
                         }
                         if (maxValue.isPresent()) {
                             logger.info("找到最大数据 - maxValue:{}", maxValue.get().valueToString());
-                            if (checkMaxValue(maxValue.get(), n.get())) {
+                            if (checkMaxValue(maxValue.get(), newValue.get())) {
                                 aggValue.get().setStringValue(maxValue.get().valueToString());
                                 return aggValue;
                             } else {
                                 // 如果新数据大于老数据，在求最大值的时候，直接用该值替换聚合信息
-                                aggValue.get().setStringValue(n.get().valueToString());
+                                aggValue.get().setStringValue(newValue.get().valueToString());
                                 return aggValue;
                             }
                         } else {
-                            aggValue.get().setStringValue(n.get().valueToString());
+                            aggValue.get().setStringValue(newValue.get().valueToString());
                             return aggValue;
                         }
                     } else {
                         // 如果新数据大于老数据，在求最大值的时候，直接用该值替换聚合信息
-                        aggValue.get().setStringValue(n.get().valueToString());
+                        aggValue.get().setStringValue(newValue.get().valueToString());
                         return aggValue;
                     }
                 }
             } else {
                 //属于第二层以上树的操作，都按replace来计算
                 // 如果新数据小于老数据，则需要在数据库中进行一次检索，查出最大数据，用该数据和新值进行比对，然后进行替换
-                if (checkMaxValue(o.get(), n.get())) {
+                if (checkMaxValue(oldValue.get(), newValue.get())) {
                     Optional<IValue> maxValue = null;
                     try {
                         maxValue = maxAggregationEntity(aggregation, context, CalculationScenarios.REPLACE);
@@ -128,21 +130,21 @@ public class MaxFunctionStrategy implements FunctionStrategy {
                         e.printStackTrace();
                     }
                     if (maxValue.isPresent()) {
-                        if (checkMaxValue(maxValue.get(), n.get())) {
+                        if (checkMaxValue(maxValue.get(), newValue.get())) {
                             aggValue.get().setStringValue(maxValue.get().valueToString());
                             return aggValue;
                         } else {
                             // 如果新数据大于老数据，在求最大值的时候，直接用该值替换聚合信息
-                            aggValue.get().setStringValue(n.get().valueToString());
+                            aggValue.get().setStringValue(newValue.get().valueToString());
                             return aggValue;
                         }
                     } else {
-                        aggValue.get().setStringValue(n.get().valueToString());
+                        aggValue.get().setStringValue(newValue.get().valueToString());
                         return aggValue;
                     }
                 } else {
                     // 如果新数据大于老数据，在求最大值的时候，直接用该值替换聚合信息
-                    aggValue.get().setStringValue(n.get().valueToString());
+                    aggValue.get().setStringValue(newValue.get().valueToString());
                     return aggValue;
                 }
             }
@@ -153,9 +155,9 @@ public class MaxFunctionStrategy implements FunctionStrategy {
             return attAggValue;
         } else if (context.getScenariso().equals(CalculationScenarios.BUILD)) {
             Optional<IValue> attAggValue = Optional.of(attachmentReplace(aggValue.get(), "1", "0"));
-            return function.excute(attAggValue, o, n);
+            return function.excute(attAggValue, oldValue, newValue);
         }
-        return function.excute(aggValue, o, n);
+        return function.excute(aggValue, oldValue, newValue);
     }
 
     /**
@@ -252,21 +254,27 @@ public class MaxFunctionStrategy implements FunctionStrategy {
         Optional<IEntityClass> aggEntityClass =
                 context.getMetaManager().get().load(aggregation.getClassId(), context.getFocusEntity().entityClassRef().getProfile());
         if (aggEntityClass.isPresent()) {
+
+            IEntityClass entityClass = aggEntityClass.get();
+
             Conditions conditions = Conditions.buildEmtpyConditions();
             // 根据关系id得到关系字段
-            Optional<IEntityField> entityField = aggEntityClass.get().field(aggregation.getRelationId());
+            Optional<IEntityField> entityField = entityClass.field(aggregation.getRelationId());
             if (entityField.isPresent()) {
                 conditions.addAnd(new Condition(entityField.get(),
                         ConditionOperator.EQUALS, new LongValue(entityField.get(), context.getFocusEntity().id())));
 
             }
             Page emptyPage = Page.newSinglePage(2);
-            List<EntityRef> entityRefs = (List<EntityRef>) context.getConditionsSelectStorage().get().select(conditions, aggEntityClass.get(),
+            List<EntityRef> entityRefs = new ArrayList(context.getConditionsSelectStorage().get().select(
+                conditions, aggEntityClass.get(),
                     SelectConfig.Builder.anSelectConfig()
                             .withPage(emptyPage)
                             .withSort(Sort.buildDescSort(aggEntityClass.get().field(aggregation.getFieldId()).get()))
                             .build()
-            );
+            ));
+
+            MasterStorage masterStorage = context.getResourceWithEx(() -> context.getMasterStorage());
             if (!entityRefs.isEmpty()) {
                 if (entityRefs.size() < 2) {
                     if (entityRefs.size() == 1) {
@@ -274,7 +282,7 @@ public class MaxFunctionStrategy implements FunctionStrategy {
                         if (calculationScenarios.equals(CalculationScenarios.REPLACE)) {
                             return Optional.empty();
                         }
-                        Optional<IEntity> entity = context.getMasterStorage().get().selectOne(entityRefs.get(0).getId());
+                        Optional<IEntity> entity = masterStorage.selectOne(entityRefs.get(0).getId(), entityClass);
                         if (entity.isPresent()) {
                             return entity.get().entityValue().getValue(aggregation.getFieldId());
                         }
@@ -282,12 +290,12 @@ public class MaxFunctionStrategy implements FunctionStrategy {
                     return Optional.empty();
                 }
                 if (calculationScenarios.equals(CalculationScenarios.DELETE)) {
-                    Optional<IEntity> entity = context.getMasterStorage().get().selectOne(entityRefs.get(0).getId());
+                    Optional<IEntity> entity = masterStorage.selectOne(entityRefs.get(0).getId(), entityClass);
                     if (entity.isPresent()) {
                         return entity.get().entityValue().getValue(aggregation.getFieldId());
                     }
                 }
-                Optional<IEntity> entity = context.getMasterStorage().get().selectOne(entityRefs.get(1).getId());
+                Optional<IEntity> entity = masterStorage.selectOne(entityRefs.get(1).getId(), entityClass);
                 if (entity.isPresent()) {
                     return entity.get().entityValue().getValue(aggregation.getFieldId());
                 }

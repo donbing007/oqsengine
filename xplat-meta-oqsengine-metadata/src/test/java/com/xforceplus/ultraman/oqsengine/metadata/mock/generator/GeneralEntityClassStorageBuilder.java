@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.metadata.mock.generator;
 
 import static com.xforceplus.ultraman.oqsengine.metadata.mock.generator.EntityClassSyncProtoBufMocker.EXPECTED_ENTITY_INFO_LIST;
 import static com.xforceplus.ultraman.oqsengine.metadata.mock.generator.EntityClassSyncProtoBufMocker.EXPECTED_PROFILE_FOUR_GEN;
+import static com.xforceplus.ultraman.oqsengine.metadata.mock.generator.EntityClassSyncProtoBufMocker.toJdbcType;
 import static com.xforceplus.ultraman.oqsengine.metadata.mock.generator.GeneralConstant.DEFAULT_ARGS;
 import static com.xforceplus.ultraman.oqsengine.metadata.mock.generator.GeneralConstant.PROFILE_CODE_1;
 import static com.xforceplus.ultraman.oqsengine.metadata.mock.generator.GeneralConstant.PROFILE_CODE_2;
@@ -29,6 +30,8 @@ import java.util.Map;
  * @since 1.8
  */
 public class GeneralEntityClassStorageBuilder {
+
+    private static String APP_CODE = "GeneralEntityClassStorageBuilder";
 
     /**
      * 生成.
@@ -60,17 +63,18 @@ public class GeneralEntityClassStorageBuilder {
             .withId(fieldId)
             .withFieldType(fieldType)
             .withName(GeneralEntityUtils.EntityFieldHelper.name(fieldId))
-            .withConfig(fieldConfig(null))
+            .withConfig(fieldConfig(null, fieldType))
             .build());
         r.setBelongToOwner(GeneralEntityUtils.RelationHelper.belongTo(id));
         return r;
     }
 
-    public static <T extends AbstractCalculation> FieldConfig fieldConfig(T calculation) {
+    public static <T extends AbstractCalculation> FieldConfig fieldConfig(T calculation, FieldType fieldType) {
         FieldConfig.Builder builder = FieldConfig.Builder.anFieldConfig()
             .withFieldSense(FieldConfig.FieldSense.NORMAL)
             .withSearchable(true)
             .withRequired(true)
+            .withJdbcType(toJdbcType(fieldType))
             .withIdentifie(false);
 
         if (null != calculation) {
@@ -122,16 +126,16 @@ public class GeneralEntityClassStorageBuilder {
 
         switch (fourTa.getC()) {
             case STATIC: {
-                builder.withConfig(fieldConfig(staticCalculation()));
+                builder.withConfig(fieldConfig(staticCalculation(), fieldType));
                 break;
             }
             case FORMULA: {
-                builder.withConfig(fieldConfig(formula(GeneralConstant.MOCK_EXPRESSION, GeneralConstant.MOCK_LEVEL, fieldType)));
+                builder.withConfig(fieldConfig(formula(GeneralConstant.MOCK_EXPRESSION, GeneralConstant.MOCK_LEVEL, fieldType), fieldType));
                 break;
             }
             case AUTO_FILL: {
                 builder.withConfig(fieldConfig(autoFill(GeneralConstant.MOCK_PATTEN, GeneralConstant.MOCK_MODEL,
-                    GeneralConstant.MOCK_MIN, GeneralConstant.MOCK_STEP)));
+                    GeneralConstant.MOCK_MIN, GeneralConstant.MOCK_STEP), fieldType));
                 break;
             }
             default: {
@@ -163,6 +167,7 @@ public class GeneralEntityClassStorageBuilder {
 
         EntityClassStorage entityClassStorage = new EntityClassStorage();
         entityClassStorage.setId(expectedEntityStorage.getSelf());
+        entityClassStorage.setAppCode(APP_CODE);
         entityClassStorage.setVersion(GeneralConstant.DEFAULT_VERSION);
 
 

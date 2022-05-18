@@ -32,6 +32,7 @@ private static final long serialVersionUID = 0L;
     crossSearch_ = false;
     length_ = 0;
     valueFloatScale_ = 0;
+    jdbcType_ = 0;
   }
 
   @java.lang.Override
@@ -147,6 +148,11 @@ private static final long serialVersionUID = 0L;
           case 128: {
 
             valueFloatScale_ = input.readInt32();
+            break;
+          }
+          case 136: {
+
+            jdbcType_ = input.readInt32();
             break;
           }
         }
@@ -578,6 +584,15 @@ private static final long serialVersionUID = 0L;
     return valueFloatScale_;
   }
 
+  public static final int JDBCTYPE_FIELD_NUMBER = 17;
+  private int jdbcType_;
+  /**
+   * <code>int32 jdbcType = 17;</code>
+   */
+  public int getJdbcType() {
+    return jdbcType_;
+  }
+
   private byte memoizedIsInitialized = -1;
   public final boolean isInitialized() {
     byte isInitialized = memoizedIsInitialized;
@@ -637,6 +652,9 @@ private static final long serialVersionUID = 0L;
     }
     if (valueFloatScale_ != 0) {
       output.writeInt32(16, valueFloatScale_);
+    }
+    if (jdbcType_ != 0) {
+      output.writeInt32(17, jdbcType_);
     }
     unknownFields.writeTo(output);
   }
@@ -707,6 +725,10 @@ private static final long serialVersionUID = 0L;
       size += com.google.protobuf.CodedOutputStream
         .computeInt32Size(16, valueFloatScale_);
     }
+    if (jdbcType_ != 0) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeInt32Size(17, jdbcType_);
+    }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
     return size;
@@ -754,6 +776,8 @@ private static final long serialVersionUID = 0L;
         == other.getLength());
     result = result && (getValueFloatScale()
         == other.getValueFloatScale());
+    result = result && (getJdbcType()
+        == other.getJdbcType());
     result = result && unknownFields.equals(other.unknownFields);
     return result;
   }
@@ -803,6 +827,8 @@ private static final long serialVersionUID = 0L;
     hash = (53 * hash) + getLength();
     hash = (37 * hash) + VALUEFLOATSCALE_FIELD_NUMBER;
     hash = (53 * hash) + getValueFloatScale();
+    hash = (37 * hash) + JDBCTYPE_FIELD_NUMBER;
+    hash = (53 * hash) + getJdbcType();
     hash = (29 * hash) + unknownFields.hashCode();
     memoizedHashCode = hash;
     return hash;
@@ -964,6 +990,8 @@ private static final long serialVersionUID = 0L;
 
       valueFloatScale_ = 0;
 
+      jdbcType_ = 0;
+
       return this;
     }
 
@@ -1002,6 +1030,7 @@ private static final long serialVersionUID = 0L;
       result.crossSearch_ = crossSearch_;
       result.length_ = length_;
       result.valueFloatScale_ = valueFloatScale_;
+      result.jdbcType_ = jdbcType_;
       onBuilt();
       return result;
     }
@@ -1093,6 +1122,9 @@ private static final long serialVersionUID = 0L;
       }
       if (other.getValueFloatScale() != 0) {
         setValueFloatScale(other.getValueFloatScale());
+      }
+      if (other.getJdbcType() != 0) {
+        setJdbcType(other.getJdbcType());
       }
       this.mergeUnknownFields(other.unknownFields);
       onChanged();
@@ -1680,6 +1712,32 @@ private static final long serialVersionUID = 0L;
     public Builder clearValueFloatScale() {
       
       valueFloatScale_ = 0;
+      onChanged();
+      return this;
+    }
+
+    private int jdbcType_ ;
+    /**
+     * <code>int32 jdbcType = 17;</code>
+     */
+    public int getJdbcType() {
+      return jdbcType_;
+    }
+    /**
+     * <code>int32 jdbcType = 17;</code>
+     */
+    public Builder setJdbcType(int value) {
+      
+      jdbcType_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>int32 jdbcType = 17;</code>
+     */
+    public Builder clearJdbcType() {
+      
+      jdbcType_ = 0;
       onChanged();
       return this;
     }

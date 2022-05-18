@@ -18,7 +18,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.AnyEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.executor.ResourceTask;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.executor.CleanExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.executor.OriginEntitiesDeleteIndexExecutor;
@@ -28,7 +27,7 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.executor.SearchE
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLHelper;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.pojo.SphinxQLStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.SphinxQLConditionsBuilderFactory;
-import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.OqsEngineEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.search.SearchConfig;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
@@ -140,7 +139,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
     @Override
     public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, SelectConfig config)
         throws SQLException {
-        return (Collection<EntityRef>) searchTransactionExecutor.execute((tx, resource, hint) -> {
+        return (Collection<EntityRef>) searchTransactionExecutor.execute((tx, resource) -> {
             Set<Long> useFilterIds = null;
 
             if (resource.getTransaction().isPresent()) {
@@ -175,7 +174,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
     @Override
     public Collection<EntityRef> search(SearchConfig config, IEntityClass... entityClasses)
         throws SQLException {
-        return (Collection<EntityRef>) searchTransactionExecutor.execute((tx, resource, hint) -> {
+        return (Collection<EntityRef>) searchTransactionExecutor.execute((tx, resource) -> {
             return SearchExecutor
                 .build(getSearchIndexName(), resource, sphinxQLConditionsBuilderFactory, getTimeoutMs())
                 .execute(Tuple.of(config, entityClasses));
@@ -204,7 +203,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
         percentiles = {0.5, 0.9, 0.99},
         extraTags = {"initiator", "index", "action", "save"})
     @Override
-    public void saveOrDeleteOriginalEntities(Collection<OriginalEntity> originalEntities) throws SQLException {
+    public void saveOrDeleteOriginalEntities(Collection<OqsEngineEntity> originalEntities) throws SQLException {
         if (originalEntities.isEmpty()) {
             return;
         }
@@ -212,6 +211,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
         verifyOriginalEntites(originalEntities);
 
         Collection<OriginalEntitySection> sections = split(originalEntities);
+
 
         /*
          * 失败重试间隔毫秒.
@@ -236,8 +236,8 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
         }
     }
 
-    private void verifyOriginalEntites(Collection<OriginalEntity> originalEntities) throws SQLException {
-        for (OriginalEntity oe : originalEntities) {
+    private void verifyOriginalEntites(Collection<OqsEngineEntity> originalEntities) throws SQLException {
+        for (OqsEngineEntity oe : originalEntities) {
             if (oe.getEntityClass() == null || oe.getEntityClass() == AnyEntityClass.getInstance()) {
                 throw new SQLException("Invalid entityclass!");
             }
@@ -299,7 +299,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
         }
 
         private int doSave() throws SQLException {
-            Map<OperationType, Collection<OriginalEntity>> sectionMap = section.getEntities();
+            Map<OperationType, Collection<OqsEngineEntity>> sectionMap = section.getEntities();
             int totalSize = 0;
             for (OperationType op : sectionMap.keySet()) {
                 switch (op) {
@@ -325,17 +325,17 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
 
         // 保存更新和创建的分区.
         private int doSaveOpSection(OperationType op, String indexName, String shardKey,
-                                    Collection<OriginalEntity> originalEntities)
+                                    Collection<OqsEngineEntity> originalEntities)
             throws SQLException {
 
             Collection<SphinxQLStorageEntity> manticoreStorageEntities = new ArrayList<>(originalEntities.size());
-            for (OriginalEntity oe : originalEntities) {
+            for (OqsEngineEntity oe : originalEntities) {
                 manticoreStorageEntities.add(toStorageEntityFromOriginal(oe));
             }
 
             return (int) writeTransactionExecutor.execute(new ResourceTask() {
                 @Override
-                public Object run(Transaction tx, TransactionResource resource, ExecutorHint hint) throws SQLException {
+                public Object run(Transaction tx, TransactionResource resource) throws SQLException {
                     if (OperationType.CREATE == op) {
                         return SaveIndexExecutor.buildCreate(indexName, resource)
                             .execute(manticoreStorageEntities);
@@ -355,11 +355,11 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
         }
 
         // 操作删除的分区.
-        private int doDeleteOpSection(String indexName, String shardKey, Collection<OriginalEntity> originalEntities)
+        private int doDeleteOpSection(String indexName, String shardKey, Collection<OqsEngineEntity> originalEntities)
             throws SQLException {
             return (int) writeTransactionExecutor.execute(new ResourceTask() {
                 @Override
-                public Object run(Transaction tx, TransactionResource resource, ExecutorHint hint) throws SQLException {
+                public Object run(Transaction tx, TransactionResource resource) throws SQLException {
                     return OriginEntitiesDeleteIndexExecutor.builder(indexName, resource).execute(originalEntities);
                 }
 
@@ -371,31 +371,31 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
         }
     }
 
-    private SphinxQLStorageEntity toStorageEntityFromOriginal(OriginalEntity originalEntity) throws SQLException {
+    private SphinxQLStorageEntity toStorageEntityFromOriginal(OqsEngineEntity oqsEngineEntity) throws SQLException {
         SphinxQLStorageEntity.Builder builder = SphinxQLStorageEntity.Builder.anManticoreStorageEntity()
-            .withId(originalEntity.getId())
-            .withCommitId(originalEntity.getCommitid())
-            .withTx(originalEntity.getTx())
-            .withCreateTime(originalEntity.getCreateTime())
-            .withUpdateTime(originalEntity.getUpdateTime())
-            .withMaintainId(originalEntity.getMaintainid())
-            .withOqsmajor(originalEntity.getOqsMajor())
-            .withAttributeF(toAttributesF(originalEntity))
-            .withEntityClassF(toEntityClassF(originalEntity))
-            .withAttribute(toAttribute(originalEntity));
+            .withId(oqsEngineEntity.getId())
+            .withCommitId(oqsEngineEntity.getCommitid())
+            .withTx(oqsEngineEntity.getTx())
+            .withCreateTime(oqsEngineEntity.getCreateTime())
+            .withUpdateTime(oqsEngineEntity.getUpdateTime())
+            .withMaintainId(oqsEngineEntity.getMaintainid())
+            .withOqsmajor(oqsEngineEntity.getOqsMajor())
+            .withAttributeF(toAttributesF(oqsEngineEntity))
+            .withEntityClassF(toEntityClassF(oqsEngineEntity))
+            .withAttribute(toAttribute(oqsEngineEntity));
         return builder.build();
     }
 
     // 转换成JSON类型属性.
-    private String toAttribute(OriginalEntity originalEntity) {
+    private String toAttribute(OqsEngineEntity oqsEngineEntity) {
         Map<String, Object> attributeMap = new HashMap(
-            MapUtils.calculateInitSize(originalEntity.attributeSize(), 0.75F));
+            MapUtils.calculateInitSize(oqsEngineEntity.attributeSize(), 0.75F));
 
-        for (Map.Entry<String, Object> attr : originalEntity.getAttributes().entrySet()) {
+        for (Map.Entry<String, Object> attr : oqsEngineEntity.getAttributes().entrySet()) {
 
             if (AnyStorageValue.isStorageValueName(attr.getKey())) {
 
-                IEntityClass entityClass = originalEntity.getEntityClass();
+                IEntityClass entityClass = oqsEngineEntity.getEntityClass();
                 StorageValue anyStorageValue = AnyStorageValue.getInstance(attr.getKey());
                 Optional<IEntityField> fieldOp = entityClass.field(Long.parseLong(anyStorageValue.logicName()));
 
@@ -443,7 +443,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
     }
 
     // 填允全文属性.
-    private String toAttributesF(OriginalEntity source) throws SQLException {
+    private String toAttributesF(OqsEngineEntity source) throws SQLException {
 
         StringBuilder buff = new StringBuilder();
         IEntityClass entityClass = source.getEntityClass();
@@ -492,8 +492,8 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
     }
 
     // 全文元信息
-    private String toEntityClassF(OriginalEntity originalEntity) {
-        return originalEntity.getEntityClass().family()
+    private String toEntityClassF(OqsEngineEntity oqsEngineEntity) {
+        return oqsEngineEntity.getEntityClass().family()
             .stream().map(e -> Long.toString(e.id())).collect(Collectors.joining(" "));
     }
 
@@ -636,7 +636,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
     }
 
     // 根据最终数据的储存目标切割.
-    private Collection<OriginalEntitySection> split(Collection<OriginalEntity> originalEntities) {
+    private Collection<OriginalEntitySection> split(Collection<OqsEngineEntity> originalEntities) {
         DataSource dataSource;
         String indexName;
         String shardKey;
@@ -650,7 +650,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
 
         Map<String, OriginalEntitySection> nameSectionMap;
 
-        for (OriginalEntity oe : originalEntities) {
+        for (OqsEngineEntity oe : originalEntities) {
             shardKey = Long.toString(oe.getId());
             dataSource = writerDataSourceSelector.select(shardKey);
             indexName = indexWriteIndexNameSelector.select(shardKey);
@@ -687,18 +687,18 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
     private static class OriginalEntitySection {
         private String shardKey;
         private String indexName;
-        private Map<OperationType, Collection<OriginalEntity>> entities;
+        private Map<OperationType, Collection<OqsEngineEntity>> entities;
 
-        public OriginalEntitySection(String shardKey, String indexName, OriginalEntity entity) {
+        public OriginalEntitySection(String shardKey, String indexName, OqsEngineEntity entity) {
             this.shardKey = shardKey;
             this.indexName = indexName;
             this.add(entity);
         }
 
-        public OriginalEntitySection(String shardKey, String indexName, Collection<OriginalEntity> entities) {
+        public OriginalEntitySection(String shardKey, String indexName, Collection<OqsEngineEntity> entities) {
             this.shardKey = shardKey;
             this.indexName = indexName;
-            for (OriginalEntity oe : entities) {
+            for (OqsEngineEntity oe : entities) {
                 this.add(oe);
             }
         }
@@ -707,28 +707,28 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
             return indexName;
         }
 
-        public Map<OperationType, Collection<OriginalEntity>> getEntities() {
+        public Map<OperationType, Collection<OqsEngineEntity>> getEntities() {
             return entities;
         }
 
-        public final void add(OriginalEntity originalEntity) {
+        public final void add(OqsEngineEntity oqsEngineEntity) {
             if (entities == null) {
                 entities = new HashMap();
             }
-            OperationType op = getOperationType(originalEntity);
-            Collection<OriginalEntity> originalEntities = entities.get(op);
+            OperationType op = getOperationType(oqsEngineEntity);
+            Collection<OqsEngineEntity> originalEntities = entities.get(op);
             if (originalEntities == null) {
                 originalEntities = new LinkedList<>();
                 entities.put(op, originalEntities);
             }
-            originalEntities.add(originalEntity);
+            originalEntities.add(oqsEngineEntity);
         }
 
         public String getShardKey() {
             return shardKey;
         }
 
-        private OperationType getOperationType(OriginalEntity oe) {
+        private OperationType getOperationType(OqsEngineEntity oe) {
             OperationType op = OperationType.getInstance(oe.getOp());
             if (OperationType.UNKNOWN == op) {
                 throw new IllegalArgumentException(

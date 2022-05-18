@@ -12,7 +12,6 @@ import com.xforceplus.ultraman.oqsengine.storage.value.StringStorageValue;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * 逻辑类型和储存类型转换策略.
@@ -75,32 +74,16 @@ public interface StorageStrategy {
     StorageValue toEmptyStorageValue(IEntityField field);
 
     /**
-     * 将逻辑类型的附件转换成储存类型.
-     *
-     * @param value 目标逻辑值逻辑类型.
-     * @return 储存类型.
-     */
-    default Optional<StorageValue> toAttachmentStorageValue(IValue value) {
-        Optional<String> attachmentOp = value.getAttachment();
-        if (!attachmentOp.isPresent()) {
-            return Optional.empty();
-        } else {
-            StringStorageValue sv =
-                new StringStorageValue(Long.toString(value.getField().id()), attachmentOp.get(), true);
-            return Optional.ofNullable(sv);
-        }
-    }
-
-    /**
      * 通过离散的物理储存来构造本地的StorageValue.
      *
      * @param storageName  物理储存名称.
      * @param storageValue 物理储存值.
-     * @param attrF 是否为attrF，默认会对attrF中非attachment、却长度 > MAX_WORLD_SPLIT_LENGTH 字节的String进行切割,比如:
-     *              假如MAX_WORLD_SPLIT_LENGTH长度为5，则AAAAAABBBBBBCCCC将会转为[AAAAA][ABBBB][BBCCC][C].
+     * @param attrF        是否为attrF，默认会对attrF中非attachment、却长度 > MAX_WORLD_SPLIT_LENGTH 的String进行切割,比如:
+     *                     假如MAX_WORLD_SPLIT_LENGTH长度为5，则AAAAAABBBBBBCCCC将会转为[AAAAA][ABBBB][BBCCC][C].
      * @return 实例.
      */
-    default StorageValue convertIndexStorageValue(String storageName, Object storageValue, boolean attachment, boolean attrF) {
+    default StorageValue convertIndexStorageValue(String storageName, Object storageValue, boolean attachment,
+                                                  boolean attrF) {
         StorageValue anyStorageValue = AnyStorageValue.getInstance(storageName);
         if (!attachment) {
             switch (anyStorageValue.type()) {

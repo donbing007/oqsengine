@@ -392,7 +392,7 @@ public class SyncRequestHandler implements IRequestHandler {
                 //  执行外部传入的执行器
                 try {
                     syncExecutor
-                        .sync(entityClassSyncResponse.getAppId(), entityClassSyncResponse.getVersion(),
+                        .sync(entityClassSyncResponse.getAppId(), entityClassSyncResponse.getEnv(), entityClassSyncResponse.getVersion(),
                             result);
                 } catch (Exception e) {
                     throw new MetaSyncClientException(e.getMessage(), false);

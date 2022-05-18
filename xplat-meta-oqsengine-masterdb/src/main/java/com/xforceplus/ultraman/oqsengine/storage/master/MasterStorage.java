@@ -6,7 +6,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.ConditionsSelectStorage;
 import com.xforceplus.ultraman.oqsengine.storage.PreciseSelectStorage;
 import com.xforceplus.ultraman.oqsengine.storage.Storage;
-import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.OqsEngineEntity;
 import java.sql.SQLException;
 
 /**
@@ -29,7 +29,7 @@ public interface MasterStorage extends Storage, PreciseSelectStorage, Conditions
      * @return 迭代器.
      * @throws SQLException 发生异常.
      */
-    DataIterator<OriginalEntity> iterator(IEntityClass entityClass, long startTime, long endTime, long lastId)
+    DataIterator<OqsEngineEntity> iterator(IEntityClass entityClass, long startTime, long endTime, long lastId)
         throws SQLException;
 
     /**
@@ -43,20 +43,20 @@ public interface MasterStorage extends Storage, PreciseSelectStorage, Conditions
      * @return 影响的记录条数.
      * @throws SQLException 发生异常.
      */
-    DataIterator<OriginalEntity> iterator(IEntityClass entityClass, long startTime, long endTime, long lastId, int size)
+    DataIterator<OqsEngineEntity> iterator(IEntityClass entityClass, long startTime, long endTime, long lastId, int size)
         throws SQLException;
 
     /**
      * 进行索引重建.
      *
-     * @param entityClassId 业务类别id.
+     * @param entityClass 对象元信息.
      * @param maintainId 维护id.
      * @param startTime 开始时间.
      * @param endTime 结束时间.
      *
      * @return 影响的记录条数.
      */
-    default int rebuild(long entityClassId, long maintainId, long startTime, long endTime) throws Exception {
+    default int rebuild(IEntityClass entityClass, long maintainId, long startTime, long endTime) throws Exception {
         return 0;
     }
 }

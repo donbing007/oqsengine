@@ -35,13 +35,14 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.EntityPackage;
-import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.OqsEngineEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionExclusiveAction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResourceType;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.accumulator.TransactionAccumulator;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.hint.TransactionHint;
 import com.xforceplus.ultraman.oqsengine.task.Task;
 import com.xforceplus.ultraman.oqsengine.task.TaskCoordinator;
 import com.xforceplus.ultraman.oqsengine.task.TaskRunner;
@@ -662,14 +663,14 @@ public class FormulaCalculationLogicTest {
         }
 
         @Override
-        public DataIterator<OriginalEntity> iterator(IEntityClass entityClass, long startTime, long endTime,
-                                                     long lastId) throws SQLException {
+        public DataIterator<OqsEngineEntity> iterator(IEntityClass entityClass, long startTime, long endTime,
+                                                      long lastId) throws SQLException {
             return null;
         }
 
         @Override
-        public DataIterator<OriginalEntity> iterator(IEntityClass entityClass, long startTime, long endTime,
-                                                     long lastId, int size) throws SQLException {
+        public DataIterator<OqsEngineEntity> iterator(IEntityClass entityClass, long startTime, long endTime,
+                                                      long lastId, int size) throws SQLException {
             return null;
         }
     }
@@ -856,6 +857,11 @@ public class FormulaCalculationLogicTest {
 
         @Override
         public TransactionAccumulator getAccumulator() {
+            return null;
+        }
+
+        @Override
+        public TransactionHint getHint() {
             return null;
         }
 

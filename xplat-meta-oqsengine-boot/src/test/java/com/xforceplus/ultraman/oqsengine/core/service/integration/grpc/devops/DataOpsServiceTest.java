@@ -8,6 +8,8 @@ import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.integration.mock.MockEntityClassDefine;
 import com.xforceplus.ultraman.oqsengine.core.service.pojo.OqsResult;
 import com.xforceplus.ultraman.oqsengine.devops.om.model.*;
+import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.SegmentInfo;
+import com.xforceplus.ultraman.oqsengine.idgenerator.storage.SegmentStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
@@ -15,7 +17,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
-import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.CanalContainer;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.ManticoreContainer;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.MysqlContainer;
@@ -37,7 +38,6 @@ import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.Statement;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 /**
  * CopyRight: 上海云砺信息科技有限公司
@@ -60,6 +60,9 @@ public class DataOpsServiceTest {
 
     final Logger logger = LoggerFactory.getLogger(DataOpsServiceTest.class);
 
+    @Resource
+    private DataOpsService dataOpsService;
+
     @Resource(name = "masterDataSource")
     private DataSource masterDataSource;
 
@@ -67,16 +70,15 @@ public class DataOpsServiceTest {
     private Selector<DataSource> indexWriteDataSourceSelector;
 
     @Resource
-    private CommitIdStatusService commitIdStatusService;
-
-    @Resource
     private EntityManagementService entityManagementService;
 
     @Resource
-    private DataOpsService dataOpsService;
+    private SegmentStorage segmentStorage;
 
     @MockBean(name = "metaManager")
     private MetaManager metaManager;
+
+    private SegmentInfo segmentInfo = MockEntityClassDefine.getDefaultSegmentInfo();
 
     private IEntity testData1;
 
@@ -104,23 +106,25 @@ public class DataOpsServiceTest {
             }
         }
 
+        segmentStorage.build(segmentInfo);
+
         MockEntityClassDefine.initMetaManager(metaManager);
 
         IEntity entity = Entity.Builder.anEntity()
-                .withEntityClassRef(MockEntityClassDefine.L0_ENTITY_CLASS.ref())
+                .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
                 .withValues(Arrays.asList(
-                                new LongValue(MockEntityClassDefine.L0_ENTITY_CLASS.field("l0-long").get(), 1L),
-                                new StringValue(MockEntityClassDefine.L0_ENTITY_CLASS.field("l0-string").get(), "1")
+                                new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 1L),
+                                new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "1")
                         )
                 ).build();
         OqsResult<IEntity> oqsResult = entityManagementService.build(entity);
         testData1 = ResultStatus.SUCCESS.equals(oqsResult.getResultStatus()) ? oqsResult.getValue().get() : null;
 
         entity = Entity.Builder.anEntity()
-                .withEntityClassRef(MockEntityClassDefine.L0_ENTITY_CLASS.ref())
+                .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
                 .withValues(Arrays.asList(
-                                new LongValue(MockEntityClassDefine.L0_ENTITY_CLASS.field("l0-long").get(), 2L),
-                                new StringValue(MockEntityClassDefine.L0_ENTITY_CLASS.field("l0-string").get(), "2")
+                                new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 2L),
+                                new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "2")
                         )
                 ).build();
         oqsResult = entityManagementService.build(entity);
@@ -132,22 +136,6 @@ public class DataOpsServiceTest {
      */
     @AfterEach
     public void after() throws Exception {
-        boolean clear = false;
-        long[] commitIds = new long[0];
-        for (int i = 0; i < 1000; i++) {
-            commitIds = commitIdStatusService.getAll();
-            if (commitIds.length > 0) {
-                logger.info("Wait for CDC synchronization to complete.[{}]", Arrays.toString(commitIds));
-                TimeUnit.MILLISECONDS.sleep(500);
-            } else {
-                clear = true;
-                break;
-            }
-        }
-        Assertions.assertTrue(clear,
-                String.format("Failed to process unsynchronized commit numbers as expected, leaving %s.",
-                        Arrays.toString(commitIds)));
-
         try (Connection conn = masterDataSource.getConnection()) {
             try (Statement stat = conn.createStatement()) {
                 stat.executeUpdate("truncate table oqsbigentity");
@@ -162,13 +150,13 @@ public class DataOpsServiceTest {
             }
         }
 
-//        segmentStorage.delete(segmentInfo);
+        segmentStorage.delete(segmentInfo);
     }
 
     @Test
     public void tesetConditionQuery() {
         DevOpsQueryConfig devOpsQueryConfig = new DevOpsQueryConfig();
-        devOpsQueryConfig.setEntityClassId(MockEntityClassDefine.L0_ENTITY_CLASS.id());
+        devOpsQueryConfig.setEntityClassId(MockEntityClassDefine.L2_ENTITY_CLASS.id());
         devOpsQueryConfig.setPageNo(0L);
         devOpsQueryConfig.setPageSize(100L);
 
@@ -186,7 +174,7 @@ public class DataOpsServiceTest {
         field.setOperation("gt_lt");
         field.setValue(new String[]{"0", "10"});
         DevOpsQueryConditionItem field2 = new DevOpsQueryConditionItem();
-        field2.setCode("l0-string");
+        field2.setCode("l2-string");
         field2.setOperation("eq");
         field2.setValue(new String[]{"1"});
 
@@ -201,91 +189,73 @@ public class DataOpsServiceTest {
         Assertions.assertTrue(response != null && response.getRows().size() == 1 && response.getSummary().getTotal() == 1);
     }
 
-    private void waitCommitIdSizeToZero() throws Exception {
-        while (commitIdStatusService.size() != 0) {
-            Thread.sleep(10);
-        }
-    }
-
     @Test
-    public void testSingleCreate() throws Exception {
+    public void testSingleCreate() {
         Map data = new HashMap();
         data.put("l0-long", 3L);
-        data.put("l0-string", "3");
-        DevOpsDataResponse response = dataOpsService.singleCreate(1L, MockEntityClassDefine.L0_ENTITY_CLASS.id(), data);
+        data.put("l2-string", "3");
+        DevOpsDataResponse response = dataOpsService.singleCreate(1L, MockEntityClassDefine.L2_ENTITY_CLASS.id(), data);
 
         Assertions.assertTrue(DevOpsDataResponse.SUCCESS_CODE.equals(response.getCode()));
-
-        waitCommitIdSizeToZero();
     }
 
     @Test
-    public void testSingleModify() throws Exception {
+    public void testSingleModify() {
         Map data = new HashMap();
         data.put("l0-long", 1L);
-        data.put("l0-string", "1");
-        DevOpsDataResponse response = dataOpsService.singleModify(1L, MockEntityClassDefine.L0_ENTITY_CLASS.id(), testData1.id(), data);
+        data.put("l2-string", "1");
+        DevOpsDataResponse response = dataOpsService.singleModify(1L, MockEntityClassDefine.L2_ENTITY_CLASS.id(), testData1.id(), data);
 
         Assertions.assertTrue(DevOpsDataResponse.SUCCESS_CODE.equals(response.getCode()));
-
-        waitCommitIdSizeToZero();
     }
 
     @Test
-    public void testSingleDelete() throws Exception {
-        DevOpsDataResponse response = dataOpsService.singleDelete(1L, MockEntityClassDefine.L0_ENTITY_CLASS.id(), testData1.id());
+    public void testSingleDelete() {
+        DevOpsDataResponse response = dataOpsService.singleDelete(1L, MockEntityClassDefine.L2_ENTITY_CLASS.id(), testData1.id());
 
         Assertions.assertTrue(DevOpsDataResponse.SUCCESS_CODE.equals(response.getCode()));
-
-        waitCommitIdSizeToZero();
     }
 
     @Test
-    public void testBatchCreate() throws Exception {
+    public void testBatchCreate() {
         Map item = new HashMap();
         item.put("l0-long", 3L);
-        item.put("l0-string", "3");
+        item.put("l2-string", "3");
         Map item2 = new HashMap();
         item2.put("l0-long", 4L);
-        item2.put("l0-string", "4");
+        item2.put("l2-string", "4");
         List<Map> data = new ArrayList<>();
         data.add(item);
         data.add(item2);
 
-        DevOpsDataResponse response = dataOpsService.batchCreate(1L, MockEntityClassDefine.L0_ENTITY_CLASS.id(), data);
+        DevOpsDataResponse response = dataOpsService.batchCreate(1L, MockEntityClassDefine.L2_ENTITY_CLASS.id(), data);
         Assertions.assertTrue(DevOpsDataResponse.SUCCESS_CODE.equals(response.getCode()));
-
-        waitCommitIdSizeToZero();
     }
 
     @Test
-    public void testBatchModify() throws Exception {
+    public void testBatchModify() {
 
         Map item = new HashMap();
         item.put("id", String.valueOf(testData1.id()));
         item.put("l0-long", 3L);
-        item.put("l0-string", "3");
+        item.put("l2-string", "3");
         Map item2 = new HashMap();
         item2.put("id", String.valueOf(testData2.id()));
         item2.put("l0-long", 4L);
-        item2.put("l0-string", "4");
+        item2.put("l2-string", "4");
         List<Map> data = new ArrayList<>();
         data.add(item);
         data.add(item2);
 
-        DevOpsDataResponse response = dataOpsService.batchModify(1L, MockEntityClassDefine.L0_ENTITY_CLASS.id(), data);
+        DevOpsDataResponse response = dataOpsService.batchModify(1L, MockEntityClassDefine.L2_ENTITY_CLASS.id(), data);
         Assertions.assertTrue(DevOpsDataResponse.SUCCESS_CODE.equals(response.getCode()));
-
-        waitCommitIdSizeToZero();
     }
 
     @Test
-    public void testBatchDelete() throws Exception {
+    public void testBatchDelete() {
         List<String> idStrs = Arrays.asList(String.valueOf(testData1.id()), String.valueOf(testData2.id()));
-        DevOpsDataResponse response = dataOpsService.batchDelete(1L, MockEntityClassDefine.L0_ENTITY_CLASS.id(), idStrs);
+        DevOpsDataResponse response = dataOpsService.batchDelete(1L, MockEntityClassDefine.L2_ENTITY_CLASS.id(), idStrs);
         Assertions.assertTrue(DevOpsDataResponse.SUCCESS_CODE.equals(response.getCode()));
-
-        waitCommitIdSizeToZero();
     }
 
     @Test
@@ -297,18 +267,18 @@ public class DataOpsServiceTest {
         convertOqsResult.setAccessible(true);
 
         IEntity data1 = Entity.Builder.anEntity()
-                .withEntityClassRef(MockEntityClassDefine.L0_ENTITY_CLASS.ref())
+                .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
                 .withValues(Arrays.asList(
-                                new LongValue(MockEntityClassDefine.L0_ENTITY_CLASS.field("l0-long").get(), 3L),
-                                new StringValue(MockEntityClassDefine.L0_ENTITY_CLASS.field("l0-string").get(), "3")
+                                new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 3L),
+                                new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "3")
                         )
                 ).build();
 
         IEntity data2 = Entity.Builder.anEntity()
-                .withEntityClassRef(MockEntityClassDefine.L0_ENTITY_CLASS.ref())
+                .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
                 .withValues(Arrays.asList(
-                                new LongValue(MockEntityClassDefine.L0_ENTITY_CLASS.field("l0-long").get(), 4L),
-                                new StringValue(MockEntityClassDefine.L0_ENTITY_CLASS.field("l0-string").get(), "4")
+                                new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 4L),
+                                new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "4")
                         )
                 ).build();
 
@@ -325,8 +295,8 @@ public class DataOpsServiceTest {
         //验证修改的返回结果解析是否成功
         Map<IEntity, IValue[]> input = new HashMap<>();
         input.put(testData1, Arrays.asList(
-                new LongValue(MockEntityClassDefine.L0_ENTITY_CLASS.field("l0-long").get(), 5L),
-                new StringValue(MockEntityClassDefine.L0_ENTITY_CLASS.field("l0-string").get(), "5")
+                new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 5L),
+                new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "5")
         ).toArray(new IValue[]{}));
         OqsResult<Map.Entry<IEntity, IValue[]>> oqsResult2 = OqsResult.success(input.entrySet().stream().findFirst().get());
         result = (Map) convertOqsResult.invoke(dataOpsService, DataOpsService.OperateType.SINGLE_MODIFY, oqsResult2);
@@ -345,12 +315,12 @@ public class DataOpsServiceTest {
         //验证批量修改的返回结果解析是否成功
         input = new HashMap<>();
         input.put(data1, Arrays.asList(
-                new LongValue(MockEntityClassDefine.L0_ENTITY_CLASS.field("l0-long").get(), 5L),
-                new StringValue(MockEntityClassDefine.L0_ENTITY_CLASS.field("l0-string").get(), "5")
+                new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 5L),
+                new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "5")
         ).toArray(new IValue[]{}));
         input.put(data2, Arrays.asList(
-                new LongValue(MockEntityClassDefine.L0_ENTITY_CLASS.field("l0-long").get(), 6L),
-                new StringValue(MockEntityClassDefine.L0_ENTITY_CLASS.field("l0-string").get(), "6")
+                new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 6L),
+                new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "6")
         ).toArray(new IValue[]{}));
         OqsResult<Map<IEntity, IValue[]>> oqsResult4 = OqsResult.success(input);
         result = (Map) convertOqsResult.invoke(dataOpsService, DataOpsService.OperateType.BATCH_MODIFY, oqsResult4);

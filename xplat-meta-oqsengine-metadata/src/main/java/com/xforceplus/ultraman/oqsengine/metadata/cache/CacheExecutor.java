@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.metadata.cache;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xforceplus.ultraman.oqsengine.event.payload.meta.MetaChangePayLoad;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.log.UpGradeLog;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.AppSimpleInfo;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -26,7 +27,7 @@ public interface CacheExecutor {
      * @param storageList 需要保存的元信息.
      * @return true成功, false失败.
      */
-    MetaChangePayLoad save(String appId, int version, List<EntityClassStorage> storageList)
+    MetaChangePayLoad save(String appId, String env, int version, List<EntityClassStorage> storageList)
         throws JsonProcessingException;
 
     /**
@@ -164,6 +165,16 @@ public interface CacheExecutor {
     void invalidateLocal();
 
     /**
+     * 获取profileCodes列表.
+     *
+     * @param entityClassId entityClassId.
+     * @param version       版本号.
+     * @return 租户定制Code列表.
+     */
+    List<String> readProfileCodes(long entityClassId, int version);
+
+
+    /**
      * 从本地缓存获取.
      *
      * @param entityClassId entityClassId.
@@ -174,15 +185,6 @@ public interface CacheExecutor {
     Optional<IEntityClass> localRead(long entityClassId, int version, String profile);
 
     /**
-     * 获取profileCodes列表.
-     *
-     * @param entityClassId entityClassId.
-     * @param version       版本号.
-     * @return 租户定制Code列表.
-     */
-    List<String> readProfileCodes(long entityClassId, int version);
-
-    /**
      * 加入本地缓存.
      *
      * @param entityClassId entityClassId.
@@ -190,10 +192,12 @@ public interface CacheExecutor {
      * @param profile       租户定制Code
      * @param entityClass   entityClass.
      */
-    void localAdd(long entityClassId, int version, String profile, IEntityClass entityClass);
+    void localStorage(long entityClassId, int version, String profile, IEntityClass entityClass);
 
     /**
      * 展示当前Redis中所有AppId-Env.
      */
     List<AppSimpleInfo> showAppInfo();
+
+    Collection<UpGradeLog> showUpgradeLogs(String appId, String env) throws JsonProcessingException;
 }

@@ -21,6 +21,7 @@ import com.xforceplus.ultraman.oqsengine.metadata.utils.CacheUtils;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.AggregationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
@@ -55,9 +56,13 @@ public class EntityClassStorageBuilderUtils {
      * 将protoBuf转为EntityClassStorage列表.
      */
     public static List<EntityClassStorage> protoToStorageList(EntityClassSyncRspProto entityClassSyncRspProto) {
+        if (entityClassSyncRspProto.getAppCode().isEmpty()) {
+            throw new MetaSyncClientException("appCode is invalid.", false);
+        }
+
         Map<Long, EntityClassStorage> temp = entityClassSyncRspProto.getEntityClassesList().stream().map(
             ecs -> {
-                EntityClassStorage e = protoValuesToLocalStorage(ecs);
+                EntityClassStorage e = protoValuesToLocalStorage(ecs, entityClassSyncRspProto.getAppCode());
                 return e;
             }
         ).collect(Collectors.toMap(EntityClassStorage::getId, s1 -> s1, (s1, s2) -> s1));
@@ -103,7 +108,7 @@ public class EntityClassStorageBuilderUtils {
     /**
      * 转换单个EntityClassStorage.
      */
-    private static EntityClassStorage protoValuesToLocalStorage(EntityClassInfo entityClassInfo) {
+    private static EntityClassStorage protoValuesToLocalStorage(EntityClassInfo entityClassInfo, String appCode) {
         if (null == entityClassInfo) {
             throw new MetaSyncClientException("entityClassInfo should not be null.", false);
         }
@@ -112,6 +117,7 @@ public class EntityClassStorageBuilderUtils {
          * convert
          */
         EntityClassStorage storage = new EntityClassStorage();
+        storage.setAppCode(appCode);
 
         //  id
         long id = entityClassInfo.getId();
@@ -120,6 +126,12 @@ public class EntityClassStorageBuilderUtils {
         }
 
         storage.setId(id);
+        //  type
+        int type = entityClassInfo.getType();
+        if (!EntityClassType.validate(type)) {
+            throw new MetaSyncClientException("entityClass-type is invalid.", false);
+        }
+        storage.setType(type);
         //  code
         storage.setCode(entityClassInfo.getCode());
         //  name
@@ -438,7 +450,8 @@ public class EntityClassStorageBuilderUtils {
             .withWildcardMaxWidth(fieldConfig.getWildcardMaxWidth())
             .withUniqueName(fieldConfig.getUniqueName())
             .withCrossSearch(fieldConfig.getCrossSearch())
-            .withLen(fieldConfig.getLength());
+            .withLen(fieldConfig.getLength())
+            .withJdbcType(fieldConfig.getJdbcType());
 
         if (!isRelationEntity) {
             builder.withCalculation(toCalculator(fieldId, fieldType, calculator));

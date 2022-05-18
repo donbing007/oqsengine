@@ -246,11 +246,9 @@ public class TaskStorageCommand {
         if (taskInfo.getBatchSize() > 0) {
             stringBuilder.append(", ").append("batchsize = ?");
         }
-
         if (taskInfo.incrementSize() > 0) {
             stringBuilder.append(", ").append("finishsize = finishsize + ?");
         }
-
         if (null != taskInfo.message()) {
             stringBuilder.append(", ").append("message = ?");
         }

@@ -5,7 +5,7 @@
     <parent>
         <artifactId>xplat-meta-oqsengine</artifactId>
         <groupId>com.xforceplus.ultraman</groupId>
-        <version>1.4.10-SNAPSHOT</version>
+        <version>1.5.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -64,5 +64,6 @@
 
     <properties>
         <checkstyle.skip>true</checkstyle.skip>
+        <test.skip>true</test.skip>
     </properties>
 </project>

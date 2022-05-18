@@ -19,6 +19,16 @@ public class EntityClassStorage {
     private long id;
 
     /**
+     * 元数据appCode.
+     */
+    private String appCode;
+
+    /**
+     * 类型type.
+     */
+    private int type;
+
+    /**
      * 对象名称.
      */
     private String name;
@@ -47,7 +57,6 @@ public class EntityClassStorage {
      */
     private Long fatherId;
 
-
     /**
      * 家族祖先的对象Id.
      */
@@ -70,6 +79,14 @@ public class EntityClassStorage {
 
     public void setId(long id) {
         this.id = id;
+    }
+
+    public String getAppCode() {
+        return appCode;
+    }
+
+    public void setAppCode(String appCode) {
+        this.appCode = appCode;
     }
 
     public String getName() {
@@ -126,6 +143,14 @@ public class EntityClassStorage {
 
     public void setAncestors(List<Long> ancestors) {
         this.ancestors = ancestors;
+    }
+
+    public int getType() {
+        return type;
+    }
+
+    public void setType(int type) {
+        this.type = type;
     }
 
     /**

@@ -52,6 +52,7 @@ public class CalculateEventDispatcher {
 
     private void dispatcher(ActualEvent<MetaChangePayLoad> event) throws CalculationException {
         Optional<MetaChangePayLoad> op = event.payload();
+
         CachedEntityClass cachedEntityClass = new CachedEntityClass();
         if (op.isPresent()) {
             log.debug("dispatcher metaChangePayLoad event, appId : {}, version : {}.", op.get().getAppId(),

@@ -109,12 +109,11 @@ public class CdcErrorQueryExecutor extends AbstractDevOpsExecutor<CdcErrorQueryC
 
             ResultSet rs = null;
             List<CdcErrorTask> cdcErrorTasks = new ArrayList<>();
-            CdcErrorTask cdcErrorTask;
             try {
                 rs = st.executeQuery();
 
                 while (rs.next()) {
-                    cdcErrorTask = new CdcErrorTask();
+                    CdcErrorTask cdcErrorTask = new CdcErrorTask();
                     cdcErrorTask.setSeqNo(rs.getLong(ErrorFieldDefine.SEQ_NO));
                     cdcErrorTask.setUniKey(rs.getString(ErrorFieldDefine.UNI_KEY));
                     cdcErrorTask.setBatchId(rs.getLong(ErrorFieldDefine.BATCH_ID));

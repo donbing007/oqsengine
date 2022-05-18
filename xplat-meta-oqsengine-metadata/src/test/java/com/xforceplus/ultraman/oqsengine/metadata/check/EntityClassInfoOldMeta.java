@@ -64,7 +64,7 @@ public class EntityClassInfoOldMeta {
                 .withFieldType(entityField.type())
                 .withDictId(entityField.dictId())
                 .withId(entityField.id())
-                .withDefaultValue(entityField.defaultValue());
+                .withDefaultValue(entityField.defaultValue().orElse(null));
 
             if (null != entityField.config()) {
                 FieldConfig config = entityField.config();

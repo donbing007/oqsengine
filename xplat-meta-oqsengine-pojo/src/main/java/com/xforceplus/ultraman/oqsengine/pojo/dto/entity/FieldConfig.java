@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.AbstractCalculation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.StaticCalculation;
 import java.io.Serializable;
+import java.sql.Types;
 import java.util.Objects;
 import java.util.StringJoiner;
 
@@ -144,21 +145,25 @@ public class FieldConfig implements Serializable {
     private boolean searchable = false;
 
     /**
-     * 废弃.
-     *
-     * @deprecated 已经被废弃.
+     * 是否为数据标识.
      */
-    @JsonProperty(value = "max")
-    @Deprecated
-    private long max = Long.MAX_VALUE;
+    @JsonProperty(value = "identifie")
+    private boolean identifie = false;
 
     /**
-     * 废弃.
-     *
-     * @deprecated 已经被废弃.
+     * 是否必填字段.
      */
-    @JsonProperty(value = "min")
-    private long min = Long.MIN_VALUE;
+    @JsonProperty(value = "required")
+    private boolean required = false;
+
+    /**
+     * 是否支持跨元信息查询.
+     */
+    @JsonProperty(value = "crossSearch")
+    private boolean crossSearch = false;
+
+    @JsonProperty(value = "splittable")
+    private boolean splittable = false;
 
     /**
      * 最大允许长度.
@@ -181,16 +186,28 @@ public class FieldConfig implements Serializable {
     private int scale = 0;
 
     /**
-     * 是否为数据标识.
+     * 只有当元信息为静态时此字段才有意义.
+     * 表示静态类型.
      */
-    @JsonProperty(value = "identifie")
-    private boolean identifie = false;
+    @JsonProperty(value = "jdbcType")
+    private int jdbcType = Types.NULL;
 
     /**
-     * 是否必填字段.
+     * 废弃.
+     *
+     * @deprecated 已经被废弃.
      */
-    @JsonProperty(value = "required")
-    private boolean required = false;
+    @JsonProperty(value = "max")
+    @Deprecated
+    private long max = Long.MAX_VALUE;
+
+    /**
+     * 废弃.
+     *
+     * @deprecated 已经被废弃.
+     */
+    @JsonProperty(value = "min")
+    private long min = Long.MIN_VALUE;
 
     /**
      * 字段意义.
@@ -199,19 +216,10 @@ public class FieldConfig implements Serializable {
     private FieldSense fieldSense = FieldSense.NORMAL;
 
     /**
-     * 是否支持跨元信息查询.
-     */
-    @JsonProperty(value = "crossSearch")
-    private boolean crossSearch = false;
-
-    /**
      * 校验正则.
      */
     @JsonProperty(value = "validateRegexString")
     private String validateRegexString = "";
-
-    @JsonProperty(value = "splittable")
-    private boolean splittable = false;
 
     @JsonProperty(value = "delimiter")
     private String delimiter = "";
@@ -467,11 +475,19 @@ public class FieldConfig implements Serializable {
         return len;
     }
 
+    public int getJdbcType() {
+        return jdbcType;
+    }
+
+    public void setJdbcType(int jdbcType) {
+        this.jdbcType = jdbcType;
+    }
+
     /**
      * 克隆.
      */
     public FieldConfig clone() {
-        return FieldConfig.Builder.anFieldConfig()
+        return Builder.anFieldConfig()
             .withDelimiter(this.getDelimiter())
             .withDisplayType(this.getDisplayType())
             .withFieldSense(this.getFieldSense())
@@ -491,6 +507,7 @@ public class FieldConfig implements Serializable {
             .withLen(this.getLen())
             .withScale(this.scale())
             .withCalculation(this.getCalculation().clone())
+            .withJdbcType(this.getJdbcType())
             .build();
     }
 
@@ -556,6 +573,7 @@ public class FieldConfig implements Serializable {
             .add("wildcardMaxWidth=" + wildcardMaxWidth)
             .add("uniqueName='" + uniqueName + "'")
             .add("calculation=" + calculation)
+            .add("jdbcType=" + jdbcType)
             .toString();
     }
 
@@ -565,22 +583,23 @@ public class FieldConfig implements Serializable {
     public static final class Builder {
         private boolean searchable = false;
         private boolean crossSearch = false;
-        private int len = 19;
-        private long max = Long.MAX_VALUE;
-        private long min = Long.MIN_VALUE;
-        private int precision = 0;
-        private int scale = 0;
         private boolean identifie = false;
         private boolean required = false;
-        private FieldSense fieldSense = FieldSense.NORMAL;
-        private String validateRegexString = "";
         private boolean splittable = false;
-        private String delimiter = "";
-        private String displayType = "";
-        private FuzzyType fuzzyType = FuzzyType.NOT;
         private int wildcardMinWidth = 3;
         private int wildcardMaxWidth = 6;
+        private int len = 19;
+        private int precision = 0;
+        private int scale = 0;
+        private int jdbcType = Types.NULL;
+        private long max = Long.MAX_VALUE;
+        private long min = Long.MIN_VALUE;
+        private String validateRegexString = "";
+        private String delimiter = "";
+        private String displayType = "";
         private String uniqueName = "";
+        private FieldSense fieldSense = FieldSense.NORMAL;
+        private FuzzyType fuzzyType = FuzzyType.NOT;
         private AbstractCalculation calculation = StaticCalculation.Builder.anStaticCalculation().build();
 
         private Builder() {
@@ -695,6 +714,11 @@ public class FieldConfig implements Serializable {
             return this;
         }
 
+        public Builder withJdbcType(int jdbcType) {
+            this.jdbcType = jdbcType;
+            return this;
+        }
+
         /**
          * 构造实例.
          *
@@ -713,6 +737,7 @@ public class FieldConfig implements Serializable {
             fieldConfig.identifie = this.identifie;
             fieldConfig.splittable = this.splittable;
             fieldConfig.fuzzyType = this.fuzzyType;
+            fieldConfig.jdbcType = this.jdbcType;
             fieldConfig.searchable = this.searchable;
             fieldConfig.crossSearch = this.crossSearch;
             fieldConfig.wildcardMinWidth = this.wildcardMinWidth;

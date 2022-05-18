@@ -26,9 +26,9 @@ public class DiscoverConfigService {
     private SystemInfoConfiguration systemInfoConfiguration;
 
     /**
-     * 获取oqs的配置.
+     * 发现服务,获取OQS的配置.
      *
-     * @return Service对象.
+     * @return 配置服务.
      */
     @DiscoverService(name = "serviceConfig", describe = "获取oqs的配置")
     public Service serviceConfigDiscover() {
@@ -42,17 +42,17 @@ public class DiscoverConfigService {
 
     private List<Application> showApplications() {
         return metaManager.showApplications()
-            .stream().map(
-                appInfo -> {
-                    return Application.newBuilder()
-                        .setId(appInfo.getAppId())
-                        .setEnv(appInfo.getEnv())
-                        .setCode(appInfo.getCode())
-                        .setVersion(appInfo.getVersion())
-                        .build();
-                }
-            )
-            .collect(Collectors.toList());
+                    .stream().map(
+                        appInfo -> {
+                            return Application.newBuilder()
+                                .setId(appInfo.getAppId())
+                                .setEnv(appInfo.getEnv())
+                                .setCode(appInfo.getCode())
+                                .setVersion(appInfo.getVersion())
+                                .build();
+                        }
+                    )
+                    .collect(Collectors.toList());
     }
 
 }

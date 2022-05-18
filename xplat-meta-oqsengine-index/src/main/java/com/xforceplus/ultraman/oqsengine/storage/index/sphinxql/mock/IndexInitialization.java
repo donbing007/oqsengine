@@ -117,10 +117,14 @@ public class IndexInitialization implements BeanInitialization {
     public void clear() throws Exception {
         List<DataSource> dataSources = CommonInitialization.getInstance().getDataSourcePackage(false).getIndexWriter();
         for (DataSource ds : dataSources) {
-            try (Connection conn = ds.getConnection()) {
-                try (Statement st = conn.createStatement()) {
-                    st.executeUpdate("truncate table " + INDEX_TABLE);
+            try {
+                try (Connection conn = ds.getConnection()) {
+                    try (Statement st = conn.createStatement()) {
+                        st.executeUpdate("truncate table " + INDEX_TABLE);
+                    }
                 }
+            } catch (Exception e) {
+                //  ignore
             }
         }
     }
@@ -138,11 +142,11 @@ public class IndexInitialization implements BeanInitialization {
     }
 
     private Selector<DataSource> buildWriteDataSourceSelector() throws IllegalAccessException {
-        return new NoSelector<>(CommonInitialization.getInstance().getDataSourcePackage(false).getIndexWriter().get(0));
+        return new NoSelector<>(CommonInitialization.getInstance().getDataSourcePackage(true).getIndexWriter().get(0));
     }
 
     private DataSource buildSearchDataSourceSelector() throws IllegalAccessException {
-        return CommonInitialization.getInstance().getDataSourcePackage(false).getIndexSearch().get(0);
+        return CommonInitialization.getInstance().getDataSourcePackage(true).getIndexSearch().get(0);
     }
 
 

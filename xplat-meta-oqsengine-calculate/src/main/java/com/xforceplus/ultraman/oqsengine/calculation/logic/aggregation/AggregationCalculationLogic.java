@@ -59,9 +59,6 @@ public class AggregationCalculationLogic implements CalculationLogic {
 
     final Logger logger = LoggerFactory.getLogger(AggregationCalculationLogic.class);
 
-    public static final int ONE = 1;
-    public static final int ZERO = 0;
-
     @Override
     public Optional<IValue> calculate(CalculationContext context) throws CalculationException {
 
@@ -73,94 +70,111 @@ public class AggregationCalculationLogic implements CalculationLogic {
                 context.getFocusClass().name(), context.getFocusField().name());
 
         }
-        //焦点字段
-        IEntityField aggField = context.getFocusField();
+        //当前需要计算的聚合字段
+        IEntityField aggregationField = context.getFocusField();
         //聚合字段的值
-        Optional<IValue> aggValue = entity.entityValue().getValue(aggField.id());
-        if (!aggField.calculationType().equals(CalculationType.AGGREGATION)) {
-            return aggValue;
+        Optional<IValue> aggregationValue = entity.entityValue().getValue(aggregationField.id());
+        // 如果当前字段不是聚合字段,那原样返回.
+        if (!aggregationField.calculationType().equals(CalculationType.AGGREGATION)) {
+            return Optional.empty();
         }
-        Aggregation aggregation = ((Aggregation) aggField.config().getCalculation());
-        long byAggFieldId = aggregation.getFieldId();
+        Aggregation aggregation = ((Aggregation) aggregationField.config().getCalculation());
         //获取被聚合的entity信息（修改后的）
-        IEntity byAggEntity = null;
-        //定义一个修改前的被聚合entity信息
-        Optional<ValueChange> byAggEntityBeforChange = null;
+        IEntity triggerEntity = null;
         Optional<IEntity> triggerEntityOp = context.getMaintenanceTriggerEntity();
+        /*
+        没有发现触发维护的目标,认定为创建场景.
+        使用默认值处理.
+         */
         if (!triggerEntityOp.isPresent()) {
-            // build场景下，给默认值
             if (context.getScenariso().equals(CalculationScenarios.BUILD)) {
-                FieldType fieldType = aggField.type();
+                FieldType fieldType = aggregationField.type();
                 switch (fieldType) {
                     case LONG:
-                        return Optional.of(new LongValue(aggField, 0L, "0|0"));
+                        return Optional.of(new LongValue(aggregationField, 0, "0|0"));
                     case DECIMAL:
-                        return Optional.of(new DecimalValue(aggField, BigDecimal.ZERO, "0|0.0"));
+                        return Optional.of(new DecimalValue(aggregationField, BigDecimal.ZERO, "0|0.0"));
                     default:
-                        return Optional.of(new DateTimeValue(aggField, DateTimeValue.MIN_DATE_TIME, "0|0"));
+                        return Optional.of(new DateTimeValue(aggregationField, DateTimeValue.MIN_DATE_TIME, "0|0"));
                 }
             }
-            return aggValue;
+            return aggregationValue;
         }
 
         // 计算相关的字段定义
-        Optional<IValue> agg;
-        Optional<IValue> n = null;
-        Optional<IValue> o = null;
+        Optional<IValue> newValue = null;
+        Optional<IValue> oldValue = null;
 
         // 正常情况两个对象只存在一个一对多，在cache中该对象也只会存在一个实例
-        byAggEntity = triggerEntityOp.get();
-        Optional<IEntityClass> byAggEntityClass =
-                context.getMetaManager().get().load(byAggEntity.entityClassRef());
+        triggerEntity = triggerEntityOp.get();
         if (aggregation.getAggregationType().equals(AggregationType.COUNT)) {
             if (context.getScenariso().equals(CalculationScenarios.BUILD)) {
-                n = Optional.of(new LongValue(aggField, 1));
-                o = Optional.of(new EmptyTypedValue(aggField));
+                newValue = Optional.of(new LongValue(aggregationField, 1));
+                oldValue = Optional.of(new EmptyTypedValue(aggregationField));
             } else if (context.getScenariso().equals(CalculationScenarios.DELETE)) {
-                o = Optional.of(new LongValue(aggField, 1));
-                n = Optional.of(new EmptyTypedValue(aggField));
+                oldValue = Optional.of(new LongValue(aggregationField, 1));
+                newValue = Optional.of(new EmptyTypedValue(aggregationField));
             } else {
-                return aggValue;
+                return Optional.empty();
             }
         } else {
-            if (byAggEntityClass.isPresent()) {
-                byAggEntityBeforChange =
-                        context.getValueChange(byAggEntity, byAggEntityClass.get().field(byAggFieldId).get());
-                n = byAggEntityBeforChange.get().getNewValue();
-                o = byAggEntityBeforChange.get().getOldValue();
+            Optional<IEntityClass> triggerEntityClassOp = context.getMetaManager().get().load(triggerEntity.entityClassRef());
+            if (!triggerEntityClassOp.isPresent()) {
+                throw new CalculationException(
+                    String.format("The expected target object meta information was not found.[%s]",
+                        triggerEntity.entityClassRef()));
             }
+
+            IEntityClass triggerEntityClass = triggerEntityClassOp.get();
+            Optional<IEntityField> triggerFieldOp = triggerEntityClass.field(aggregation.getFieldId());
+            if (!triggerFieldOp.isPresent()) {
+                throw new CalculationException(
+                    String.format("The expected field (%s) does not exist.", aggregation.getFieldId()));
+            }
+
+            Optional<ValueChange> triggerEntityFieldValueChange =
+                context.getValueChange(triggerEntity, triggerFieldOp.get());
+            if (!triggerEntityClassOp.isPresent()) {
+                // 没有改变,原样返回.
+                return Optional.empty();
+            }
+
+            // 修改前
+            oldValue = triggerEntityFieldValueChange.get().getOldValue();
+            // 修改后.
+            newValue = triggerEntityFieldValueChange.get().getNewValue();
+
         }
         //拿到数据后开始进行判断数据是否符合条件
-        boolean pass = checkEntityByCondition(((Aggregation) aggField.config().getCalculation()).getConditions());
+        boolean pass = checkEntityByCondition(((Aggregation) aggregationField.config().getCalculation()).getConditions());
         if (!pass) {
-            return aggValue;
+            return Optional.empty();
         }
 
         try {
             //拿到数据后开始运算
-            agg = aggValue;
             AggregationType aggregationType = aggregation.getAggregationType();
             if (aggregationType.equals(AggregationType.AVG)) {
                 FunctionStrategy functionStrategy = new AvgFunctionStrategy();
-                return functionStrategy.excute(agg, o, n, context);
+                return functionStrategy.excute(aggregationValue, oldValue, newValue, context);
             } else if (aggregationType.equals(AggregationType.MAX)) {
                 FunctionStrategy functionStrategy = new MaxFunctionStrategy();
-                return functionStrategy.excute(agg, o, n, context);
+                return functionStrategy.excute(aggregationValue, oldValue, newValue, context);
             } else if (aggregationType.equals(AggregationType.MIN)) {
                 FunctionStrategy functionStrategy = new MinFunctionStrategy();
-                return functionStrategy.excute(agg, o, n, context);
+                return functionStrategy.excute(aggregationValue, oldValue, newValue, context);
             } else if (aggregationType.equals(AggregationType.SUM)) {
                 FunctionStrategy functionStrategy = new SumFunctionStrategy();
-                return functionStrategy.excute(agg, o, n, context);
+                return functionStrategy.excute(aggregationValue, oldValue, newValue, context);
             } else if (aggregationType.equals(AggregationType.COUNT)) {
                 FunctionStrategy functionStrategy = new CountFunctionStrategy();
-                return functionStrategy.excute(agg, o, n, context);
+                return functionStrategy.excute(aggregationValue, oldValue, newValue, context);
             }
         } catch (Exception ex) {
             throw new CalculationException(
                 String.format(
                     "Aggregation calculation exception. [focus-field :%d-%s, message :%s]",
-                    aggField.id(), aggField.name(), ex.getMessage()),
+                    aggregationField.id(), aggregationField.name(), ex.getMessage()),
                 ex);
         }
 

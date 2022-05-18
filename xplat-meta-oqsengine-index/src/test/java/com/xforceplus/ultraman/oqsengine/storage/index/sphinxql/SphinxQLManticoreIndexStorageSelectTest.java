@@ -6,7 +6,6 @@ import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.common.serializable.utils.JacksonDefaultMapper;
 import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.AttachmentCondition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
@@ -18,18 +17,14 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.mock.IndexInitialization;
-import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.OqsEngineEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.ManticoreContainer;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.RedisContainer;
-import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -57,7 +52,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 @ExtendWith({RedisContainer.class, ManticoreContainer.class})
 public class SphinxQLManticoreIndexStorageSelectTest {
 
-    private Collection<OriginalEntity> expectedDatas;
+    private Collection<OqsEngineEntity> expectedDatas;
 
     /*
     使用的字段名和其id.
@@ -348,7 +343,7 @@ public class SphinxQLManticoreIndexStorageSelectTest {
 
     @Test
     public void testNegativeNumber() throws Exception {
-        OriginalEntity entity = OriginalEntity.Builder.anOriginalEntity()
+        OqsEngineEntity entity = OqsEngineEntity.Builder.anOriginalEntity()
             .withId(123L)
             .withEntityClass(l2EntityClass)
             .withCreateTime(System.currentTimeMillis())
@@ -393,11 +388,11 @@ public class SphinxQLManticoreIndexStorageSelectTest {
      */
     @Test
     public void testFuzzyAndEqInfluence() throws Exception {
-        List<OriginalEntity> entities = new ArrayList(3);
+        List<OqsEngineEntity> entities = new ArrayList(3);
         long baseId = 1000;
         for (int i = 0; i < 3; i++) {
 
-            entities.add(OriginalEntity.Builder.anOriginalEntity()
+            entities.add(OqsEngineEntity.Builder.anOriginalEntity()
                 .withId(baseId++)
                 .withEntityClass(l2EntityClass)
                 .withCreateTime(System.currentTimeMillis())
@@ -411,7 +406,7 @@ public class SphinxQLManticoreIndexStorageSelectTest {
                 ).build());
         }
 
-        OriginalEntity scanEntity = OriginalEntity.Builder.anOriginalEntity()
+        OqsEngineEntity scanEntity = OqsEngineEntity.Builder.anOriginalEntity()
             .withId(baseId++)
             .withEntityClass(l2EntityClass)
             .withCreateTime(System.currentTimeMillis())
@@ -509,890 +504,936 @@ public class SphinxQLManticoreIndexStorageSelectTest {
 
     private Collection<Case> buildSelectCases() {
         return Arrays.asList(
+//            new Case(
+//                "l2-string-longString",
+//                Conditions.buildEmtpyConditions()
+//                    .addAnd(
+//                        new Condition(
+//                            l2EntityClass.field("l2-string").get(),
+//                            ConditionOperator.EQUALS,
+//                            new StringValue(l2EntityClass.field("l2-string").get(),
+//                                "ABCDEFGHIJKLMNOPQRSTUVWXYZXXXYYYTTT")
+//                        )
+//                    ),
+//                l2EntityClass,
+//                SelectConfig.Builder.anSelectConfig()
+//                    .withPage(Page.newSinglePage(20)).build(),
+//                new long[] {
+//                    Long.MAX_VALUE - 10L
+//                }
+//            ),
+//            new Case(
+//                "l2-string-longString-not-eq",
+//                Conditions.buildEmtpyConditions()
+//                    .addAnd(
+//                        new Condition(
+//                            l2EntityClass.field("l2-string").get(),
+//                            ConditionOperator.NOT_EQUALS,
+//                            new StringValue(l2EntityClass.field("l2-string").get(),
+//                                "ABCDEFGHIJKLMNOPQRSTUVWXYZXXXYYYTTT")
+//                        )
+//                    ),
+//                l2EntityClass,
+//                SelectConfig.Builder.anSelectConfig()
+//                    .withPage(Page.newSinglePage(20)).build(),
+//                new long[] {
+//                    Long.MAX_VALUE, Long.MAX_VALUE - 1, Long.MAX_VALUE - 2, Long.MAX_VALUE - 3, Long.MAX_VALUE - 4,
+//                    Long.MAX_VALUE - 5, Long.MAX_VALUE - 6, Long.MAX_VALUE - 7, Long.MAX_VALUE - 8,
+//                    Long.MAX_VALUE - 9
+//                }
+//            ),
+//            new Case(
+//                "strings eq longString",
+//                Conditions.buildEmtpyConditions()
+//                    .addAnd(new Condition(
+//                        l2EntityClass.field("l0-strings").get(),
+//                        ConditionOperator.EQUALS,
+//                        new StringsValue(l2EntityClass.field("l0-strings").get(),
+//                            "blueSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS")
+//                    )),
+//                l2EntityClass,
+//                SelectConfig.Builder.anSelectConfig()
+//                    .withPage(Page.newSinglePage(1000))
+//                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
+//                    .build(),
+//                new long[] {
+//                    Long.MAX_VALUE - 10L
+//                }
+//            ),
+//            new Case(
+//                "strings in longString",
+//                Conditions.buildEmtpyConditions()
+//                    .addAnd(new Condition(
+//                        l2EntityClass.field("l0-strings").get(),
+//                        ConditionOperator.MULTIPLE_EQUALS,
+//                        new StringsValue(l2EntityClass.field("l0-strings").get(),
+//                            "blueSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS"),
+//                        new StringsValue(l2EntityClass.field("l0-strings").get(), "fuchsia")
+//                    )),
+//                l2EntityClass,
+//                SelectConfig.Builder.anSelectConfig()
+//                    .withPage(Page.newSinglePage(1000))
+//                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
+//                    .build(),
+//                new long[] {
+//                    Long.MAX_VALUE - 3, Long.MAX_VALUE - 10L
+//                }
+//            ),
+//            new Case(
+//                "strings not eq longString",
+//                Conditions.buildEmtpyConditions()
+//                    .addAnd(new Condition(
+//                        l2EntityClass.field("l0-strings").get(),
+//                        ConditionOperator.NOT_EQUALS,
+//                        new StringsValue(l2EntityClass.field("l0-strings").get(),
+//                            "blueSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS")
+//                    )),
+//                l2EntityClass,
+//                SelectConfig.Builder.anSelectConfig()
+//                    .withPage(Page.newSinglePage(1000))
+//                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
+//                    .build(),
+//                new long[] {
+//                    Long.MAX_VALUE, Long.MAX_VALUE - 1, Long.MAX_VALUE - 2, Long.MAX_VALUE - 3, Long.MAX_VALUE - 4,
+//                    Long.MAX_VALUE - 5, Long.MAX_VALUE - 6, Long.MAX_VALUE - 7, Long.MAX_VALUE - 8,
+//                    Long.MAX_VALUE - 9
+//                }
+//            ),
+//            new Case(
+//                "is not null",
+//                Conditions.buildEmtpyConditions()
+//                    .addAnd(
+//                        new Condition(
+//                            l2EntityClass.field("l2-null").get(),
+//                            ConditionOperator.IS_NOT_NULL,
+//                            new EmptyTypedValue(l2EntityClass.field("l2-null").get())
+//                        )
+//                    ),
+//                l2EntityClass,
+//                SelectConfig.Builder.anSelectConfig()
+//                    .withPage(Page.newSinglePage(20)).build(),
+//                new long[0]
+//            ),
+//            new Case(
+//                "eq dec or eq dec",
+//                Conditions.buildEmtpyConditions()
+//                    .addAnd(
+//                        new Condition(
+//                            l2EntityClass.field("l2-dec").get(),
+//                            ConditionOperator.EQUALS,
+//                            new DecimalValue(
+//                                l2EntityClass.field("l2-dec").get(),
+//                                new BigDecimal("16507.1689237975")
+//                            )
+//                        )
+//                    ).addOr(
+//                        new Condition(
+//                            l2EntityClass.field("l2-dec").get(),
+//                            ConditionOperator.EQUALS,
+//                            new DecimalValue(
+//                                l2EntityClass.field("l2-dec").get(),
+//                                new BigDecimal("37574.3322308913")
+//                            )
+//                        )
+//                    ),
+//                l2EntityClass,
+//                SelectConfig.Builder.anSelectConfig()
+//                    .withPage(Page.newSinglePage(100)).build(),
+//                new long[] {
+//                    9223372036854775806L, 9223372036854775807L
+//                }
+//            ),
+//            new Case(
+//                ">= dec or =< dec",
+//                Conditions.buildEmtpyConditions()
+//                    .addAnd(
+//                        new Condition(
+//                            l2EntityClass.field("l1-dec").get(),
+//                            ConditionOperator.GREATER_THAN_EQUALS,
+//                            new DecimalValue(
+//                                l2EntityClass.field("l1-dec").get(),
+//                                new BigDecimal("847042.336188")
+//                            )
+//                        )
+//                    ).addOr(
+//                        new Condition(
+//                            l2EntityClass.field("l2-dec").get(),
+//                            ConditionOperator.LESS_THAN_EQUALS,
+//                            new DecimalValue(
+//                                l2EntityClass.field("l2-dec").get(),
+//                                new BigDecimal("13354.0992034462")
+//                            )
+//                        )
+//                    ),
+//                l2EntityClass,
+//                SelectConfig.Builder.anSelectConfig()
+//                    .withPage(Page.newSinglePage(100)).build(),
+//                new long[] {
+//                    9223372036854775805L,
+//                    9223372036854775804L,
+//                    9223372036854775801L,
+//                    9223372036854775798L,
+//                    9223372036854775797L
+//                }
+//            ),
+//            new Case(
+//                "attahcment - (l1-long) 100",
+//                Conditions.buildEmtpyConditions()
+//                    .addAnd(
+//                        new AttachmentCondition(
+//                            l2EntityClass.field("l1-long").get(),
+//                            true,
+//                            "100"
+//                        )
+//                    ),
+//                l2EntityClass,
+//                SelectConfig.Builder.anSelectConfig()
+//                    .withPage(Page.newSinglePage(100)).build(),
+//                new long[] {
+//                    9223372036854775807L
+//                }
+//            ),
+//            new Case(
+//                "attahcment - (l0-string) 方致远",
+//                Conditions.buildEmtpyConditions()
+//                    .addAnd(
+//                        new AttachmentCondition(
+//                            l2EntityClass.field("l0-string").get(),
+//                            true,
+//                            "方致远"
+//                        )
+//                    ),
+//                l2EntityClass,
+//                SelectConfig.Builder.anSelectConfig()
+//                    .withPage(Page.newSinglePage(100)).build(),
+//                new long[] {
+//                    9223372036854775798L
+//                }
+//            ),
+//            new Case(
+//                "all",
+//                Conditions.buildEmtpyConditions(),
+//                l2EntityClass,
+//                SelectConfig.Builder.anSelectConfig()
+//                    .withPage(Page.newSinglePage(20)).build(),
+//                new long[] {
+//                    Long.MAX_VALUE, Long.MAX_VALUE - 1, Long.MAX_VALUE - 2, Long.MAX_VALUE - 3, Long.MAX_VALUE - 4,
+//                    Long.MAX_VALUE - 5, Long.MAX_VALUE - 6, Long.MAX_VALUE - 7, Long.MAX_VALUE - 8, Long.MAX_VALUE - 9,
+//                    Long.MAX_VALUE - 10
+//                }
+//            ),
+//            new Case(
+//                "string .- symbol",
+//                Conditions.buildEmtpyConditions()
+//                    .addAnd(
+//                        new Condition(
+//                            l2EntityClass.field("l1-string").get(),
+//                            ConditionOperator.EQUALS,
+//                            new StringValue(l2EntityClass.field("l1-string").get(), "15796500901.-12")
+//                        )
+//                    ),
+//                l2EntityClass,
+//                SelectConfig.Builder.anSelectConfig().build(),
+//                new long[] {
+//                    9223372036854775798L
+//                }
+//            ),
+//            new Case(
+//                "id in (not exist)",
+//                Conditions.buildEmtpyConditions()
+//                    .addAnd(
+//                        new Condition(
+//                            EntityField.ID_ENTITY_FIELD,
+//                            ConditionOperator.MULTIPLE_EQUALS,
+//                            new LongValue(EntityField.ID_ENTITY_FIELD, 10000000L)
+//                        )
+//                    ),
+//                l2EntityClass,
+//                SelectConfig.Builder.anSelectConfig()
+//                    .withPage(Page.newSinglePage(1000))
+//                    .withSort(Sort.buildAscSort(l2EntityClass.field("l1-long").get()))
+//                    .build(),
+//                new long[0],
+//                r -> {
+//
+//                    if (!r.refs.isEmpty()) {
+//                        return String.format("No data is expected, but there is %d data.", r.refs.size());
+//                    }
+//
+//                    return null;
+//                }
+//            ),
+//            new Case(
+//                "sort with value",
+//                Conditions.buildEmtpyConditions(),
+//                l2EntityClass,
+//                SelectConfig.Builder.anSelectConfig()
+//                    .withPage(Page.newSinglePage(1000))
+//                    .withSort(Sort.buildAscSort(l2EntityClass.field("l1-long").get()))
+//                    .build(),
+//                null,
+//                r -> {
+//                    for (EntityRef ref : r.refs) {
+//                        if (ref.getOrderValue() == null) {
+//                            return "The sort is expected to return the value of the sort, but it does not.";
+//                        }
+//                    }
+//                    return null;
+//                }
+//            ),
+//            new Case(
+//                "empty",
+//                Conditions.buildEmtpyConditions(),
+//                l2EntityClass,
+//                SelectConfig.Builder.anSelectConfig()
+//                    .withPage(Page.emptyPage())
+//                    .withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD))
+//                    .build(),
+//                new long[0],
+//                r -> {
+//                    if (!r.refs.isEmpty()) {
+//                        return String.format("No data is expected, but there is %d data.", r.refs.size());
+//                    }
+//
+//                    if (r.page.getTotalCount() != expectedDatas.size()) {
+//                        return String.format("The expected data total is %d, but it is actually up %d.",
+//                            expectedDatas.size(), r.page.getTotalCount());
+//                    }
+//
+//                    return null;
+//                }
+//            ),
+//            new Case(
+//                "order by id asc",
+//                Conditions.buildEmtpyConditions(),
+//                l2EntityClass,
+//                SelectConfig.Builder.anSelectConfig()
+//                    .withPage(Page.newSinglePage(1000))
+//                    .withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD))
+//                    .build(),
+//                null,
+//                r -> isSorted(r.refs, false) ? null : "Not expecting descending order"
+//            ),
+//            new Case(
+//                "order by id desc",
+//                Conditions.buildEmtpyConditions(),
+//                l2EntityClass,
+//                SelectConfig.Builder.anSelectConfig()
+//                    .withPage(Page.newSinglePage(1000))
+//                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
+//                    .build(),
+//                null,
+//                r -> isSorted(r.refs, true) ? null : "Not expecting descending order"
+//            ),
+//            new Case(
+//                "first page",
+//                Conditions.buildEmtpyConditions(),
+//                l2EntityClass,
+//                SelectConfig.Builder.anSelectConfig()
+//                    .withPage(new Page(1, 5))
+//                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
+//                    .build(),
+//                new long[] {
+//                    Long.MAX_VALUE, Long.MAX_VALUE - 1, Long.MAX_VALUE - 2, Long.MAX_VALUE - 3, Long.MAX_VALUE - 4
+//                }
+//            ),
+//            new Case(
+//                "last page",
+//                Conditions.buildEmtpyConditions(),
+//                l2EntityClass,
+//                SelectConfig.Builder.anSelectConfig()
+//                    .withPage(new Page(2, 6))
+//                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
+//                    .build(),
+//                null
+//            ),
+//            new Case(
+//                "long eq",
+//                Conditions.buildEmtpyConditions()
+//                    .addAnd(new Condition(
+//                        l2EntityClass.field("l0-long").get(),
+//                        ConditionOperator.EQUALS,
+//                        new LongValue(l2EntityClass.field("l0-long").get(), 5932795534250140672L)
+//                    )),
+//                l2EntityClass,
+//                SelectConfig.Builder.anSelectConfig()
+//                    .withPage(Page.newSinglePage(1000))
+//                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
+//                    .build(),
+//                new long[] {
+//                    Long.MAX_VALUE - 4
+//                }
+//            ),
+//            new Case(
+//                "long not equals",
+//                Conditions.buildEmtpyConditions()
+//                    .addAnd(new Condition(
+//                        l2EntityClass.field("l0-long").get(),
+//                        ConditionOperator.NOT_EQUALS,
+//                        new LongValue(l2EntityClass.field("l0-long").get(), 5932795534250140672L)
+//                    )),
+//                l2EntityClass,
+//                SelectConfig.Builder.anSelectConfig()
+//                    .withPage(Page.newSinglePage(1000))
+//                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
+//                    .build(),
+//                new long[] {
+//                    Long.MAX_VALUE, Long.MAX_VALUE - 1, Long.MAX_VALUE - 2, Long.MAX_VALUE - 3,
+//                    Long.MAX_VALUE - 5, Long.MAX_VALUE - 6, Long.MAX_VALUE - 7, Long.MAX_VALUE - 8,
+//                    Long.MAX_VALUE - 9, Long.MAX_VALUE - 10
+//                }
+//            ),
+//            new Case(
+//                "long >",
+//                Conditions.buildEmtpyConditions()
+//                    .addAnd(new Condition(
+//                        l2EntityClass.field("l0-long").get(),
+//                        ConditionOperator.GREATER_THAN,
+//                        new LongValue(l2EntityClass.field("l0-long").get(), 3065636258020209152L)
+//                    )),
+//                l2EntityClass,
+//                SelectConfig.Builder.anSelectConfig()
+//                    .withPage(Page.newSinglePage(1000))
+//                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
+//                    .build(),
+//                new long[] {
+//                    Long.MAX_VALUE, Long.MAX_VALUE - 1, Long.MAX_VALUE - 2, Long.MAX_VALUE - 4,
+//                    Long.MAX_VALUE - 5, Long.MAX_VALUE - 6, Long.MAX_VALUE - 8, Long.MAX_VALUE - 9,
+//                    Long.MAX_VALUE - 10
+//                }
+//            ),
+//            new Case(
+//                "long <",
+//                Conditions.buildEmtpyConditions()
+//                    .addAnd(new Condition(
+//                        l2EntityClass.field("l0-long").get(),
+//                        ConditionOperator.LESS_THAN,
+//                        new LongValue(l2EntityClass.field("l0-long").get(), 3065636258020209152L)
+//                    )),
+//                l2EntityClass,
+//                SelectConfig.Builder.anSelectConfig()
+//                    .withPage(Page.newSinglePage(1000))
+//                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
+//                    .build(),
+//                new long[] {
+//                    Long.MAX_VALUE - 3,
+//                }
+//            ),
+//            new Case(
+//                "long >=",
+//                Conditions.buildEmtpyConditions()
+//                    .addAnd(new Condition(
+//                        l2EntityClass.field("l0-long").get(),
+//                        ConditionOperator.GREATER_THAN_EQUALS,
+//                        new LongValue(l2EntityClass.field("l0-long").get(), 3065636258020209152L)
+//                    )),
+//                l2EntityClass,
+//                SelectConfig.Builder.anSelectConfig()
+//                    .withPage(Page.newSinglePage(1000))
+//                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
+//                    .build(),
+//                new long[] {
+//                    Long.MAX_VALUE, Long.MAX_VALUE - 1, Long.MAX_VALUE - 2, Long.MAX_VALUE - 4,
+//                    Long.MAX_VALUE - 5, Long.MAX_VALUE - 6, Long.MAX_VALUE - 7, Long.MAX_VALUE - 8,
+//                    Long.MAX_VALUE - 9, Long.MAX_VALUE - 10
+//                }
+//            ),
+//            new Case(
+//                "long <=",
+//                Conditions.buildEmtpyConditions()
+//                    .addAnd(new Condition(
+//                        l2EntityClass.field("l0-long").get(),
+//                        ConditionOperator.LESS_THAN_EQUALS,
+//                        new LongValue(l2EntityClass.field("l0-long").get(), 3065636258020209152L)
+//                    )),
+//                l2EntityClass,
+//                SelectConfig.Builder.anSelectConfig()
+//                    .withPage(Page.newSinglePage(1000))
+//                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
+//                    .build(),
+//                new long[] {
+//                    Long.MAX_VALUE - 3, Long.MAX_VALUE - 7
+//                }
+//            ),
+//            new Case(
+//                "long in",
+//                Conditions.buildEmtpyConditions()
+//                    .addAnd(new Condition(
+//                        l2EntityClass.field("l0-long").get(),
+//                        ConditionOperator.MULTIPLE_EQUALS,
+//                        new LongValue(l2EntityClass.field("l0-long").get(), 3065636258020209152L),
+//                        new LongValue(l2EntityClass.field("l0-long").get(), 8044778060371018752L)
+//                    )),
+//                l2EntityClass,
+//                SelectConfig.Builder.anSelectConfig()
+//                    .withPage(Page.newSinglePage(1000))
+//                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
+//                    .build(),
+//                new long[] {
+//                    Long.MAX_VALUE, Long.MAX_VALUE - 7,
+//                }
+//            ),
+//            new Case(
+//                "String eq",
+//                Conditions.buildEmtpyConditions()
+//                    .addAnd(new Condition(
+//                        l2EntityClass.field("l1-string").get(),
+//                        ConditionOperator.EQUALS,
+//                        new StringValue(l2EntityClass.field("l1-string").get(), "15841884807")
+//                    )),
+//                l2EntityClass,
+//                SelectConfig.Builder.anSelectConfig()
+//                    .withPage(Page.newSinglePage(1000))
+//                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
+//                    .build(),
+//                new long[] {
+//                    Long.MAX_VALUE - 1
+//                }
+//            ),
+//            new Case(
+//                "String no eq",
+//                Conditions.buildEmtpyConditions()
+//                    .addAnd(new Condition(
+//                        l2EntityClass.field("l1-string").get(),
+//                        ConditionOperator.NOT_EQUALS,
+//                        new StringValue(l2EntityClass.field("l1-string").get(), "15841884807")
+//                    )),
+//                l2EntityClass,
+//                SelectConfig.Builder.anSelectConfig()
+//                    .withPage(Page.newSinglePage(1000))
+//                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
+//                    .build(),
+//                new long[] {
+//                    Long.MAX_VALUE, Long.MAX_VALUE - 2, Long.MAX_VALUE - 4, Long.MAX_VALUE - 9,
+//                    Long.MAX_VALUE - 5, Long.MAX_VALUE - 6, Long.MAX_VALUE - 7, Long.MAX_VALUE - 8,
+//                    Long.MAX_VALUE - 3, Long.MAX_VALUE - 10
+//                }
+//            ),
+//            new Case(
+//                "String like 熊鹤轩 (熊鹤轩)",
+//                Conditions.buildEmtpyConditions()
+//                    .addAnd(new Condition(
+//                        l2EntityClass.field("l0-string").get(),
+//                        ConditionOperator.LIKE,
+//                        new StringValue(l2EntityClass.field("l0-string").get(), "熊鹤轩")
+//                    )),
+//                l2EntityClass,
+//                SelectConfig.Builder.anSelectConfig()
+//                    .withPage(Page.newSinglePage(1000))
+//                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
+//                    .build(),
+//                new long[] {
+//                    Long.MAX_VALUE - 2
+//                }
+//            ),
+//            new Case(
+//                "String like 18159301250 (301)",
+//                Conditions.buildEmtpyConditions()
+//                    .addAnd(new Condition(
+//                        l2EntityClass.field("l1-string").get(),
+//                        ConditionOperator.LIKE,
+//                        new StringValue(l2EntityClass.field("l1-string").get(), "301")
+//                    )),
+//                l2EntityClass,
+//                SelectConfig.Builder.anSelectConfig()
+//                    .withPage(Page.newSinglePage(1000))
+//                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
+//                    .build(),
+//                new long[] {
+//                    Long.MAX_VALUE - 2
+//                }
+//            ),
+//            new Case(
+//                "String like 18159301250 (3012)",
+//                Conditions.buildEmtpyConditions()
+//                    .addAnd(new Condition(
+//                        l2EntityClass.field("l1-string").get(),
+//                        ConditionOperator.LIKE,
+//                        new StringValue(l2EntityClass.field("l1-string").get(), "3012")
+//                    )),
+//                l2EntityClass,
+//                SelectConfig.Builder.anSelectConfig()
+//                    .withPage(Page.newSinglePage(1000))
+//                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
+//                    .build(),
+//                new long[] {
+//                    Long.MAX_VALUE - 2
+//                }
+//            ),
+//            new Case(
+//                "String like 18159301250 (30125)",
+//                Conditions.buildEmtpyConditions()
+//                    .addAnd(new Condition(
+//                        l2EntityClass.field("l1-string").get(),
+//                        ConditionOperator.LIKE,
+//                        new StringValue(l2EntityClass.field("l1-string").get(), "30125")
+//                    )),
+//                l2EntityClass,
+//                SelectConfig.Builder.anSelectConfig()
+//                    .withPage(Page.newSinglePage(1000))
+//                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
+//                    .build(),
+//                new long[] {
+//                    Long.MAX_VALUE - 2
+//                }
+//            ),
+//            new Case(
+//                "String like 18159301250 (301250)",
+//                Conditions.buildEmtpyConditions()
+//                    .addAnd(new Condition(
+//                        l2EntityClass.field("l1-string").get(),
+//                        ConditionOperator.LIKE,
+//                        new StringValue(l2EntityClass.field("l1-string").get(), "301250")
+//                    )),
+//                l2EntityClass,
+//                SelectConfig.Builder.anSelectConfig()
+//                    .withPage(Page.newSinglePage(1000))
+//                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
+//                    .build(),
+//                new long[] {
+//                    Long.MAX_VALUE - 2
+//                }
+//            ),
+//            new Case(
+//                "String like 18159301250 (9301250)",
+//                Conditions.buildEmtpyConditions()
+//                    .addAnd(new Condition(
+//                        l2EntityClass.field("l1-string").get(),
+//                        ConditionOperator.LIKE,
+//                        new StringValue(l2EntityClass.field("l1-string").get(), "9301250")
+//                    )),
+//                l2EntityClass,
+//                SelectConfig.Builder.anSelectConfig()
+//                    .withPage(Page.newSinglePage(1000))
+//                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
+//                    .build(),
+//                new long[] {
+//                    Long.MAX_VALUE - 2
+//                }
+//            ),
+//            new Case(
+//                "decimal eq",
+//                Conditions.buildEmtpyConditions()
+//                    .addAnd(new Condition(
+//                        l2EntityClass.field("l2-dec").get(),
+//                        ConditionOperator.EQUALS,
+//                        new DecimalValue(l2EntityClass.field("l2-dec").get(), new BigDecimal("13354.0992034462"))
+//                    )),
+//                l2EntityClass,
+//                SelectConfig.Builder.anSelectConfig()
+//                    .withPage(Page.newSinglePage(1000))
+//                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
+//                    .build(),
+//                new long[] {
+//                    Long.MAX_VALUE - 9
+//                }
+//            ),
+//            new Case(
+//                "decimal not eq",
+//                Conditions.buildEmtpyConditions()
+//                    .addAnd(new Condition(
+//                        l2EntityClass.field("l2-dec").get(),
+//                        ConditionOperator.NOT_EQUALS,
+//                        new DecimalValue(l2EntityClass.field("l2-dec").get(), new BigDecimal("13354.0992034462"))
+//                    )),
+//                l2EntityClass,
+//                SelectConfig.Builder.anSelectConfig()
+//                    .withPage(Page.newSinglePage(1000))
+//                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
+//                    .build(),
+//                new long[] {
+//                    Long.MAX_VALUE, Long.MAX_VALUE - 1, Long.MAX_VALUE - 2, Long.MAX_VALUE - 3,
+//                    Long.MAX_VALUE - 4, Long.MAX_VALUE - 5, Long.MAX_VALUE - 6, Long.MAX_VALUE - 7,
+//                    Long.MAX_VALUE - 8, Long.MAX_VALUE - 10
+//                }
+//            ),
+//            new Case(
+//                "decimal >",
+//                Conditions.buildEmtpyConditions()
+//                    .addAnd(new Condition(
+//                        l2EntityClass.field("l2-dec").get(),
+//                        ConditionOperator.GREATER_THAN,
+//                        new DecimalValue(l2EntityClass.field("l2-dec").get(), new BigDecimal("13354.0992034462"))
+//                    )),
+//                l2EntityClass,
+//                SelectConfig.Builder.anSelectConfig()
+//                    .withPage(Page.newSinglePage(1000))
+//                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
+//                    .build(),
+//                new long[] {
+//                    Long.MAX_VALUE, Long.MAX_VALUE - 1, Long.MAX_VALUE - 2, Long.MAX_VALUE - 3,
+//                    Long.MAX_VALUE - 4, Long.MAX_VALUE - 5, Long.MAX_VALUE - 7, Long.MAX_VALUE - 8, Long.MAX_VALUE - 10
+//                }
+//            ),
+//            new Case(
+//                "decimal between",
+//                Conditions.buildEmtpyConditions()
+//                    .addAnd(new Condition(
+//                        l2EntityClass.field("l2-dec").get(),
+//                        ConditionOperator.GREATER_THAN,
+//                        new DecimalValue(l2EntityClass.field("l2-dec").get(), new BigDecimal("13354.0992034462"))
+//                    ))
+//                    .addAnd(new Condition(
+//                        l2EntityClass.field("l2-dec").get(),
+//                        ConditionOperator.LESS_THAN,
+//                        new DecimalValue(l2EntityClass.field("l2-dec").get(), new BigDecimal("61894.0"))
+//                    )),
+//                l2EntityClass,
+//                SelectConfig.Builder.anSelectConfig()
+//                    .withPage(Page.newSinglePage(1000))
+//                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
+//                    .build(),
+//                new long[] {
+//                    Long.MAX_VALUE, Long.MAX_VALUE - 1, Long.MAX_VALUE - 3,
+//                    Long.MAX_VALUE - 4, Long.MAX_VALUE - 5, Long.MAX_VALUE - 7
+//                }
+//            ),
+//            new Case(
+//                "strings eq",
+//                Conditions.buildEmtpyConditions()
+//                    .addAnd(new Condition(
+//                        l2EntityClass.field("l0-strings").get(),
+//                        ConditionOperator.EQUALS,
+//                        new StringsValue(l2EntityClass.field("l0-strings").get(), "fuchsia")
+//                    )),
+//                l2EntityClass,
+//                SelectConfig.Builder.anSelectConfig()
+//                    .withPage(Page.newSinglePage(1000))
+//                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
+//                    .build(),
+//                new long[] {
+//                    Long.MAX_VALUE - 3
+//                }
+//            ),
+//            new Case(
+//                "strings in",
+//                Conditions.buildEmtpyConditions()
+//                    .addAnd(new Condition(
+//                        l2EntityClass.field("l0-strings").get(),
+//                        ConditionOperator.MULTIPLE_EQUALS,
+//                        new StringsValue(l2EntityClass.field("l0-strings").get(), "teal"),
+//                        new StringsValue(l2EntityClass.field("l0-strings").get(), "fuchsia")
+//                    )),
+//                l2EntityClass,
+//                SelectConfig.Builder.anSelectConfig()
+//                    .withPage(Page.newSinglePage(1000))
+//                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
+//                    .build(),
+//                new long[] {
+//                    Long.MAX_VALUE, Long.MAX_VALUE - 3
+//                }
+//            ),
+//            new Case(
+//                "update time desc",
+//                Conditions.buildEmtpyConditions(),
+//                l2EntityClass,
+//                SelectConfig.Builder.anSelectConfig()
+//                    .withPage(Page.newSinglePage(1000))
+//                    .withSort(Sort.buildDescSort(EntityField.UPDATE_TIME_FILED))
+//                    .build(),
+//                new long[] {
+//                    Long.MAX_VALUE, Long.MAX_VALUE - 1, Long.MAX_VALUE - 2, Long.MAX_VALUE - 3,
+//                    Long.MAX_VALUE - 4, Long.MAX_VALUE - 5, Long.MAX_VALUE - 6, Long.MAX_VALUE - 7,
+//                    Long.MAX_VALUE - 8, Long.MAX_VALUE - 9, Long.MAX_VALUE - 10
+//                }
+//            ),
+//            new Case(
+//                "l0-long or l0-long",
+//                Conditions.buildEmtpyConditions()
+//                    .addAnd(
+//                        new Condition(
+//                            l2EntityClass.field("l0-long").get(),
+//                            ConditionOperator.EQUALS,
+//                            new LongValue(l2EntityClass.field("l0-long").get(), 3065636258020209152L)
+//                        )
+//                    )
+//                    .addOr(
+//                        new Condition(
+//                            l2EntityClass.field("l0-long").get(),
+//                            ConditionOperator.EQUALS,
+//                            new LongValue(l2EntityClass.field("l0-long").get(), 8044778060371018752L)
+//                        )
+//                    ),
+//                l2EntityClass,
+//                SelectConfig.Builder.anSelectConfig()
+//                    .withPage(Page.newSinglePage(1000))
+//                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
+//                    .build(),
+//                new long[] {
+//                    Long.MAX_VALUE, Long.MAX_VALUE - 7,
+//                }
+//            ),
+//            new Case(
+//                "l0-long eq or l0-long no eq",
+//                Conditions.buildEmtpyConditions()
+//                    .addAnd(
+//                        new Condition(
+//                            l2EntityClass.field("l0-long").get(),
+//                            ConditionOperator.EQUALS,
+//                            new LongValue(l2EntityClass.field("l0-long").get(), 3065636258020209152L)
+//                        )
+//                    )
+//                    .addOr(
+//                        new Condition(
+//                            l2EntityClass.field("l0-long").get(),
+//                            ConditionOperator.NOT_EQUALS,
+//                            new LongValue(l2EntityClass.field("l0-long").get(), 8044778060371018752L)
+//                        )
+//                    ),
+//                l2EntityClass,
+//                SelectConfig.Builder.anSelectConfig()
+//                    .withPage(Page.newSinglePage(1000))
+//                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
+//                    .build(),
+//                new long[] {
+//                    Long.MAX_VALUE - 1, Long.MAX_VALUE - 2, Long.MAX_VALUE - 3, Long.MAX_VALUE - 4,
+//                    Long.MAX_VALUE - 5, Long.MAX_VALUE - 6, Long.MAX_VALUE - 7, Long.MAX_VALUE - 8,
+//                    Long.MAX_VALUE - 9, Long.MAX_VALUE - 10
+//                }
+//            ),
+//            new Case(
+//                "l0-long > or l0-long =",
+//                Conditions.buildEmtpyConditions()
+//                    .addAnd(
+//                        new Condition(
+//                            l2EntityClass.field("l0-long").get(),
+//                            ConditionOperator.GREATER_THAN,
+//                            new LongValue(l2EntityClass.field("l0-long").get(), 5120579758453153792L)
+//                        )
+//                    )
+//                    .addOr(
+//                        new Condition(
+//                            l2EntityClass.field("l0-long").get(),
+//                            ConditionOperator.EQUALS,
+//                            new LongValue(l2EntityClass.field("l0-long").get(), 2305210501598537472L)
+//                        )
+//                    ),
+//                l2EntityClass,
+//                SelectConfig.Builder.anSelectConfig()
+//                    .withPage(Page.newSinglePage(1000))
+//                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
+//                    .build(),
+//                new long[] {
+//                    Long.MAX_VALUE - 3, Long.MAX_VALUE - 4, Long.MAX_VALUE - 6, Long.MAX_VALUE - 8, Long.MAX_VALUE - 9,
+//                    Long.MAX_VALUE - 5, Long.MAX_VALUE - 2, Long.MAX_VALUE, Long.MAX_VALUE - 10
+//                }
+//            ),
+//            new Case(
+//                "l0-long > or l0-long = (filter l0-long !=)",
+//                Conditions.buildEmtpyConditions()
+//                    .addAnd(
+//                        new Condition(
+//                            l2EntityClass.field("l0-long").get(),
+//                            ConditionOperator.GREATER_THAN,
+//                            new LongValue(l2EntityClass.field("l0-long").get(), 5120579758453153792L)
+//                        )
+//                    )
+//                    .addOr(
+//                        new Condition(
+//                            l2EntityClass.field("l0-long").get(),
+//                            ConditionOperator.EQUALS,
+//                            new LongValue(l2EntityClass.field("l0-long").get(), 2305210501598537472L)
+//                        )
+//                    ),
+//                l2EntityClass,
+//                SelectConfig.Builder.anSelectConfig()
+//                    .withPage(Page.newSinglePage(1000))
+//                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
+//                    .withDataAccessFitlerCondtitons(
+//                        Conditions.buildEmtpyConditions()
+//                            .addAnd(
+//                                new Condition(
+//                                    l2EntityClass.field("l0-long").get(),
+//                                    ConditionOperator.NOT_EQUALS,
+//                                    new LongValue(l2EntityClass.field("l0-long").get(), 8044778060371018752L)
+//                                )
+//                            )
+//                    )
+//                    .build(),
+//                new long[] {
+//                    Long.MAX_VALUE - 3, Long.MAX_VALUE - 4, Long.MAX_VALUE - 6, Long.MAX_VALUE - 8, Long.MAX_VALUE - 9,
+//                    Long.MAX_VALUE - 5, Long.MAX_VALUE - 2, Long.MAX_VALUE - 10
+//                }
+//            ),
+//            new Case(
+//                "l0-long = and l0-long = (filter l0-long !=)",
+//                Conditions.buildEmtpyConditions()
+//                    .addAnd(
+//                        new Condition(
+//                            l2EntityClass.field("l0-long").get(),
+//                            ConditionOperator.EQUALS,
+//                            new LongValue(l2EntityClass.field("l0-long").get(), 5120579758453153792L)
+//                        )
+//                    )
+//                    .addAnd(
+//                        new Condition(
+//                            l2EntityClass.field("l1-long").get(),
+//                            ConditionOperator.EQUALS,
+//                            new LongValue(l2EntityClass.field("l0-long").get(), 162L)
+//                        )
+//                    ),
+//                l2EntityClass,
+//                SelectConfig.Builder.anSelectConfig()
+//                    .withPage(Page.newSinglePage(1000))
+//                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
+//                    .withDataAccessFitlerCondtitons(
+//                        Conditions.buildEmtpyConditions()
+//                            .addAnd(
+//                                new Condition(
+//                                    l2EntityClass.field("l0-long").get(),
+//                                    ConditionOperator.NOT_EQUALS,
+//                                    new LongValue(l2EntityClass.field("l0-long").get(), 5120579758453153792L)
+//                                )
+//                            )
+//                    )
+//                    .build(),
+//                new long[] {
+//                }
+//            ),
             new Case(
-                "l2-string-longString",
+                "l2-enum in or l1-long eq",
                 Conditions.buildEmtpyConditions()
                     .addAnd(
                         new Condition(
-                            l2EntityClass.field("l2-string").get(),
-                            ConditionOperator.EQUALS,
-                            new StringValue(l2EntityClass.field("l2-string").get(),
-                                "ABCDEFGHIJKLMNOPQRSTUVWXYZXXXYYYTTT")
-                        )
-                    ),
-                l2EntityClass,
-                SelectConfig.Builder.anSelectConfig()
-                    .withPage(Page.newSinglePage(20)).build(),
-                new long[] {
-                    Long.MAX_VALUE - 10L
-                }
-            ),
-            new Case(
-                "l2-string-longString-not-eq",
-                Conditions.buildEmtpyConditions()
-                    .addAnd(
-                        new Condition(
-                            l2EntityClass.field("l2-string").get(),
-                            ConditionOperator.NOT_EQUALS,
-                            new StringValue(l2EntityClass.field("l2-string").get(),
-                                "ABCDEFGHIJKLMNOPQRSTUVWXYZXXXYYYTTT")
-                        )
-                    ),
-                l2EntityClass,
-                SelectConfig.Builder.anSelectConfig()
-                    .withPage(Page.newSinglePage(20)).build(),
-                new long[] {
-                    Long.MAX_VALUE, Long.MAX_VALUE - 1, Long.MAX_VALUE - 2, Long.MAX_VALUE - 3, Long.MAX_VALUE - 4,
-                    Long.MAX_VALUE - 5, Long.MAX_VALUE - 6, Long.MAX_VALUE - 7, Long.MAX_VALUE - 8,
-                    Long.MAX_VALUE - 9
-                }
-            ),
-            new Case(
-                "strings eq longString",
-                Conditions.buildEmtpyConditions()
-                    .addAnd(new Condition(
-                        l2EntityClass.field("l0-strings").get(),
-                        ConditionOperator.EQUALS,
-                        new StringsValue(l2EntityClass.field("l0-strings").get(),
-                            "blueSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS")
-                    )),
-                l2EntityClass,
-                SelectConfig.Builder.anSelectConfig()
-                    .withPage(Page.newSinglePage(1000))
-                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
-                    .build(),
-                new long[] {
-                    Long.MAX_VALUE - 10L
-                }
-            ),
-            new Case(
-                "strings in longString",
-                Conditions.buildEmtpyConditions()
-                    .addAnd(new Condition(
-                        l2EntityClass.field("l0-strings").get(),
-                        ConditionOperator.MULTIPLE_EQUALS,
-                        new StringsValue(l2EntityClass.field("l0-strings").get(),
-                            "blueSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS"),
-                        new StringsValue(l2EntityClass.field("l0-strings").get(), "fuchsia")
-                    )),
-                l2EntityClass,
-                SelectConfig.Builder.anSelectConfig()
-                    .withPage(Page.newSinglePage(1000))
-                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
-                    .build(),
-                new long[] {
-                    Long.MAX_VALUE - 3, Long.MAX_VALUE - 10L
-                }
-            ),
-            new Case(
-                "strings not eq longString",
-                Conditions.buildEmtpyConditions()
-                    .addAnd(new Condition(
-                        l2EntityClass.field("l0-strings").get(),
-                        ConditionOperator.NOT_EQUALS,
-                        new StringsValue(l2EntityClass.field("l0-strings").get(),
-                            "blueSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS")
-                    )),
-                l2EntityClass,
-                SelectConfig.Builder.anSelectConfig()
-                    .withPage(Page.newSinglePage(1000))
-                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
-                    .build(),
-                new long[] {
-                    Long.MAX_VALUE, Long.MAX_VALUE - 1, Long.MAX_VALUE - 2, Long.MAX_VALUE - 3, Long.MAX_VALUE - 4,
-                    Long.MAX_VALUE - 5, Long.MAX_VALUE - 6, Long.MAX_VALUE - 7, Long.MAX_VALUE - 8,
-                    Long.MAX_VALUE - 9
-                }
-            ),
-            new Case(
-                "is not null",
-                Conditions.buildEmtpyConditions()
-                    .addAnd(
-                        new Condition(
-                            l2EntityClass.field("l2-null").get(),
-                            ConditionOperator.IS_NOT_NULL,
-                            new EmptyTypedValue(l2EntityClass.field("l2-null").get())
-                        )
-                    ),
-                l2EntityClass,
-                SelectConfig.Builder.anSelectConfig()
-                    .withPage(Page.newSinglePage(20)).build(),
-                new long[0]
-            ),
-            new Case(
-                "eq dec or eq dec",
-                Conditions.buildEmtpyConditions()
-                    .addAnd(
-                        new Condition(
-                            l2EntityClass.field("l2-dec").get(),
-                            ConditionOperator.EQUALS,
-                            new DecimalValue(
-                                l2EntityClass.field("l2-dec").get(),
-                                new BigDecimal("16507.1689237975")
-                            )
-                        )
-                    ).addOr(
-                        new Condition(
-                            l2EntityClass.field("l2-dec").get(),
-                            ConditionOperator.EQUALS,
-                            new DecimalValue(
-                                l2EntityClass.field("l2-dec").get(),
-                                new BigDecimal("37574.3322308913")
-                            )
-                        )
-                    ),
-                l2EntityClass,
-                SelectConfig.Builder.anSelectConfig()
-                    .withPage(Page.newSinglePage(100)).build(),
-                new long[] {
-                    9223372036854775806L, 9223372036854775807L
-                }
-            ),
-            new Case(
-                ">= dec or =< dec",
-                Conditions.buildEmtpyConditions()
-                    .addAnd(
-                        new Condition(
-                            l2EntityClass.field("l1-dec").get(),
-                            ConditionOperator.GREATER_THAN_EQUALS,
-                            new DecimalValue(
-                                l2EntityClass.field("l1-dec").get(),
-                                new BigDecimal("847042.336188")
-                            )
-                        )
-                    ).addOr(
-                        new Condition(
-                            l2EntityClass.field("l2-dec").get(),
-                            ConditionOperator.LESS_THAN_EQUALS,
-                            new DecimalValue(
-                                l2EntityClass.field("l2-dec").get(),
-                                new BigDecimal("13354.0992034462")
-                            )
-                        )
-                    ),
-                l2EntityClass,
-                SelectConfig.Builder.anSelectConfig()
-                    .withPage(Page.newSinglePage(100)).build(),
-                new long[] {
-                    9223372036854775805L,
-                    9223372036854775804L,
-                    9223372036854775801L,
-                    9223372036854775798L,
-                    9223372036854775797L
-                }
-            ),
-            new Case(
-                "attahcment - (l1-long) 100",
-                Conditions.buildEmtpyConditions()
-                    .addAnd(
-                        new AttachmentCondition(
-                            l2EntityClass.field("l1-long").get(),
-                            true,
-                            "100"
-                        )
-                    ),
-                l2EntityClass,
-                SelectConfig.Builder.anSelectConfig()
-                    .withPage(Page.newSinglePage(100)).build(),
-                new long[] {
-                    9223372036854775807L
-                }
-            ),
-            new Case(
-                "attahcment - (l0-string) 方致远",
-                Conditions.buildEmtpyConditions()
-                    .addAnd(
-                        new AttachmentCondition(
-                            l2EntityClass.field("l0-string").get(),
-                            true,
-                            "方致远"
-                        )
-                    ),
-                l2EntityClass,
-                SelectConfig.Builder.anSelectConfig()
-                    .withPage(Page.newSinglePage(100)).build(),
-                new long[] {
-                    9223372036854775798L
-                }
-            ),
-            new Case(
-                "all",
-                Conditions.buildEmtpyConditions(),
-                l2EntityClass,
-                SelectConfig.Builder.anSelectConfig()
-                    .withPage(Page.newSinglePage(20)).build(),
-                new long[] {
-                    Long.MAX_VALUE, Long.MAX_VALUE - 1, Long.MAX_VALUE - 2, Long.MAX_VALUE - 3, Long.MAX_VALUE - 4,
-                    Long.MAX_VALUE - 5, Long.MAX_VALUE - 6, Long.MAX_VALUE - 7, Long.MAX_VALUE - 8, Long.MAX_VALUE - 9,
-                    Long.MAX_VALUE - 10
-                }
-            ),
-            new Case(
-                "string .- symbol",
-                Conditions.buildEmtpyConditions()
-                    .addAnd(
-                        new Condition(
-                            l2EntityClass.field("l1-string").get(),
-                            ConditionOperator.EQUALS,
-                            new StringValue(l2EntityClass.field("l1-string").get(), "15796500901.-12")
-                        )
-                    ),
-                l2EntityClass,
-                SelectConfig.Builder.anSelectConfig().build(),
-                new long[] {
-                    9223372036854775798L
-                }
-            ),
-            new Case(
-                "id in (not exist)",
-                Conditions.buildEmtpyConditions()
-                    .addAnd(
-                        new Condition(
-                            EntityField.ID_ENTITY_FIELD,
+                            l2EntityClass.field("l2-enum").get(),
                             ConditionOperator.MULTIPLE_EQUALS,
-                            new LongValue(EntityField.ID_ENTITY_FIELD, 10000000L)
+                            new StringValue(l2EntityClass.field("l2-enum").get(), "yellow"),
+                            new StringValue(l2EntityClass.field("l2-enum").get(), "tan")
                         )
-                    ),
-                l2EntityClass,
-                SelectConfig.Builder.anSelectConfig()
-                    .withPage(Page.newSinglePage(1000))
-                    .withSort(Sort.buildAscSort(l2EntityClass.field("l1-long").get()))
-                    .build(),
-                new long[0],
-                r -> {
-
-                    if (!r.refs.isEmpty()) {
-                        return String.format("No data is expected, but there is %d data.", r.refs.size());
-                    }
-
-                    return null;
-                }
-            ),
-            new Case(
-                "sort with value",
-                Conditions.buildEmtpyConditions(),
-                l2EntityClass,
-                SelectConfig.Builder.anSelectConfig()
-                    .withPage(Page.newSinglePage(1000))
-                    .withSort(Sort.buildAscSort(l2EntityClass.field("l1-long").get()))
-                    .build(),
-                null,
-                r -> {
-                    for (EntityRef ref : r.refs) {
-                        if (ref.getOrderValue() == null) {
-                            return "The sort is expected to return the value of the sort, but it does not.";
-                        }
-                    }
-                    return null;
-                }
-            ),
-            new Case(
-                "empty",
-                Conditions.buildEmtpyConditions(),
-                l2EntityClass,
-                SelectConfig.Builder.anSelectConfig()
-                    .withPage(Page.emptyPage())
-                    .withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD))
-                    .build(),
-                new long[0],
-                r -> {
-                    if (!r.refs.isEmpty()) {
-                        return String.format("No data is expected, but there is %d data.", r.refs.size());
-                    }
-
-                    if (r.page.getTotalCount() != expectedDatas.size()) {
-                        return String.format("The expected data total is %d, but it is actually up %d.",
-                            expectedDatas.size(), r.page.getTotalCount());
-                    }
-
-                    return null;
-                }
-            ),
-            new Case(
-                "order by id asc",
-                Conditions.buildEmtpyConditions(),
-                l2EntityClass,
-                SelectConfig.Builder.anSelectConfig()
-                    .withPage(Page.newSinglePage(1000))
-                    .withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD))
-                    .build(),
-                null,
-                r -> isSorted(r.refs, false) ? null : "Not expecting descending order"
-            ),
-            new Case(
-                "order by id desc",
-                Conditions.buildEmtpyConditions(),
-                l2EntityClass,
-                SelectConfig.Builder.anSelectConfig()
-                    .withPage(Page.newSinglePage(1000))
-                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
-                    .build(),
-                null,
-                r -> isSorted(r.refs, true) ? null : "Not expecting descending order"
-            ),
-            new Case(
-                "first page",
-                Conditions.buildEmtpyConditions(),
-                l2EntityClass,
-                SelectConfig.Builder.anSelectConfig()
-                    .withPage(new Page(1, 5))
-                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
-                    .build(),
-                new long[] {
-                    Long.MAX_VALUE, Long.MAX_VALUE - 1, Long.MAX_VALUE - 2, Long.MAX_VALUE - 3, Long.MAX_VALUE - 4
-                }
-            ),
-            new Case(
-                "last page",
-                Conditions.buildEmtpyConditions(),
-                l2EntityClass,
-                SelectConfig.Builder.anSelectConfig()
-                    .withPage(new Page(2, 6))
-                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
-                    .build(),
-                null
-            ),
-            new Case(
-                "long eq",
-                Conditions.buildEmtpyConditions()
-                    .addAnd(new Condition(
-                        l2EntityClass.field("l0-long").get(),
-                        ConditionOperator.EQUALS,
-                        new LongValue(l2EntityClass.field("l0-long").get(), 5932795534250140672L)
-                    )),
-                l2EntityClass,
-                SelectConfig.Builder.anSelectConfig()
-                    .withPage(Page.newSinglePage(1000))
-                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
-                    .build(),
-                new long[] {
-                    Long.MAX_VALUE - 4
-                }
-            ),
-            new Case(
-                "long not equals",
-                Conditions.buildEmtpyConditions()
-                    .addAnd(new Condition(
-                        l2EntityClass.field("l0-long").get(),
-                        ConditionOperator.NOT_EQUALS,
-                        new LongValue(l2EntityClass.field("l0-long").get(), 5932795534250140672L)
-                    )),
-                l2EntityClass,
-                SelectConfig.Builder.anSelectConfig()
-                    .withPage(Page.newSinglePage(1000))
-                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
-                    .build(),
-                new long[] {
-                    Long.MAX_VALUE, Long.MAX_VALUE - 1, Long.MAX_VALUE - 2, Long.MAX_VALUE - 3,
-                    Long.MAX_VALUE - 5, Long.MAX_VALUE - 6, Long.MAX_VALUE - 7, Long.MAX_VALUE - 8,
-                    Long.MAX_VALUE - 9, Long.MAX_VALUE - 10
-                }
-            ),
-            new Case(
-                "long >",
-                Conditions.buildEmtpyConditions()
-                    .addAnd(new Condition(
-                        l2EntityClass.field("l0-long").get(),
-                        ConditionOperator.GREATER_THAN,
-                        new LongValue(l2EntityClass.field("l0-long").get(), 3065636258020209152L)
-                    )),
-                l2EntityClass,
-                SelectConfig.Builder.anSelectConfig()
-                    .withPage(Page.newSinglePage(1000))
-                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
-                    .build(),
-                new long[] {
-                    Long.MAX_VALUE, Long.MAX_VALUE - 1, Long.MAX_VALUE - 2, Long.MAX_VALUE - 4,
-                    Long.MAX_VALUE - 5, Long.MAX_VALUE - 6, Long.MAX_VALUE - 8, Long.MAX_VALUE - 9,
-                    Long.MAX_VALUE - 10
-                }
-            ),
-            new Case(
-                "long <",
-                Conditions.buildEmtpyConditions()
-                    .addAnd(new Condition(
-                        l2EntityClass.field("l0-long").get(),
-                        ConditionOperator.LESS_THAN,
-                        new LongValue(l2EntityClass.field("l0-long").get(), 3065636258020209152L)
-                    )),
-                l2EntityClass,
-                SelectConfig.Builder.anSelectConfig()
-                    .withPage(Page.newSinglePage(1000))
-                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
-                    .build(),
-                new long[] {
-                    Long.MAX_VALUE - 3,
-                }
-            ),
-            new Case(
-                "long >=",
-                Conditions.buildEmtpyConditions()
-                    .addAnd(new Condition(
-                        l2EntityClass.field("l0-long").get(),
-                        ConditionOperator.GREATER_THAN_EQUALS,
-                        new LongValue(l2EntityClass.field("l0-long").get(), 3065636258020209152L)
-                    )),
-                l2EntityClass,
-                SelectConfig.Builder.anSelectConfig()
-                    .withPage(Page.newSinglePage(1000))
-                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
-                    .build(),
-                new long[] {
-                    Long.MAX_VALUE, Long.MAX_VALUE - 1, Long.MAX_VALUE - 2, Long.MAX_VALUE - 4,
-                    Long.MAX_VALUE - 5, Long.MAX_VALUE - 6, Long.MAX_VALUE - 7, Long.MAX_VALUE - 8,
-                    Long.MAX_VALUE - 9, Long.MAX_VALUE - 10
-                }
-            ),
-            new Case(
-                "long <=",
-                Conditions.buildEmtpyConditions()
-                    .addAnd(new Condition(
-                        l2EntityClass.field("l0-long").get(),
-                        ConditionOperator.LESS_THAN_EQUALS,
-                        new LongValue(l2EntityClass.field("l0-long").get(), 3065636258020209152L)
-                    )),
-                l2EntityClass,
-                SelectConfig.Builder.anSelectConfig()
-                    .withPage(Page.newSinglePage(1000))
-                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
-                    .build(),
-                new long[] {
-                    Long.MAX_VALUE - 3, Long.MAX_VALUE - 7
-                }
-            ),
-            new Case(
-                "long in",
-                Conditions.buildEmtpyConditions()
-                    .addAnd(new Condition(
-                        l2EntityClass.field("l0-long").get(),
-                        ConditionOperator.MULTIPLE_EQUALS,
-                        new LongValue(l2EntityClass.field("l0-long").get(), 3065636258020209152L),
-                        new LongValue(l2EntityClass.field("l0-long").get(), 8044778060371018752L)
-                    )),
-                l2EntityClass,
-                SelectConfig.Builder.anSelectConfig()
-                    .withPage(Page.newSinglePage(1000))
-                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
-                    .build(),
-                new long[] {
-                    Long.MAX_VALUE, Long.MAX_VALUE - 7,
-                }
-            ),
-            new Case(
-                "String eq",
-                Conditions.buildEmtpyConditions()
-                    .addAnd(new Condition(
-                        l2EntityClass.field("l1-string").get(),
-                        ConditionOperator.EQUALS,
-                        new StringValue(l2EntityClass.field("l1-string").get(), "15841884807")
-                    )),
-                l2EntityClass,
-                SelectConfig.Builder.anSelectConfig()
-                    .withPage(Page.newSinglePage(1000))
-                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
-                    .build(),
-                new long[] {
-                    Long.MAX_VALUE - 1
-                }
-            ),
-            new Case(
-                "String no eq",
-                Conditions.buildEmtpyConditions()
-                    .addAnd(new Condition(
-                        l2EntityClass.field("l1-string").get(),
-                        ConditionOperator.NOT_EQUALS,
-                        new StringValue(l2EntityClass.field("l1-string").get(), "15841884807")
-                    )),
-                l2EntityClass,
-                SelectConfig.Builder.anSelectConfig()
-                    .withPage(Page.newSinglePage(1000))
-                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
-                    .build(),
-                new long[] {
-                    Long.MAX_VALUE, Long.MAX_VALUE - 2, Long.MAX_VALUE - 4, Long.MAX_VALUE - 9,
-                    Long.MAX_VALUE - 5, Long.MAX_VALUE - 6, Long.MAX_VALUE - 7, Long.MAX_VALUE - 8,
-                    Long.MAX_VALUE - 3, Long.MAX_VALUE - 10
-                }
-            ),
-            new Case(
-                "String like 熊鹤轩 (熊鹤轩)",
-                Conditions.buildEmtpyConditions()
-                    .addAnd(new Condition(
-                        l2EntityClass.field("l0-string").get(),
-                        ConditionOperator.LIKE,
-                        new StringValue(l2EntityClass.field("l0-string").get(), "熊鹤轩")
-                    )),
-                l2EntityClass,
-                SelectConfig.Builder.anSelectConfig()
-                    .withPage(Page.newSinglePage(1000))
-                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
-                    .build(),
-                new long[] {
-                    Long.MAX_VALUE - 2
-                }
-            ),
-            new Case(
-                "String like 18159301250 (301)",
-                Conditions.buildEmtpyConditions()
-                    .addAnd(new Condition(
-                        l2EntityClass.field("l1-string").get(),
-                        ConditionOperator.LIKE,
-                        new StringValue(l2EntityClass.field("l1-string").get(), "301")
-                    )),
-                l2EntityClass,
-                SelectConfig.Builder.anSelectConfig()
-                    .withPage(Page.newSinglePage(1000))
-                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
-                    .build(),
-                new long[] {
-                    Long.MAX_VALUE - 2
-                }
-            ),
-            new Case(
-                "String like 18159301250 (3012)",
-                Conditions.buildEmtpyConditions()
-                    .addAnd(new Condition(
-                        l2EntityClass.field("l1-string").get(),
-                        ConditionOperator.LIKE,
-                        new StringValue(l2EntityClass.field("l1-string").get(), "3012")
-                    )),
-                l2EntityClass,
-                SelectConfig.Builder.anSelectConfig()
-                    .withPage(Page.newSinglePage(1000))
-                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
-                    .build(),
-                new long[] {
-                    Long.MAX_VALUE - 2
-                }
-            ),
-            new Case(
-                "String like 18159301250 (30125)",
-                Conditions.buildEmtpyConditions()
-                    .addAnd(new Condition(
-                        l2EntityClass.field("l1-string").get(),
-                        ConditionOperator.LIKE,
-                        new StringValue(l2EntityClass.field("l1-string").get(), "30125")
-                    )),
-                l2EntityClass,
-                SelectConfig.Builder.anSelectConfig()
-                    .withPage(Page.newSinglePage(1000))
-                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
-                    .build(),
-                new long[] {
-                    Long.MAX_VALUE - 2
-                }
-            ),
-            new Case(
-                "String like 18159301250 (301250)",
-                Conditions.buildEmtpyConditions()
-                    .addAnd(new Condition(
-                        l2EntityClass.field("l1-string").get(),
-                        ConditionOperator.LIKE,
-                        new StringValue(l2EntityClass.field("l1-string").get(), "301250")
-                    )),
-                l2EntityClass,
-                SelectConfig.Builder.anSelectConfig()
-                    .withPage(Page.newSinglePage(1000))
-                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
-                    .build(),
-                new long[] {
-                    Long.MAX_VALUE - 2
-                }
-            ),
-            new Case(
-                "String like 18159301250 (9301250)",
-                Conditions.buildEmtpyConditions()
-                    .addAnd(new Condition(
-                        l2EntityClass.field("l1-string").get(),
-                        ConditionOperator.LIKE,
-                        new StringValue(l2EntityClass.field("l1-string").get(), "9301250")
-                    )),
-                l2EntityClass,
-                SelectConfig.Builder.anSelectConfig()
-                    .withPage(Page.newSinglePage(1000))
-                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
-                    .build(),
-                new long[] {
-                    Long.MAX_VALUE - 2
-                }
-            ),
-            new Case(
-                "decimal eq",
-                Conditions.buildEmtpyConditions()
-                    .addAnd(new Condition(
-                        l2EntityClass.field("l2-dec").get(),
-                        ConditionOperator.EQUALS,
-                        new DecimalValue(l2EntityClass.field("l2-dec").get(), new BigDecimal("13354.0992034462"))
-                    )),
-                l2EntityClass,
-                SelectConfig.Builder.anSelectConfig()
-                    .withPage(Page.newSinglePage(1000))
-                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
-                    .build(),
-                new long[] {
-                    Long.MAX_VALUE - 9
-                }
-            ),
-            new Case(
-                "decimal not eq",
-                Conditions.buildEmtpyConditions()
-                    .addAnd(new Condition(
-                        l2EntityClass.field("l2-dec").get(),
-                        ConditionOperator.NOT_EQUALS,
-                        new DecimalValue(l2EntityClass.field("l2-dec").get(), new BigDecimal("13354.0992034462"))
-                    )),
-                l2EntityClass,
-                SelectConfig.Builder.anSelectConfig()
-                    .withPage(Page.newSinglePage(1000))
-                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
-                    .build(),
-                new long[] {
-                    Long.MAX_VALUE, Long.MAX_VALUE - 1, Long.MAX_VALUE - 2, Long.MAX_VALUE - 3,
-                    Long.MAX_VALUE - 4, Long.MAX_VALUE - 5, Long.MAX_VALUE - 6, Long.MAX_VALUE - 7,
-                    Long.MAX_VALUE - 8, Long.MAX_VALUE - 10
-                }
-            ),
-            new Case(
-                "decimal >",
-                Conditions.buildEmtpyConditions()
-                    .addAnd(new Condition(
-                        l2EntityClass.field("l2-dec").get(),
-                        ConditionOperator.GREATER_THAN,
-                        new DecimalValue(l2EntityClass.field("l2-dec").get(), new BigDecimal("13354.0992034462"))
-                    )),
-                l2EntityClass,
-                SelectConfig.Builder.anSelectConfig()
-                    .withPage(Page.newSinglePage(1000))
-                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
-                    .build(),
-                new long[] {
-                    Long.MAX_VALUE, Long.MAX_VALUE - 1, Long.MAX_VALUE - 2, Long.MAX_VALUE - 3,
-                    Long.MAX_VALUE - 4, Long.MAX_VALUE - 5, Long.MAX_VALUE - 7, Long.MAX_VALUE - 8, Long.MAX_VALUE - 10
-                }
-            ),
-            new Case(
-                "decimal between",
-                Conditions.buildEmtpyConditions()
-                    .addAnd(new Condition(
-                        l2EntityClass.field("l2-dec").get(),
-                        ConditionOperator.GREATER_THAN,
-                        new DecimalValue(l2EntityClass.field("l2-dec").get(), new BigDecimal("13354.0992034462"))
-                    ))
-                    .addAnd(new Condition(
-                        l2EntityClass.field("l2-dec").get(),
-                        ConditionOperator.LESS_THAN,
-                        new DecimalValue(l2EntityClass.field("l2-dec").get(), new BigDecimal("61894.0"))
-                    )),
-                l2EntityClass,
-                SelectConfig.Builder.anSelectConfig()
-                    .withPage(Page.newSinglePage(1000))
-                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
-                    .build(),
-                new long[] {
-                    Long.MAX_VALUE, Long.MAX_VALUE - 1, Long.MAX_VALUE - 3,
-                    Long.MAX_VALUE - 4, Long.MAX_VALUE - 5, Long.MAX_VALUE - 7
-                }
-            ),
-            new Case(
-                "strings eq",
-                Conditions.buildEmtpyConditions()
-                    .addAnd(new Condition(
-                        l2EntityClass.field("l0-strings").get(),
-                        ConditionOperator.EQUALS,
-                        new StringsValue(l2EntityClass.field("l0-strings").get(), "fuchsia")
-                    )),
-                l2EntityClass,
-                SelectConfig.Builder.anSelectConfig()
-                    .withPage(Page.newSinglePage(1000))
-                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
-                    .build(),
-                new long[] {
-                    Long.MAX_VALUE - 3
-                }
-            ),
-            new Case(
-                "strings in",
-                Conditions.buildEmtpyConditions()
-                    .addAnd(new Condition(
-                        l2EntityClass.field("l0-strings").get(),
-                        ConditionOperator.MULTIPLE_EQUALS,
-                        new StringsValue(l2EntityClass.field("l0-strings").get(), "teal"),
-                        new StringsValue(l2EntityClass.field("l0-strings").get(), "fuchsia")
-                    )),
-                l2EntityClass,
-                SelectConfig.Builder.anSelectConfig()
-                    .withPage(Page.newSinglePage(1000))
-                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
-                    .build(),
-                new long[] {
-                    Long.MAX_VALUE, Long.MAX_VALUE - 3
-                }
-            ),
-            new Case(
-                "update time desc",
-                Conditions.buildEmtpyConditions(),
-                l2EntityClass,
-                SelectConfig.Builder.anSelectConfig()
-                    .withPage(Page.newSinglePage(1000))
-                    .withSort(Sort.buildDescSort(EntityField.UPDATE_TIME_FILED))
-                    .build(),
-                new long[] {
-                    Long.MAX_VALUE, Long.MAX_VALUE - 1, Long.MAX_VALUE - 2, Long.MAX_VALUE - 3,
-                    Long.MAX_VALUE - 4, Long.MAX_VALUE - 5, Long.MAX_VALUE - 6, Long.MAX_VALUE - 7,
-                    Long.MAX_VALUE - 8, Long.MAX_VALUE - 9, Long.MAX_VALUE - 10
-                }
-            ),
-            new Case(
-                "l0-long or l0-long",
-                Conditions.buildEmtpyConditions()
-                    .addAnd(
-                        new Condition(
-                            l2EntityClass.field("l0-long").get(),
-                            ConditionOperator.EQUALS,
-                            new LongValue(l2EntityClass.field("l0-long").get(), 3065636258020209152L)
-                        )
-                    )
-                    .addOr(
-                        new Condition(
-                            l2EntityClass.field("l0-long").get(),
-                            ConditionOperator.EQUALS,
-                            new LongValue(l2EntityClass.field("l0-long").get(), 8044778060371018752L)
-                        )
-                    ),
-                l2EntityClass,
-                SelectConfig.Builder.anSelectConfig()
-                    .withPage(Page.newSinglePage(1000))
-                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
-                    .build(),
-                new long[] {
-                    Long.MAX_VALUE, Long.MAX_VALUE - 7,
-                }
-            ),
-            new Case(
-                "l0-long eq or l0-long no eq",
-                Conditions.buildEmtpyConditions()
-                    .addAnd(
-                        new Condition(
-                            l2EntityClass.field("l0-long").get(),
-                            ConditionOperator.EQUALS,
-                            new LongValue(l2EntityClass.field("l0-long").get(), 3065636258020209152L)
-                        )
-                    )
-                    .addOr(
-                        new Condition(
-                            l2EntityClass.field("l0-long").get(),
-                            ConditionOperator.NOT_EQUALS,
-                            new LongValue(l2EntityClass.field("l0-long").get(), 8044778060371018752L)
-                        )
-                    ),
-                l2EntityClass,
-                SelectConfig.Builder.anSelectConfig()
-                    .withPage(Page.newSinglePage(1000))
-                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
-                    .build(),
-                new long[] {
-                    Long.MAX_VALUE - 1, Long.MAX_VALUE - 2, Long.MAX_VALUE - 3, Long.MAX_VALUE - 4,
-                    Long.MAX_VALUE - 5, Long.MAX_VALUE - 6, Long.MAX_VALUE - 7, Long.MAX_VALUE - 8,
-                    Long.MAX_VALUE - 9, Long.MAX_VALUE - 10
-                }
-            ),
-            new Case(
-                "l0-long > or l0-long =",
-                Conditions.buildEmtpyConditions()
-                    .addAnd(
-                        new Condition(
-                            l2EntityClass.field("l0-long").get(),
-                            ConditionOperator.GREATER_THAN,
-                            new LongValue(l2EntityClass.field("l0-long").get(), 5120579758453153792L)
-                        )
-                    )
-                    .addOr(
-                        new Condition(
-                            l2EntityClass.field("l0-long").get(),
-                            ConditionOperator.EQUALS,
-                            new LongValue(l2EntityClass.field("l0-long").get(), 2305210501598537472L)
-                        )
-                    ),
-                l2EntityClass,
-                SelectConfig.Builder.anSelectConfig()
-                    .withPage(Page.newSinglePage(1000))
-                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
-                    .build(),
-                new long[] {
-                    Long.MAX_VALUE - 3, Long.MAX_VALUE - 4, Long.MAX_VALUE - 6, Long.MAX_VALUE - 8, Long.MAX_VALUE - 9,
-                    Long.MAX_VALUE - 5, Long.MAX_VALUE - 2, Long.MAX_VALUE, Long.MAX_VALUE - 10
-                }
-            ),
-            new Case(
-                "l0-long > or l0-long = (filter l0-long !=)",
-                Conditions.buildEmtpyConditions()
-                    .addAnd(
-                        new Condition(
-                            l2EntityClass.field("l0-long").get(),
-                            ConditionOperator.GREATER_THAN,
-                            new LongValue(l2EntityClass.field("l0-long").get(), 5120579758453153792L)
-                        )
-                    )
-                    .addOr(
-                        new Condition(
-                            l2EntityClass.field("l0-long").get(),
-                            ConditionOperator.EQUALS,
-                            new LongValue(l2EntityClass.field("l0-long").get(), 2305210501598537472L)
-                        )
-                    ),
-                l2EntityClass,
-                SelectConfig.Builder.anSelectConfig()
-                    .withPage(Page.newSinglePage(1000))
-                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
-                    .withDataAccessFitlerCondtitons(
-                        Conditions.buildEmtpyConditions()
-                            .addAnd(
-                                new Condition(
-                                    l2EntityClass.field("l0-long").get(),
-                                    ConditionOperator.NOT_EQUALS,
-                                    new LongValue(l2EntityClass.field("l0-long").get(), 8044778060371018752L)
-                                )
-                            )
-                    )
-                    .build(),
-                new long[] {
-                    Long.MAX_VALUE - 3, Long.MAX_VALUE - 4, Long.MAX_VALUE - 6, Long.MAX_VALUE - 8, Long.MAX_VALUE - 9,
-                    Long.MAX_VALUE - 5, Long.MAX_VALUE - 2, Long.MAX_VALUE - 10
-                }
-            ),
-            new Case(
-                "l0-long = and l0-long = (filter l0-long !=)",
-                Conditions.buildEmtpyConditions()
-                    .addAnd(
-                        new Condition(
-                            l2EntityClass.field("l0-long").get(),
-                            ConditionOperator.EQUALS,
-                            new LongValue(l2EntityClass.field("l0-long").get(), 5120579758453153792L)
-                        )
-                    )
-                    .addAnd(
+                    ).addOr(
                         new Condition(
                             l2EntityClass.field("l1-long").get(),
                             ConditionOperator.EQUALS,
-                            new LongValue(l2EntityClass.field("l0-long").get(), 162L)
+                            new LongValue(l2EntityClass.field("l1-long").get(), 193L)
                         )
                     ),
                 l2EntityClass,
-                SelectConfig.Builder.anSelectConfig()
-                    .withPage(Page.newSinglePage(1000))
-                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
-                    .withDataAccessFitlerCondtitons(
-                        Conditions.buildEmtpyConditions()
-                            .addAnd(
-                                new Condition(
-                                    l2EntityClass.field("l0-long").get(),
-                                    ConditionOperator.NOT_EQUALS,
-                                    new LongValue(l2EntityClass.field("l0-long").get(), 5120579758453153792L)
-                                )
-                            )
-                    )
-                    .build(),
+                SelectConfig.Builder.anSelectConfig().withPage(Page.newSinglePage(100)).build(),
                 new long[] {
+                    9223372036854775805L, 9223372036854775804L, 9223372036854775802L,
+                }
+            ),
+            new Case(
+                "l2-enum in or l1-long gt",
+                Conditions.buildEmtpyConditions()
+                    .addAnd(
+                        new Condition(
+                            l2EntityClass.field("l2-enum").get(),
+                            ConditionOperator.MULTIPLE_EQUALS,
+                            new StringValue(l2EntityClass.field("l2-enum").get(), "yellow"),
+                            new StringValue(l2EntityClass.field("l2-enum").get(), "tan")
+                        )
+                    ).addOr(
+                        new Condition(
+                            l2EntityClass.field("l1-long").get(),
+                            ConditionOperator.GREATER_THAN,
+                            new LongValue(l2EntityClass.field("l1-long").get(), 193L)
+                        )
+                    ),
+                l2EntityClass,
+                SelectConfig.Builder.anSelectConfig().withPage(Page.newSinglePage(100)).build(),
+                new long[] {
+                    9223372036854775805L, 9223372036854775804L, 9223372036854775797L,
                 }
             )
         );
@@ -1474,8 +1515,8 @@ public class SphinxQLManticoreIndexStorageSelectTest {
         Path path = Paths.get(ClassLoader.getSystemResource("OriginalEntityTestData.json").toURI());
         String value = new String(Files.readAllBytes(path), "utf8");
 
-        Collection<OriginalEntity> datas = JacksonDefaultMapper.OBJECT_MAPPER.readValue(value,
-            new TypeReference<List<OriginalEntity>>() {});
+        Collection<OqsEngineEntity> datas = JacksonDefaultMapper.OBJECT_MAPPER.readValue(value,
+            new TypeReference<List<OqsEngineEntity>>() {});
         datas.stream().forEach(o -> {
             o.setEntityClass(l2EntityClass);
         });

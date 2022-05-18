@@ -27,9 +27,6 @@ public class CDCAckMetrics {
     //  上一次成功连接的时间(单位为时间戳)
     private long lastConnectedTime;
 
-    //  表示当前批次数据中最大耗时时间(单位为毫秒)
-    private long maxSyncUseTime;
-
     //  当前批次的总耗时
     private long totalUseTime;
 
@@ -63,14 +60,6 @@ public class CDCAckMetrics {
 
     public void setLastConnectedTime(long lastConnectedTime) {
         this.lastConnectedTime = lastConnectedTime;
-    }
-
-    public long getMaxSyncUseTime() {
-        return maxSyncUseTime;
-    }
-
-    public void setMaxSyncUseTime(long maxSyncUseTime) {
-        this.maxSyncUseTime = maxSyncUseTime;
     }
 
     public CDCStatus getCdcConsumerStatus() {

@@ -98,11 +98,6 @@ public interface DevOpsManagementService {
     void initNewCommitId(Optional<Long> commitId) throws SQLException;
 
     /**
-     * 执行修复CDC批次.
-     */
-    boolean cdcSendErrorRecover(long seqNo, String recoverStr) throws SQLException;
-
-    /**
      * 更新某条状态为修复完毕.
      */
     boolean cdcUpdateStatus(long seqNo, FixedStatus fixedStatus) throws SQLException;

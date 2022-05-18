@@ -6,18 +6,15 @@ import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.common.mock.ReflectionUtils;
 import com.xforceplus.ultraman.oqsengine.common.mock.SqlInitUtils;
 import com.xforceplus.ultraman.oqsengine.common.selector.NoSelector;
-import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MetaInitialization;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.master.SQLMasterStorage;
-import com.xforceplus.ultraman.oqsengine.storage.master.strategy.conditions.SQLJsonConditionsBuilderFactory;
-import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterDecimalStorageStrategy;
-import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterStringsStorageStrategy;
+import com.xforceplus.ultraman.oqsengine.storage.master.mysql.SQLMasterStorage;
+import com.xforceplus.ultraman.oqsengine.storage.master.mysql.strategy.conditions.SQLJsonConditionsBuilderFactory;
+import com.xforceplus.ultraman.oqsengine.storage.master.mysql.strategy.value.MasterDecimalStorageStrategy;
+import com.xforceplus.ultraman.oqsengine.storage.master.mysql.strategy.value.MasterStringsStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.master.transaction.SqlConnectionTransactionResourceFactory;
-import com.xforceplus.ultraman.oqsengine.storage.master.unique.UniqueKeyGenerator;
-import com.xforceplus.ultraman.oqsengine.storage.master.unique.impl.SimpleFieldKeyGenerator;
 import com.xforceplus.ultraman.oqsengine.storage.mock.StorageInitialization;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import com.xforceplus.ultraman.oqsengine.tokenizer.DefaultTokenizerFactory;
@@ -37,10 +34,8 @@ public class MasterDBInitialization implements BeanInitialization {
     private DataSource dataSource;
     private SQLMasterStorage masterStorage;
     private TransactionExecutor masterTransactionExecutor;
-    private UniqueKeyGenerator keyGenerator;
     private StorageStrategyFactory masterStorageStrategyFactory;
     private SQLJsonConditionsBuilderFactory sqlJsonConditionsBuilderFactory;
-
     public static final String MASTER_STORAGE_TABLE = "oqsbigentity";
 
     private MasterDBInitialization() {
@@ -76,40 +71,42 @@ public class MasterDBInitialization implements BeanInitialization {
         sqlJsonConditionsBuilderFactory.setTokenizerFacotry(new DefaultTokenizerFactory());
         sqlJsonConditionsBuilderFactory.init();
 
-        keyGenerator = new SimpleFieldKeyGenerator();
-        MetaManager metaManager = MetaInitialization.getInstance().getMetaManager();
-
-        Collection<Field> fields = ReflectionUtils.printAllMembers(keyGenerator);
-        ReflectionUtils.reflectionFieldValue(fields, "metaManager", keyGenerator, metaManager);
 
         masterStorage = new SQLMasterStorage();
         Collection<Field> masterFields = ReflectionUtils.printAllMembers(masterStorage);
 
+        //  transactionExecutor
         resetTransactionExecutor(MASTER_STORAGE_TABLE);
+
         ReflectionUtils
             .reflectionFieldValue(masterFields, "storageStrategyFactory", masterStorage, masterStorageStrategyFactory);
         ReflectionUtils
-            .reflectionFieldValue(masterFields, "conditionsBuilderFactory", masterStorage, sqlJsonConditionsBuilderFactory);
-        ReflectionUtils.reflectionFieldValue(masterFields, "keyGenerator", masterStorage, keyGenerator);
-        ReflectionUtils.reflectionFieldValue(masterFields, "metaManager", masterStorage, metaManager);
-        ReflectionUtils.reflectionFieldValue(masterFields, "asyncErrorExecutor", masterStorage,
-            CommonInitialization.getInstance().getRunner());
-        ReflectionUtils.reflectionFieldValue(masterFields, "masterDataSource", masterStorage, dataSource);
+            .reflectionFieldValue(masterFields, "conditionsBuilderFactory", masterStorage,
+                sqlJsonConditionsBuilderFactory);
+        ReflectionUtils
+            .reflectionFieldValue(masterFields, "metaManager", masterStorage,
+                MetaInitialization.getInstance().getMetaManager());
+        ReflectionUtils
+            .reflectionFieldValue(masterFields, "masterDataSource", masterStorage, dataSource);
 
-        masterStorage.setTableName(MASTER_STORAGE_TABLE);
+
+        masterStorage.setDynamicTableName(MASTER_STORAGE_TABLE);
         masterStorage.init();
     }
 
     @Override
     public void clear() throws Exception {
-        SqlInitUtils.init("/mysql/truncate", dataSource);
+        try {
+            SqlInitUtils.init("/mysql/truncate", dataSource);
+        } catch (Exception e) {
+            //  ignore
+        }
     }
 
     @Override
     public void destroy() throws Exception {
         dataSource = null;
         masterTransactionExecutor = null;
-        keyGenerator = null;
         masterStorageStrategyFactory = null;
         sqlJsonConditionsBuilderFactory = null;
         masterStorage.destroy();
@@ -151,10 +148,6 @@ public class MasterDBInitialization implements BeanInitialization {
 
     public TransactionExecutor getMasterTransactionExecutor() {
         return masterTransactionExecutor;
-    }
-
-    public UniqueKeyGenerator getKeyGenerator() {
-        return keyGenerator;
     }
 
     public StorageStrategyFactory getMasterStorageStrategyFactory() {

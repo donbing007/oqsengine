@@ -10,6 +10,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Date;
@@ -133,12 +134,12 @@ public class IValueUtils {
                     if (field.config().getPrecision() > 0) {
                         Scale scale = Scale.getInstance(field.config().scale());
                         if (!scale.equals(Scale.UN_KNOW)) {
-                            r = ((BigDecimal) result).setScale(field.config().getPrecision(), scale.getMode());
+                            r = toBigDecimal(result, field.config().getPrecision(), scale.getMode());
                         } else {
-                            r = (BigDecimal) result;
+                            r = toBigDecimal(result, null, null);
                         }
                     } else {
-                        r = (BigDecimal) result;
+                        r = toBigDecimal(result, null, null);
                     }
                     return new DecimalValue(field, r);
                 }
@@ -149,6 +150,32 @@ public class IValueUtils {
         } catch (Exception e) {
             throw new IllegalArgumentException(String.format("toIValue failed, message [%s]", e.getMessage()));
         }
+    }
+
+    private static BigDecimal toBigDecimal(Object value, Integer precision, Integer model) {
+        BigDecimal toValue = null;
+
+        if (value instanceof String) {
+            toValue = new BigDecimal((String) value);
+        } else if (value instanceof Long) {
+            toValue = BigDecimal.valueOf((Long) value);
+        } else if (value instanceof Integer) {
+            toValue = BigDecimal.valueOf((Integer) value);
+        } else if (value instanceof Double) {
+            toValue = BigDecimal.valueOf((Double) value);
+        } else if (value instanceof Float) {
+            toValue = BigDecimal.valueOf((Float) value);
+        } else if (value instanceof BigDecimal) {
+            toValue = (BigDecimal) value;
+        } else {
+            throw new IllegalArgumentException(
+                String.format("bigDecimal un-support type[%s], value[%s]", value.getClass(), value));
+        }
+
+        if (null != precision && null != model) {
+            return toValue.setScale(precision, RoundingMode.valueOf(model));
+        }
+        return toValue;
     }
 
 

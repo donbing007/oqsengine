@@ -10,9 +10,12 @@ import com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.task.LookupMai
 import com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.utils.LookupEntityRefIterator;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
+import com.xforceplus.ultraman.oqsengine.common.profile.OqsProfile;
+import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Lookup;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
@@ -63,8 +66,27 @@ public class LookupCalculationLogic implements CalculationLogic {
 
         Optional<IValue> lookupValueOp = focusEntity.entityValue().getValue(focusField.id());
         if (!lookupValueOp.isPresent()) {
+
+            if (logger.isDebugEnabled()) {
+                logger.debug(
+                    "Unable to instantiate the field that launched the lookup.[entityClass={}, field={}]",
+                    focusEntity.entityClassRef(), focusField.fieldName()
+                );
+            }
+
             return Optional.empty();
         }
+
+        long targetEntityClassId = ((Lookup) focusField.config().getCalculation()).getClassId();
+        MetaManager metaManager = context.getResourceWithEx(() -> context.getMetaManager());
+        Optional<IEntityClass> targetEntityClassOp =
+            metaManager.load(targetEntityClassId, OqsProfile.UN_DEFINE_PROFILE);
+        if (!targetEntityClassOp.isPresent()) {
+            throw new CalculationException(
+                String.format("The expected target object meta information was not found.[%s]", targetEntityClassId));
+        }
+
+        IEntityClass targetEntityClass = targetEntityClassOp.get();
 
         if (!context.isMaintenance()) {
             IValue lookupValue = lookupValueOp.get();
@@ -73,10 +95,18 @@ public class LookupCalculationLogic implements CalculationLogic {
              */
             if (!LookupValue.class.isInstance(lookupValue)) {
                 // 保持原样.
+
+                if (logger.isDebugEnabled()) {
+                    logger.debug(
+                        "The current state is not maintenance, so the field ({}) remains unchanged.",
+                        focusField.fieldName());
+                }
+
                 return Optional.ofNullable(lookupValue);
+
             } else {
 
-                return doLookup(context, (LookupValue) lookupValue);
+                return doLookup(context, (LookupValue) lookupValue, targetEntityClass);
             }
         } else {
             /*
@@ -93,11 +123,18 @@ public class LookupCalculationLogic implements CalculationLogic {
             IValue nowTargetValue = sourceEntity.entityValue().getValue(lookUpFieldId).get();
             if (nowTargetValue.equals(nowLookupValue)) {
                 // 保持原样.
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Recalculation is not required because the values of the current instance "
+                            + "({}) field ({}) and the target instance ({}) field are the same.",
+                        focusEntity.id(), focusField.fieldName(), nowTargetValue.getField().fieldName());
+                }
+
                 return Optional.ofNullable(nowLookupValue);
             }
 
             LookupValue lookupValue = new LookupValue(focusField, sourceEntity.id());
-            return doLookup(context, lookupValue);
+
+            return doLookup(context, lookupValue, targetEntityClass);
         }
 
     }
@@ -119,8 +156,21 @@ public class LookupCalculationLogic implements CalculationLogic {
 
         Optional attachmentOp = participant.getAttachment();
         if (!attachmentOp.isPresent()) {
+
+            if (logger.isDebugEnabled()) {
+                logger.debug(
+                    "[lookup]The current participant [{},{}] has no attachments, so the impact instance cannot be calculated.",
+                    participant.getEntityClass().code(),
+                    participant.getField().fieldName());
+            }
+
             return Collections.emptyList();
         } else {
+            /*
+            注意: 这里直接使用了 context.getSourceEntity() 作为了目标源.
+            由于lookup类型不允许级连,所以影响树会有二层,第一层为发起操作的对象实例第二层为指向这个对象实例的参与者.
+            这些参与者限制不会再有参与者指向他们.
+             */
 
             // 判断是否为强关系,只有强关系才会在当前事务进行部份更新.
             boolean strong = (boolean) attachmentOp.get();
@@ -142,6 +192,13 @@ public class LookupCalculationLogic implements CalculationLogic {
 
 
                 addAfterCommitTask(context, lookupMaintainingTask);
+
+                if (logger.isDebugEnabled()) {
+                    logger.debug(
+                        "[lookup] Because the relationship is weak, the current influence node is returned empty.[{},{}]",
+                        participant.getEntityClass().code(),
+                        participant.getField().fieldName());
+                }
 
                 return Collections.emptyList();
 
@@ -182,6 +239,13 @@ public class LookupCalculationLogic implements CalculationLogic {
                             .withMaxSize(TASK_LIMIT_NUMBER)
                             .build();
                     addAfterCommitTask(context, lookupMaintainingTask);
+                }
+
+                if (logger.isDebugEnabled()) {
+                    logger.debug("The number of instances affected by the participant ({},{}) is {}.",
+                        participant.getEntityClass().code(),
+                        participant.getField().fieldName(),
+                        affectedInfos.size());
                 }
 
                 return affectedInfos;
@@ -225,8 +289,9 @@ public class LookupCalculationLogic implements CalculationLogic {
     /**
      * 实际进行lookup.
      */
-    private Optional<IValue> doLookup(CalculationContext context, LookupValue lookupValue) {
-        Optional<IEntity> targetEntityOp = findTargetEntity(context, lookupValue.valueToLong());
+    private Optional<IValue> doLookup(CalculationContext context, LookupValue lookupValue,
+                                      IEntityClass targetEntityClass) {
+        Optional<IEntity> targetEntityOp = findTargetEntity(context, lookupValue.valueToLong(), targetEntityClass);
         if (!targetEntityOp.isPresent()) {
             logger.warn("Unable to find the target of the lookup ({}).", lookupValue.valueToLong());
             return Optional.empty();
@@ -262,12 +327,13 @@ public class LookupCalculationLogic implements CalculationLogic {
         }
     }
 
-    private Optional<IEntity> findTargetEntity(CalculationContext context, long targetEntityId) {
+    private Optional<IEntity> findTargetEntity(CalculationContext context, long targetEntityId,
+                                               IEntityClass targetEntityClass) {
         Optional<IEntity> targetEntityOp = context.getEntityToCache(targetEntityId);
         if (!targetEntityOp.isPresent()) {
             MasterStorage masterStorage = context.getResourceWithEx(() -> context.getMasterStorage());
             try {
-                targetEntityOp = masterStorage.selectOne(targetEntityId);
+                targetEntityOp = masterStorage.selectOne(targetEntityId, targetEntityClass);
             } catch (SQLException ex) {
                 throw new CalculationException(ex.getMessage(), ex);
             }

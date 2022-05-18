@@ -13,8 +13,10 @@ import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.ProtoAnyHelper;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Formula;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -53,12 +55,12 @@ public class EntityClassSyncProtoBufMocker {
          * 每层有2个随机的EntityField [String、Long] 各一
          * 每层存在2条关系
          */
-        public static EntityClassSyncResponse entityClassSyncResponseGenerator(String appId, int version,
+        public static EntityClassSyncResponse entityClassSyncResponseGenerator(String appId, String appCode, int version,
                                                                                List<ExpectedEntityStorage> expectedEntityStorages) {
             return EntityClassSyncResponse.newBuilder()
                 .setAppId(appId)
                 .setVersion(version + 1)
-                .setEntityClassSyncRspProto(entityClassSyncRspProtoGenerator(expectedEntityStorages))
+                .setEntityClassSyncRspProto(entityClassSyncRspProtoGenerator(appCode, expectedEntityStorages))
                 .build();
         }
 
@@ -66,7 +68,7 @@ public class EntityClassSyncProtoBufMocker {
          * 生成同步响应.
          */
         public static EntityClassSyncRspProto entityClassSyncRspProtoGenerator(
-            List<ExpectedEntityStorage> expectedEntityStorages) {
+            String appCode, List<ExpectedEntityStorage> expectedEntityStorages) {
             /*
              * 生成爷爷
              */
@@ -80,6 +82,7 @@ public class EntityClassSyncProtoBufMocker {
 
             return EntityClassSyncRspProto.newBuilder()
                 .addAllEntityClasses(entityClassInfos)
+                .setAppCode(appCode)
                 .build();
         }
     }
@@ -107,6 +110,7 @@ public class EntityClassSyncProtoBufMocker {
 
         return EntityClassInfo.newBuilder()
             .setId(id)
+            .setType(EntityClassType.DYNAMIC.getType())
             .setVersion(GeneralConstant.DEFAULT_VERSION)
             .setCode(id + GeneralConstant.LEVEL + level + GeneralConstant.CODE_SUFFIX)
             .setName(id + GeneralConstant.LEVEL + level + GeneralConstant.NAME_SUFFIX)
@@ -199,7 +203,7 @@ public class EntityClassSyncProtoBufMocker {
             .setCname(GeneralEntityUtils.EntityFieldHelper.cname(id))
             .setFieldType(protoType)
             .setDictId(GeneralEntityUtils.EntityFieldHelper.dictId(id))
-            .setFieldConfig(fieldConfig(true, GeneralConstant.MOCK_SYSTEM_FIELD_TYPE));
+            .setFieldConfig(fieldConfig(true, fieldType, GeneralConstant.MOCK_SYSTEM_FIELD_TYPE));
 
         switch (fourTa.getC()) {
             case STATIC: {
@@ -239,7 +243,7 @@ public class EntityClassSyncProtoBufMocker {
                 .setId(fieldId)
                 .setFieldType(toFieldType(FieldType.LONG.name()))
                 .setName(GeneralEntityUtils.EntityFieldHelper.name(fieldId))
-                .setFieldConfig(fieldConfig(true, GeneralConstant.MOCK_SYSTEM_FIELD_TYPE))
+                .setFieldConfig(fieldConfig(true, FieldType.LONG, GeneralConstant.MOCK_SYSTEM_FIELD_TYPE))
                 .build())
             .setBelongToOwner(GeneralEntityUtils.RelationHelper.belongTo(id))
             .build();
@@ -249,7 +253,7 @@ public class EntityClassSyncProtoBufMocker {
      * 生成.
      */
     public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig fieldConfig(
-        boolean searchable, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.MetaFieldSense systemFieldType) {
+        boolean searchable, FieldType fieldType, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.MetaFieldSense systemFieldType) {
         return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.newBuilder()
             .setSearchable(searchable)
             .setIsRequired(true)
@@ -257,7 +261,32 @@ public class EntityClassSyncProtoBufMocker {
             .setMetaFieldSense(systemFieldType)
             .setLength(15)
             .setPrecision(4)
+            .setJdbcType(toJdbcType(fieldType))
             .build();
+    }
+
+    /**
+     * 根据OQS字段类型转换成JDBC类型.
+     */
+    public static int toJdbcType(FieldType fieldType) {
+        switch (fieldType) {
+            case LONG: {
+                return Types.BIGINT;
+            }
+            case DECIMAL: {
+                return Types.DECIMAL;
+            }
+            case STRING:
+            case ENUM:
+            case STRINGS: {
+                return Types.VARCHAR;
+            }
+            case DATETIME: {
+                return Types.TIMESTAMP;
+            }
+            default:
+                return Types.VARCHAR;
+        }
     }
 
     /**

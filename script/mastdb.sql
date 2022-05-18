@@ -21,7 +21,7 @@ create table oqsbigentity
     primary key (id),
     KEY commitid_entity_index (commitid, entityclassl0, entityclassl1),
     KEY tx_index (tx),
-    KEY update_time_index (updatetime)
+    KEY update_time_index (updatetime, entityclassl0, entityclassl1)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
 /*
@@ -52,4 +52,3 @@ CREATE TABLE `segment` (
   `update_time` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-

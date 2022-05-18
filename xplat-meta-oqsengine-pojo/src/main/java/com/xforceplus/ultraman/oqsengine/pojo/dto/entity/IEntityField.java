@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity;
 
+import java.util.Optional;
+
 /**
  * 表示entity 的字段信息.
  *
@@ -17,11 +19,29 @@ public interface IEntityField extends Comparable<IEntityField> {
     long id();
 
     /**
+     * 字符串表示的字段标识.
+     *
+     * @return 字段标识.
+     */
+    default String idString() {
+        return Long.toString(id());
+    }
+
+    /**
      * 字段的名称.
      *
      * @return 名称.
      */
     String name();
+
+    /**
+     * 获取字段的名称.
+     *
+     * @return 字段名称表示.
+     */
+    default EntityFieldName fieldName() {
+        return new EntityFieldName(this);
+    }
 
     /**
      * 字段的中文名.
@@ -56,7 +76,7 @@ public interface IEntityField extends Comparable<IEntityField> {
      *
      * @return 配置
      */
-    String defaultValue();
+    Optional<String> defaultValue();
 
     /**
      * 字段计算类型.

@@ -5,6 +5,7 @@ import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NO
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.event.payload.meta.MetaChangePayLoad;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.log.UpGradeLog;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.ProfileStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MetaInitialization;
@@ -19,6 +20,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.RedisContainer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -108,7 +110,7 @@ public class CacheExecutorTest {
         entityClassStorageList.add(two);
 
         MetaChangePayLoad metaChangePayLoad =
-            cacheExecutor.save("1", 1, entityClassStorageList);
+            cacheExecutor.save("1", "test",1, entityClassStorageList);
 
         checkMetaPayLoad(metaChangePayLoad, "1", 1, entityClassStorageList);
 
@@ -139,9 +141,84 @@ public class CacheExecutorTest {
         entityClassStorageList.add(doTwo);
 
         metaChangePayLoad =
-            cacheExecutor.save("1", 3, entityClassStorageList);
+            cacheExecutor.save("1", "test",3, entityClassStorageList);
 
         checkMetaPayLoad(metaChangePayLoad, "1", 3, mixedUpdateDeletes);
+    }
+
+    @Test
+    public void upgradeLogTest() throws JsonProcessingException {
+        List<EntityClassStorage> entityClassStorageList = new ArrayList<>();
+
+        //  测试加入一个app，并更新了版本，这时全局log会拿到1条
+        EntityClassStorage one = MetaPayLoadHelper.toBasicPrepareEntity(1);
+        one.getFields().add(MetaPayLoadHelper.genericEntityField(10001, FieldType.STRING, CalculationType.STATIC, OperationType.CREATE));
+        one.getFields().add(MetaPayLoadHelper.genericEntityField(10002, FieldType.STRING, CalculationType.FORMULA, OperationType.CREATE));
+        one.getFields().add(MetaPayLoadHelper.genericEntityField(10003, FieldType.STRING, CalculationType.AUTO_FILL, OperationType.CREATE));
+
+        String expectedApp = "1";
+        String expectedEnv = "test";
+        int startVersion = 1;
+        int currentVersion = 100;
+
+        cacheExecutor.save(expectedApp, expectedEnv, startVersion, entityClassStorageList);
+
+        cacheExecutor.save(expectedApp, expectedEnv,currentVersion, entityClassStorageList);
+
+        Collection<UpGradeLog> upGradeLogCollection = cacheExecutor.showUpgradeLogs(null, null);
+        Assertions.assertEquals(1, upGradeLogCollection.size());
+        Assertions.assertTrue(upGradeLogCollection.stream().anyMatch(
+            up -> {
+                return up.getAppId().equals(expectedApp) && up.getEnv().equals(expectedEnv) &&
+                    up.getStartVersion() == startVersion && up.getCurrentVersion() == currentVersion;
+            }
+        ));
+
+
+        //  测试再次加入一个app，这时全局log会拿到2条
+        EntityClassStorage two = MetaPayLoadHelper.toBasicPrepareEntity(2);
+        two.getFields().add(MetaPayLoadHelper.genericEntityField(20001, FieldType.STRING, CalculationType.STATIC, OperationType.CREATE));
+        two.getFields().add(MetaPayLoadHelper.genericEntityField(20002, FieldType.STRING, CalculationType.FORMULA, OperationType.CREATE));
+        two.getFields().add(MetaPayLoadHelper.genericEntityField(20003, FieldType.STRING, CalculationType.AUTO_FILL, OperationType.CREATE));
+
+        entityClassStorageList.clear();
+        entityClassStorageList.add(two);
+
+        String newExpectedApp = "122";
+        String newExpectedEnv = "test111";
+        int newStartVersion = 12;
+        int newCurrentVersion = 122;
+
+        cacheExecutor.save(newExpectedApp, newExpectedEnv, newStartVersion, entityClassStorageList);
+
+        upGradeLogCollection = cacheExecutor.showUpgradeLogs(null, null);
+        Assertions.assertEquals(2, upGradeLogCollection.size());
+        //  拿到appId 1
+        Assertions.assertTrue(upGradeLogCollection.stream().anyMatch(
+            up -> {
+                return up.getAppId().equals(expectedApp) && up.getEnv().equals(expectedEnv) &&
+                    up.getStartVersion() == startVersion && up.getCurrentVersion() == currentVersion;
+            }
+        ));
+        //  拿到appId 122，此时CurrentVersion为newStartVersion
+        Assertions.assertTrue(upGradeLogCollection.stream().anyMatch(
+            up -> {
+                return up.getAppId().equals(newExpectedApp) && up.getEnv().equals(newExpectedEnv) &&
+                    up.getStartVersion() == newStartVersion && up.getCurrentVersion() == newStartVersion;
+            }
+        ));
+
+        //  测试再次更新一个新版本，这时条件查询会搜索到1条记录
+        cacheExecutor.save(newExpectedApp, newExpectedEnv, newCurrentVersion, entityClassStorageList);
+        upGradeLogCollection = cacheExecutor.showUpgradeLogs(newExpectedApp, newExpectedEnv);
+        Assertions.assertEquals(1, upGradeLogCollection.size());
+        //  拿到appId 122，此时CurrentVersion有值
+        Assertions.assertTrue(upGradeLogCollection.stream().anyMatch(
+            up -> {
+                return up.getAppId().equals(newExpectedApp) && up.getEnv().equals(newExpectedEnv) &&
+                    up.getStartVersion() == newStartVersion && up.getCurrentVersion() == newCurrentVersion;
+            }
+        ));
     }
 
 
@@ -316,7 +393,7 @@ public class CacheExecutorTest {
         entityClassIds.addAll(addAndRetEntityClassId(expects, "testApp2", expectedVersion + 1, Arrays.asList(3L, 4L)));
         entityClassIds.addAll(addAndRetEntityClassId(expects, "testApp3", expectedVersion + 2, Arrays.asList(5L, 6L)));
 
-        Map<Long, Integer> res = cacheExecutor.versions(entityClassIds, false, false);
+        Map<Long, Integer> res = cacheExecutor.versions(entityClassIds, false,false);
 
         Assertions.assertEquals(expects.size(), res.size());
 
@@ -355,7 +432,7 @@ public class CacheExecutorTest {
         int expectedVersion = Integer.MAX_VALUE;
 
         //  set storage
-        cacheExecutor.save(expectedAppId, expectedVersion, entityClassStorageList);
+        cacheExecutor.save(expectedAppId, "test", expectedVersion, entityClassStorageList);
 
         check(expectedVersion, expectedEntityStorageList, entityClassStorageList);
 
@@ -373,7 +450,7 @@ public class CacheExecutorTest {
         int expectedVersion = Integer.MAX_VALUE - 1;
 
         //  set storage
-        cacheExecutor.save(expectedAppId, expectedVersion, entityClassStorageList);
+        cacheExecutor.save(expectedAppId, "test", expectedVersion, entityClassStorageList);
 
         check(expectedVersion, expectedEntityStorageList, null);
 

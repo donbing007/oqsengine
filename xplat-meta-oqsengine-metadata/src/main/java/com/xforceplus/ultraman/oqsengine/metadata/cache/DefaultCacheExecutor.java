@@ -2,18 +2,21 @@ package com.xforceplus.ultraman.oqsengine.metadata.cache;
 
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
 import static com.xforceplus.ultraman.oqsengine.metadata.cache.RedisLuaScript.ACTIVE_VERSION;
+import static com.xforceplus.ultraman.oqsengine.metadata.cache.RedisLuaScript.DEFAULT_METADATA_APP_CODE;
 import static com.xforceplus.ultraman.oqsengine.metadata.cache.RedisLuaScript.DEFAULT_METADATA_APP_ENTITY;
 import static com.xforceplus.ultraman.oqsengine.metadata.cache.RedisLuaScript.DEFAULT_METADATA_APP_ENV;
 import static com.xforceplus.ultraman.oqsengine.metadata.cache.RedisLuaScript.DEFAULT_METADATA_APP_PREPARE;
 import static com.xforceplus.ultraman.oqsengine.metadata.cache.RedisLuaScript.DEFAULT_METADATA_APP_VERSIONS;
 import static com.xforceplus.ultraman.oqsengine.metadata.cache.RedisLuaScript.DEFAULT_METADATA_APP_VERSIONS_ENTITY_IDS;
 import static com.xforceplus.ultraman.oqsengine.metadata.cache.RedisLuaScript.DEFAULT_METADATA_ENTITY_APP_REL;
+import static com.xforceplus.ultraman.oqsengine.metadata.cache.RedisLuaScript.DEFAULT_METADATA_UPGRADE_LOG;
 import static com.xforceplus.ultraman.oqsengine.metadata.cache.RedisLuaScript.ENTITY_CLASS_STORAGE_INFO;
 import static com.xforceplus.ultraman.oqsengine.metadata.cache.RedisLuaScript.ENTITY_CLASS_STORAGE_INFO_LIST;
 import static com.xforceplus.ultraman.oqsengine.metadata.cache.RedisLuaScript.PREPARE_VERSION_SCRIPT;
 import static com.xforceplus.ultraman.oqsengine.metadata.cache.RedisLuaScript.REST_VERSION;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.NOT_INIT_INTEGER_PARAMETER;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_ANCESTORS;
+import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_APPCODE;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_CODE;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_FATHER;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_FIELDS;
@@ -21,6 +24,7 @@ import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassEle
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_LEVEL;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_NAME;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_RELATIONS;
+import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_TYPE;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_VERSION;
 import static com.xforceplus.ultraman.oqsengine.metadata.utils.CacheUtils.generateEntityCacheInternalKey;
 import static com.xforceplus.ultraman.oqsengine.metadata.utils.CacheUtils.generateEntityCacheKey;
@@ -31,12 +35,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 import com.xforceplus.ultraman.oqsengine.common.thread.PollingThreadExecutor;
 import com.xforceplus.ultraman.oqsengine.common.watch.RedisLuaScriptWatchDog;
 import com.xforceplus.ultraman.oqsengine.event.payload.meta.MetaChangePayLoad;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.log.UpGradeLog;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.AppSimpleInfo;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.ProfileStorage;
@@ -54,11 +57,11 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
@@ -92,6 +95,8 @@ public class DefaultCacheExecutor implements CacheExecutor {
     private StatefulRedisConnection<String, String> syncConnect;
 
     private RedisCommands<String, String> syncCommands;
+
+    private CacheContext cacheContext;
 
     private int maxWait = 10;
     private int versionCacheRefreshDuration = 10;
@@ -152,6 +157,17 @@ public class DefaultCacheExecutor implements CacheExecutor {
      */
     private final String appEnvKeys;
 
+
+    /*
+     * version key (AppID-Code信息)
+     * [redis hash key]
+     * key-appCodeKeys
+     * field-appId
+     * value-code
+     */
+    private final String appCodeKeys;
+
+
     /*
      * version key (版本信息)
      * [redis hash key]
@@ -197,23 +213,15 @@ public class DefaultCacheExecutor implements CacheExecutor {
      */
     private final String entityStorageKeys;
 
-    /**
-     * cache key entityClass.version
-     * value key profile
-     * is not have profile, value key will be defaultKey '-'getFromLocal
-     */
-    private final Cache<String, Map<String, IEntityClass>> entityClassStorageCache;
 
-    /**
-     * cache key entityClass.version
-     * value profile list
+    /*
+     * upGradeLogKey key prefix (当前的entityStorage key前缀)
+     * [redis hash key]
+     * key - upGradeLogKey
+     * field - appId + env
+     * value - upGradeValue
      */
-    private final Cache<String, List<String>> profileCache;
-
-    /**
-     * version cache.
-     */
-    private Map<Long, Integer> versions;
+    private final String upGradeLogKey;
 
     /**
      * 默认实例化.
@@ -225,7 +233,9 @@ public class DefaultCacheExecutor implements CacheExecutor {
             DEFAULT_METADATA_APP_PREPARE,
             DEFAULT_METADATA_APP_ENTITY,
             DEFAULT_METADATA_ENTITY_APP_REL,
-            DEFAULT_METADATA_APP_VERSIONS_ENTITY_IDS);
+            DEFAULT_METADATA_APP_VERSIONS_ENTITY_IDS,
+            DEFAULT_METADATA_APP_CODE,
+            DEFAULT_METADATA_UPGRADE_LOG);
     }
 
     /**
@@ -242,7 +252,9 @@ public class DefaultCacheExecutor implements CacheExecutor {
             DEFAULT_METADATA_APP_PREPARE,
             DEFAULT_METADATA_APP_ENTITY,
             DEFAULT_METADATA_ENTITY_APP_REL,
-            DEFAULT_METADATA_APP_VERSIONS_ENTITY_IDS);
+            DEFAULT_METADATA_APP_VERSIONS_ENTITY_IDS,
+            DEFAULT_METADATA_APP_CODE,
+            DEFAULT_METADATA_UPGRADE_LOG);
     }
 
     /**
@@ -257,11 +269,12 @@ public class DefaultCacheExecutor implements CacheExecutor {
      * @param entityStorageKeys       元信息储存KEY.
      * @param appEntityMappingKey     元信息属性MAP的KEY.
      * @param appEntityCollectionsKey 应用所有元信息的列表KEY.
+     * @param appCodeKeys             应用CODE的KEY.
      */
     public DefaultCacheExecutor(int maxCacheSize, int prepareExpireSeconds, int cacheExpireSeconds,
                                 String appEnvKeys, String appVersionKeys, String appPrepareKeyPrefix,
                                 String entityStorageKeys,
-                                String appEntityMappingKey, String appEntityCollectionsKey) {
+                                String appEntityMappingKey, String appEntityCollectionsKey, String appCodeKeys, String upGradeLogKey) {
 
         if (maxCacheSize > NOT_INIT_INTEGER_PARAMETER) {
             this.maxCacheSize = maxCacheSize;
@@ -305,31 +318,17 @@ public class DefaultCacheExecutor implements CacheExecutor {
             throw new IllegalArgumentException("The appEntityCollections key is invalid.");
         }
 
-        entityClassStorageCache = initCache();
-        profileCache = initCache();
-        versions = new ConcurrentHashMap<>();
-    }
+        this.appCodeKeys = appCodeKeys;
+        if (this.appCodeKeys == null || this.appCodeKeys.isEmpty()) {
+            throw new IllegalArgumentException("The appCodeKeys keys is invalid.");
+        }
 
-    public void setMaxCacheSize(int maxCacheSize) {
-        this.maxCacheSize = maxCacheSize;
-    }
+        this.upGradeLogKey = upGradeLogKey;
+        if (this.upGradeLogKey == null || this.upGradeLogKey.isEmpty()) {
+            throw new IllegalArgumentException("The upGradeLogKey keys is invalid.");
+        }
 
-    public void setCacheExpire(int cacheExpire) {
-        this.cacheExpire = cacheExpire;
-    }
-
-    public void setPrepareExpire(int prepareExpire) {
-        this.prepareExpire = prepareExpire;
-    }
-
-    /**
-     * 初始化cache.
-     */
-    public <V> Cache<String, V> initCache() {
-        return CacheBuilder.newBuilder()
-            .maximumSize(maxCacheSize)
-            .expireAfterAccess(cacheExpire, TimeUnit.SECONDS)
-            .build();
+        cacheContext = new CacheContext(this.maxCacheSize,  this.cacheExpire);
     }
 
     @PostConstruct
@@ -379,7 +378,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
      * 存储appId级别的所有EntityClassStorage对象.
      */
     @Override
-    public MetaChangePayLoad save(String appId, int version, List<EntityClassStorage> storageList)
+    public MetaChangePayLoad save(String appId, String env, int version, List<EntityClassStorage> storageList)
         throws JsonProcessingException {
 
         MetaChangePayLoad appMetaChangePayLoad = new MetaChangePayLoad(appId, version);
@@ -394,8 +393,12 @@ public class DefaultCacheExecutor implements CacheExecutor {
                     remoteMultiplyLoading(appEntityIdList(appId, oldVersion), oldVersion));
         }
 
+        String appCode = "";
+
         //  set data
         for (EntityClassStorage newStorage : storageList) {
+
+            appCode = newStorage.getAppCode();
 
             //  存入到cache中，并获得entityClass的变更事件
             EntityClassStorage old = null != oldMetas ? oldMetas.remove(newStorage.getId()) : null;
@@ -424,6 +427,12 @@ public class DefaultCacheExecutor implements CacheExecutor {
             storageList.stream().map(EntityClassStorage::getId).collect(Collectors.toList()))) {
             throw new RuntimeException(String.format("reset version failed, appId : %s, %d", appId, version));
         }
+
+        if (!appCode.isEmpty()) {
+            saveAppCode(appId, appCode);
+        }
+
+        addUpGradeLog(appId, env, version);
 
         return appMetaChangePayLoad;
     }
@@ -495,7 +504,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
         }
 
         if (withCache) {
-            Integer v = versions.get(entityClassId);
+            Integer v = cacheContext.versionCache().get(entityClassId);
             if (null != v) {
                 return v;
             }
@@ -525,7 +534,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
             //  从缓存读取.
             entityClassIds.forEach(
                 id -> {
-                    Integer v = versions.get(id);
+                    Integer v = cacheContext.versionCache().get(id);
                     if (null != v && v > NOT_EXIST_VERSION) {
                         vs.put(id, v);
                     } else {
@@ -708,9 +717,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
 
     @Override
     public void invalidateLocal() {
-        entityClassStorageCache.invalidateAll();
-        profileCache.invalidateAll();
-        versions.clear();
+        cacheContext.invalidate();
     }
 
     /**
@@ -763,7 +770,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
     @Override
     public Optional<IEntityClass> localRead(long entityClassId, int version, String profile) {
         Map<String, IEntityClass> entityClassMap =
-            entityClassStorageCache.getIfPresent(generateEntityCacheKey(entityClassId, version));
+            cacheContext.entityClassStorageCache().getIfPresent(generateEntityCacheKey(entityClassId, version));
 
         if (null != entityClassMap) {
             return Optional.ofNullable(entityClassMap.get(generateEntityCacheInternalKey(profile)));
@@ -775,12 +782,12 @@ public class DefaultCacheExecutor implements CacheExecutor {
     public List<String> readProfileCodes(long entityClassId, int version) {
         String key = generateEntityCacheKey(entityClassId, version);
         //  从本地cache读取
-        List<String> profiles = profileCache.getIfPresent(key);
+        List<String> profiles = cacheContext.profileCache().getIfPresent(key);
         if (null == profiles) {
             try {
                 profiles = CacheUtils.parseProfileCodes(remoteRead(entityClassId, version));
                 //  从remoteCache读取,并写入本地cache
-                profileCache.put(key, profiles);
+                cacheContext.profileCache().put(key, profiles);
             } catch (Exception e) {
                 throw new RuntimeException(
                     String.format("entityId : %d, version : %d, read profiles failed, message : %s",
@@ -792,13 +799,13 @@ public class DefaultCacheExecutor implements CacheExecutor {
     }
 
     @Override
-    public void localAdd(long entityClassId, int version, String profile, IEntityClass entityClass) {
+    public void localStorage(long entityClassId, int version, String profile, IEntityClass entityClass) {
         String key = generateEntityCacheKey(entityClassId, version);
-        Map<String, IEntityClass> e = entityClassStorageCache.getIfPresent(key);
+        Map<String, IEntityClass> e = cacheContext.entityClassStorageCache().getIfPresent(key);
         if (null == e) {
             Map<String, IEntityClass> internals = new HashMap<>();
             internals.put(generateEntityCacheInternalKey(profile), entityClass);
-            entityClassStorageCache.put(key, internals);
+            cacheContext.entityClassStorageCache().put(key, internals);
         } else {
             e.putIfAbsent(generateEntityCacheInternalKey(profile), entityClass);
         }
@@ -810,21 +817,76 @@ public class DefaultCacheExecutor implements CacheExecutor {
         Map<String, String> envs =  syncCommands.hgetall(appEnvKeys);
         if (null != envs && !envs.isEmpty()) {
             Map<String, String> versions = syncCommands.hgetall(appVersionKeys);
+            Map<String, String> codes = syncCommands.hgetall(appCodeKeys);
             envs.forEach(
                 (appId, env) -> {
-                    String version = versions.remove(appId);
+                    String version = null;
+                    if (null != versions && !versions.isEmpty()) {
+                        version = versions.remove(appId);
+                    }
 
-                    infoList.add(new AppSimpleInfo(appId, env, "",
-                        (null != version && !version.isEmpty()) ? Integer.parseInt(version) : NOT_EXIST_VERSION));
+                    String code = null;
+                    if (null != codes && !codes.isEmpty()) {
+                        code = codes.remove(appId);
+                    }
+
+                    infoList.add(new AppSimpleInfo(appId, env, null != code ? code : "",
+                        null != version ? Integer.parseInt(version) : NOT_EXIST_VERSION));
                 }
             );
         }
         return infoList;
     }
 
-    private String toNowDateString(LocalDate date) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
-        return formatter.format(date);
+    @Override
+    public Collection<UpGradeLog> showUpgradeLogs(String appId, String env) throws JsonProcessingException {
+        List<UpGradeLog> upGradeLogs = new ArrayList<>();
+        if (null != appId && !appId.isEmpty() && null != env && !env.isEmpty()) {
+            String fieldKey = String.format("%s.%s", appId, env);
+            UpGradeLog upGradeLog = getUpgradeLog(fieldKey);
+            if (null != upGradeLog) {
+                upGradeLogs.add(upGradeLog);
+            }
+        } else {
+            Map<String, String> vs = syncCommands.hgetall(upGradeLogKey);
+            if (null != vs) {
+                for (String v : vs.values()) {
+                    upGradeLogs.add(OBJECT_MAPPER.readValue(v, UpGradeLog.class));
+                }
+            }
+        }
+        return upGradeLogs;
+    }
+
+    private UpGradeLog getUpgradeLog(String fieldKey) throws JsonProcessingException {
+        String v = syncCommands.hget(upGradeLogKey, fieldKey);
+        if (null != v) {
+            return OBJECT_MAPPER.readValue(v, UpGradeLog.class);
+        }
+        return null;
+    }
+
+    private void addUpGradeLog(String appId, String env, int currentVersion) {
+        try {
+            String fieldKey = String.format("%s.%s", appId, env);
+            UpGradeLog upGradeLog = getUpgradeLog(fieldKey);
+            if (null == upGradeLog) {
+                long time = System.currentTimeMillis();
+                upGradeLog = new UpGradeLog(appId, env, currentVersion, time, currentVersion, time);
+            } else {
+                upGradeLog.setCurrentVersion(currentVersion);
+                upGradeLog.setCurrentTimeStamp(System.currentTimeMillis());
+            }
+
+            String finalValue = OBJECT_MAPPER.writeValueAsString(upGradeLog);
+            syncCommands.hset(upGradeLogKey, fieldKey, finalValue);
+        } catch (Exception e) {
+            logger.warn("add upgrade log failed, appId : {}, env : {}, version : {}, message : {}", appId, env, currentVersion, e.getMessage());
+        }
+    }
+
+    private void saveAppCode(String appId, String appCode) {
+        syncCommands.hset(appCodeKeys, appId, appCode);
     }
 
     /**
@@ -907,9 +969,9 @@ public class DefaultCacheExecutor implements CacheExecutor {
 
     private void localInvalidate(long entityId, int version) {
         try {
-            entityClassStorageCache.invalidate(generateEntityCacheKey(entityId, version));
-            profileCache.invalidate(generateEntityCacheKey(entityId, version));
-            versions.clear();
+            cacheContext.entityClassStorageCache().invalidate(generateEntityCacheKey(entityId, version));
+            cacheContext.entityClassStorageCache().invalidate(generateEntityCacheKey(entityId, version));
+            cacheContext.versionCache().remove(entityId);
         } catch (Exception e) {
             logger.warn("delete local failed, entityId:[{}], version:[{}], message:[{}]", entityId, version,
                 e.getMessage());
@@ -939,6 +1001,8 @@ public class DefaultCacheExecutor implements CacheExecutor {
 
         //  basic elements
         syncCommands.hset(key, ELEMENT_ID, Long.toString(newStorage.getId()));
+        syncCommands.hset(key, ELEMENT_APPCODE, newStorage.getAppCode());
+        syncCommands.hset(key, ELEMENT_TYPE, Integer.toString(newStorage.getType()));
         syncCommands.hset(key, ELEMENT_CODE, newStorage.getCode());
         syncCommands.hset(key, ELEMENT_NAME, newStorage.getName());
         syncCommands.hset(key, ELEMENT_LEVEL, Integer.toString(newStorage.getLevel()));
@@ -1098,9 +1162,10 @@ public class DefaultCacheExecutor implements CacheExecutor {
 
                         ids.forEach(
                             id -> {
-                                versions.put(id, version);
+                                cacheContext.versionCache().put(id, version);
                             }
                         );
+
                     } catch (JsonProcessingException e) {
                         logger.warn("cache version json error, message : {}", e.getMessage());
                     }
@@ -1121,4 +1186,8 @@ public class DefaultCacheExecutor implements CacheExecutor {
         return NOT_EXIST_VERSION;
     }
 
+    private String toNowDateString(LocalDate date) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+        return formatter.format(date);
+    }
 }

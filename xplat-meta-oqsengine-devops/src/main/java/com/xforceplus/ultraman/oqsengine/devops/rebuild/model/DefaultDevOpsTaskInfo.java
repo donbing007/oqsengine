@@ -15,7 +15,7 @@ public class DefaultDevOpsTaskInfo implements DevOpsTaskInfo {
     private long entity;
     private long starts;
     private long ends;
-    private long batchSize;
+    private volatile long batchSize;
     private volatile int finishSize;
     private volatile int errorSize;
     private volatile int status;
@@ -41,7 +41,7 @@ public class DefaultDevOpsTaskInfo implements DevOpsTaskInfo {
      */
     public DefaultDevOpsTaskInfo(long maintainId, IEntityClass entityClass, long starts, long ends) {
         this(maintainId, entityClass.id(), starts, ends, 0, 0,
-                        BatchStatus.PENDING.getCode(), System.currentTimeMillis(), 0);
+            BatchStatus.PENDING.getCode(), System.currentTimeMillis(), 0);
         this.entityClass = entityClass;
         this.message = "TASK INIT";
         this.incrementSize = 0;

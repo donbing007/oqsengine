@@ -1,6 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl;
 
+import com.xforceplus.ultraman.oqsengine.common.profile.OqsProfile;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import java.util.ArrayList;
@@ -32,6 +34,11 @@ public class EntityClass implements IEntityClass {
      * 对象code
      */
     private String code;
+
+    /*
+     * 所属于的应用code.
+     */
+    private String appCode;
     /*
      * 元数据版本.
      */
@@ -60,7 +67,10 @@ public class EntityClass implements IEntityClass {
      * 对象属性信息
      */
     private Collection<IEntityField> fields = Collections.emptyList();
-
+    /*
+     * entityClass的类型, static/dynamic
+     */
+    private EntityClassType type;
 
     private EntityClass() {
     }
@@ -76,8 +86,13 @@ public class EntityClass implements IEntityClass {
     }
 
     @Override
+    public String appCode() {
+        return this.appCode;
+    }
+
+    @Override
     public String profile() {
-        return profile;
+        return this.profile;
     }
 
     @Override
@@ -98,10 +113,20 @@ public class EntityClass implements IEntityClass {
     @Override
     public EntityClassRef ref() {
         return EntityClassRef.Builder.anEntityClassRef()
-            .withEntityClassId(id())
-            .withEntityClassCode(code())
-            .withEntityClassProfile(profile())
+            .withEntityClassId(id)
+            .withEntityClassCode(code)
+            .withEntityClassProfile(profile)
             .build();
+    }
+
+    @Override
+    public EntityClassType type() {
+        return type;
+    }
+
+    @Override
+    public boolean isDynamic() {
+        return type == null || type.equals(EntityClassType.DYNAMIC);
     }
 
     @Override
@@ -234,8 +259,10 @@ public class EntityClass implements IEntityClass {
         return id == that.id
             && version == that.version
             && level == that.level
+            && Objects.equals(profile, that.profile)
             && Objects.equals(name, that.name)
             && Objects.equals(code, that.code)
+            && Objects.equals(appCode, that.appCode)
             && Objects.equals(father, that.father)
             && Objects.equals(relations, that.relations)
             && Objects.equals(fields, that.fields);
@@ -252,6 +279,8 @@ public class EntityClass implements IEntityClass {
         sb.append("id=").append(id);
         sb.append(", name='").append(name).append('\'');
         sb.append(", code='").append(code).append('\'');
+        sb.append(", profile='").append(profile).append('\'');
+        sb.append(", appCode='").append(appCode).append('\'');
         sb.append(", version=").append(version);
         sb.append(", level=").append(level);
         sb.append(", relations=").append(relations);
@@ -268,12 +297,14 @@ public class EntityClass implements IEntityClass {
         private long id;
         private String name;
         private String code;
+        private String appCode;
         private int version;
         private int level;
         private String profile;
         private Collection<Relationship> relations = Collections.emptyList();
         private IEntityClass father;
         private Collection<IEntityField> fields = Collections.emptyList();
+        private EntityClassType type;
 
         private Builder() {
         }
@@ -303,6 +334,11 @@ public class EntityClass implements IEntityClass {
             return this;
         }
 
+        public EntityClass.Builder withAppCode(String appCode) {
+            this.appCode = appCode;
+            return this;
+        }
+
         public EntityClass.Builder withVersion(int version) {
             this.version = version;
             return this;
@@ -325,6 +361,11 @@ public class EntityClass implements IEntityClass {
 
         public EntityClass.Builder withFields(Collection<IEntityField> fields) {
             this.fields = fields;
+            return this;
+        }
+
+        public EntityClass.Builder withType(EntityClassType type) {
+            this.type = type;
             return this;
         }
 
@@ -351,15 +392,21 @@ public class EntityClass implements IEntityClass {
          */
         public EntityClass build() {
             EntityClass entityClass = new EntityClass();
-            entityClass.id = id;
-            entityClass.code = code;
+            entityClass.id = this.id;
+            entityClass.code = this.code;
+            entityClass.appCode = this.appCode;
             entityClass.name = this.name;
             entityClass.level = this.level;
             entityClass.version = this.version;
             entityClass.father = father;
             entityClass.fields = fields;
             entityClass.relations = this.relations;
-            entityClass.profile = this.profile;
+            entityClass.type = this.type;
+            if (this.profile == null) {
+                entityClass.profile = OqsProfile.UN_DEFINE_PROFILE;
+            } else {
+                entityClass.profile = this.profile;
+            }
             return entityClass;
         }
     }

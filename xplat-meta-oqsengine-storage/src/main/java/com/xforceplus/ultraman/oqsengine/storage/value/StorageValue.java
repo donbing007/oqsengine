@@ -69,6 +69,20 @@ public interface StorageValue<V> {
     StorageValue<V> stick(StorageValue<V> value);
 
     /**
+     * 当前物理储存值的一个附件物理值表示.
+     *
+     * @return 附件物理值.
+     */
+    StorageValue<String> getAttachment();
+
+    /**
+     * 判断是否含有附件.
+     *
+     * @return true有附件,false没有附件.
+     */
+    boolean haveAttachment();
+
+    /**
      * 字段逻辑名称.
      *
      * @return 名称.
@@ -135,4 +149,11 @@ public interface StorageValue<V> {
      * 设置当前部分为整个长字段切分中的第几部分.
      */
     void partition(int partition);
+
+    /**
+     * 判断是否空值.
+     *
+     * @return true 空值, false 非空值.
+     */
+    boolean isEmpty();
 }

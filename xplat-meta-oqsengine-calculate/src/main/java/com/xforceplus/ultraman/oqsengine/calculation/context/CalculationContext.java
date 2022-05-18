@@ -327,6 +327,13 @@ public interface CalculationContext {
     boolean tryLocksEntity(long ...entityIds);
 
     /**
+     * 返回加锁超时时间.
+     *
+     * @return 加锁超时时间,毫秒.
+     */
+    long getLockTimeoutMs();
+
+    /**
      * 清理.
      */
     void destroy();

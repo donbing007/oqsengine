@@ -2,15 +2,18 @@ package com.xforceplus.ultraman.oqsengine.lock;
 
 import com.xforceplus.ultraman.oqsengine.common.mock.CommonInitialization;
 import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
+import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.RedisContainer;
 import io.lettuce.core.RedisClient;
-import java.util.concurrent.CompletableFuture;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -63,29 +66,42 @@ public class RedisResourceLockerTest extends AbstractResourceLockerTest {
      * 测试是否正确续期.
      */
     @Test
-    @Disabled("暂时去除了续期功能,将在下个版本提供.")
     public void testTenewalIntervalMs() throws Exception {
-        String resource = "test.resource";
-        locker.lock(resource);
-        long ttl = locker.getTtlMs();
+        int size = 10;
+        ExecutorService worker = Executors.newFixedThreadPool(size);
+        CountDownLatch latch = new CountDownLatch(size);
+        Queue<Boolean> queue = new ConcurrentLinkedQueue();
+        for (int i = 0; i < size; i++) {
+            int finalI = i;
+            worker.submit(() -> {
+                String resource = "test.resource" + finalI;
 
-        /*
-        等待比TTL多50%的时间.
-         */
-        TimeUnit.MILLISECONDS.sleep(ttl + (long) (ttl * 0.5F));
+                try {
+                    locker.lock(resource);
 
-        Assertions.assertTrue(locker.isLocking(resource));
 
-        CountDownLatch latch = new CountDownLatch(1);
-        CompletableFuture<Boolean> future = CompletableFuture.supplyAsync(() -> {
-            try {
-                return locker.tryLock(resource);
-            } finally {
-                latch.countDown();
-            }
-        });
+                    long ttl = locker.getTtlMs();
+
+                    TimeUnit.MILLISECONDS.sleep(ttl + (long) (ttl * 0.2F));
+
+                    queue.add(locker.isLocking(resource));
+
+                } catch (InterruptedException e) {
+
+                    logger.error(e.getMessage(), e);
+
+                } finally {
+
+                    latch.countDown();
+                }
+            });
+        }
+
         latch.await();
 
-        Assertions.assertFalse(future.get());
+        ExecutorHelper.shutdownAndAwaitTermination(worker, 1);
+
+        Assertions.assertEquals(size, queue.size());
+        Assertions.assertEquals(size, queue.stream().filter(b -> b).count());
     }
 }

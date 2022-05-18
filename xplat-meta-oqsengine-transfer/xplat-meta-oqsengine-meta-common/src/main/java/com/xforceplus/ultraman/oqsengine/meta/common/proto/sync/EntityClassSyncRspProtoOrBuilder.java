@@ -30,4 +30,14 @@ public interface EntityClassSyncRspProtoOrBuilder extends
    */
   com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassInfoOrBuilder getEntityClassesOrBuilder(
       int index);
+
+  /**
+   * <code>string appCode = 2;</code>
+   */
+  java.lang.String getAppCode();
+  /**
+   * <code>string appCode = 2;</code>
+   */
+  com.google.protobuf.ByteString
+      getAppCodeBytes();
 }

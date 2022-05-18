@@ -28,16 +28,23 @@ public interface IEntityClass {
     String code();
 
     /**
-     * 替身,例如表示某个租户.
+     * 所属于的应用Code.
      */
-    default String profile() {
-        return OqsProfile.UN_DEFINE_PROFILE;
+    default String appCode() {
+        return "";
     }
 
     /**
      * 元信息名称.
      */
     String name();
+
+    /**
+     * 替身.元信息特殊定制的标记.
+     */
+    default String profile() {
+        return OqsProfile.UN_DEFINE_PROFILE;
+    }
 
     /**
      * 元信息版本.0为初始版本号.
@@ -152,5 +159,22 @@ public interface IEntityClass {
         return family().stream().filter(e -> e.id() == id).count() >= 1;
     }
 
+    /**
+     * 判断指定的元信息是否兼容当前元信息.
+     *
+     * @param entityClass 判断目标.
+     * @return true 兼容, false 不兼容.
+     */
+    default boolean isCompatibility(IEntityClass entityClass) {
+        return isCompatibility(entityClass.id());
+    }
 
+    /**
+     * 获取当前entityClass的类型，目前支持的类型包括动态、静态.
+     *
+     * @return 返回entityClassType.
+     */
+    default EntityClassType type() {
+        return EntityClassType.UNKNOWN;
+    }
 }

@@ -1,7 +1,9 @@
 {
+  "appCode": "onlineTest",
   "entityClasses": [{
     "code": "component",
     "id": "1251658380868685825",
+    "type": 2,
     "name": "组件",
     "version": 2027,
     "entityFields": [{
@@ -345,6 +347,7 @@
   }, {
     "code": "person",
     "id": "1263391796170928130",
+    "type": 2,
     "name": "人员",
     "version": 2027,
     "entityFields": [{
@@ -1183,6 +1186,7 @@
   }, {
     "code": "route",
     "id": "1267402433675583489",
+    "type": 2,
     "name": "路由配置",
     "version": 2026,
     "entityFields": [{
@@ -1433,6 +1437,7 @@
   }, {
     "code": "app",
     "id": "1267402804498194434",
+    "type": 2,
     "name": "应用",
     "version": 2026,
     "entityFields": [{
@@ -1853,6 +1858,7 @@
   }, {
     "code": "invoice",
     "id": "1268111464543596546",
+    "type": 2,
     "name": "发票",
     "version": 2023,
     "entityFields": [{
@@ -2150,6 +2156,7 @@
   }, {
     "code": "importObj",
     "id": "1270529341674151937",
+    "type": 2,
     "name": "导入对象",
     "version": 2022,
     "entityFields": [{
@@ -2411,6 +2418,7 @@
   }, {
     "code": "depart",
     "id": "1275678539314814978",
+    "type": 2,
     "name": "组织",
     "version": 2016,
     "entityFields": [{
@@ -2687,6 +2695,7 @@
   }, {
     "code": "company",
     "id": "1275678608923484162",
+    "type": 2,
     "name": "公司",
     "version": 2016,
     "entityFields": [{
@@ -3052,6 +3061,7 @@
   }, {
     "code": "childTest",
     "id": "1304253852310900738",
+    "type": 2,
     "name": "子类测试",
     "father": "1275678608923484162",
     "level": 1,
@@ -3198,6 +3208,7 @@
   }, {
     "code": "testsave7",
     "id": "1309381492597805057",
+    "type": 2,
     "name": "testsave7",
     "version": 2000,
     "entityFields": [{
@@ -3371,6 +3382,7 @@
   }, {
     "code": "test9",
     "id": "1311131393018982401",
+    "type": 2,
     "name": "test9",
     "version": 2000,
     "entityFields": [{
@@ -3563,6 +3575,7 @@
   }, {
     "code": "testa",
     "id": "1311134927391191042",
+    "type": 2,
     "name": "testa",
     "version": 2000,
     "entityFields": [{
@@ -3736,6 +3749,7 @@
   }, {
     "code": "testb",
     "id": "1311139676484169729",
+    "type": 2,
     "name": "testb",
     "version": 2000,
     "entityFields": [{
@@ -3909,6 +3923,7 @@
   }, {
     "code": "testc",
     "id": "1311141420551270402",
+    "type": 2,
     "name": "testc",
     "version": 2000,
     "entityFields": [{
@@ -4082,6 +4097,7 @@
   }, {
     "code": "testd",
     "id": "1311189520414326785",
+    "type": 2,
     "name": "testd",
     "version": 2000,
     "entityFields": [{
@@ -4255,6 +4271,7 @@
   }, {
     "code": "teste",
     "id": "1311202546676850689",
+    "type": 2,
     "name": "teste",
     "version": 2000,
     "entityFields": [{
@@ -4428,6 +4445,7 @@
   }, {
     "code": "actionTrail",
     "id": "1315859164940939266",
+    "type": 2,
     "name": "行为审计",
     "version": 2000,
     "entityFields": [{
@@ -4738,6 +4756,7 @@
   }, {
     "code": "objectIndex",
     "id": "1319299558087929857",
+    "type": 2,
     "name": "对象索引",
     "version": 1098,
     "entityFields": [{
@@ -4945,6 +4964,7 @@
   }, {
     "code": "assetchild",
     "id": "1321300992379789314",
+    "type": 2,
     "name": "assetchild",
     "level": 1,
     "version": 1097,
@@ -4969,6 +4989,7 @@
   }, {
     "code": "personCompany",
     "id": "1336568713741770754",
+    "type": 2,
     "name": "个人有限公司",
     "father": "1275678608923484162",
     "level": 1,
@@ -5032,6 +5053,7 @@
   }, {
     "code": "bigPerson",
     "id": "1351129912773951489",
+    "type": 2,
     "name": "大人",
     "father": "1263391796170928130",
     "level": 1,
@@ -5073,6 +5095,7 @@
   }, {
     "code": "dddtest",
     "id": "1366227203765637121",
+    "type": 2,
     "name": "默认值测试",
     "version": 1065,
     "entityFields": [{
@@ -5445,6 +5468,7 @@
   }, {
     "code": "invoiceBill",
     "id": "1366326718728310785",
+    "type": 2,
     "name": "票据",
     "version": 1064,
     "entityFields": [{
@@ -5653,6 +5677,7 @@
   }, {
     "code": "mobiletest",
     "id": "1375361236081782786",
+    "type": 2,
     "name": "移动端测试对象",
     "version": 1062,
     "entityFields": [{
@@ -6040,6 +6065,7 @@
   }, {
     "code": "formulaEntity",
     "id": "1391633432916127746",
+    "type": 2,
     "name": "公式对象",
     "version": 1030,
     "entityFields": [{
@@ -6224,6 +6250,7 @@
   }, {
     "code": "aPerson",
     "id": "1392404401170087937",
+    "type": 2,
     "name": "aPerson",
     "father": "1263391796170928130",
     "level": 1,
@@ -6276,6 +6303,7 @@
   }, {
     "code": "bPerson",
     "id": "1392404559869968385",
+    "type": 2,
     "name": "bPerson",
     "father": "1392404401170087937",
     "level": 2,
@@ -6328,6 +6356,7 @@
   }, {
     "code": "cPerson",
     "id": "1392404671652364290",
+    "type": 2,
     "name": "cPerson",
     "father": "1392404559869968385",
     "level": 3,
@@ -6380,6 +6409,7 @@
   }, {
     "code": "dPerson",
     "id": "1392404791726899201",
+    "type": 2,
     "name": "dPerson",
     "father": "1392404671652364290",
     "level": 4,
@@ -6454,6 +6484,7 @@
   }, {
     "code": "childTest3",
     "id": "1394239130636632066",
+    "type": 2,
     "name": "childTest3",
     "father": "1304253852310900738",
     "level": 2,
@@ -6480,6 +6511,7 @@
   }, {
     "code": "childTest4",
     "id": "1394239218805096450",
+    "type": 2,
     "name": "childTest4",
     "father": "1394239130636632066",
     "level": 3,
@@ -6506,6 +6538,7 @@
   }, {
     "code": "appLevel1",
     "id": "1394945267914412034",
+    "type": 2,
     "name": "应用扩展一层",
     "father": "1267402804498194434",
     "level": 1,
@@ -6532,6 +6565,7 @@
   }, {
     "code": "appLevel2",
     "id": "1394946043051151362",
+    "type": 2,
     "name": "应用扩展二层",
     "father": "1394945267914412034",
     "level": 2,
@@ -6629,6 +6663,7 @@
   }, {
     "code": "appLevel3",
     "id": "1395220921749803010",
+    "type": 2,
     "name": " 应用扩展三层",
     "father": "1394946043051151362",
     "level": 3,
@@ -6655,6 +6690,7 @@
   }, {
     "code": "appLevel4",
     "id": "1395221667354447873",
+    "type": 2,
     "name": " 应用扩展四层",
     "father": "1395220921749803010",
     "level": 4,
@@ -6729,6 +6765,7 @@
   }, {
     "code": "air",
     "id": "1395650019019907074",
+    "type": 2,
     "name": "飞机票",
     "version": 24,
     "entityFields": [{
@@ -6967,6 +7004,7 @@
   }, {
     "code": "airdetail",
     "id": "1395650144349904897",
+    "type": 2,
     "name": "飞机票明细",
     "version": 24,
     "entityFields": [{
@@ -7187,6 +7225,7 @@
   }, {
     "code": "inv",
     "id": "1397389052517261313",
+    "type": 2,
     "name": "发票信息",
     "version": 14,
     "entityFields": [{
@@ -7401,6 +7440,7 @@
   }, {
     "code": "testdefault",
     "id": "1399279274276651010",
+    "type": 2,
     "name": "testdefault",
     "version": 8,
     "entityFields": [{
@@ -7618,6 +7658,7 @@
   }, {
     "code": "diffAdd",
     "id": "1400707957463646209",
+    "type": 2,
     "name": "新增变更",
     "version": 3,
     "entityFields": [{

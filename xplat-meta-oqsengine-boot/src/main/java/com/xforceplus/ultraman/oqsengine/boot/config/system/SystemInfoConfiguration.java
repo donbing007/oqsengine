@@ -80,14 +80,18 @@ public class SystemInfoConfiguration {
     }
 
     /**
-     * 生成system-info.
+     * 生成系统信息.
+     *
+     * @return 系统信息.
      */
     public SDKAgentConfig generateSystemInfo() {
         SDKAgentConfig sdkAgentConfig = new SDKAgentConfig();
         //  cdc
         sdkAgentConfig.addService(new CanalTypedConfig(cdcHost, cdcDestination));
-        sdkAgentConfig.addService(new RedisTypedConfig(
-            SystemInfoConfigUtils.getSimpleUrl("@", "?", redisLettuceUrl), Integer.toString(redissonDataBase)));
+        sdkAgentConfig.addService(
+            new RedisTypedConfig(
+                SystemInfoConfigUtils.getSimpleUrl("@", "?", redisLettuceUrl),
+                Integer.toString(redissonDataBase)));
         sdkAgentConfig.addService(new ManticoreTypedConfig(indexSimpleUri, indexSearchName, indexWriteName));
         sdkAgentConfig.addService(new MysqlTypedConfig(masterSimpleUri, masterName));
 

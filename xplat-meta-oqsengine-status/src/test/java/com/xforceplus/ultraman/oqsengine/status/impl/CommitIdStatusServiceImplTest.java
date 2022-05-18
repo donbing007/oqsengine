@@ -102,6 +102,12 @@ public class CommitIdStatusServiceImplTest {
         }
 
         Assertions.assertArrayEquals(expected, status);
+
+        // 确认淘汰的提交号也认为是淘汰
+        impl.save(Long.MAX_VALUE, true);
+        impl.obsolete(Long.MAX_VALUE);
+        Assertions.assertTrue(impl.isReady(Long.MAX_VALUE));
+        Assertions.assertArrayEquals(new boolean[] { true }, impl.isReady(new long[] {Long.MAX_VALUE}));
     }
 
     /**
@@ -165,7 +171,8 @@ public class CommitIdStatusServiceImplTest {
         impl.obsolete(commitId);
 
         for (int i = 0; i < 10; i++) {
-            Assertions.assertFalse(impl.isReady(commitId));
+            Assertions.assertTrue(impl.isReady(commitId));
+            Assertions.assertTrue(impl.isObsolete(commitId));
         }
     }
 
@@ -221,11 +228,10 @@ public class CommitIdStatusServiceImplTest {
      */
     @Test
     public void testSize() throws Exception {
-        long expectedCount = LongStream
-            .rangeClosed(9, 100).map(i -> {
-                impl.save(i, false);
-                return i;
-            }).count();
+        long expectedCount = 100;
+        for (long i = 1; i <= expectedCount; i++) {
+            Assertions.assertTrue(impl.save(i, false));
+        }
         Assertions.assertEquals(expectedCount, impl.size());
     }
 
@@ -312,7 +318,7 @@ public class CommitIdStatusServiceImplTest {
         impl.obsolete(100);
         impl.save(100, true);
 
-        Assertions.assertFalse(impl.isReady(100));
+        Assertions.assertTrue(impl.isReady(100));
         Assertions.assertTrue(impl.isObsolete(100));
         Assertions.assertEquals(200, impl.getMin().get().longValue());
         Assertions.assertEquals(1, impl.size());
@@ -358,7 +364,7 @@ public class CommitIdStatusServiceImplTest {
              */
             if (impl.isObsolete(i)) {
 
-                Assertions.assertFalse(impl.isReady(i));
+                Assertions.assertTrue(impl.isReady(i));
 
             } else if (impl.isReady(i + 1)) {
 

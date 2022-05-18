@@ -18,7 +18,6 @@ public class CDCMetricsRecorder {
     private CDCMetrics cdcMetrics;
     private long start;
 
-
     /**
      * 开始记录.
      */

@@ -22,6 +22,8 @@ import java.util.ArrayList;
  */
 public class MetaPayLoadHelper {
 
+    private static String APP_CODE = "MetaPayLoadHelper";
+
     /**
      * 产生一个基本对象.
      * @param id entityClassId.
@@ -30,6 +32,7 @@ public class MetaPayLoadHelper {
     public static EntityClassStorage toBasicPrepareEntity(long id) {
         EntityClassStorage entityClassStorage = new EntityClassStorage();
         entityClassStorage.setId(id);
+        entityClassStorage.setAppCode(APP_CODE);
         entityClassStorage.setVersion(GeneralConstant.DEFAULT_VERSION);
 
         entityClassStorage.setName(id + GeneralConstant.LEVEL
@@ -54,7 +57,7 @@ public class MetaPayLoadHelper {
 
             switch (calculationType) {
                 case STATIC: {
-                    builder.withConfig(fieldConfig(staticCalculation()));
+                    builder.withConfig(fieldConfig(staticCalculation(), fieldType));
                     break;
                 }
                 case FORMULA: {
@@ -62,7 +65,7 @@ public class MetaPayLoadHelper {
                     if (op.equals(OperationType.UPDATE)) {
                         express = GeneralConstant.MOCK_EXPRESSION_SUB;
                     }
-                    builder.withConfig(fieldConfig(formula(express, GeneralConstant.MOCK_LEVEL, fieldType)));
+                    builder.withConfig(fieldConfig(formula(express, GeneralConstant.MOCK_LEVEL, fieldType), fieldType));
                     break;
                 }
                 case AUTO_FILL: {
@@ -71,7 +74,7 @@ public class MetaPayLoadHelper {
                         express = GeneralConstant.MOCK_PATTEN_SUB;
                     }
                     builder.withConfig(fieldConfig(autoFill(express,
-                        GeneralConstant.MOCK_MODEL, GeneralConstant.MOCK_MIN, GeneralConstant.MOCK_STEP)));
+                        GeneralConstant.MOCK_MODEL, GeneralConstant.MOCK_MIN, GeneralConstant.MOCK_STEP), fieldType));
                     break;
                 }
                 default: {

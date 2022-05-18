@@ -69,22 +69,22 @@ public class StarterTest {
         Map<String, String> systemInfo = systemInfoConfiguration.printSystemInfo();
 
         //  cdc
-        Assertions.assertTrue(!StringUtils.isEmpty(systemInfo.get("cdcHost")));
-        Assertions.assertTrue(!StringUtils.isEmpty(systemInfo.get("cdcDestination")));
+        Assertions.assertFalse(StringUtils.isEmpty(systemInfo.get("cdcHost")));
+        Assertions.assertFalse(StringUtils.isEmpty(systemInfo.get("cdcDestination")));
         //  meta
-        Assertions.assertTrue(!StringUtils.isEmpty(systemInfo.get("metaHost")));
-        Assertions.assertTrue(!StringUtils.isEmpty(systemInfo.get("metaPort")));
+        Assertions.assertFalse(StringUtils.isEmpty(systemInfo.get("metaHost")));
+        Assertions.assertFalse(StringUtils.isEmpty(systemInfo.get("metaPort")));
         //  redis
-        Assertions.assertTrue(!StringUtils.isEmpty(systemInfo.get("redisLettuceUrl")));
-        Assertions.assertTrue(!StringUtils.isEmpty(systemInfo.get("redissonDataBase")));
-        Assertions.assertTrue(!StringUtils.isEmpty(systemInfo.get("redissonSingleAddress")));
+        Assertions.assertFalse(StringUtils.isEmpty(systemInfo.get("redisLettuceUrl")));
+        Assertions.assertFalse(StringUtils.isEmpty(systemInfo.get("redissonDataBase")));
+
         //  index
-        Assertions.assertTrue(!StringUtils.isEmpty(systemInfo.get("indexSearchName")));
-        Assertions.assertTrue(!StringUtils.isEmpty(systemInfo.get("indexWriteName")));
-        Assertions.assertTrue(!StringUtils.isEmpty(systemInfo.get("indexSimpleUri")));
+        Assertions.assertFalse(StringUtils.isEmpty(systemInfo.get("indexSearchName")));
+        Assertions.assertFalse(StringUtils.isEmpty(systemInfo.get("indexWriteName")));
+        Assertions.assertFalse(StringUtils.isEmpty(systemInfo.get("indexSimpleUri")));
         //  master
-        Assertions.assertTrue(!StringUtils.isEmpty(systemInfo.get("masterName")));
-        Assertions.assertTrue(!StringUtils.isEmpty(systemInfo.get("masterSimpleUri")));
+        Assertions.assertFalse(StringUtils.isEmpty(systemInfo.get("masterName")));
+        Assertions.assertFalse(StringUtils.isEmpty(systemInfo.get("masterSimpleUri")));
     }
 
     @Test

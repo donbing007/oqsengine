@@ -58,12 +58,14 @@ public class DefaultDevOpsTaskHandler implements TaskHandler {
     private void flush() {
         try {
             sqlTaskStorage.selectUnique((devOpsTaskInfo).getMaintainid()).ifPresent(opsTaskInfo -> {
-                devOpsTaskInfo.setBatchSize(opsTaskInfo.getBatchSize());
-                devOpsTaskInfo.setFinishSize(opsTaskInfo.getFinishSize());
-                devOpsTaskInfo.setErrorSize(opsTaskInfo.getErrorSize());
-                devOpsTaskInfo.resetStatus(opsTaskInfo.getStatus());
-                devOpsTaskInfo.resetMessage(opsTaskInfo.message());
-                devOpsTaskInfo.resetUpdateTime(opsTaskInfo.updateTime());
+                synchronized (DefaultDevOpsTaskHandler.class) {
+                    devOpsTaskInfo.setBatchSize(opsTaskInfo.getBatchSize());
+                    devOpsTaskInfo.setFinishSize(opsTaskInfo.getFinishSize());
+                    devOpsTaskInfo.setErrorSize(opsTaskInfo.getErrorSize());
+                    devOpsTaskInfo.resetStatus(opsTaskInfo.getStatus());
+                    devOpsTaskInfo.resetMessage(opsTaskInfo.message());
+                    devOpsTaskInfo.resetUpdateTime(opsTaskInfo.updateTime());
+                }
             });
         } catch (Exception e) {
             e.printStackTrace();

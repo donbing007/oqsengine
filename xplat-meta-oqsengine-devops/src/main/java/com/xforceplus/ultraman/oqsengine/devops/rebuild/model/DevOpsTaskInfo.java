@@ -192,7 +192,6 @@ public interface DevOpsTaskInfo {
      */
     void resetUpdateTime(long updateTime);
 
-
     /**
      * 获取当前incrementSize.
      */

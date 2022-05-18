@@ -34,7 +34,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.EntityPackage;
-import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.OqsEngineEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -469,14 +469,14 @@ public class DefaultCalculationImplTest {
         }
 
         @Override
-        public DataIterator<OriginalEntity> iterator(IEntityClass entityClass, long startTime, long endTime,
-                                                     long lastId) throws SQLException {
+        public DataIterator<OqsEngineEntity> iterator(IEntityClass entityClass, long startTime, long endTime,
+                                                      long lastId) throws SQLException {
             return null;
         }
 
         @Override
-        public DataIterator<OriginalEntity> iterator(IEntityClass entityClass, long startTime, long endTime,
-                                                     long lastId, int size) throws SQLException {
+        public DataIterator<OqsEngineEntity> iterator(IEntityClass entityClass, long startTime, long endTime,
+                                                      long lastId, int size) throws SQLException {
             return null;
         }
     }

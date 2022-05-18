@@ -11,7 +11,7 @@ import java.net.InetSocketAddress;
  */
 public class SingleCDCConnector extends AbstractCDCConnector {
 
-    private int port;
+    protected int port;
 
     public SingleCDCConnector(String connectString, String destination, String userName, String password, int port) {
         super(connectString, destination, userName, password);

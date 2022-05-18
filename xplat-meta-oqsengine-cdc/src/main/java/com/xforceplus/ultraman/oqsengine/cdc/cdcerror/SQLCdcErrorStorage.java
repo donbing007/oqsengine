@@ -1,14 +1,16 @@
 package com.xforceplus.ultraman.oqsengine.cdc.cdcerror;
 
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.condition.CdcErrorQueryCondition;
+import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.executor.impl.CdcErrorBatchInsertExecutor;
+import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.executor.impl.CdcErrorBatchQueryExecutor;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.executor.impl.CdcErrorBuildExecutor;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.executor.impl.CdcErrorQueryExecutor;
-import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.executor.impl.CdcErrorRecoverExecutor;
-import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.executor.impl.CdcErrorUpdateExecutor;
+import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.executor.impl.CdcErrorUpdateStatusExecutor;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.CdcErrorTask;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.FixedStatus;
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.List;
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import javax.sql.DataSource;
@@ -27,7 +29,6 @@ public class SQLCdcErrorStorage implements CdcErrorStorage {
     private String cdcErrorRecordTable;
 
     private long queryTimeout;
-
 
     public void setCdcErrorRecordTable(String cdcErrorRecordTable) {
         this.cdcErrorRecordTable = cdcErrorRecordTable;
@@ -52,16 +53,9 @@ public class SQLCdcErrorStorage implements CdcErrorStorage {
     }
 
     @Override
-    public int updateCdcError(long seqNo, FixedStatus fixedStatus) throws SQLException {
-        return CdcErrorUpdateExecutor
+    public int updateCdcErrorStatus(long seqNo, FixedStatus fixedStatus) throws SQLException {
+        return CdcErrorUpdateStatusExecutor
             .build(cdcErrorRecordTable, devOpsDataSource, queryTimeout, fixedStatus)
-            .execute(seqNo);
-    }
-
-    @Override
-    public int submitRecover(long seqNo, FixedStatus fixedStatus, String operationObjectString) throws SQLException {
-        return CdcErrorRecoverExecutor
-            .build(cdcErrorRecordTable, devOpsDataSource, queryTimeout, fixedStatus, operationObjectString)
             .execute(seqNo);
     }
 
@@ -70,5 +64,19 @@ public class SQLCdcErrorStorage implements CdcErrorStorage {
         return CdcErrorQueryExecutor
             .build(cdcErrorRecordTable, devOpsDataSource, queryTimeout)
             .execute(res);
+    }
+
+    @Override
+    public Collection<CdcErrorTask> queryCdcErrors(List<String> res) throws SQLException {
+        return CdcErrorBatchQueryExecutor
+            .build(cdcErrorRecordTable, devOpsDataSource, queryTimeout)
+            .execute(res);
+    }
+
+    @Override
+    public boolean batchInsert(Collection<CdcErrorTask> errorTasks) throws SQLException {
+        return CdcErrorBatchInsertExecutor
+            .build(cdcErrorRecordTable, devOpsDataSource, queryTimeout)
+            .execute(errorTasks);
     }
 }

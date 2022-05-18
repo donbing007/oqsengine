@@ -11,7 +11,6 @@ import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFac
 import com.xforceplus.ultraman.oqsengine.calculation.impl.DefaultCalculationImpl;
 import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
-import com.xforceplus.ultraman.oqsengine.common.version.VersionHelp;
 import com.xforceplus.ultraman.oqsengine.core.service.impl.mock.EntityClassDefine;
 import com.xforceplus.ultraman.oqsengine.core.service.pojo.OqsResult;
 import com.xforceplus.ultraman.oqsengine.event.DoNothingEventBus;
@@ -25,10 +24,10 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.storage.executor.ResourceTask;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.executor.hint.DefaultExecutorHint;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.EntityPackage;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.MultiLocalTransaction;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.RedisContainer;
 import java.sql.SQLException;
 import java.util.Arrays;
@@ -53,6 +52,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 public class EntityManagementServiceImplTest {
 
     private EntityManagementServiceImpl impl;
+    private MockTransactionExecutor executor;
 
     /**
      * 每个测试初始化.
@@ -60,12 +60,14 @@ public class EntityManagementServiceImplTest {
     @BeforeEach
     public void before() throws Exception {
 
+        executor = new MockTransactionExecutor();
+
         impl = new EntityManagementServiceImpl(true);
         ReflectionTestUtils.setField(impl, "longContinuousPartialOrderIdGenerator",
             new IncreasingOrderLongIdGenerator());
         ReflectionTestUtils.setField(impl, "longNoContinuousPartialOrderIdGenerator",
             new IncreasingOrderLongIdGenerator());
-        ReflectionTestUtils.setField(impl, "transactionExecutor", new MockTransactionExecutor());
+        ReflectionTestUtils.setField(impl, "transactionExecutor", executor);
         ReflectionTestUtils.setField(impl, "metaManager", EntityClassDefine.getMockMetaManager());
         ReflectionTestUtils.setField(impl, "calculation", new DefaultCalculationImpl());
         ReflectionTestUtils.setField(impl, "resourceLocker", new LocalResourceLocker());
@@ -76,6 +78,7 @@ public class EntityManagementServiceImplTest {
 
     @AfterEach
     public void after() throws Exception {
+        executor.currentTx.remove();
     }
 
     @Test
@@ -128,6 +131,8 @@ public class EntityManagementServiceImplTest {
 
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
         OqsResult<IEntity[]> results = impl.build(targetEntities);
+
+        Assertions.assertFalse(executor.currentTx.get().getHint().isCanWaitCommitSync());
         Assertions.assertEquals(ResultStatus.SUCCESS, results.getResultStatus());
         Assertions.assertEquals(targetEntities.length, results.getValue().get().length);
 
@@ -159,6 +164,8 @@ public class EntityManagementServiceImplTest {
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
 
         OqsResult<IEntity> result = impl.build(targetEntity);
+
+        Assertions.assertTrue(executor.currentTx.get().getHint().isCanWaitCommitSync());
         Assertions.assertEquals(ResultStatus.SUCCESS, result.getResultStatus());
         Assertions.assertEquals(targetEntity.id(), result.getValue().get().id());
     }
@@ -317,7 +324,9 @@ public class EntityManagementServiceImplTest {
         });
 
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
+
         Assertions.assertEquals(ResultStatus.SUCCESS, impl.replace(replaceEntity).getResultStatus());
+        Assertions.assertTrue(executor.currentTx.get().getHint().isCanWaitCommitSync());
     }
 
     @Test
@@ -344,52 +353,10 @@ public class EntityManagementServiceImplTest {
         });
 
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
+
         Assertions.assertEquals(ResultStatus.SUCCESS, impl.delete(targetEntity).getResultStatus());
+        Assertions.assertTrue(executor.currentTx.get().getHint().isCanWaitCommitSync());
     }
-
-    @Test
-    public void testDeleteForce() throws Exception {
-        MasterStorage masterStorage = mock(MasterStorage.class);
-
-        // 已经存在的
-        IEntity targetEntity = Entity.Builder.anEntity()
-            .withEntityClassRef(
-                new EntityClassRef(EntityClassDefine.l2EntityClass.id(), EntityClassDefine.l2EntityClass.code()))
-            .withId(1)
-            .withVersion(200)
-            .withTime(System.currentTimeMillis())
-            .withValues(Stream.of(new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L),
-                new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"),
-                new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")).collect(Collectors.toList())
-            ).build();
-        targetEntity.neat();
-
-        when(masterStorage.selectOne(1, EntityClassDefine.l2EntityClass)).thenReturn(Optional.of(targetEntity));
-        when(masterStorage.delete(targetEntity, EntityClassDefine.l2EntityClass)).thenAnswer(inv -> {
-            IEntity entity = inv.getArgument(0);
-            entity.resetVersion(VersionHelp.OMNIPOTENCE_VERSION);
-            entity.delete();
-            return true;
-        });
-        ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
-
-        // 删除目标
-        IEntity deletedEntity = Entity.Builder.anEntity()
-            .withEntityClassRef(
-                new EntityClassRef(EntityClassDefine.l2EntityClass.id(), EntityClassDefine.l2EntityClass.code()))
-            .withId(1)
-            .withVersion(200)
-            .withTime(System.currentTimeMillis())
-            .withValues(Stream.of(new LongValue(EntityClassDefine.l2EntityClass.field("l0-long").get(), 10000L),
-                new StringValue(EntityClassDefine.l2EntityClass.field("l1-string").get(), "l2value"),
-                new EnumValue(EntityClassDefine.l2EntityClass.field("l2-enum").get(), "E")).collect(Collectors.toList())
-            ).build();
-
-        Assertions.assertEquals(ResultStatus.SUCCESS, impl.deleteForce(deletedEntity).getResultStatus());
-        Assertions.assertEquals(VersionHelp.OMNIPOTENCE_VERSION, targetEntity.version());
-
-    }
-
 
     @Test
     public void testDeleteFail() throws Exception {
@@ -432,19 +399,21 @@ public class EntityManagementServiceImplTest {
 
     static class MockTransactionExecutor implements TransactionExecutor {
 
+        private ThreadLocal<Transaction> currentTx = new ThreadLocal<>();
         private LongIdGenerator idGenerator = new IncreasingOrderLongIdGenerator();
 
         @Override
         public Object execute(ResourceTask storageTask) throws SQLException {
             try {
-                return storageTask.run(
-                    MultiLocalTransaction.Builder.anMultiLocalTransaction()
-                        .withId(1)
-                        .withLongIdGenerator(idGenerator)
-                        .withEventBus(DoNothingEventBus.getInstance()).build(),
-                    null,
-                    new DefaultExecutorHint()
-                );
+
+                Transaction tx = MultiLocalTransaction.Builder.anMultiLocalTransaction()
+                    .withId(1)
+                    .withLongIdGenerator(idGenerator)
+                    .withEventBus(DoNothingEventBus.getInstance()).build();
+
+                currentTx.set(tx);
+
+                return storageTask.run(tx, null);
             } catch (Exception e) {
                 throw new SQLException(e.getMessage(), e);
             }

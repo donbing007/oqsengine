@@ -36,18 +36,18 @@ public class AvgFunctionStrategy implements FunctionStrategy {
     final Logger logger = LoggerFactory.getLogger(AvgFunctionStrategy.class);
 
     @Override
-    public Optional<IValue> excute(Optional<IValue> agg, Optional<IValue> o, Optional<IValue> n, CalculationContext context) {
+    public Optional<IValue> excute(Optional<IValue> currentValue, Optional<IValue> oldValue, Optional<IValue> newValue, CalculationContext context) {
         if (logger.isDebugEnabled()) {
             logger.debug("begin excuteAvg agg:{}, o-value:{}, n-value:{}",
-                agg.get().valueToString(), o.get().valueToString(), n.get().valueToString());
+                currentValue.get().valueToString(), oldValue.get().valueToString(), newValue.get().valueToString());
         }
         //焦点字段
         Aggregation aggregation = ((Aggregation) context.getFocusField().config().getCalculation());
-        Optional<IValue> aggValue = Optional.of(agg.get().copy());
+        Optional<IValue> aggValue = Optional.of(currentValue.get().copy());
         long count = countAggregationByAttachment(aggValue.get());
         if (count == 0) {
             if (!context.getFocusField().type().equals(FieldType.DATETIME)) {
-                Optional<IValue> attAggValue = Optional.of(attachmentReplace(aggValue.get(), o.get(), n.get(), CalculationScenarios.BUILD));
+                Optional<IValue> attAggValue = Optional.of(attachmentReplace(aggValue.get(), oldValue.get(), newValue.get(), CalculationScenarios.BUILD));
                 return attAggValue;
             }
             return aggValue;
@@ -56,17 +56,17 @@ public class AvgFunctionStrategy implements FunctionStrategy {
         // 判断聚合的对象信息是否是当前来源的数据
         if (aggregation.getClassId() == context.getSourceEntity().entityClassRef().getId()) {
             if (context.getScenariso().equals(CalculationScenarios.BUILD)) {
-                Optional<IValue> attAggValue = Optional.of(attachmentReplace(aggValue.get(), o.get(), n.get(), CalculationScenarios.BUILD));
+                Optional<IValue> attAggValue = Optional.of(attachmentReplace(aggValue.get(), oldValue.get(), newValue.get(), CalculationScenarios.BUILD));
                 return attAggValue;
             } else if (context.getScenariso().equals(CalculationScenarios.DELETE)) {
-                Optional<IValue> attAggValue = Optional.of(attachmentReplace(aggValue.get(), o.get(), n.get(), CalculationScenarios.DELETE));
+                Optional<IValue> attAggValue = Optional.of(attachmentReplace(aggValue.get(), oldValue.get(), newValue.get(), CalculationScenarios.DELETE));
                 return attAggValue;
             } else {
-                Optional<IValue> attAggValue = Optional.of(attachmentReplace(aggValue.get(), o.get(), n.get(), CalculationScenarios.REPLACE));
+                Optional<IValue> attAggValue = Optional.of(attachmentReplace(aggValue.get(), oldValue.get(), newValue.get(), CalculationScenarios.REPLACE));
                 return attAggValue;
             }
         } else {
-            Optional<IValue> attAggValue = Optional.of(attachmentReplace(aggValue.get(), o.get(), n.get(), CalculationScenarios.REPLACE));
+            Optional<IValue> attAggValue = Optional.of(attachmentReplace(aggValue.get(), oldValue.get(), newValue.get(), CalculationScenarios.REPLACE));
             return attAggValue;
         }
     }

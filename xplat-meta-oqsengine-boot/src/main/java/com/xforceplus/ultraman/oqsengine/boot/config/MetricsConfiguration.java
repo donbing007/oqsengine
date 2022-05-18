@@ -7,10 +7,13 @@ import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import io.kontainers.micrometer.akka.AkkaMetricRegistry;
 import io.micrometer.core.aop.TimedAspect;
 import io.micrometer.core.instrument.Metrics;
+import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics;
 import java.util.concurrent.ExecutorService;
+import java.util.function.Function;
 import javax.annotation.Resource;
+import org.aspectj.lang.ProceedingJoinPoint;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -56,7 +59,8 @@ public class MetricsConfiguration {
 
     @Bean
     public TimedAspect timedAspect() {
-        return new TimedAspect(Metrics.globalRegistry, pjp -> Tags.empty());
+        return new TimedAspect(Metrics.globalRegistry,
+            (Function<ProceedingJoinPoint, Iterable<Tag>>) pjp -> Tags.empty());
     }
 
     @Bean

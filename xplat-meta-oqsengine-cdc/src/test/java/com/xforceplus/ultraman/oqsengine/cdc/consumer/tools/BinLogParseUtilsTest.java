@@ -3,14 +3,13 @@ package com.xforceplus.ultraman.oqsengine.cdc.consumer.tools;
 
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.google.protobuf.InvalidProtocolBufferException;
-import com.xforceplus.ultraman.oqsengine.cdc.CanalEntryTools;
-import com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder;
-import com.xforceplus.ultraman.oqsengine.common.StringUtils;
+import com.xforceplus.ultraman.oqsengine.cdc.testhelp.cases.DynamicCanalEntryCase;
+import com.xforceplus.ultraman.oqsengine.cdc.testhelp.generator.DynamicCanalEntryGenerator;
+import com.xforceplus.ultraman.oqsengine.cdc.testhelp.repo.DynamicCanalEntryRepo;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import java.sql.SQLException;
 import java.util.List;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -20,90 +19,46 @@ import org.junit.jupiter.api.Test;
  */
 public class BinLogParseUtilsTest {
 
-    private long expectedId = 1001;
-    private long expectedCommitId = 2;
-    private long expectedTx = 11;
-    private int expectedVersion = 10;
-    private int expectedOqsMajor = 1;
-    private String isDeleted = "false";
-    private IEntityClass expectedEntityClass = EntityClassBuilder.ENTITY_CLASS_2;
-    private int expectedLevel = 3;
+    static DynamicCanalEntryCase expected = DynamicCanalEntryRepo.CASE_NORMAL_2;
+    static List<CanalEntry.Column> columns;
 
-    private String expectedAttrString = "{\"1L\":73550,\"2S\":\"1\",\"3L\":0}";
+    @BeforeAll
+    public static void before() throws InvalidProtocolBufferException {
+        CanalEntry.Entry entry = DynamicCanalEntryGenerator.buildRowDataEntry(expected);
 
-    private List<CanalEntry.Column> columns;
+        CanalEntry.RowChange rowChange = CanalEntry.RowChange.parseFrom(entry.getStoreValue());
 
-    public BinLogParseUtilsTest() throws InvalidProtocolBufferException {
-        columns = CanalEntryTools.generateColumns(expectedId, expectedLevel, expectedCommitId, expectedTx,
-                        expectedVersion, expectedAttrString, expectedOqsMajor,
-                        isDeleted, expectedEntityClass.id(), System.currentTimeMillis(), System.currentTimeMillis());
+        columns = rowChange.getRowDatasList().get(0).getAfterColumnsList();
     }
 
     @Test
-    public void getLongFromColumnTest() throws SQLException {
-        Assertions.assertEquals(0,
-            BinLogParseUtils.getLongFromColumn(columns, OqsBigEntityColumns.ENTITYCLASSL0));
-
-        Assertions.assertEquals(0,
-            BinLogParseUtils.getLongFromColumn(columns, OqsBigEntityColumns.ENTITYCLASSL1));
-
-        Assertions.assertEquals(EntityClassBuilder.ENTITY_CLASS_2.id(),
-            BinLogParseUtils.getLongFromColumn(columns, OqsBigEntityColumns.ENTITYCLASSL2));
-
-        Assertions.assertEquals(0,
-            BinLogParseUtils.getLongFromColumn(columns, OqsBigEntityColumns.ENTITYCLASSL3));
-
-        Assertions.assertEquals(0,
-            BinLogParseUtils.getLongFromColumn(columns, OqsBigEntityColumns.ENTITYCLASSL4));
-    }
-
-
-    @Test
-    public void getIntegerFromColumnTest() throws SQLException {
-        Assertions.assertEquals(expectedVersion,
-            BinLogParseUtils.getLongFromColumn(columns, OqsBigEntityColumns.VERSION));
+    public void oqsBigEntityColumnTest() {
+        expected.assertionColumns(columns);
     }
 
     @Test
-    public void getStringFromColumnTest() throws SQLException {
-        Assertions.assertEquals(expectedAttrString,
-            BinLogParseUtils.getStringFromColumn(columns, OqsBigEntityColumns.ATTRIBUTE));
+    public void getLongFromColumnTest() {
+        Assertions.assertEquals(expected.getId(), BinLogParseUtils.getLongFromColumn(columns, OqsBigEntityColumns.ID));
+        Assertions.assertEquals(expected.getId(), BinLogParseUtils.getLongFromColumn(columns, OqsBigEntityColumns.ID));
+        Assertions.assertEquals(expected.getCommitId(), BinLogParseUtils.getLongFromColumn(columns, OqsBigEntityColumns.COMMITID));
+        Assertions.assertEquals(expected.getCreate(), BinLogParseUtils.getLongFromColumn(columns, OqsBigEntityColumns.CREATETIME));
+    }
+
+    @Test
+    public void getStringFromColumnTest() {
+        Assertions.assertEquals(expected.getAttr(), BinLogParseUtils.getStringFromColumn(columns, OqsBigEntityColumns.ATTRIBUTE));
+        Assertions.assertEquals(expected.getProfile(), BinLogParseUtils.getStringFromColumn(columns, OqsBigEntityColumns.PROFILE));
+    }
+
+    @Test
+    public void getIntegerFromColumnTest() {
+        Assertions.assertEquals(expected.getVersion(), BinLogParseUtils.getIntegerFromColumn(columns, OqsBigEntityColumns.VERSION));
+        Assertions.assertEquals(expected.getOp(), BinLogParseUtils.getIntegerFromColumn(columns, OqsBigEntityColumns.OP));
+        Assertions.assertEquals(expected.getOqsmajor(), BinLogParseUtils.getIntegerFromColumn(columns, OqsBigEntityColumns.OQSMAJOR));
     }
 
     @Test
     public void getBooleanFromColumnTest() {
-        Assertions.assertEquals(isDeleted.equals("true"),
-            BinLogParseUtils.getBooleanFromColumn(columns, OqsBigEntityColumns.DELETED));
-    }
-
-    @Test
-    public void stringToBooleanTest() {
-        String expectedStringTrue = "true";
-        String expectedStringNumberTrue = "100";
-
-        Assertions.assertTrue(BinLogParseUtils.stringToBoolean(expectedStringTrue));
-        Assertions.assertTrue(BinLogParseUtils.stringToBoolean(expectedStringNumberTrue));
-
-        String expectedStringFalse = "false";
-        String expectedStringNumberFalseZero = "0";
-        String expectedStringNumberFalse = "-1";
-
-        Assertions.assertFalse(BinLogParseUtils.stringToBoolean(expectedStringFalse));
-        Assertions.assertFalse(BinLogParseUtils.stringToBoolean(expectedStringNumberFalseZero));
-        Assertions.assertFalse(BinLogParseUtils.stringToBoolean(expectedStringNumberFalse));
-    }
-
-    @Test
-    public void getStringWithoutNullCheckTest() {
-        String res = BinLogParseUtils.getStringWithoutNullCheck(columns, OqsBigEntityColumns.PROFILE);
-        Assertions.assertTrue(StringUtils.isEmpty(res));
-
-        res = BinLogParseUtils.getStringWithoutNullCheck(columns, OqsBigEntityColumns.ATTRIBUTE);
-        Assertions.assertFalse(StringUtils.isEmpty(res));
-    }
-
-    @Test
-    public void getColumnWithoutNullTest() throws SQLException {
-        Assertions.assertNotNull(BinLogParseUtils.getColumnWithoutNull(columns, OqsBigEntityColumns.ATTRIBUTE));
+        Assertions.assertEquals(expected.isDeleted(), BinLogParseUtils.getBooleanFromColumn(columns, OqsBigEntityColumns.DELETED));
     }
 }

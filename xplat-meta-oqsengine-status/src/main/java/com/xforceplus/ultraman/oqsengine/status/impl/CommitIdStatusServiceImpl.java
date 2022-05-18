@@ -243,7 +243,11 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService, Lifecyc
 
         CommitStatus status = getStatus(commitId);
 
-        if (CommitStatus.READY == status) {
+        /*
+        明确的ready状态或者淘汰状态都认为是已经ready了.
+        因为淘汰状态一般是需要丢弃的提交号,并且一般是经过了ready状态了.
+         */
+        if (CommitStatus.READY == status || CommitStatus.ELIMINATION == status) {
 
             return true;
 
@@ -291,7 +295,7 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService, Lifecyc
         CommitStatus[] commitStatuses = getStatus(commitIds);
         boolean[] statues = new boolean[commitStatuses.length];
         for (int i = 0; i < len; i++) {
-            statues[i] = CommitStatus.READY == commitStatuses[i];
+            statues[i] = CommitStatus.READY == commitStatuses[i] || CommitStatus.ELIMINATION == commitStatuses[i];
         }
 
         return statues;
@@ -398,7 +402,7 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService, Lifecyc
     @Override
     public boolean isObsolete(long commitId) {
         CommitStatus status = getStatus(commitId);
-        return CommitStatus.ELIMINATION == status;
+        return CommitStatus.ELIMINATION == status || CommitStatus.UNKNOWN == status;
     }
 
     public void setLimitUnknownNumber(long limitUnknownNumber) {

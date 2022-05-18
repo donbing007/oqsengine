@@ -35,6 +35,7 @@ message EntityClassSyncResponse {
 
 message EntityClassSyncRspProto {
   repeated EntityClassInfo entityClasses = 1;
+  string appCode = 2;
 }
 
 message EntityClassInfo {
@@ -47,6 +48,7 @@ message EntityClassInfo {
   repeated EntityFieldInfo entityFields = 7;
   repeated RelationInfo relations = 8;
   repeated ProfileInfo profiles = 9;
+  int32 type = 10;
 }
 
 message EntityFieldInfo {
@@ -104,6 +106,7 @@ message FieldConfig {
   bool crossSearch = 14;
   int32 length = 15;
   int32 valueFloatScale = 16;
+  int32 jdbcType = 17;
 }
 
 message Calculator {

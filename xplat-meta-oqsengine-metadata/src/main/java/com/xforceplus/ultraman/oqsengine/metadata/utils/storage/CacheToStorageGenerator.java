@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.metadata.utils.storage;
 
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_ANCESTORS;
+import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_APPCODE;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_CODE;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_FATHER;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_FIELDS;
@@ -9,6 +10,7 @@ import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassEle
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_NAME;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_PROFILES;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_RELATIONS;
+import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_TYPE;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_VERSION;
 import static com.xforceplus.ultraman.oqsengine.metadata.utils.CacheUtils.parseOneKeyFromProfileEntity;
 import static com.xforceplus.ultraman.oqsengine.metadata.utils.CacheUtils.parseOneKeyFromProfileRelations;
@@ -19,6 +21,8 @@ import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.ProfileStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.RelationStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.utils.CacheUtils;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -62,6 +66,13 @@ public class CacheToStorageGenerator {
         }
 
         EntityClassStorage entityClassStorage = new EntityClassStorage();
+        //  appCode
+        String appCode = keyValues.remove(ELEMENT_APPCODE);
+        if (null != appCode && !appCode.isEmpty()) {
+            entityClassStorage.setAppCode(appCode);
+        } else {
+            entityClassStorage.setAppCode("");
+        }
 
         //  id
         String id = keyValues.remove(ELEMENT_ID);
@@ -69,6 +80,10 @@ public class CacheToStorageGenerator {
             throw new RuntimeException("id is null from cache.");
         }
         entityClassStorage.setId(Long.parseLong(id));
+
+        //  type
+        String type = keyValues.remove(ELEMENT_TYPE);
+        entityClassStorage.setType((null == type || type.isEmpty()) ? EntityClassType.DYNAMIC.getType() : Integer.parseInt(type));
 
         //  code
         String code = keyValues.remove(ELEMENT_CODE);

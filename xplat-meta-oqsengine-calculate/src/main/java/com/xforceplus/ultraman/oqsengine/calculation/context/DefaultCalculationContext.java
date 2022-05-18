@@ -411,6 +411,11 @@ public class DefaultCalculationContext implements CalculationContext {
         }
     }
 
+    @Override
+    public long getLockTimeoutMs() {
+        return this.lockTimeoutMs;
+    }
+
     public Set<Long> getLockedEnittyIds() {
         return new HashSet<>(lockedEnittyIds);
     }

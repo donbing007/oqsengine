@@ -210,6 +210,43 @@ public class CalculationTest extends AbstractContainerExtends {
     }
 
     /**
+     * 静态对象 lookup 动态对象的创建更新.
+     */
+    @Test
+    public void testOriginalLookupDynamic() throws Exception {
+        IEntity targetEntity = entityHelper.buildOdLookupTargetEntity();
+        OqsResult<IEntity> results = entityManagementService.build(targetEntity);
+        Assertions.assertEquals(ResultStatus.SUCCESS, results.getResultStatus(), results.getMessage());
+
+        IEntity lookupOrigianlEntity = entityHelper.buildOdLookupEntity(targetEntity);
+        results = entityManagementService.build(lookupOrigianlEntity);
+        Assertions.assertEquals(ResultStatus.SUCCESS, results.getResultStatus(), results.getMessage());
+
+        lookupOrigianlEntity = entitySearchService.selectOne(
+            lookupOrigianlEntity.id(), lookupOrigianlEntity.entityClassRef()).getValue().get();
+
+        Assertions.assertEquals(
+            targetEntity.entityValue().getValue("od-lookup-target-long").get().valueToLong(),
+            lookupOrigianlEntity.entityValue().getValue("od-lookup-original-long").get().valueToLong()
+        );
+
+        targetEntity.entityValue().addValue(
+            new LongValue(
+                MockEntityClassDefine.OD_LOOKUP_TARGET_ENTITY_CLASS.field("od-lookup-target-long").get(),
+                faker.number().numberBetween(100, 10000)
+            )
+        );
+        // 应该在事务内完成的.更新后lookup仍然保持一致.
+        Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.replace(targetEntity).getResultStatus());
+        lookupOrigianlEntity = entitySearchService.selectOne(
+            lookupOrigianlEntity.id(), lookupOrigianlEntity.entityClassRef()).getValue().get();
+        Assertions.assertEquals(
+            targetEntity.entityValue().getValue("od-lookup-target-long").get().valueToLong(),
+            lookupOrigianlEntity.entityValue().getValue("od-lookup-original-long").get().valueToLong()
+        );
+    }
+
+    /**
      * lookup目标对象字段值不存在.
      * 预计发起lookup的对象此值也不存在.
      */
@@ -399,7 +436,7 @@ public class CalculationTest extends AbstractContainerExtends {
         IEntity user = entityHelper.buildUserEntity();
         entityManagementService.build(user);
 
-        int size = 30;
+        int size = 3;
         long userId = user.id();
         CountDownLatch startLatch = new CountDownLatch(1);
         CountDownLatch finishLatch = new CountDownLatch(size);
@@ -778,7 +815,7 @@ public class CalculationTest extends AbstractContainerExtends {
         Assertions.assertFalse(user.isDirty());
         user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).getValue().get();
 
-        IEntity[] orders = new IEntity[10];
+        com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[] orders = new com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[10];
         for (int i = 0; i < orders.length; i++) {
             orders[i] = entityHelper.buildOrderEntity(user);
         }
@@ -811,13 +848,50 @@ public class CalculationTest extends AbstractContainerExtends {
         entityManagementService.replace(users);
 
         Collection<IEntity> replaceOrders = entitySearchService.selectMultiple(
-            Arrays.stream(orders).mapToLong(o -> o.id()).toArray(), MockEntityClassDefine.ORDER_CLASS.ref())
+                Arrays.stream(orders).mapToLong(o -> o.id()).toArray(), MockEntityClassDefine.ORDER_CLASS.ref())
             .getValue().get();
 
         for (IEntity o : replaceOrders) {
             Assertions.assertEquals(newUserCode, o.entityValue().getValue("用户编号lookup").get().valueToString());
         }
 
+    }
+
+    @Test
+    public void testLookupChangeTarget() throws Exception {
+        IEntity u0 = entityHelper.buildUserEntity();
+        IEntity u1 = entityHelper.buildUserEntity();
+
+        Assertions.assertEquals(OqsResult.success(), entityManagementService.build(u0));
+        Assertions.assertEquals(OqsResult.success(), entityManagementService.build(u1));
+
+        u0 = entitySearchService.selectOne(u0.id(), MockEntityClassDefine.USER_CLASS.ref()).getValue().get();
+        u1 = entitySearchService.selectOne(u1.id(), MockEntityClassDefine.USER_CLASS.ref()).getValue().get();
+
+        IEntity order = entityHelper.buildOrderEntity(u0);
+        Assertions.assertEquals(OqsResult.halfSuccess().getResultStatus(),
+            entityManagementService.build(order).getResultStatus());
+        order = entitySearchService.selectOne(order.id(), MockEntityClassDefine.ORDER_CLASS.ref()).getValue().get();
+        // 确认原始lookup成功.
+        Assertions.assertEquals(
+            order.entityValue().getValue("用户编号lookup").get().getValue(),
+            u0.entityValue().getValue("用户编号").get().getValue()
+        );
+
+        // 更改成lookupu1.
+        order.entityValue().addValue(
+            new LookupValue(
+                MockEntityClassDefine.ORDER_CLASS.field("用户编号lookup").get(),
+                u1.id()
+            )
+        );
+        Assertions.assertEquals(OqsResult.halfSuccess().getResultStatus(),
+            entityManagementService.replace(order).getResultStatus());
+        order = entitySearchService.selectOne(order.id(), MockEntityClassDefine.ORDER_CLASS.ref()).getValue().get();
+        Assertions.assertEquals(
+            order.entityValue().getValue("用户编号lookup").get().getValue(),
+            u1.entityValue().getValue("用户编号").get().getValue()
+        );
     }
 
     @Test

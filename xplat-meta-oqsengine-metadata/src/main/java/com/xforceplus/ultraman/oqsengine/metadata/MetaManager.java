@@ -1,6 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.metadata;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xforceplus.ultraman.oqsengine.meta.common.monitor.dto.MetricsLog;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.log.UpGradeLog;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.AppSimpleInfo;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
@@ -52,17 +54,17 @@ public interface MetaManager {
      * 加载指定的IEntityClass实例.
      *
      * @param entityClassId 元信息标识.
-     * @param version 版本.
-     * @param profile 个性化定制标识.
+     * @param version       版本.
+     * @param profile       个性化定制标识.
      * @return 元信息的实例.
      */
     Optional<IEntityClass> load(long entityClassId, int version, String profile);
 
     /**
-     * 获取当前entityClassId下的所有EntityClassWithProfile.
+     * 获取当前entityClassId下的所有entityClass, entityClass profiles.
      *
      * @param entityClassId 元信息标识.
-     * @return 元信息的实例.
+     * @return 元信息的实例集合.
      */
     Collection<IEntityClass> withProfilesLoad(long entityClassId);
 
@@ -78,10 +80,10 @@ public interface MetaManager {
      * 表示需要关注此appId代表的应用的元信息.
      *
      * @param appId 应用标识.
-     * @param overWrite 是否为重置.
+     * @param reset 是否为重置.
      * @return 当前的元信息版本号.小于0表示没有持有任何版本的元信息.
      */
-    int need(String appId, String env, boolean overWrite);
+    int need(String appId, String env, boolean reset);
 
     /**
      * 清空本地缓存.
@@ -91,16 +93,27 @@ public interface MetaManager {
 
     /**
      * 导入Meta信息.
+     *
+     * @param appId   应用ID.
+     * @param env     环境CODE.
+     * @param version 应用版本.
+     * @param content 应用的entityClass json.
      */
     boolean metaImport(String appId, String env, int version, String content);
 
     /**
-     * 产看当前appId下的信息.
+     * 维护类接口, 查询当前的meta指标.
+     *
+     * @param appId 应用ID.
+     * @return MetaMetrics指标.
      */
     Optional<MetaMetrics> showMeta(String appId) throws Exception;
 
     /**
-     * 查询同步日志.
+     * 查看当前的meta日志.
+     *
+     * @param showType 类型 info/error/all.
+     * @return 日志集合.
      */
     default Collection<MetricsLog> metaLogs(MetricsLog.ShowType showType) {
         return new ArrayList<>();
@@ -110,6 +123,7 @@ public interface MetaManager {
      * 表示将刷新某个appId所关注的env信息.
      *
      * @param appId 应用标识.
+     * @param env   环境标识.
      * @return 当前的元信息版本号, 小于0表示没有持有任何版本的元信息.
      */
     int reset(String appId, String env);
@@ -127,7 +141,16 @@ public interface MetaManager {
      *
      * @return appId列表.
      */
-    default List<AppSimpleInfo> showApplications() {
+    default Collection<AppSimpleInfo> showApplications() {
+        return new ArrayList<>();
+    }
+
+    /**
+     * 显示当前oqs中所有正在使用的appId.
+     *
+     * @return appId列表.
+     */
+    default Collection<UpGradeLog> showUpgradeLogs(String appId, String env) throws JsonProcessingException {
         return new ArrayList<>();
     }
 }

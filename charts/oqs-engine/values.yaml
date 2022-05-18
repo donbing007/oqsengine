@@ -47,6 +47,21 @@ annotations:
   prometheus.io/path: "/actuator/prometheus"
 
 # 推荐-Xmx大小为limit的60%.
+# -XX:+UseG1GC  使用G1 GC.
+# -XX:MaxGCPauseMillis=200 最大GC停顿时间为200毫秒(尽量)
+# -XX:ParallelGCThreads=4 可用以GC的线程数量,建议和CPU数量一致.
+# -XX:ConcGCThreads=4 可用以GC的线程数量,和ParallelGCThreads只是处于GC不同阶段时使用.
+# 上述两项不设计后,JVM将使用启发式的方法动态调整,只有当效果不好时才指定.
+# -XX:+UseCompressedOops 启用压缩指针
+# -XX:+UseStringDeduplication 启用字符串重复合并, 减少堆空间占用.
+# -XX:ReservedCodeCacheSize=256m JIT编译的代码储存空间.
+# -XX:+UseTLAB 打开TLAB.
+# -XX:+ZeroTLAB 申请TLAB时置0,不需要等待到分配对象是才置0.
+# -XX:+DoEscapeAnalysis 启用逃逸分析.jdk8默认开启.
+# -XX:+EliminateAllocations 启用标量替换.jdk8默认开启.
+# -XX:AutoBoxCacheMax=20000 自动装箱cache的数量, 可以减轻Integer等包装类的开销.
+# -XX:+AlwaysPreTouch 启动时将允许内存都置0,可以降低内存分配的延时.
+# -Dlog4j2.formatMsgNoLookups=true 由于log4j2的远程执行代码bug, 关闭log4j2的lookup.
 jvm:
   - -server
   - -Xms4096M
@@ -57,7 +72,12 @@ jvm:
   - -XX:+UseCompressedOops
   - -XX:+UseStringDeduplication
   - -XX:ReservedCodeCacheSize=256m
-  - -XX:+UseStringDeduplication
+  - -XX:+UseTLAB
+  - -XX:+ZeroTLAB
+  - -XX:+DoEscapeAnalysis
+  - -XX:+EliminateAllocations
+  - -XX:AutoBoxCacheMax=20000
+  - -XX:+AlwaysPreTouch
   - -Dlog4j2.formatMsgNoLookups=true
 
 jmx:

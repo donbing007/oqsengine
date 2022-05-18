@@ -12,9 +12,10 @@ server:
 logging:
   level:
     root: info
-    io:
-      lettuce: info
-    com.xforceplus.ultraman.oqsengine.changelog: debug
+    com:
+      xforceplus:
+        ultraman:
+          oqsengine: debug
 
 transaction:
   timeoutMs: 300000
@@ -44,7 +45,7 @@ storage:
         # 字典URL
         url: "-"
   debug:
-    showsql: false
+    showsql: true
   timeoutMs:
     query: 10000
   kv:
@@ -198,4 +199,4 @@ metadata:
 
 locker:
   try:
-    timeoutMs: 3000
+    timeoutMs: 30000

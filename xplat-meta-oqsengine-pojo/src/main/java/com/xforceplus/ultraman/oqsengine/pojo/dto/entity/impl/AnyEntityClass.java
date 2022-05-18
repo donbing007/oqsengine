@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import java.util.Collection;
@@ -91,6 +92,11 @@ public class AnyEntityClass implements IEntityClass {
     @Override
     public boolean isAny() {
         return true;
+    }
+
+    @Override
+    public EntityClassType type() {
+        return EntityClassType.DYNAMIC;
     }
 
     @Override

@@ -5,12 +5,13 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * 累加器的默认实现.
+ * 累加器工作在事务中,每一个事务中不应该出现并发.
+ * 所以累加器的实现不需要考虑在并发安全.
  *
  * @author dongbin
  * @version 0.1 2020/12/11 15:30
@@ -20,16 +21,16 @@ public class DefaultTransactionAccumulator implements TransactionAccumulator {
 
     private final Logger logger = LoggerFactory.getLogger(DefaultTransactionAccumulator.class);
 
-    private AtomicLong buildNumbers = new AtomicLong(0);
-    private AtomicLong replaceNumbers = new AtomicLong(0);
-    private AtomicLong deleteNumbers = new AtomicLong(0);
+    private int buildNumbers = 0;
+    private int replaceNumbers = 0;
+    private int deleteNumbers = 0;
 
     private volatile Set<Long> processIds = null;
     private final Object processIdsLock = new Object();
     /**
      * 当前操作的最大序号,从0开始.
      */
-    private AtomicLong opNumber = new AtomicLong(-1);
+    private int opNumber = -1;
 
     private long txId;
 
@@ -39,8 +40,8 @@ public class DefaultTransactionAccumulator implements TransactionAccumulator {
 
     @Override
     public boolean accumulateBuild(IEntity entity) {
-        buildNumbers.incrementAndGet();
-        opNumber.incrementAndGet();
+        buildNumbers++;
+        opNumber++;
 
         if (logger.isDebugEnabled()) {
             logger.debug("Transaction Accumulator: create number +1.[{}]", entity.id());
@@ -51,8 +52,8 @@ public class DefaultTransactionAccumulator implements TransactionAccumulator {
 
     @Override
     public boolean accumulateReplace(IEntity entity) {
-        replaceNumbers.incrementAndGet();
-        opNumber.incrementAndGet();
+        replaceNumbers++;
+        opNumber++;
 
         getProcessIdsIdsSet(true).add(entity.id());
 
@@ -65,11 +66,11 @@ public class DefaultTransactionAccumulator implements TransactionAccumulator {
 
     @Override
     public boolean accumulateDelete(IEntity entity) {
-        deleteNumbers.incrementAndGet();
+        deleteNumbers++;
+        opNumber++;
 
         getProcessIdsIdsSet(true).add(entity.id());
 
-        opNumber.incrementAndGet();
 
         if (logger.isDebugEnabled()) {
             logger.debug("Transaction Accumulator: delete number +1.[{}]", entity.id());
@@ -80,17 +81,17 @@ public class DefaultTransactionAccumulator implements TransactionAccumulator {
 
     @Override
     public long getBuildNumbers() {
-        return buildNumbers.get();
+        return buildNumbers;
     }
 
     @Override
     public long getReplaceNumbers() {
-        return replaceNumbers.get();
+        return replaceNumbers;
     }
 
     @Override
     public long getDeleteNumbers() {
-        return deleteNumbers.get();
+        return deleteNumbers;
     }
 
     @Override
@@ -106,15 +107,15 @@ public class DefaultTransactionAccumulator implements TransactionAccumulator {
     @Override
     public void reset() {
         getProcessIdsIdsSet(false).clear();
-        buildNumbers.set(0);
-        replaceNumbers.set(0);
-        deleteNumbers.set(0);
-        opNumber.set(0);
+        buildNumbers = 0;
+        replaceNumbers = 0;
+        deleteNumbers = 0;
+        opNumber = 0;
     }
 
     @Override
     public long operationNumber() {
-        return opNumber.get();
+        return opNumber;
     }
 
     private Set<Long> getProcessIdsIdsSet(boolean build) {

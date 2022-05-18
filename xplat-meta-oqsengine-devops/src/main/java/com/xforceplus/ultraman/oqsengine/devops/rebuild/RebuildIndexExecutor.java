@@ -99,10 +99,4 @@ public interface RebuildIndexExecutor extends Lifecycle {
      */
     void sync(Map<Long, DevOpsCdcMetrics> devOpsCdcMetrics) throws SQLException;
 
-    /**
-     * 设置doubleCheckDistance.
-     */
-    default void resetDoubleCheckDistance(long distance) {
-        //  do nothing
-    }
 }

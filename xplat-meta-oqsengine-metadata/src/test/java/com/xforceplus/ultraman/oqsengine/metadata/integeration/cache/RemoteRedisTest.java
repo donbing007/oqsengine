@@ -3,10 +3,13 @@ package com.xforceplus.ultraman.oqsengine.metadata.integeration.cache;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xforceplus.ultraman.oqsengine.metadata.StorageMetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.DefaultCacheExecutor;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.AppSimpleInfo;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.MetaMetrics;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.model.ClientModel;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
+import java.util.Collection;
 import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -30,12 +33,13 @@ public class RemoteRedisTest {
 
     private StorageMetaManager storageMetaManager;
 
-
-    private static final String password = "8eSf4M97VLhP6hq9";
+    private static String expectedAppId = "1474264648684351490";
+    private static String expectedEnv = "0";
+    private static final String password = "8eSf4M97VLhP6hq8";
     private static final String ip = "localhost";
     private static final int port = 6379;
 
-    private static final long entityClassId = 1295238550381510657L;
+    private static long expectedEntityClassId = 1510916899419320321L;
 
     @BeforeEach
     public void before() throws Exception {
@@ -62,8 +66,24 @@ public class RemoteRedisTest {
     }
 
     @Test
+    public void allTest() throws Exception {
+        Optional<IEntityClass> entityClassOptional = storageMetaManager.load(expectedEntityClassId, "");
+        Assertions.assertTrue(entityClassOptional.isPresent());
+
+        Collection<AppSimpleInfo> appSimples = storageMetaManager.showApplications();
+        Assertions.assertTrue(appSimples.size() > 0);
+
+        Assertions.assertTrue(appSimples.stream().anyMatch(s -> {
+            return s.getAppId().equals(expectedAppId) && s.getEnv().equals(expectedEnv);
+        }));
+
+        Optional<MetaMetrics> metaMetrics = storageMetaManager.showMeta(expectedAppId);
+        Assertions.assertTrue(metaMetrics.isPresent());
+    }
+
+    @Test
     public void load() throws JsonProcessingException {
-        Optional<IEntityClass> entityClassOptional = storageMetaManager.load(entityClassId, "");
+        Optional<IEntityClass> entityClassOptional = storageMetaManager.load(expectedEntityClassId, "");
         Assertions.assertTrue(entityClassOptional.isPresent());
     }
 }

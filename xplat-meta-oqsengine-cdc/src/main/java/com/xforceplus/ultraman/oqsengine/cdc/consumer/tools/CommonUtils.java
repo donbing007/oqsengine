@@ -1,6 +1,12 @@
 package com.xforceplus.ultraman.oqsengine.cdc.consumer.tools;
 
-import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper;
+import com.xforceplus.ultraman.oqsengine.cdc.context.ParserContext;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import java.sql.SQLException;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * Created by justin.xu on 01/2022.
@@ -10,13 +16,44 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper
 public class CommonUtils {
 
     /**
-     * 是否为维护ID.
-     *
-     * @param commitId 维护commitId.
-     *
-     * @return true/false.
+     * 获取entityClass.
      */
-    public static boolean isMaintainRecord(long commitId) {
-        return CommitHelper.getMaintainCommitId() == commitId;
+    public static IEntityClass getEntityClass(EntityClassRef entityClassRef, ParserContext parserContext) throws
+        SQLException {
+
+        String key = ParserContext.entityClassKey(entityClassRef);
+
+        IEntityClass entityClass = parserContext.entityClasses().get(key);
+        if (null != entityClass) {
+            return entityClass;
+        }
+
+        Optional<IEntityClass>
+            entityClassOptional =
+            parserContext.getMetaManager().load(entityClassRef.getId(), entityClassRef.getProfile());
+
+        if (entityClassOptional.isPresent()) {
+            entityClass = entityClassOptional.get();
+
+            parserContext.entityClasses().put(key, entityClass);
+            return entityClass;
+        }
+
+        throw new SQLException(
+            String.format("[common-utils] id : %d, profile : %s has no entityClass...",
+                entityClassRef.getId(), entityClassRef.getProfile()));
+    }
+
+    /**
+     * toErrorCommitIdStr.
+     */
+    public static String toErrorCommitIdStr(Set<Long> commitIds, Set<Long> unCommitIds) {
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append(commitIds);
+        if (!unCommitIds.isEmpty()) {
+            stringBuilder.append(unCommitIds);
+        }
+
+        return stringBuilder.toString();
     }
 }

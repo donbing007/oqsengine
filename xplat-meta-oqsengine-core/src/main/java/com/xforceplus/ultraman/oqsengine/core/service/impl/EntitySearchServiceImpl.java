@@ -111,7 +111,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
     private long maxVisibleTotalCount;
     private int maxJoinEntityNumber;
     private long maxJoinDriverLineNumber;
-    private boolean showResult = false;
+    private boolean debugInfo = false;
 
 
     @PostConstruct
@@ -162,12 +162,12 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         this.maxVisibleTotalCount = maxVisibleTotalCount;
     }
 
-    public boolean isShowResult() {
-        return showResult;
+    public boolean isDebugInfo() {
+        return debugInfo;
     }
 
-    public void setShowResult(boolean showResult) {
-        this.showResult = showResult;
+    public void setDebugInfo(boolean showDebugInfo) {
+        this.debugInfo = showDebugInfo;
     }
 
     @Timed(
@@ -181,6 +181,10 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         IEntityClass entityClass;
         if (!entityClassOp.isPresent()) {
 
+            if (logger.isDebugEnabled()) {
+                logger.debug("Unable to find meta information {}.", entityClassRef);
+            }
+
             return OqsResult.notExistMeta(entityClassRef);
 
         } else {
@@ -192,9 +196,17 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             Optional<IEntity> entityOptional = masterStorage.selectOne(id, entityClass);
             if (entityOptional.isPresent()) {
 
-                if (isShowResult()) {
-                    logger.info("Select one result: [{}].", entityOptional.get());
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Query {} instance result of object ({}) : [{}].",
+                        id, entityClassRef, entityOptional.get());
                 }
+
+            } else {
+
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Query {} instance result of object ({}) : [].", id, entityClassRef);
+                }
+
             }
 
             return OqsResult.success(entityOptional.orElse(null));
@@ -236,6 +248,10 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         IEntityClass entityClass;
         if (!entityClassOp.isPresent()) {
 
+            if (logger.isDebugEnabled()) {
+                logger.debug("Unable to find meta information {}.", entityClassRef);
+            }
+
             return OqsResult.notExistMeta(entityClassRef);
 
         } else {
@@ -245,9 +261,9 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         try {
             Collection<IEntity> entities = masterStorage.selectMultiple(ids, entityClass);
 
-            if (isShowResult()) {
+            if (logger.isDebugEnabled()) {
                 entities.stream().forEach(e -> {
-                    logger.info("Select multiple result: [{}].", e.toString());
+                    logger.debug("Query {} instance result of object ({}) : [{}].", e.id(), entityClassRef, e);
                 });
             }
 
@@ -304,6 +320,10 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             throw new SQLException("Invalid search config.");
         }
 
+        if (this.isDebugInfo()) {
+            logger.info("Conditional query: {}.[entityClass = {}, config = {}]", conditions, entityClassRef, config);
+        }
+
         /*
          * 数据过滤不会使有和含有模糊搜索的条件.
          */
@@ -347,6 +367,9 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             }
         }
 
+        /*
+        一个优化,将只有一个条件并且条件是id的查询退化成selectOne.
+         */
         if (isOneIdQuery(conditions)) {
             Condition onlyCondition = conditions.collectCondition().stream().findFirst().get();
             long id = onlyCondition.getFirstValue().valueToLong();
@@ -442,22 +465,37 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                 selectConfigBuilder.withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD));
 
             } else {
+                // 排序中是否有id排序,如果有就不需要追加id.
+                boolean haveIdSort = false;
                 // 上层不排序,后续的直接视为不排序.
-                if (config.getSort().isPresent()) {
+                Optional<Sort> sortOp = config.getSort();
+                if (sortOp.isPresent() && !sortOp.get().isOutOfOrder()) {
+                    if (config.getSort().get().getField().config().isIdentifie()) {
+                        haveIdSort = true;
+                    }
                     selectConfigBuilder.withSort(config.getSort().get());
 
                     if (config.getSecondarySort().isPresent()) {
+
+                        if (config.getSecondarySort().get().getField().config().isIdentifie()) {
+                            haveIdSort = true;
+                        }
+
                         selectConfigBuilder.withSecondarySort(config.getSecondarySort().get());
 
                         if (config.getThirdSort().isPresent()) {
                             selectConfigBuilder.withThirdSort(config.getThirdSort().get());
                         } else {
                             // 追加ID排序.防止相同值造成排序不准确.
-                            selectConfigBuilder.withThirdSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD));
+                            if (!haveIdSort) {
+                                selectConfigBuilder.withThirdSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD));
+                            }
                         }
                     } else {
                         // 追加ID排序.防止相同值造成排序不准确.
-                        selectConfigBuilder.withSecondarySort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD));
+                        if (!haveIdSort) {
+                            selectConfigBuilder.withSecondarySort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD));
+                        }
                     }
                 }
             }
@@ -470,20 +508,23 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
             Collection<IEntity> entities = buildEntitiesFromRefs(refs, entityClass);
 
-            if (isShowResult()) {
+            if (logger.isDebugEnabled()) {
                 if (entities.size() == 0) {
 
-                    logger.info("Select conditions result: []");
+                    logger.debug("Select conditions ({}) result: []", conditions);
 
                 } else {
-                    entities.stream().forEach(e -> {
-                        if (e == null) {
-                            logger.info("Select conditions result: [NULL]");
-                        } else {
-                            logger.info("Select conditions result: [{}],totalCount:[{}]", e.toString(),
-                                usePage.getTotalCount());
+                    StringBuilder buff = new StringBuilder();
+                    for (IEntity e : entities) {
+                        if (e != null) {
+                            buff.append(e.toString()).append('\n');
                         }
-                    });
+                    }
+                    logger.debug(
+                        "Select conditions ({}) result: [{}],totalCount:[{}]",
+                        conditions, buff.toString(), usePage.getTotalCount());
+                    // help gc
+                    buff = null;
                 }
             }
 
@@ -516,6 +557,12 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
         OqsResult<Collection<IEntity>> result = this.selectByConditions(conditions, entityClassRef, countConfig);
         if (result.isSuccess()) {
+
+            if (logger.isDebugEnabled()) {
+                logger.debug("Using object (%s) The result of using (%s) conditional count is %d.",
+                    entityClassRef, conditions, page.getTotalCount());
+            }
+
             return OqsResult.success(page.getTotalCount());
         } else {
             return result.copy(0);

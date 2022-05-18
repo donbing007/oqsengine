@@ -70,7 +70,7 @@ public class AutoJoinTransactionExecutorTest {
                 new MockConnectionTransactionResource(key, resource, autocommit), dataSourceSelector,
             new NoSelector<>("table"));
         // 分片键不关心
-        te.execute((transaction, resource, hint) -> {
+        te.execute((transaction, resource) -> {
 
             Connection conn = (Connection) resource.value();
             Assertions.assertEquals(expectedConn, conn);
@@ -101,7 +101,7 @@ public class AutoJoinTransactionExecutorTest {
                 new MockConnectionTransactionResource(key, resource, autocommit), dataSourceSelector,
             new NoSelector<>("table"));
         // 分片键不关心
-        te.execute((transaction, resource, hint) -> {
+        te.execute((transaction, resource) -> {
             Connection conn = (Connection) resource.value();
             Assertions.assertEquals(expectedConn, conn);
 
@@ -125,8 +125,7 @@ public class AutoJoinTransactionExecutorTest {
         when(mockDataSource.getConnection()).thenReturn(expectedConn);
         Selector<DataSource> dataSourceSelector = key -> mockDataSource;
 
-        TransactionManager tm = StorageInitialization.getInstance()
-            .getTransactionManager();
+        TransactionManager tm = StorageInitialization.getInstance().getTransactionManager();
 
         Transaction currentT = tm.create();
         tm.bind(currentT.id());
@@ -137,7 +136,7 @@ public class AutoJoinTransactionExecutorTest {
                 new MockConnectionTransactionResource(key, resource, autocommit), dataSourceSelector,
             new NoSelector<>("table"));
         // 分片键不关心
-        te.execute((tx, resource, hint) -> {
+        te.execute((tx, resource) -> {
             Assertions.assertEquals(currentT.queryTransactionResource(mockDataSource.toString() + ".table").get(), resource);
 
             return null;

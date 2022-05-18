@@ -85,7 +85,7 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
         throws SQLException {
         Collection<EntityRef> masterRefs = Collections.emptyList();
 
-        long commitId = checkCommitId(config);
+        long commitId = buildMasterQueryCommitId(config);
         Sort sort = config.getSort();
         Sort secondSort = config.getSecondarySort();
         Sort thirdSort = config.getThirdSort();
@@ -141,6 +141,44 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
             throw new SQLException(e.getMessage(), e);
         }
 
+        /*
+        这里使用了二次提交号查询.为了是解决如下场景.
+        假设有 100, 200, 300 三个旧有对象数据, 其提交号分别是1, 2, 3.
+        当前最小提交号为4.
+           主库存
+          --------------  <---- 当前水位线(提交号)
+          |   300(3)   |
+          --------------
+          |   200(2)   |
+          --------------
+          |   100(1)   |
+          --------------
+          查询主库存使用的是 >= 4 水位,将什么也查询不到.
+
+          水位线被提升为5.
+
+            索引
+          --------------
+          |   300(4)   | <---- 这是3新的位置,高于当前水位线.
+          -------------- <---- 当前水位线(提交号) 4.
+          |   200(2)   |
+          --------------
+          |   100(1)   |
+          --------------
+          查询索引使用的是 < 4 水位,将查询不到 300这, 因为300已经被更新事务变更提交号为4了.
+          这将造成 300 在主库存和索引中都被排除造成查询对象丢失.
+          这里将查询索引的行为进行一再次提交号,即水位线再次获取.
+
+            索引
+          -------------- <---- 再次获取当前水位线(提交号) 5.
+          |   300(4)   | <---- 这是3新的位置,高于当前水位线.
+          --------------
+          |   200(2)   |
+          --------------
+          |   100(1)   |
+          --------------
+          查询索引将使用 < 5,来保证查询到300这个数据.
+         */
         Collection<EntityRef> indexRefs = syncedStorage.select(
             conditions,
             entityClass,
@@ -151,7 +189,7 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
                 .withPage(indexPage)
                 .withExcludedIds(filterIdsFromMaster)
                 .withDataAccessFitlerCondtitons(filterCondition)
-                .withCommitId(commitId).build()
+                .withCommitId(buildQueryCommitId()).build()
         );
         indexRefs = fixNullSortValue(indexRefs, sorts);
 
@@ -351,11 +389,8 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
         }
     }
 
-    private long checkCommitId(SelectConfig config) {
-        if (config.getCommitId() > 0) {
-            return config.getCommitId();
-        }
-
+    // 构造当前查询的最小提交号.
+    private long buildQueryCommitId() {
         long minUnSyncCommitId = 0;
         if (commitIdStatusService != null) {
             // 获取提交号.
@@ -374,6 +409,16 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
                 }
             }
         }
+        return minUnSyncCommitId;
+    }
+
+    // 构造主库存查询提交号.
+    private long buildMasterQueryCommitId(SelectConfig config) {
+        if (config.getCommitId() > 0) {
+            return config.getCommitId();
+        }
+
+        long minUnSyncCommitId = buildQueryCommitId();
 
         /*
          * 校正查询提交号,防止由于当前事务中未提交但是无法查询到这些数据的问题.

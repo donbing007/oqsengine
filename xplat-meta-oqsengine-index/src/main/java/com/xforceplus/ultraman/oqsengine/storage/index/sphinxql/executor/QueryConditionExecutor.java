@@ -37,16 +37,16 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
- * Query condition Executor.
+ * 条件查询命令实现.
+ * 注意: 实现支持分页,但是分页策略会读取从第一页至当前页的所有数据.
+ * 这是为了当前结果最后需要交由上层和主库进行合并.例如.
+ * 1 2 3 4 这是对象ID,页大小为2,那么第一页将是读取 1,2, 第二页读取 1, 2, 3, 4.
+ * 即当前读取对象数量为 分页数量 * 当前页.
  */
 public class QueryConditionExecutor
     extends AbstractJdbcTaskExecutor<Tuple3<IEntityClass, Conditions, SelectConfig>, List<EntityRef>> {
-
-    private Logger logger = LoggerFactory.getLogger(QueryConditionExecutor.class);
 
     private StorageStrategyFactory storageStrategyFactory;
 

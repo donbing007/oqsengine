@@ -21,7 +21,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Aggreg
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Formula;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
-import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.OqsEngineEntity;
 import io.vavr.Tuple2;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -56,15 +56,14 @@ public class DefaultCalculationInitLogicTest {
     private MasterStorage masterStorage;
 
     @Mock
-    private DataIterator<OriginalEntity> iterator;
+    private DataIterator<OqsEngineEntity> iterator;
 
-    @Spy
     private ExecutorService worker;
 
     @Spy
     private InitIvalueFactory initIvalueFactory;
 
-    private OriginalEntity originalEntity;
+    private OqsEngineEntity oqsEngineEntity;
 
     private IEntity entity;
     private static IEntityClass B_CLASS;
@@ -87,6 +86,7 @@ public class DefaultCalculationInitLogicTest {
         initIvalueFactory.setInitIvalueLogicMap(initIvalueLogicMap);
 
         worker = Executors.newFixedThreadPool(5);
+        defaultCalculationInitLogic.setWorker(worker);
 
         MockitoAnnotations.initMocks(this);
         B1 = EntityField.Builder.anEntityField()
@@ -134,21 +134,21 @@ public class DefaultCalculationInitLogicTest {
             InitCalculationParticipant.Builder.anInitCalculationParticipant().withField(B_FML).withEntityClass(B_CLASS)
                 .withSourceEntityClass(B_CLASS).withSourceFields(Stream.of(B1).collect(Collectors.toList())).build();
 
-        originalEntity = new OriginalEntity();
+        oqsEngineEntity = new OqsEngineEntity();
 
-        originalEntity.setId(10000);
+        oqsEngineEntity.setId(10000);
 
         Mockito.when(masterStorage.iterator(Mockito.any(IEntityClass.class), Mockito.anyLong(), Mockito.anyLong(),
             Mockito.anyLong(), Mockito.anyInt())).thenReturn(iterator);
 
         Mockito.when(iterator.hasNext()).thenReturn(true, false);
 
-        Mockito.when(iterator.next()).thenReturn(originalEntity);
+        Mockito.when(iterator.next()).thenReturn(oqsEngineEntity);
 
         Mockito.when(masterStorage.selectOne(Mockito.anyLong(), Mockito.any(IEntityClass.class)))
             .thenReturn(Optional.of(entity));
 
-        Mockito.when(masterStorage.selectMultiple(Mockito.any()))
+        Mockito.when(masterStorage.selectMultiple(Mockito.any(), Mockito.any()))
             .thenReturn(Stream.of(entity).collect(Collectors.toList()));
 
         defaultCalculationInitLogic.init();
