@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.calculation.utils.infuence;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
@@ -24,28 +25,48 @@ import java.util.stream.Collectors;
  */
 public class Infuence {
 
-    private RootNode rootNode;
+    private boolean allowDuplicates;
     private int size;
+    private RootNode rootNode;
     /*
     KEY: 参与者
     VALUE: 参与者绑定的结点.
      */
-    private Map<Participant, Node> participantNodeSearchHelper;
+    private Map<Participant, List<Node>> participantNodeSearchHelper;
 
     /**
      * 构造一个新的影响树.
+     * 不允许在一个影响传播链上出现相同的参与者.
      *
      * @param entity 起源对象实例.
      * @param participant 参与者.
      * @param change 值改变.
      */
     public Infuence(IEntity entity, Participant participant, ValueChange change) {
+        this(entity, participant, change, false);
+    }
+
+    /**
+     * 构造一个新的影响树.
+     * allowDuplicates 为true是允许在一个影响传播链上出现ID相同的参与者,反之不允许.
+     * 不允许出现重复的参与者,加入时也会成功,但是不会出现在传播链上.
+     * 这个配置不影响多个传播链上出现相同的参与者,这是允许的.
+     *
+     * @param entity          起源对象实例.
+     * @param participant     参与者.
+     * @param change          值的改变.
+     * @param allowDuplicates true 接受重复, false不接受重和.
+     */
+    public Infuence(IEntity entity, Participant participant, ValueChange change, boolean allowDuplicates) {
         rootNode = new RootNode(entity, participant, change);
 
         participantNodeSearchHelper = new HashMap<>();
-        participantNodeSearchHelper.put(participant, rootNode);
+
+        addQuickLink(participant, rootNode);
 
         size++;
+
+        this.allowDuplicates = allowDuplicates;
     }
 
     public IEntity getSourceEntity() {
@@ -60,9 +81,10 @@ public class Infuence {
      * 增加影响.默认以根为传递者.
      *
      * @param participant 新的参与者.
+     * @return false 出现重复不允许传播, true成功.
      */
-    public void impact(Participant participant) {
-        impact(rootNode.getParticipant(), participant);
+    public boolean impact(Participant participant) {
+        return impact(rootNode.getParticipant(), participant);
     }
 
     /**
@@ -70,9 +92,15 @@ public class Infuence {
      *
      * @param parentParticipant      传递影响的参与者.
      * @param newParticipant 新的参与者.
-     * @return true 成功,false失败.
+     * @return false 出现重复不允许传播, true成功.
      */
     public boolean impact(Participant parentParticipant, Participant newParticipant) {
+
+        if (!allowDuplicates && parentParticipant.equals(newParticipant)) {
+            // 不允许传播链出现重复.
+            return false;
+        }
+
         if (rootNode.getParticipant().equals(parentParticipant)) {
             insert(rootNode, newParticipant);
             return true;
@@ -81,6 +109,20 @@ public class Infuence {
         Optional<Node> childOp = searchChild(parentParticipant);
         if (childOp.isPresent()) {
             ChildNode childNode = (ChildNode) childOp.get();
+
+            if (!allowDuplicates) {
+                // 从当前结点的上一个开始检查,因为已经开始检查了当前的参与者是否与新参与者是否相同.
+                Optional<Node> point = childNode.getParent();
+                while (point.isPresent()) {
+                    if (point.get().getParticipant().equals(newParticipant)) {
+                        // 不允许传播链出现重复.
+                        return false;
+                    } else {
+                        point = point.get().getParent();
+                    }
+                }
+            }
+
             insert(childNode, newParticipant);
             return true;
         }
@@ -323,7 +365,7 @@ public class Infuence {
         Node newChildNode = new ChildNode(newParticipant);
         point.addChild(newChildNode);
         newChildNode.setLevel(point.getLevel() + 1);
-        participantNodeSearchHelper.put(newParticipant, newChildNode);
+        addQuickLink(newParticipant, newChildNode);
 
         size++;
     }
@@ -332,11 +374,17 @@ public class Infuence {
         return searchChild(participant).isPresent() || rootNode.getParticipant().equals(participant);
     }
 
-    // 搜索子类结点.
+    /*
+    如果相同的参与者出现在不同的结点中,以结点为高的为优先.
+     */
     private Optional<Node> searchChild(Participant participant) {
 
-        Node node = participantNodeSearchHelper.get(participant);
-        return Optional.ofNullable(node);
+        List<Node> nodes = participantNodeSearchHelper.get(participant);
+        if (nodes != null && !nodes.isEmpty()) {
+            return Optional.ofNullable(nodes.get(0));
+        } else {
+            return Optional.empty();
+        }
     }
 
     private void bfsIter(BfsIterNodeConsumer consumer) {
@@ -387,6 +435,18 @@ public class Infuence {
     private interface BfsIterNodeConsumer {
 
         InfuenceConsumer.Action consumer(Node node, int level);
+    }
+
+    // 加入快捷Link.
+    private void addQuickLink(Participant participant, Node node) {
+        List<Node> nodes = participantNodeSearchHelper.get(participant);
+        if (nodes == null) {
+            nodes = new ArrayList<>();
+            participantNodeSearchHelper.put(participant, nodes);
+        }
+
+        // 这里假设越往后的node的level越深.
+        nodes.add(node);
     }
 
     // 序号
