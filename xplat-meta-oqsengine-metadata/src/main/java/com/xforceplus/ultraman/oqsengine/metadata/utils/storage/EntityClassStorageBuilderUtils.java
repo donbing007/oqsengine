@@ -144,8 +144,11 @@ public class EntityClassStorageBuilderUtils {
             throw new MetaSyncClientException("entityClass-version is invalid.", false);
         }
         storage.setVersion(version);
+
         //  father
-        storage.setFatherId(entityClassInfo.getFather());
+        if (entityClassInfo.getFather() > 0) {
+            storage.setFatherId(entityClassInfo.getFather());
+        }
 
         //  relations
         storage.setRelations(toRelationStorageList(entityClassInfo.getRelationsList()));
@@ -536,25 +539,5 @@ public class EntityClassStorageBuilderUtils {
         }
 
         return Optional.ofNullable(value);
-    }
-
-    public static final int FIXED_CONDITION_LENGTH = 3;
-    public static final int FIXED_BO_ENTITY_LENGTH = 2;
-
-    /**
-     * 转换条件信息.
-     */
-    private static String checkConditions(String condition) {
-        String[] conditionArray = condition.substring(1, condition.length() - 1).split("\\[\\]");
-        for (String s : conditionArray) {
-            String[] array = s.split("\\s+");
-
-            if (array.length != FIXED_CONDITION_LENGTH) {
-                throw new MetaSyncClientException(
-                    String.format("condition length should equals %d in aggregation", FIXED_CONDITION_LENGTH),
-                    false);
-            }
-        }
-        return condition;
     }
 }

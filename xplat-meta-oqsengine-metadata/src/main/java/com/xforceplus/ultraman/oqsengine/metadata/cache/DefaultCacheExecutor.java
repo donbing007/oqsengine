@@ -1009,7 +1009,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
         syncCommands.hset(key, ELEMENT_VERSION, Integer.toString(newStorage.getVersion()));
 
         //  father & ancestors
-        if (null != newStorage.getFatherId()) {
+        if (null != newStorage.getFatherId() && newStorage.getFatherId() > 0) {
             syncCommands.hset(key, ELEMENT_FATHER, Long.toString(newStorage.getFatherId()));
             if (null != newStorage.getAncestors() && newStorage.getAncestors().size() > 0) {
                 try {

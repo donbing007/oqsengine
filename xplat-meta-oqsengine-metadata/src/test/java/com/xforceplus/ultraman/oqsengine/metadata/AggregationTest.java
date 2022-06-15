@@ -1,22 +1,14 @@
 package com.xforceplus.ultraman.oqsengine.metadata;
 
-import static com.xforceplus.ultraman.oqsengine.metadata.mock.generator.GeneralConstant.DEFAULT_ARGS;
 import static com.xforceplus.ultraman.oqsengine.metadata.mock.generator.GeneralConstant.PROFILE_CODE_1;
-import static com.xforceplus.ultraman.oqsengine.metadata.mock.generator.GeneralConstant.defaultValue;
 
-import com.google.protobuf.Any;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfo;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo;
-import com.xforceplus.ultraman.oqsengine.meta.common.utils.ProtoAnyHelper;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MetaInitialization;
-import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.EntityClassSyncProtoBufMocker;
-import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.ExpectedEntityStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.GeneralConstant;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.GeneralEntityUtils;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.AggregationType;
@@ -26,7 +18,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Aggregation;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Formula;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -86,7 +77,7 @@ public class AggregationTest extends AbstractMetaTestHelper {
         Optional<IEntityField> eOp = entityClassOp.get().field(entityFiledIdAgg);
         Assertions.assertTrue(eOp.isPresent());
         Assertions.assertEquals(String.format("%d_field_%d %s %s", entityIdMain, entityFiledIdMain, operator, value),
-            ((Aggregation) eOp.get().config().getCalculation()).getConditions().toString());
+            ((Aggregation) eOp.get().config().getCalculation()).getConditions().get().toString());
     }
 
     public static class EntityStoragePack {
@@ -173,7 +164,7 @@ public class AggregationTest extends AbstractMetaTestHelper {
             .setVersion(GeneralConstant.DEFAULT_VERSION)
             .setCode(entityStoragePack.getClassId() + "")
             .setName(entityStoragePack.getClassId() + "")
-            .setLevel(1)
+            .setLevel(0)
             .addAllEntityFields(entityFieldInfos)
             .build();
     }

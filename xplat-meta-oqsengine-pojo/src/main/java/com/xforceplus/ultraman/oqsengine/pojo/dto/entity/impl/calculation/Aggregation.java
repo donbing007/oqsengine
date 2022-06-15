@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
@@ -59,8 +60,8 @@ public class Aggregation extends AbstractCalculation {
     /**
      * 最终条件对象.
      */
-    @JsonProperty(value = "conditions")
-    private Conditions  conditions;
+    @JsonIgnore
+    private Conditions conditions;
 
     public Aggregation(CalculationType calculationType) {
         super(calculationType);
