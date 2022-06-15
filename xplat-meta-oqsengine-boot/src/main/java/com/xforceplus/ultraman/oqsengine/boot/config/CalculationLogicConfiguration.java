@@ -3,8 +3,6 @@ package com.xforceplus.ultraman.oqsengine.boot.config;
 import com.xforceplus.ultraman.oqsengine.calculation.Calculation;
 import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFactory;
 import com.xforceplus.ultraman.oqsengine.calculation.impl.DefaultCalculationImpl;
-import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.parse.AggregationParse;
-import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.parse.MetaAggregationParse;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.initcalculation.CalculationInitLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.initcalculation.DefaultCalculationInitLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.initcalculation.DefaultInitCalculationManager;
@@ -20,7 +18,6 @@ import java.util.List;
 import java.util.Map;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
 
 
 /**
@@ -43,12 +40,6 @@ public class CalculationLogicConfiguration {
         return new DefaultCalculationImpl();
     }
 
-
-    @Bean
-    public AggregationParse aggregationParse() {
-        return new MetaAggregationParse();
-    }
-
     /**
      * 计算字段初始化工厂.
      */
@@ -64,12 +55,12 @@ public class CalculationLogicConfiguration {
         return initIvalueFactory;
     }
 
-    @Bean ("aggregationInitLogic")
+    @Bean("aggregationInitLogic")
     public InitIvalueLogic aggregationInitLogic() {
         return new AggregationInitLogic();
     }
 
-    @Bean ("autoFillInitLogic")
+    @Bean("autoFillInitLogic")
     public InitIvalueLogic autoFillInitLogic() {
         return new AutoFillInitLogic();
     }
