@@ -30,11 +30,16 @@ public enum ConditionOperatorMap {
         this.conditionOperator = conditionOperator;
     }
 
+    /**
+     * 实例化.
+     *
+     * @param operator 操作.
+     * @return 操作哈希映射.
+     */
     public static ConditionOperatorMap instance(DomainCondition.Operator operator) {
         return null == operator ? UN_KNOWN :
-            Arrays.stream(ConditionOperatorMap.values()).filter(c -> {
-                return c.domainCondition.equals(operator);
-            }).findFirst()
+            Arrays.stream(ConditionOperatorMap.values())
+                .filter(c -> c.domainCondition.equals(operator)).findFirst()
                 .orElse(UN_KNOWN);
     }
 

@@ -2,7 +2,11 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.conditions;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
@@ -22,6 +26,33 @@ import org.junit.jupiter.api.Test;
  * @since <pre>Feb 22, 2020</pre>
  */
 public class ConditionsTest {
+
+    private static final IEntityField stringField = EntityField.Builder.anEntityField()
+        .withId(1000L)
+        .withFieldType(FieldType.STRING)
+        .withName("string-filed")
+        .build();
+    private static final IEntityClass matchEntityClass = EntityClass.Builder.anEntityClass()
+        .withId(1000L)
+        .withField(stringField)
+        .withName("matchEntityClass")
+        .build();
+
+    @Test
+    public void testLikeMatch() throws Exception {
+        IEntity entity = Entity.Builder.anEntity()
+            .withEntityClassRef(matchEntityClass.ref())
+            .withId(100)
+            .withValue(
+                new StringValue(stringField, "这是一个测试")
+            ).build();
+
+        Conditions conditions = Conditions.buildEmtpyConditions()
+            .addAnd(
+                new Condition(stringField, ConditionOperator.LIKE, new StringValue(stringField, "一个"))
+            );
+        Assertions.assertTrue(conditions.match(entity));
+    }
 
     @Test
     public void testScan() throws Exception {
@@ -153,12 +184,7 @@ public class ConditionsTest {
             ConditionOperator.GREATER_THAN,
             new StringValue(new EntityField(1, "test", FieldType.STRING), "test.value"));
 
-        try {
-            new Conditions(wrongCondition);
-            Assertions.fail("Attempt to add error condition, but no error.");
-        } catch (IllegalArgumentException ex) {
-            ex.printStackTrace();
-        }
+        Assertions.assertThrows(IllegalArgumentException.class, () -> new Conditions(wrongCondition));
 
         Condition correctCondition = new Condition(
             new EntityField(1, "test", FieldType.STRING),
@@ -168,12 +194,7 @@ public class ConditionsTest {
         Conditions conditions = new Conditions(correctCondition);
         Assertions.assertEquals(1, conditions.size());
 
-        try {
-            conditions.addAnd(wrongCondition);
-            Assertions.fail("Attempt to add error condition, but no error.");
-        } catch (IllegalArgumentException ex) {
-            ex.printStackTrace();
-        }
+        Assertions.assertThrows(IllegalArgumentException.class, () -> conditions.addAnd(wrongCondition));
     }
 
     @Test

@@ -112,14 +112,13 @@ public class Aggregation extends AbstractCalculation {
         this.aggregationByFields = aggregationByFields;
     }
 
-    public Conditions getConditions() {
-        return conditions;
+    public Optional<Conditions> getConditions() {
+        return Optional.ofNullable(conditions);
     }
 
     public void setConditions(Conditions conditions) {
         this.conditions = conditions;
     }
-
 
 
     public AggregationType getAggregationType() {
@@ -228,6 +227,9 @@ public class Aggregation extends AbstractCalculation {
         }
     }
 
+    /**
+     * 聚合条件.
+     */
     public static class AggregationCondition {
         private long entityClassId;
         private String entityClassCode;
@@ -270,6 +272,9 @@ public class Aggregation extends AbstractCalculation {
             return stringValue;
         }
 
+        /**
+         * 构造器.
+         */
         public static final class Builder {
             private long entityClassId;
             private String entityClassCode;

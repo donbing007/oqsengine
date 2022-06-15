@@ -11,7 +11,7 @@ import java.util.Optional;
  * @version 0.1 2020/2/18 20:54
  * @since 1.8
  */
-public interface IValue<T> {
+public interface IValue<T> extends Comparable<IValue> {
 
     /**
      * 属性值相关的字段信息.
@@ -121,4 +121,7 @@ public interface IValue<T> {
     public default boolean compareByString() {
         return true;
     }
+
+    @Override
+    int compareTo(IValue o);
 }

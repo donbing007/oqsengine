@@ -57,4 +57,9 @@ public class LookupValue extends AbstractValue<Long> {
     protected boolean skipTypeCheckWithCopy() {
         return true;
     }
+
+    @Override
+    public int compareTo(IValue o) {
+        return 0;
+    }
 }

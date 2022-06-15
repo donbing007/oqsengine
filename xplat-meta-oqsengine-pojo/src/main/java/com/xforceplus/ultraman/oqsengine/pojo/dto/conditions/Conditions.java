@@ -143,7 +143,7 @@ public class Conditions implements Serializable {
      * @return 匹配的实例.
      */
     public Collection<IEntity> match(Collection<IEntity> entities) {
-        if (entities == null || entities.isEmpty()) {
+        if (entities == null || entities.isEmpty() || this.isEmtpy()) {
             return Collections.emptyList();
         }
 
@@ -166,7 +166,7 @@ public class Conditions implements Serializable {
      * @return true 匹配, false 不匹配.
      */
     public boolean match(IEntity entity) {
-        if (entity == null) {
+        if (entity == null || this.isEmtpy()) {
             return false;
         }
 

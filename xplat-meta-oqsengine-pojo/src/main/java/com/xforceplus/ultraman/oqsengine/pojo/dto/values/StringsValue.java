@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.values;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 多值字符串逻辑值.
@@ -92,5 +93,23 @@ public class StringsValue extends AbstractValue<String[]> {
      */
     public static String[] toStrings(String stringValues) {
         return stringValues.split(DELIMITER);
+    }
+
+    @Override
+    public int compareTo(IValue o) {
+        String[] sourceValues = this.getValue();
+        String[] targetValues = ((StringsValue) o).getValue();
+
+        String sourceValue = "";
+        if (sourceValues != null) {
+            sourceValue = Arrays.stream(sourceValues).collect(Collectors.joining());
+        }
+
+        String targetValue = "";
+        if (targetValues != null) {
+            targetValue = Arrays.stream(targetValues).collect(Collectors.joining());
+        }
+
+        return sourceValue.compareTo(targetValue);
     }
 }

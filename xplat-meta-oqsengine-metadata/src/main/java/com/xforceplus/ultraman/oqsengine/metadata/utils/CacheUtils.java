@@ -164,7 +164,9 @@ public class CacheUtils {
         return Collections.emptyList();
     }
 
-    private static void aggregationConditionsToConditions(Aggregation aggregation, StorageMetaManager storageMetaManager) {
+
+    private static void aggregationConditionsToConditions(Aggregation aggregation,
+                                                          StorageMetaManager storageMetaManager) {
         Conditions conditions = Conditions.buildEmtpyConditions();
         if (null != aggregation.getAggregationConditions() && !aggregation.getAggregationConditions().isEmpty()) {
             for (Aggregation.AggregationCondition aggregationCondition : aggregation.getAggregationConditions()) {
@@ -176,14 +178,14 @@ public class CacheUtils {
                     return;
                 }
 
-                Optional<IEntityField> eOp = entityClassOp.get().field(aggregationCondition.getEntityFieldId());
-                if (!eOp.isPresent()) {
+                Optional<IEntityField> fieldOp = entityClassOp.get().field(aggregationCondition.getEntityFieldId());
+                if (!fieldOp.isPresent()) {
                     return;
                 }
 
                 conditions.addAnd(
-                    new Condition(eOp.get(), aggregationCondition.getConditionOperator()
-                        , IValueUtils.deserialize(aggregationCondition.getStringValue(), eOp.get()))
+                    new Condition(fieldOp.get(), aggregationCondition.getConditionOperator(),
+                        IValueUtils.deserialize(aggregationCondition.getStringValue(), fieldOp.get()))
                 );
             }
         }

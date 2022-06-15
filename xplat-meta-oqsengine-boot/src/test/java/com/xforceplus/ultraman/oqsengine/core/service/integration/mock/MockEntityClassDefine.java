@@ -619,7 +619,6 @@ public class MockEntityClassDefine {
                             .withCalculation(
                                 Aggregation.Builder.anAggregation()
                                     .withAggregationType(AggregationType.AVG)
-                                    .withConditions(Conditions.buildEmtpyConditions())
                                     .withClassId(orderClassId)
                                     .withFieldId(Long.MAX_VALUE - FieldId.orderTotalPriceSumFieldId.ordinal())
                                     .withRelationId(orderUserForeignField.id()).build()
@@ -639,7 +638,6 @@ public class MockEntityClassDefine {
                             .withCalculation(
                                 Aggregation.Builder.anAggregation()
                                     .withAggregationType(AggregationType.MAX)
-                                    .withConditions(Conditions.buildEmtpyConditions())
                                     .withClassId(orderClassId)
                                     .withFieldId(Long.MAX_VALUE - FieldId.orderTotalPriceSumFieldId.ordinal())
                                     .withRelationId(orderUserForeignField.id()).build()
@@ -659,7 +657,6 @@ public class MockEntityClassDefine {
                             .withCalculation(
                                 Aggregation.Builder.anAggregation()
                                     .withAggregationType(AggregationType.MIN)
-                                    .withConditions(Conditions.buildEmtpyConditions())
                                     .withClassId(orderClassId)
                                     .withFieldId(Long.MAX_VALUE - FieldId.orderTotalPriceSumFieldId.ordinal())
                                     .withRelationId(orderUserForeignField.id()).build()
