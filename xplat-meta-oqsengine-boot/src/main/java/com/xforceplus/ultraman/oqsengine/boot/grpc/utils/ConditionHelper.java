@@ -333,6 +333,13 @@ public class ConditionHelper {
                                                                                            FieldUp field,
                                                                                            MetaManager manager) {
 
+        /*
+        如果是identifier,那么返回预定义类型.
+         */
+        if (field.getIdentifier()) {
+            return Optional.of(Tuple.of(mainClass, EntityField.ID_ENTITY_FIELD));
+        }
+
         IEntityClass targetEntityClass = mainClass;
         String profile = mainClass.ref().getProfile();
         long fieldId = field.getId();
