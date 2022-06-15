@@ -134,8 +134,6 @@ public class CacheUtils {
                 Aggregation aggregation = (Aggregation) entityField.config().getCalculation();
                 if (null != storageMetaManager) {
                     aggregationConditionsToConditions(aggregation, storageMetaManager);
-                } else {
-                    aggregation.setConditions(Conditions.buildEmtpyConditions());
                 }
             }
         } else {
@@ -169,20 +167,18 @@ public class CacheUtils {
 
     public static void aggregationConditionsToConditions(Aggregation aggregation, StorageMetaManager storageMetaManager) {
         Conditions conditions = Conditions.buildEmtpyConditions();
-        if (null != aggregation.getAggregationConditions() || !aggregation.getAggregationConditions().isEmpty()) {
+        if (null != aggregation.getAggregationConditions() && !aggregation.getAggregationConditions().isEmpty()) {
             for (Aggregation.AggregationCondition aggregationCondition : aggregation.getAggregationConditions()) {
 
                 Optional<IEntityClass> entityClassOp =
                     storageMetaManager.load(aggregationCondition.getEntityClassId(), aggregationCondition.getProfile());
 
                 if (!entityClassOp.isPresent()) {
-                    aggregation.setConditions(Conditions.buildEmtpyConditions());
                     return;
                 }
 
                 Optional<IEntityField> eOp = entityClassOp.get().field(aggregationCondition.getEntityFieldId());
                 if (!eOp.isPresent()) {
-                    aggregation.setConditions(Conditions.buildEmtpyConditions());
                     return;
                 }
 
