@@ -134,8 +134,6 @@ public class CacheUtils {
                 Aggregation aggregation = (Aggregation) entityField.config().getCalculation();
                 if (null != storageMetaManager) {
                     aggregationConditionsToConditions(aggregation, storageMetaManager);
-                } else {
-                    aggregation.setConditions(Conditions.buildEmtpyConditions());
                 }
             }
         } else {
@@ -167,28 +165,27 @@ public class CacheUtils {
     }
 
 
-    private static void aggregationConditionsToConditions(Aggregation aggregation,
-                                                          StorageMetaManager storageMetaManager) {
+    public static void aggregationConditionsToConditions(Aggregation aggregation, StorageMetaManager storageMetaManager) {
         Conditions conditions = Conditions.buildEmtpyConditions();
-        if (null != aggregation.getAggregationConditions() || !aggregation.getAggregationConditions().isEmpty()) {
+        if (null != aggregation.getAggregationConditions() && !aggregation.getAggregationConditions().isEmpty()) {
             for (Aggregation.AggregationCondition aggregationCondition : aggregation.getAggregationConditions()) {
 
                 Optional<IEntityClass> entityClassOp =
                     storageMetaManager.load(aggregationCondition.getEntityClassId(), aggregationCondition.getProfile());
 
                 if (!entityClassOp.isPresent()) {
-                    aggregation.setConditions(Conditions.buildEmtpyConditions());
                     return;
                 }
 
-                Optional<IEntityField> fieldOp = entityClassOp.get().field(aggregationCondition.getEntityFieldId());
-                if (!fieldOp.isPresent()) {
-                    aggregation.setConditions(Conditions.buildEmtpyConditions());
+                Optional<IEntityField> eOp = entityClassOp.get().field(aggregationCondition.getEntityFieldId());
+                if (!eOp.isPresent()) {
                     return;
                 }
 
-                conditions.addAnd(new Condition(fieldOp.get(), aggregationCondition.getConditionOperator(),
-                    IValueUtils.deserialize(aggregationCondition.getStringValue(), fieldOp.get())));
+                conditions.addAnd(
+                    new Condition(eOp.get(), aggregationCondition.getConditionOperator()
+                        , IValueUtils.deserialize(aggregationCondition.getStringValue(), eOp.get()))
+                );
             }
         }
 
@@ -198,8 +195,9 @@ public class CacheUtils {
     /**
      * 转换条件信息.
      */
-    private static Conditions convertConditions(String condition, String profile, ObjectMapper objectMapper,
-                                                StorageMetaManager storageMetaManager) throws JsonProcessingException {
+    private static Conditions convertConditions(String condition
+                            , String profile, ObjectMapper objectMapper, StorageMetaManager storageMetaManager)
+        throws JsonProcessingException {
 
         Conditions conditions = Conditions.buildEmtpyConditions();
         if (null == condition) {
@@ -209,7 +207,7 @@ public class CacheUtils {
         List<String> conditionList = objectMapper.readValue(condition,
             objectMapper.getTypeFactory().constructParametricType(List.class, Long.class));
         for (String c : conditionList) {
-            String[] array = c.split("\\s+");
+            String [] array = c.split("\\s+");
             if (array.length != EntityClassStorageBuilderUtils.FIXED_CONDITION_LENGTH) {
                 return Conditions.buildEmtpyConditions();
             }
@@ -219,15 +217,18 @@ public class CacheUtils {
                 return Conditions.buildEmtpyConditions();
             }
 
-            Optional<IEntityClass> entityClassOp = storageMetaManager.load(Long.parseLong(boWithEntity[0]), profile);
+            Optional<IEntityClass> entityClassOp =
+                storageMetaManager.load(Long.parseLong(boWithEntity[0]), profile);
 
-            Optional<IEntityField> fieldOp;
-            if (!entityClassOp.isPresent() || !(fieldOp = entityClassOp.get().field(boWithEntity[1])).isPresent()) {
+            Optional<IEntityField> eOp;
+            if (!entityClassOp.isPresent() ||
+                !(eOp = entityClassOp.get().field(boWithEntity[1])).isPresent()) {
                 return Conditions.buildEmtpyConditions();
             }
 
-            conditions.addAnd(new Condition(fieldOp.get(), ConditionOperator.getInstance(array[1]),
-                IValueUtils.deserialize(array[2], fieldOp.get())));
+            conditions.addAnd(
+                new Condition(eOp.get(), ConditionOperator.getInstance(array[1]), IValueUtils.deserialize(array[2], eOp.get()))
+            );
 
             return conditions;
         }
