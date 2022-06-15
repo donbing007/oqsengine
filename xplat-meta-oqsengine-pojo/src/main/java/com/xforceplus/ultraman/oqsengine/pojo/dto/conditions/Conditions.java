@@ -143,9 +143,8 @@ public class Conditions implements Serializable {
      * @return 匹配的实例.
      */
     public Collection<IEntity> match(Collection<IEntity> entities) {
-        // 如果当前条件为空,表示全部匹配.
-        if (this.isEmtpy()) {
-            return entities;
+        if (entities == null || entities.isEmpty()) {
+            return Collections.emptyList();
         }
 
         PredicateHolder holder = new PredicateHolder();
@@ -169,10 +168,6 @@ public class Conditions implements Serializable {
     public boolean match(IEntity entity) {
         if (entity == null) {
             return false;
-        }
-
-        if (this.isEmtpy()) {
-            return true;
         }
 
         PredicateHolder holder = new PredicateHolder();
