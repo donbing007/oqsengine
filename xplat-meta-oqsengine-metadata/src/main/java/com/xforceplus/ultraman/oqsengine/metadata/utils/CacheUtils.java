@@ -165,7 +165,8 @@ public class CacheUtils {
     }
 
 
-    public static void aggregationConditionsToConditions(Aggregation aggregation, StorageMetaManager storageMetaManager) {
+    private static void aggregationConditionsToConditions(Aggregation aggregation,
+                                                          StorageMetaManager storageMetaManager) {
         Conditions conditions = Conditions.buildEmtpyConditions();
         if (null != aggregation.getAggregationConditions() && !aggregation.getAggregationConditions().isEmpty()) {
             for (Aggregation.AggregationCondition aggregationCondition : aggregation.getAggregationConditions()) {
@@ -177,14 +178,14 @@ public class CacheUtils {
                     return;
                 }
 
-                Optional<IEntityField> eOp = entityClassOp.get().field(aggregationCondition.getEntityFieldId());
-                if (!eOp.isPresent()) {
+                Optional<IEntityField> fieldOp = entityClassOp.get().field(aggregationCondition.getEntityFieldId());
+                if (!fieldOp.isPresent()) {
                     return;
                 }
 
                 conditions.addAnd(
-                    new Condition(eOp.get(), aggregationCondition.getConditionOperator()
-                        , IValueUtils.deserialize(aggregationCondition.getStringValue(), eOp.get()))
+                    new Condition(fieldOp.get(), aggregationCondition.getConditionOperator(),
+                        IValueUtils.deserialize(aggregationCondition.getStringValue(), fieldOp.get()))
                 );
             }
         }
@@ -195,8 +196,8 @@ public class CacheUtils {
     /**
      * 转换条件信息.
      */
-    private static Conditions convertConditions(String condition
-                            , String profile, ObjectMapper objectMapper, StorageMetaManager storageMetaManager)
+    private static Conditions convertConditions(String condition, String profile, ObjectMapper objectMapper,
+                                                StorageMetaManager storageMetaManager)
         throws JsonProcessingException {
 
         Conditions conditions = Conditions.buildEmtpyConditions();
@@ -207,7 +208,7 @@ public class CacheUtils {
         List<String> conditionList = objectMapper.readValue(condition,
             objectMapper.getTypeFactory().constructParametricType(List.class, Long.class));
         for (String c : conditionList) {
-            String [] array = c.split("\\s+");
+            String[] array = c.split("\\s+");
             if (array.length != EntityClassStorageBuilderUtils.FIXED_CONDITION_LENGTH) {
                 return Conditions.buildEmtpyConditions();
             }
@@ -220,14 +221,15 @@ public class CacheUtils {
             Optional<IEntityClass> entityClassOp =
                 storageMetaManager.load(Long.parseLong(boWithEntity[0]), profile);
 
-            Optional<IEntityField> eOp;
-            if (!entityClassOp.isPresent() ||
-                !(eOp = entityClassOp.get().field(boWithEntity[1])).isPresent()) {
+            Optional<IEntityField> fieldOp;
+            if (!entityClassOp.isPresent()
+                || !(fieldOp = entityClassOp.get().field(boWithEntity[1])).isPresent()) {
                 return Conditions.buildEmtpyConditions();
             }
 
             conditions.addAnd(
-                new Condition(eOp.get(), ConditionOperator.getInstance(array[1]), IValueUtils.deserialize(array[2], eOp.get()))
+                new Condition(fieldOp.get(), ConditionOperator.getInstance(array[1]),
+                    IValueUtils.deserialize(array[2], fieldOp.get()))
             );
 
             return conditions;
