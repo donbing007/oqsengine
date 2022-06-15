@@ -526,7 +526,7 @@ public class StorageMetaManager implements MetaManager {
                     EntityField entityField =
                         OBJECT_MAPPER.readValue(entry.getValue(), EntityField.class);
 
-                    fields.add(CacheUtils.resetCalculation(entityField,this));
+                    fields.add(CacheUtils.resetCalculation(entityField, this));
                 }
             } else if (entry.getKey().startsWith(ELEMENT_PROFILES + "." + ELEMENT_RELATIONS)) {
                 if (!profile.equals(OqsProfile.UN_DEFINE_PROFILE)) {
