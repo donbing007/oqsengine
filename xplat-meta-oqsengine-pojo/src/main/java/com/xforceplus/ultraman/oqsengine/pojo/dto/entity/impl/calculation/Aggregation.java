@@ -1,9 +1,12 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.AggregationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.StringJoiner;
@@ -38,8 +41,8 @@ public class Aggregation extends AbstractCalculation {
     /**
      * 聚合字段条件信息.
      */
-    @JsonProperty(value = "conditions")
-    private Conditions conditions;
+    @JsonProperty(value = "aggregationConditions")
+    private List<AggregationCondition> aggregationConditions;
 
     /**
      * 聚合字段类型.
@@ -52,6 +55,12 @@ public class Aggregation extends AbstractCalculation {
      */
     @JsonProperty(value = "condition")
     private Map<Long, Long> aggregationByFields;
+
+    /**
+     * 最终条件对象.
+     */
+    @JsonProperty(value = "conditions")
+    private Conditions  conditions;
 
     public Aggregation(CalculationType calculationType) {
         super(calculationType);
@@ -85,12 +94,14 @@ public class Aggregation extends AbstractCalculation {
         this.relationId = relationId;
     }
 
-    public Optional<Conditions> getConditions() {
-        return Optional.ofNullable(conditions);
+
+    public List<AggregationCondition> getAggregationConditions() {
+        return aggregationConditions;
     }
 
-    public void setConditions(Conditions conditions) {
-        this.conditions = conditions;
+    public void setAggregationConditions(
+        List<AggregationCondition> aggregationConditions) {
+        this.aggregationConditions = aggregationConditions;
     }
 
     public Map<Long, Long> getAggregationByFields() {
@@ -100,6 +111,16 @@ public class Aggregation extends AbstractCalculation {
     public void setAggregationByFields(Map<Long, Long> aggregationByFields) {
         this.aggregationByFields = aggregationByFields;
     }
+
+    public Conditions getConditions() {
+        return conditions;
+    }
+
+    public void setConditions(Conditions conditions) {
+        this.conditions = conditions;
+    }
+
+
 
     public AggregationType getAggregationType() {
         return aggregationType;
@@ -142,6 +163,7 @@ public class Aggregation extends AbstractCalculation {
         private long fieldId;
         private long relationId;
         private Conditions conditions;
+        private List<AggregationCondition> aggregationConditions;
         private AggregationType aggregationType;
         private Map<Long, Long> aggregationByFields;
 
@@ -172,6 +194,11 @@ public class Aggregation extends AbstractCalculation {
             return this;
         }
 
+        public Aggregation.Builder withAggregationConditions(List<AggregationCondition> aggregationConditions) {
+            this.aggregationConditions = aggregationConditions;
+            return this;
+        }
+
         public Aggregation.Builder withAggregationType(AggregationType aggregationType) {
             this.aggregationType = aggregationType;
             return this;
@@ -195,7 +222,127 @@ public class Aggregation extends AbstractCalculation {
             aggregation.conditions = this.conditions;
             aggregation.relationId = this.relationId;
             aggregation.aggregationType = this.aggregationType;
+            aggregation.aggregationConditions = this.aggregationConditions;
+
             return aggregation;
+        }
+    }
+
+    public static class AggregationCondition {
+        private long entityClassId;
+        private String entityClassCode;
+        private String profile;
+        private long entityFieldId;
+        private String entityFieldCode;
+        private FieldType fieldType;
+        private ConditionOperator conditionOperator;
+        private String stringValue;
+
+        public long getEntityClassId() {
+            return entityClassId;
+        }
+
+        public String getEntityClassCode() {
+            return entityClassCode;
+        }
+
+        public String getProfile() {
+            return profile;
+        }
+
+        public long getEntityFieldId() {
+            return entityFieldId;
+        }
+
+        public String getEntityFieldCode() {
+            return entityFieldCode;
+        }
+
+        public FieldType getFieldType() {
+            return fieldType;
+        }
+
+        public ConditionOperator getConditionOperator() {
+            return conditionOperator;
+        }
+
+        public String getStringValue() {
+            return stringValue;
+        }
+
+        public static final class Builder {
+            private long entityClassId;
+            private String entityClassCode;
+            private String profile;
+            private long entityFieldId;
+            private String entityFieldCode;
+            private FieldType fieldType;
+            private ConditionOperator conditionOperator;
+            private String stringValue;
+
+            private Builder() {
+            }
+
+            public static AggregationCondition.Builder anAggregationCondition() {
+                return new AggregationCondition.Builder();
+            }
+
+            public AggregationCondition.Builder withEntityClassId(long classId) {
+                this.entityClassId = classId;
+                return this;
+            }
+
+            public AggregationCondition.Builder withEntityClassCode(String entityClassCode) {
+                this.entityClassCode = entityClassCode;
+                return this;
+            }
+
+            public AggregationCondition.Builder withProfile(String profile) {
+                this.profile = profile;
+                return this;
+            }
+
+            public AggregationCondition.Builder withEntityFieldId(long entityFieldId) {
+                this.entityFieldId = entityFieldId;
+                return this;
+            }
+
+            public AggregationCondition.Builder withEntityFieldCode(String entityFieldCode) {
+                this.entityFieldCode = entityFieldCode;
+                return this;
+            }
+
+            public AggregationCondition.Builder withEntityFieldType(FieldType fieldType) {
+                this.fieldType = fieldType;
+                return this;
+            }
+
+            public AggregationCondition.Builder withConditionOperator(ConditionOperator conditionOperator) {
+                this.conditionOperator = conditionOperator;
+                return this;
+            }
+
+            public AggregationCondition.Builder withStringValue(String stringValue) {
+                this.stringValue = stringValue;
+                return this;
+            }
+
+            /**
+             * build.
+             */
+            public AggregationCondition build() {
+                AggregationCondition aggregationCondition = new AggregationCondition();
+                aggregationCondition.entityClassId = this.entityClassId;
+                aggregationCondition.entityClassCode = this.entityClassCode;
+                aggregationCondition.entityFieldId = this.entityFieldId;
+                aggregationCondition.entityFieldCode = this.entityFieldCode;
+                aggregationCondition.conditionOperator = this.conditionOperator;
+                aggregationCondition.fieldType = this.fieldType;
+                aggregationCondition.profile = this.profile;
+                aggregationCondition.stringValue = this.stringValue;
+
+                return aggregationCondition;
+            }
         }
     }
 }

@@ -6,16 +6,28 @@ import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassEle
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_RELATIONS;
 import static com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.StaticCalculation.DEFAULT_LEVEL;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
+import com.xforceplus.ultraman.oqsengine.metadata.StorageMetaManager;
+import com.xforceplus.ultraman.oqsengine.metadata.utils.storage.EntityClassStorageBuilderUtils;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Aggregation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.AutoFill;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.StaticCalculation;
+import com.xforceplus.ultraman.oqsengine.pojo.utils.IValueUtils;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -107,7 +119,7 @@ public class CacheUtils {
     /**
      * 为了兼容目前redis中的结构不抛NullPointException，需要对某些自增编号字段设默认值.
      */
-    public static EntityField resetCalculation(EntityField entityField) {
+    public static EntityField resetCalculation(EntityField entityField, StorageMetaManager storageMetaManager) {
         if (null != entityField.calculationType()) {
             if (entityField.calculationType().equals(CalculationType.AUTO_FILL)) {
                 AutoFill autoFill = (AutoFill) entityField.config().getCalculation();
@@ -117,6 +129,13 @@ public class CacheUtils {
 
                 if (autoFill.getLevel() == 0) {
                     autoFill.setLevel(DEFAULT_LEVEL);
+                }
+            } else if (entityField.calculationType().equals(CalculationType.AGGREGATION)) {
+                Aggregation aggregation = (Aggregation) entityField.config().getCalculation();
+                if (null != storageMetaManager) {
+                    aggregationConditionsToConditions(aggregation, storageMetaManager);
+                } else {
+                    aggregation.setConditions(Conditions.buildEmtpyConditions());
                 }
             }
         } else {
@@ -145,5 +164,79 @@ public class CacheUtils {
         }
 
         return Collections.emptyList();
+    }
+
+
+    public static void aggregationConditionsToConditions(Aggregation aggregation, StorageMetaManager storageMetaManager) {
+        Conditions conditions = Conditions.buildEmtpyConditions();
+        if (null == aggregation.getAggregationConditions() || aggregation.getAggregationConditions().isEmpty()) {
+            for (Aggregation.AggregationCondition aggregationCondition : aggregation.getAggregationConditions()) {
+
+                Optional<IEntityClass> entityClassOp =
+                    storageMetaManager.load(aggregationCondition.getEntityClassId(), aggregationCondition.getProfile());
+
+                if (!entityClassOp.isPresent()) {
+                    aggregation.setConditions(Conditions.buildEmtpyConditions());
+                    return;
+                }
+
+                Optional<IEntityField> eOp = entityClassOp.get().field(aggregationCondition.getEntityFieldId());
+                if (!eOp.isPresent()) {
+                    aggregation.setConditions(Conditions.buildEmtpyConditions());
+                    return;
+                }
+
+                conditions.addAnd(
+                    new Condition(eOp.get(), aggregationCondition.getConditionOperator()
+                        , IValueUtils.deserialize(aggregationCondition.getStringValue(), eOp.get()))
+                );
+            }
+        }
+
+        aggregation.setConditions(conditions);
+    }
+
+    /**
+     * 转换条件信息.
+     */
+    private static Conditions convertConditions(String condition
+                            , String profile, ObjectMapper objectMapper, StorageMetaManager storageMetaManager)
+        throws JsonProcessingException {
+
+        Conditions conditions = Conditions.buildEmtpyConditions();
+        if (null == condition) {
+            return conditions;
+        }
+
+        List<String> conditionList = objectMapper.readValue(condition,
+            objectMapper.getTypeFactory().constructParametricType(List.class, Long.class));
+        for (String c : conditionList) {
+            String [] array = c.split("\\s+");
+            if (array.length != EntityClassStorageBuilderUtils.FIXED_CONDITION_LENGTH) {
+                return Conditions.buildEmtpyConditions();
+            }
+
+            String[] boWithEntity = array[0].split("\\.");
+            if (boWithEntity.length != EntityClassStorageBuilderUtils.FIXED_BO_ENTITY_LENGTH) {
+                return Conditions.buildEmtpyConditions();
+            }
+
+            Optional<IEntityClass> entityClassOp =
+                storageMetaManager.load(Long.parseLong(boWithEntity[0]), profile);
+
+            Optional<IEntityField> eOp;
+            if (!entityClassOp.isPresent() ||
+                !(eOp = entityClassOp.get().field(boWithEntity[1])).isPresent()) {
+                return Conditions.buildEmtpyConditions();
+            }
+
+            conditions.addAnd(
+                new Condition(eOp.get(), ConditionOperator.getInstance(array[1]), IValueUtils.deserialize(array[2], eOp.get()))
+            );
+
+            return conditions;
+        }
+
+        return null;
     }
 }

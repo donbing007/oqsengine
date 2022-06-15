@@ -22,7 +22,6 @@ import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.ProfileStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.RelationStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.utils.CacheUtils;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassType;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -146,11 +145,12 @@ public class CacheToStorageGenerator {
         while (iterator.hasNext()) {
             Map.Entry<String, String> entry = iterator.next();
             if (entry.getKey().startsWith(ELEMENT_FIELDS + ".")) {
-                fields.add(CacheUtils.resetCalculation(objectMapper.readValue(entry.getValue(), EntityField.class)));
+
+                fields.add(CacheUtils.resetCalculation(objectMapper.readValue(entry.getValue(), EntityField.class), null));
             } else if (entry.getKey().startsWith(ELEMENT_PROFILES + "." +  ELEMENT_FIELDS)) {
                 String key = parseOneKeyFromProfileEntity(entry.getKey());
                 profileStorageMap.computeIfAbsent(key, ProfileStorage::new)
-                    .addField(CacheUtils.resetCalculation(objectMapper.readValue(entry.getValue(), EntityField.class)));
+                    .addField(CacheUtils.resetCalculation(objectMapper.readValue(entry.getValue(), EntityField.class),  null));
             } else if (entry.getKey().startsWith(ELEMENT_PROFILES + "." +  ELEMENT_RELATIONS)) {
                 String key = parseOneKeyFromProfileRelations(entry.getKey());
                 String profileRelations = keyValues.get(entry.getKey());
@@ -165,4 +165,6 @@ public class CacheToStorageGenerator {
 
         return entityClassStorage;
     }
+
+
 }

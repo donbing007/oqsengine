@@ -9,6 +9,7 @@ import com.google.protobuf.DoubleValue;
 import com.google.protobuf.Int64Value;
 import com.google.protobuf.StringValue;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo;
@@ -18,6 +19,7 @@ import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.ProfileStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.RelationStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.utils.CacheUtils;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.AggregationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
@@ -400,30 +402,44 @@ public class EntityClassStorageBuilderUtils {
 
     private static Aggregation toAggregation(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator calculator) {
 
-        Conditions conditions = null;
-        if (!calculator.getCondition().isEmpty()) {
-            conditions = converConditions(calculator.getCondition());
-        }
-        Aggregation.Builder builder = Aggregation.Builder.anAggregation()
+        return Aggregation.Builder.anAggregation()
                 .withClassId(calculator.getAggregationBoId())
                 .withFieldId(calculator.getAggregationFieldId())
                 .withAggregationType(AggregationType.getInstance(calculator.getAggregationType()))
                 .withRelationId(calculator.getAggregationRelationId())
                 .withAggregationByFields(calculator.getAggregationByFieldsMap())
-                .withConditions(conditions);
-        return builder.build();
+                .withAggregationConditions(
+                    aggregationConditions(calculator.getDomainConditionsList())
+                ).build();
     }
 
-    /**
-     * 转换条件信息.
-     */
-    private static Conditions converConditions(String condition) {
-        String[] conditionArray = condition.substring(1, condition.length() - 1).split("\\[\\]");
-        for (String s : conditionArray) {
-            String [] array = s.split("\\s+");
+    private static List<Aggregation.AggregationCondition> aggregationConditions(List<DomainCondition> domainConditions) {
+
+        List<Aggregation.AggregationCondition> aggregationConditions = new ArrayList<>();
+        if (null != domainConditions) {
+
+            for (DomainCondition domainCondition : domainConditions) {
+                Aggregation.AggregationCondition aggregationCondition =
+                    Aggregation.AggregationCondition.Builder
+                        .anAggregationCondition()
+                        .withEntityClassId(domainCondition.getEntityId())
+                        .withEntityClassCode(domainCondition.getEntityCode())
+                        .withEntityFieldCode(domainCondition.getEntityFieldCode())
+                        .withEntityFieldId(domainCondition.getEntityFieldId())
+                        .withProfile(domainCondition.getProfile())
+                        .withStringValue(domainCondition.getValues())
+                        .withConditionOperator(ConditionOperatorMap.instance(domainCondition.getOperator()).getConditionOperator())
+                        .withEntityFieldType(FieldType.fromRawType(domainCondition.getFieldType().name()))
+                        .build();
+
+                aggregationConditions.add(aggregationCondition);
+            }
         }
-        return null;
+        return aggregationConditions;
     }
+
+
+
 
     /**
      * 转换FieldConfig.
@@ -515,5 +531,23 @@ public class EntityClassStorageBuilderUtils {
         }
 
         return Optional.ofNullable(value);
+    }
+
+    public static final int FIXED_CONDITION_LENGTH = 3;
+    public static final int FIXED_BO_ENTITY_LENGTH = 2;
+    /**
+     * 转换条件信息.
+     */
+    private static String checkConditions(String condition) {
+        String[] conditionArray = condition.substring(1, condition.length() - 1).split("\\[\\]");
+        for (String s : conditionArray) {
+            String [] array = s.split("\\s+");
+
+            if (array.length != FIXED_CONDITION_LENGTH) {
+                throw new MetaSyncClientException(String.format("condition length should equals %d in aggregation", FIXED_CONDITION_LENGTH),
+                    false);
+            }
+        }
+        return condition;
     }
 }

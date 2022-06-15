@@ -1,10 +1,12 @@
 package com.xforceplus.ultraman.oqsengine.metadata.mock.generator;
 
 import static com.xforceplus.ultraman.oqsengine.metadata.mock.generator.GeneralConstant.DEFAULT_ARGS;
+import static com.xforceplus.ultraman.oqsengine.metadata.mock.generator.GeneralConstant.PROFILE_CODE_1;
 import static com.xforceplus.ultraman.oqsengine.metadata.mock.generator.GeneralConstant.defaultValue;
 
 import com.google.protobuf.Any;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
@@ -12,14 +14,17 @@ import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.ProfileInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.ProtoAnyHelper;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.AggregationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Aggregation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Formula;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
@@ -41,7 +46,9 @@ public class EntityClassSyncProtoBufMocker {
             new GeneralConstant.FourGeneric<>(3, FieldType.LONG.name(),
                 CalculationType.FORMULA, false),
             new GeneralConstant.FourGeneric<>(4, FieldType.STRING.name(),
-                CalculationType.AUTO_FILL, false)
+                CalculationType.AUTO_FILL, false),
+            new GeneralConstant.FourGeneric<>(5, FieldType.STRING.name(),
+                CalculationType.AGGREGATION, false)
         );
 
     public static GeneralConstant.FourGeneric<Integer, String, CalculationType, Boolean>
@@ -181,6 +188,30 @@ public class EntityClassSyncProtoBufMocker {
             .build();
     }
 
+    /**
+     * 生成autoFill-calculator
+     */
+    public static Calculator aggregation(long boId, long filedId, long domainEntityId, long domainFieldId) {
+
+        return Calculator.newBuilder()
+            .setAggregationBoId(boId)
+            .setAggregationFieldId(filedId)
+            .setCalculateType(CalculationType.AGGREGATION.getSymbol())
+            .setAggregationType(AggregationType.MAX.getType())
+            .addDomainConditions(DomainCondition
+                .newBuilder()
+                .setEntityCode("testClassAAA")
+                .setEntityId(domainEntityId)
+                .setEntityFieldCode("testFieldAAA")
+                .setEntityFieldId(domainFieldId)
+                .setFieldType(DomainCondition.FieldType.LONG)
+                .setOperator(DomainCondition.Operator.EQUALS)
+                .setProfile(PROFILE_CODE_1.getKey())
+                .setValues("10")
+                .build()
+            ).build();
+    }
+
     private static EntityFieldInfo.FieldType toFieldType(String type) {
         for (EntityFieldInfo.FieldType fieldType : EntityFieldInfo.FieldType.values()) {
             if (fieldType.name().equals(type)) {
@@ -197,8 +228,12 @@ public class EntityClassSyncProtoBufMocker {
                                                   GeneralConstant.FourGeneric<Integer, String, CalculationType, Boolean> fourTa) {
         EntityFieldInfo.FieldType protoType = toFieldType(fourTa.getB());
         FieldType fieldType = FieldType.fromRawType(protoType.name());
+
+        long entityFieldId =
+            GeneralEntityUtils.EntityFieldHelper.id(id + fourTa.getA(), fourTa.getD());
+
         EntityFieldInfo.Builder builder = EntityFieldInfo.newBuilder()
-            .setId(GeneralEntityUtils.EntityFieldHelper.id(id + fourTa.getA(), fourTa.getD()))
+            .setId(entityFieldId)
             .setName(GeneralEntityUtils.EntityFieldHelper.name(id))
             .setCname(GeneralEntityUtils.EntityFieldHelper.cname(id))
             .setFieldType(protoType)
@@ -220,6 +255,10 @@ public class EntityClassSyncProtoBufMocker {
                     GeneralConstant.MOCK_DOMAIN_NOT_TYPE, GeneralConstant.MOCK_LEVEL,
                     GeneralConstant.MOCK_SENIOR_ARGS, GeneralConstant.MOCK_MODEL,
                     GeneralConstant.MOCK_MIN, GeneralConstant.MOCK_STEP));
+                break;
+            }
+            case AGGREGATION: {
+                builder.setCalculator(aggregation(id, entityFieldId, id, entityFieldId));
                 break;
             }
             default: {
