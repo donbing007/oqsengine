@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.AggregationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import java.util.Map;
+import java.util.Optional;
 import java.util.StringJoiner;
 
 /**
@@ -84,8 +85,8 @@ public class Aggregation extends AbstractCalculation {
         this.relationId = relationId;
     }
 
-    public Conditions getConditions() {
-        return conditions;
+    public Optional<Conditions> getConditions() {
+        return Optional.ofNullable(conditions);
     }
 
     public void setConditions(Conditions conditions) {

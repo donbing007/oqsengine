@@ -17,6 +17,8 @@ import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
 import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MockMetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.AggregationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
@@ -67,29 +69,23 @@ import org.slf4j.LoggerFactory;
 
 /**
  * 测试类.
- *       A
- * /     \       \
- * B(sum)  C(COUNT)  C(SUM)
- * /
+ * <pre>
+ *                 A
+ *     /      /        \          \
+ * B(sum)  C(COUNT)  C(SUM)   C(SUM(condition))
+ *    |
  * D(SUM)
+ * </pre>
+ * <em>注意: 所有的测试都基于发起聚合的实体一定早于被聚合的实体被创建.</em>
  */
 public class AggregationCalculationLogicTest {
 
     final Logger logger = LoggerFactory.getLogger(AggregationCalculationLogicTest.class);
 
-    public static final int ONE = 1;
-
-    public static final int ZERO = 0;
-
-    private List<IEntityClass> entityClasses = new ArrayList<>();
-
-    private CalculationContext context;
 
     private AggregationCalculationLogic aggregationCalculationLogic;
 
     private static IEntityField A_LONG;
-
-    private static IEntityField B_ID;
 
     private static IEntityField B_REF;
 
@@ -98,6 +94,8 @@ public class AggregationCalculationLogicTest {
     private static IEntityField C_SUM;
 
     private static IEntityField C_COUNT;
+
+    private static IEntityField C_SUM_CONDITIONS;
 
     private static IEntityField D_SUM;
 
@@ -118,7 +116,6 @@ public class AggregationCalculationLogicTest {
     private IEntity entityC;
 
     private AggregationCalculationLogicTest.MockLogic aggregationLogic;
-    private AggregationCalculationLogicTest.MockLogic lookupLogic;
 
     private MockMetaManager metaManager;
     private AggregationCalculationLogicTest.MockMasterStorage masterStorage;
@@ -134,11 +131,6 @@ public class AggregationCalculationLogicTest {
             .withId(Long.MAX_VALUE)
             .withFieldType(FieldType.LONG)
             .withName("a-long").build();
-
-        B_ID = EntityField.Builder.anEntityField()
-            .withId(Long.MAX_VALUE - 1000)
-            .withFieldType(FieldType.LONG)
-            .withName("id").build();
 
         B_REF = EntityField.Builder.anEntityField()
             .withId(Long.MAX_VALUE - 10)
@@ -191,6 +183,30 @@ public class AggregationCalculationLogicTest {
                     ).build()
             )
             .withName("c-count-a").build();
+
+        // sum的条件聚合
+        C_SUM_CONDITIONS = EntityField.Builder.anEntityField()
+            .withId(Long.MAX_VALUE - 22)
+            .withFieldType(FieldType.LONG)
+            .withConfig(
+                FieldConfig.Builder.anFieldConfig()
+                    .withCalculation(Aggregation.Builder.anAggregation()
+                        .withClassId(Long.MAX_VALUE)
+                        .withFieldId(Long.MAX_VALUE)
+                        .withRelationId(Long.MAX_VALUE - 20)
+                        .withConditions(
+                            Conditions.buildEmtpyConditions()
+                                .addAnd(
+                                    new Condition(
+                                        A_LONG, ConditionOperator.GREATER_THAN, new LongValue(A_LONG, 100L)
+                                    )
+                                )
+                        )
+                        .withAggregationType(AggregationType.SUM)
+                        .build()
+                    ).build()
+            )
+            .withName("c-sum-conditions").build();
 
         D_SUM = EntityField.Builder.anEntityField()
             .withId(Long.MAX_VALUE - 3)
@@ -452,6 +468,59 @@ public class AggregationCalculationLogicTest {
     }
 
     @Test
+    public void testBuildConditionSum() {
+        CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()
+            .withMetaManager(metaManager)
+            .withScenarios(CalculationScenarios.BUILD).withCalculationLogicFactory(new CalculationLogicFactory())
+            .build();
+        context.getCalculationLogicFactory().get().register(aggregationLogic);
+        context.focusEntity(entityC, C_CLASS);
+        context.focusField(C_SUM_CONDITIONS);
+
+        IEntity triggerEntity = Entity.Builder.anEntity()
+            .withId(1)
+            .withEntityClassRef(A_CLASS.ref())
+            .withValue(
+                new LongValue(A_LONG, 100L)
+            ).build();
+
+        // 目标是一个不应该被聚合的.
+        context.putEntityToCache(triggerEntity);
+        context.addValueChange(
+            ValueChange.build(1, new EmptyTypedValue(A_LONG), new LongValue(A_LONG, 100L)));
+        context.startMaintenance(triggerEntity);
+        Optional<IValue> targetValue = aggregationCalculationLogic.calculate(context);
+        Assertions.assertFalse(targetValue.isPresent());
+
+        /*
+        另一次创建,应该被聚合.由于需要保证entityC被targetEntity早创建,所以这里为entityC增加一个 "c_sum_conditions"的默认值1.
+         */
+        entityC.entityValue().addValue(
+            new LongValue(C_SUM_CONDITIONS, 1)
+        );
+        context = DefaultCalculationContext.Builder.anCalculationContext()
+            .withMetaManager(metaManager)
+            .withScenarios(CalculationScenarios.BUILD).withCalculationLogicFactory(new CalculationLogicFactory())
+            .build();
+        context.getCalculationLogicFactory().get().register(aggregationLogic);
+        context.focusEntity(entityC, C_CLASS);
+        context.focusField(C_SUM_CONDITIONS);
+
+        triggerEntity = Entity.Builder.anEntity()
+            .withId(1)
+            .withEntityClassRef(A_CLASS.ref())
+            .withValue(
+                new LongValue(A_LONG, 101L)
+            ).build();
+        context.putEntityToCache(triggerEntity);
+        context.addValueChange(
+            ValueChange.build(1, new EmptyTypedValue(A_LONG), new LongValue(A_LONG, 100L)));
+        context.startMaintenance(triggerEntity);
+        targetValue = aggregationCalculationLogic.calculate(context);
+        Assertions.assertEquals(101L, targetValue.get().valueToLong());
+    }
+
+    @Test
     public void testBuildCalculation() {
         CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()
             .withMetaManager(metaManager)
@@ -641,7 +710,7 @@ public class AggregationCalculationLogicTest {
 
     static class MockMasterStorage implements MasterStorage {
 
-        private Map<Long, com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity> entities = new HashMap<>();
+        private Map<Long, IEntity> entities = new HashMap<>();
 
         private List<IEntity> replaceEntities = new ArrayList<>();
 

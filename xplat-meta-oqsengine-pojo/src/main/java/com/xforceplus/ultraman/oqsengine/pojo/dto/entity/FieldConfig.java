@@ -20,6 +20,11 @@ import java.util.StringJoiner;
 public class FieldConfig implements Serializable {
 
     /**
+     * 默认的字段配置.
+     */
+    public static final FieldConfig DEFAULT_CONFIG = FieldConfig.Builder.anFieldConfig().build();
+
+    /**
      * 字段意义.
      */
     public enum FieldSense {

@@ -79,6 +79,7 @@ public class AggregationCalculationLogic implements CalculationLogic {
             return Optional.empty();
         }
         Aggregation aggregation = ((Aggregation) aggregationField.config().getCalculation());
+
         //获取被聚合的entity信息（修改后的）
         IEntity triggerEntity = null;
         Optional<IEntity> triggerEntityOp = context.getMaintenanceTriggerEntity();
@@ -101,12 +102,23 @@ public class AggregationCalculationLogic implements CalculationLogic {
             return aggregationValue;
         }
 
+        // 正常情况两个对象只存在一个一对多，在cache中该对象也只会存在一个实例
+        triggerEntity = triggerEntityOp.get();
+
+        /*
+        如果指定了条件,那么需要触发的实体符合当前聚合定义的条件.
+         */
+        Optional<Conditions> conditionsOp = aggregation.getConditions();
+        if (conditionsOp.isPresent()) {
+            if (!conditionsOp.get().match(triggerEntity)) {
+                return Optional.empty();
+            }
+        }
+
         // 计算相关的字段定义
         Optional<IValue> newValue = null;
         Optional<IValue> oldValue = null;
 
-        // 正常情况两个对象只存在一个一对多，在cache中该对象也只会存在一个实例
-        triggerEntity = triggerEntityOp.get();
         if (aggregation.getAggregationType().equals(AggregationType.COUNT)) {
             if (context.getScenariso().equals(CalculationScenarios.BUILD)) {
                 newValue = Optional.of(new LongValue(aggregationField, 1));
@@ -118,7 +130,8 @@ public class AggregationCalculationLogic implements CalculationLogic {
                 return Optional.empty();
             }
         } else {
-            Optional<IEntityClass> triggerEntityClassOp = context.getMetaManager().get().load(triggerEntity.entityClassRef());
+            Optional<IEntityClass> triggerEntityClassOp =
+                context.getMetaManager().get().load(triggerEntity.entityClassRef());
             if (!triggerEntityClassOp.isPresent()) {
                 throw new CalculationException(
                     String.format("The expected target object meta information was not found.[%s]",
@@ -144,11 +157,6 @@ public class AggregationCalculationLogic implements CalculationLogic {
             // 修改后.
             newValue = triggerEntityFieldValueChange.get().getNewValue();
 
-        }
-        //拿到数据后开始进行判断数据是否符合条件
-        boolean pass = checkEntityByCondition(((Aggregation) aggregationField.config().getCalculation()).getConditions());
-        if (!pass) {
-            return Optional.empty();
         }
 
         try {
@@ -271,55 +279,6 @@ public class AggregationCalculationLogic implements CalculationLogic {
     @Override
     public CalculationType supportType() {
         return CalculationType.AGGREGATION;
-    }
-
-    /**
-     * 根据条件和id来判断这条数据是否符合聚合范围.
-     *
-     * @param conditions  条件信息.
-     * @return 是否符合.
-     */
-    private boolean checkEntityByCondition(Conditions conditions) {
-        if (conditions == null || conditions.size() == 0) {
-            return true;
-        }
-        return true;
-    }
-
-    /**
-     * 得到统计值.
-     *
-     * @param aggregation             聚合配置.
-     * @param sourceEntity            来源实例.
-     * @param entityClass             对象结构.
-     * @param metaManager             meta.
-     * @param conditionsSelectStorage 条件查询.
-     * @return 统计数字.
-     */
-    private long countAggregationEntity(Aggregation aggregation, IEntity sourceEntity, IEntityClass entityClass,
-                                        MetaManager metaManager, ConditionsSelectStorage conditionsSelectStorage) {
-        // 得到count值
-        Optional<IEntityClass> aggEntityClass =
-            metaManager.load(aggregation.getClassId(), sourceEntity.entityClassRef().getProfile());
-        long count = 0;
-        if (aggEntityClass.isPresent()) {
-            Conditions conditions = aggregation.getConditions();
-            // 根据关系id得到关系字段
-            Optional<IEntityField> entityField = aggEntityClass.get().field(aggregation.getRelationId());
-            if (entityField.isPresent()) {
-                conditions.addAnd(new Condition(entityField.get(),
-                    ConditionOperator.EQUALS, new LongValue(entityField.get(), sourceEntity.id())));
-            }
-            Page emptyPage = Page.emptyPage();
-            try {
-                conditionsSelectStorage.select(conditions, aggEntityClass.get(),
-                    SelectConfig.Builder.anSelectConfig().withPage(emptyPage).build());
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-            count = emptyPage.getTotalCount();
-        }
-        return count;
     }
 
     /**

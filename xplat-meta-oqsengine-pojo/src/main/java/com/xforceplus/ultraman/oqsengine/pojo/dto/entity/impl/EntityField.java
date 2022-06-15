@@ -325,7 +325,7 @@ public class EntityField implements IEntityField, Serializable {
             entityField.fieldType = this.fieldType;
             entityField.dictId = this.dictId;
             entityField.defaultValue = this.defaultValue;
-            entityField.config = this.config;
+            entityField.config = this.config == null ? FieldConfig.DEFAULT_CONFIG : this.config;
             //  没有calculation时使用static
             entityField.calculationType = (null == this.config || null == this.config.getCalculation())
                                             ? CalculationType.STATIC : this.config.getCalculation().getCalculationType();
