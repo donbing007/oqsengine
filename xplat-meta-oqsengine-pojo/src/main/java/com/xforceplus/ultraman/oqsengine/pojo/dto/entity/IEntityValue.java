@@ -1,6 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -22,11 +24,21 @@ public interface IEntityValue extends Cloneable {
     public int size();
 
     /**
+     * 根据字段实例获取实段实例.
+     *
+     * @param field 字段.
+     * @return 实例.
+     */
+    public Optional<IValue> getValue(IEntityField field);
+
+    /**
      * 获得该对象指定属性的数据.
      *
      * @param fieldName 字段名称.
      * @return 值.
+     * @deprecated 无法获取特殊字段的值, 比如ID等特殊字段.请使用替代的<pre>getValue(IEntityField)}</pre>
      */
+    @Deprecated
     public Optional<IValue> getValue(String fieldName);
 
     /**
@@ -34,7 +46,9 @@ public interface IEntityValue extends Cloneable {
      *
      * @param fieldId 字段 id.
      * @return 值.
+     * @deprecated 无法获取特殊字段的值, 比如ID等特殊字段.请使用替代的<pre>getValue(IEntityField)}</pre>
      */
+    @Deprecated
     public Optional<IValue> getValue(long fieldId);
 
     /**

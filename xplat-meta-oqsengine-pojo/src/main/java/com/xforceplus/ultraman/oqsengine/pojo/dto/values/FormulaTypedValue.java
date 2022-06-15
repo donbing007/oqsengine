@@ -40,4 +40,9 @@ public class FormulaTypedValue extends AbstractValue<Map<String, Object>> {
     protected boolean skipTypeCheckWithCopy() {
         return true;
     }
+
+    @Override
+    public int compareTo(IValue o) {
+        return 0;
+    }
 }
