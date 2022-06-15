@@ -169,7 +169,7 @@ public class CacheUtils {
 
     public static void aggregationConditionsToConditions(Aggregation aggregation, StorageMetaManager storageMetaManager) {
         Conditions conditions = Conditions.buildEmtpyConditions();
-        if (null == aggregation.getAggregationConditions() || aggregation.getAggregationConditions().isEmpty()) {
+        if (null != aggregation.getAggregationConditions() || !aggregation.getAggregationConditions().isEmpty()) {
             for (Aggregation.AggregationCondition aggregationCondition : aggregation.getAggregationConditions()) {
 
                 Optional<IEntityClass> entityClassOp =
