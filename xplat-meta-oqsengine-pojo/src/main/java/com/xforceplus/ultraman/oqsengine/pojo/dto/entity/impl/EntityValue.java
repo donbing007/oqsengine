@@ -160,7 +160,7 @@ public class EntityValue implements IEntityValue, Cloneable, Serializable {
         }
 
         long[] emptyValueFieldIds = this.values.entrySet().stream()
-            .filter(entry -> !EmptyTypedValue.class.isInstance(entry.getValue()))
+            .filter(entry -> EmptyTypedValue.class.isInstance(entry.getValue()))
             .mapToLong(entity -> entity.getKey()).toArray();
         for (long id : emptyValueFieldIds) {
             this.values.remove(id);
