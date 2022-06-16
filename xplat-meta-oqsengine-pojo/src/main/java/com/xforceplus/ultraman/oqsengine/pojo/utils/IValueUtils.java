@@ -60,13 +60,12 @@ public class IValueUtils {
     public static Condition deserializeCondition(String rawValue, ConditionOperator operator, IEntityField entityField) {
         if (operator.equals(ConditionOperator.MULTIPLE_EQUALS)) {
             String[] rawValues = rawValue.split(",");
-            IValue[] iValues = new IValue[rawValues.length];
+            IValue[] values = new IValue[rawValues.length];
             for (int i = 0; i < rawValues.length; i++) {
-                iValues[i] = deserialize(rawValue, entityField);
+                values[i] = deserialize(rawValue, entityField);
             }
-            return new Condition(entityField, operator, iValues);
+            return new Condition(entityField, operator, values);
         }
-
         return new Condition(entityField, operator, deserialize(rawValue, entityField));
     }
 
