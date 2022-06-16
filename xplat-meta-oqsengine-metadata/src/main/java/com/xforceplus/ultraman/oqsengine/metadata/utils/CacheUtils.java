@@ -1,17 +1,19 @@
 package com.xforceplus.ultraman.oqsengine.metadata.utils;
 
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.MIN_ID;
+import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
+import static com.xforceplus.ultraman.oqsengine.metadata.cache.DefaultCacheExecutor.OBJECT_MAPPER;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_FIELDS;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_PROFILES;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.ELEMENT_RELATIONS;
 import static com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.StaticCalculation.DEFAULT_LEVEL;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
-import com.xforceplus.ultraman.oqsengine.metadata.StorageMetaManager;
+import com.xforceplus.ultraman.oqsengine.metadata.cache.CacheExecutor;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Aggregation;
@@ -23,7 +25,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -115,7 +116,8 @@ public class CacheUtils {
     /**
      * 为了兼容目前redis中的结构不抛NullPointException，需要对某些自增编号字段设默认值.
      */
-    public static EntityField resetCalculation(EntityField entityField, StorageMetaManager storageMetaManager) {
+    public static EntityField resetCalculation(EntityField entityField, int version, CacheExecutor cacheExecutor)
+        throws JsonProcessingException {
         if (null != entityField.calculationType()) {
             if (entityField.calculationType().equals(CalculationType.AUTO_FILL)) {
                 AutoFill autoFill = (AutoFill) entityField.config().getCalculation();
@@ -128,8 +130,8 @@ public class CacheUtils {
                 }
             } else if (entityField.calculationType().equals(CalculationType.AGGREGATION)) {
                 Aggregation aggregation = (Aggregation) entityField.config().getCalculation();
-                if (null != storageMetaManager) {
-                    aggregationConditionsToConditions(aggregation, storageMetaManager);
+                if (null != cacheExecutor && version != NOT_EXIST_VERSION) {
+                    aggregationConditionsToConditions(aggregation, version, cacheExecutor);
                 }
             }
         } else {
@@ -161,27 +163,28 @@ public class CacheUtils {
     }
 
 
-    private static void aggregationConditionsToConditions(Aggregation aggregation,
-                                                          StorageMetaManager storageMetaManager) {
+
+    private static void aggregationConditionsToConditions(Aggregation aggregation
+                                                , int version, CacheExecutor cacheExecutor)
+        throws JsonProcessingException {
         Conditions conditions = Conditions.buildEmtpyConditions();
         if (null != aggregation.getAggregationConditions() && !aggregation.getAggregationConditions().isEmpty()) {
             for (Aggregation.AggregationCondition aggregationCondition : aggregation.getAggregationConditions()) {
 
-                Optional<IEntityClass> entityClassOp =
-                    storageMetaManager.load(aggregationCondition.getEntityClassId(), aggregationCondition.getProfile());
 
-                if (!entityClassOp.isPresent()) {
+                String fieldStr = cacheExecutor.remoteFieldLoad(aggregationCondition.getEntityClassId(),
+                                        aggregationCondition.getEntityFieldId(), aggregationCondition.getProfile(), version) ;
+
+                if (null == fieldStr) {
                     return;
                 }
 
-                Optional<IEntityField> fieldOp = entityClassOp.get().field(aggregationCondition.getEntityFieldId());
-                if (!fieldOp.isPresent()) {
-                    return;
-                }
+                IEntityField entityField =
+                    OBJECT_MAPPER.readValue(fieldStr, EntityField.class);
 
                 conditions.addAnd(
-                    new Condition(fieldOp.get(), aggregationCondition.getConditionOperator(),
-                        IValueUtils.deserialize(aggregationCondition.getStringValue(), fieldOp.get()))
+                    new Condition(entityField, aggregationCondition.getConditionOperator(),
+                        IValueUtils.deserialize(aggregationCondition.getStringValue(), entityField))
                 );
             }
         }

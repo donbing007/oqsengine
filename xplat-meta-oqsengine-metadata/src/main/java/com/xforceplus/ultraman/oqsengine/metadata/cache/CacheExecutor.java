@@ -61,6 +61,19 @@ public interface CacheExecutor {
     Map<String, Map<String, String>> multiRemoteRead(Collection<Long> ids, int version) throws JsonProcessingException;
 
     /**
+     * 读取指定Field信息.
+     *
+     * @param   entityClassId 元信息标识.
+     * @param   entityFieldId fieldId.
+     * @param   profile       替身信息.
+     * @param   version       版本.
+     * @throws JsonProcessingException JSON异常.
+     */
+    default String remoteFieldLoad(long entityClassId, long entityFieldId, String profile, int version) throws JsonProcessingException {
+        return null;
+    }
+
+    /**
      * 清除AppId + version对应的存储记录.
      *
      * @param appId   应用标识.

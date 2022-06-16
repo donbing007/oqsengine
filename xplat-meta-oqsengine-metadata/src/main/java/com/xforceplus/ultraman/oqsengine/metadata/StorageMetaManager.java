@@ -25,7 +25,6 @@ import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncR
 import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.CacheExecutor;
-import com.xforceplus.ultraman.oqsengine.metadata.cache.DefaultCacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.HealthCheckEntityClass;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.log.UpGradeLog;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.AppSimpleInfo;
@@ -277,7 +276,7 @@ public class StorageMetaManager implements MetaManager {
             }
 
             Collection<EntityClassStorage> result = CacheToStorageGenerator.toEntityClassStorages(
-                DefaultCacheExecutor.OBJECT_MAPPER,
+                currentVersion,
                 cacheExecutor.multiRemoteRead(
                     cacheExecutor.appEntityIdList(appId, currentVersion), currentVersion
                 )
@@ -476,7 +475,7 @@ public class StorageMetaManager implements MetaManager {
             builder.withVersion(Integer.parseInt(vn));
 
             //  entityFields & profile & relations
-            withFieldsRelations(builder, profile, keyValues, this::load, this::withProfilesLoad);
+            withFieldsRelations(builder, profile, keyValues, version, this::load, this::withProfilesLoad);
 
             //  father
             String father = keyValues.remove(ELEMENT_FATHER);
@@ -498,7 +497,7 @@ public class StorageMetaManager implements MetaManager {
         }
     }
 
-    private void withFieldsRelations(EntityClass.Builder builder, String profile, Map<String, String> keyValues,
+    private void withFieldsRelations(EntityClass.Builder builder, String profile, Map<String, String> keyValues, int version,
                                      BiFunction<Long, String, Optional<IEntityClass>> rightEntityClassLoader,
                                      Function<Long, Collection<IEntityClass>> rightFamilyEntityClassLoader) throws
         JsonProcessingException {
@@ -518,7 +517,7 @@ public class StorageMetaManager implements MetaManager {
                 EntityField entityField =
                     OBJECT_MAPPER.readValue(entry.getValue(), EntityField.class);
 
-                fields.add(CacheUtils.resetCalculation(entityField, this));
+                fields.add(CacheUtils.resetCalculation(entityField, version, cacheExecutor));
             } else if (entry.getKey().startsWith(ELEMENT_PROFILES + "." + ELEMENT_FIELDS)) {
                 String key = parseOneKeyFromProfileEntity(entry.getKey());
                 if (key.equals(profile)) {
@@ -526,7 +525,7 @@ public class StorageMetaManager implements MetaManager {
                     EntityField entityField =
                         OBJECT_MAPPER.readValue(entry.getValue(), EntityField.class);
 
-                    fields.add(CacheUtils.resetCalculation(entityField, this));
+                    fields.add(CacheUtils.resetCalculation(entityField, version, cacheExecutor));
                 }
             } else if (entry.getKey().startsWith(ELEMENT_PROFILES + "." + ELEMENT_RELATIONS)) {
                 if (!profile.equals(OqsProfile.UN_DEFINE_PROFILE)) {

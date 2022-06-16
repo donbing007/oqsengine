@@ -494,7 +494,7 @@ public class CacheExecutorTest {
                     Assertions.assertNotNull(r);
 
                     if (null != fullCheckMaps) {
-                        checkEntity(fullCheckMaps.get(id), CacheToStorageGenerator.toEntityClassStorage(DefaultCacheExecutor.OBJECT_MAPPER, r));
+                        checkEntity(fullCheckMaps.get(id), CacheToStorageGenerator.toEntityClassStorage(expectedVersion, r));
                     }
                 }
             }

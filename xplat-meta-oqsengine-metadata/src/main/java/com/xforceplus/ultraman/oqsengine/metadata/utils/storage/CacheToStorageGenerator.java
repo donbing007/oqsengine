@@ -16,7 +16,7 @@ import static com.xforceplus.ultraman.oqsengine.metadata.utils.CacheUtils.parseO
 import static com.xforceplus.ultraman.oqsengine.metadata.utils.CacheUtils.parseOneKeyFromProfileRelations;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.xforceplus.ultraman.oqsengine.metadata.cache.DefaultCacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.ProfileStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.RelationStorage;
@@ -41,14 +41,14 @@ public class CacheToStorageGenerator {
     /**
      * 批量转换EntityClassStorageMap.
      */
-    public static Map<Long, EntityClassStorage> toEntityClassStorages(ObjectMapper objectMapper, Map<String, Map<String, String>> raw)
+    public static Map<Long, EntityClassStorage> toEntityClassStorages(int version, Map<String, Map<String, String>> raw)
         throws JsonProcessingException {
         Map<Long, EntityClassStorage> entityClassStorages = new LinkedHashMap<>();
         if (null != raw) {
             for (Map.Entry<String, Map<String, String>> value : raw.entrySet()) {
                 entityClassStorages.put(
                     Long.parseLong(value.getKey()),
-                    CacheToStorageGenerator.toEntityClassStorage(objectMapper, value.getValue()));
+                    CacheToStorageGenerator.toEntityClassStorage(version, value.getValue()));
             }
         }
         return entityClassStorages;
@@ -57,7 +57,7 @@ public class CacheToStorageGenerator {
     /**
      * 将redis存储结构转为EntityClassStorage.
      */
-    public static EntityClassStorage toEntityClassStorage(ObjectMapper objectMapper, Map<String, String> keyValues)
+    public static EntityClassStorage toEntityClassStorage(int appVersion, Map<String, String> keyValues)
         throws JsonProcessingException {
 
         if (0 == keyValues.size()) {
@@ -121,8 +121,8 @@ public class CacheToStorageGenerator {
         //  ancestors
         String ancestors = keyValues.remove(ELEMENT_ANCESTORS);
         if (null != ancestors && !ancestors.isEmpty()) {
-            entityClassStorage.setAncestors(objectMapper.readValue(ancestors,
-                objectMapper.getTypeFactory().constructParametricType(List.class, Long.class)));
+            entityClassStorage.setAncestors(DefaultCacheExecutor.OBJECT_MAPPER.readValue(ancestors,
+                DefaultCacheExecutor.OBJECT_MAPPER.getTypeFactory().constructParametricType(List.class, Long.class)));
         } else {
             entityClassStorage.setAncestors(new ArrayList<>());
         }
@@ -130,8 +130,8 @@ public class CacheToStorageGenerator {
         //  relations
         String relations = keyValues.remove(ELEMENT_RELATIONS);
         if (null != relations && !relations.isEmpty()) {
-            List<RelationStorage> relationStorageList = objectMapper.readValue(relations,
-                objectMapper.getTypeFactory().constructParametricType(List.class, RelationStorage.class));
+            List<RelationStorage> relationStorageList = DefaultCacheExecutor.OBJECT_MAPPER.readValue(relations,
+                DefaultCacheExecutor.OBJECT_MAPPER.getTypeFactory().constructParametricType(List.class, RelationStorage.class));
             entityClassStorage.setRelations(relationStorageList);
         } else {
             entityClassStorage.setRelations(new ArrayList<>());
@@ -146,17 +146,17 @@ public class CacheToStorageGenerator {
             Map.Entry<String, String> entry = iterator.next();
             if (entry.getKey().startsWith(ELEMENT_FIELDS + ".")) {
 
-                fields.add(CacheUtils.resetCalculation(objectMapper.readValue(entry.getValue(), EntityField.class), null));
+                fields.add(CacheUtils.resetCalculation(DefaultCacheExecutor.OBJECT_MAPPER.readValue(entry.getValue(), EntityField.class), appVersion, null));
             } else if (entry.getKey().startsWith(ELEMENT_PROFILES + "." +  ELEMENT_FIELDS)) {
                 String key = parseOneKeyFromProfileEntity(entry.getKey());
                 profileStorageMap.computeIfAbsent(key, ProfileStorage::new)
-                    .addField(CacheUtils.resetCalculation(objectMapper.readValue(entry.getValue(), EntityField.class),  null));
+                    .addField(CacheUtils.resetCalculation(DefaultCacheExecutor.OBJECT_MAPPER.readValue(entry.getValue(), EntityField.class),  appVersion, null));
             } else if (entry.getKey().startsWith(ELEMENT_PROFILES + "." +  ELEMENT_RELATIONS)) {
                 String key = parseOneKeyFromProfileRelations(entry.getKey());
                 String profileRelations = keyValues.get(entry.getKey());
                 profileStorageMap.computeIfAbsent(key, ProfileStorage::new)
-                    .setRelationStorageList(objectMapper.readValue(profileRelations,
-                        objectMapper.getTypeFactory().constructParametricType(List.class, RelationStorage.class)));
+                    .setRelationStorageList(DefaultCacheExecutor.OBJECT_MAPPER.readValue(profileRelations,
+                        DefaultCacheExecutor.OBJECT_MAPPER.getTypeFactory().constructParametricType(List.class, RelationStorage.class)));
             }
         }
 
