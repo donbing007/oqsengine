@@ -167,9 +167,8 @@ public class CacheUtils {
     private static void aggregationConditionsToConditions(Aggregation aggregation
                                                 , int version, CacheExecutor cacheExecutor)
         throws JsonProcessingException {
-        Conditions conditions = null;
         if (null != aggregation.getAggregationConditions() && !aggregation.getAggregationConditions().isEmpty()) {
-            conditions = Conditions.buildEmtpyConditions();
+            Conditions conditions = Conditions.buildEmtpyConditions();
 
             for (Aggregation.AggregationCondition aggregationCondition : aggregation.getAggregationConditions()) {
 
@@ -189,8 +188,7 @@ public class CacheUtils {
                         IValueUtils.deserialize(aggregationCondition.getStringValue(), entityField))
                 );
             }
+            aggregation.setConditions(conditions);
         }
-
-        aggregation.setConditions(conditions);
     }
 }
