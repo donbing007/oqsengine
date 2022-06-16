@@ -162,9 +162,8 @@ public class CacheUtils {
         return Collections.emptyList();
     }
 
-
-
-    private static void aggregationConditionsToConditions(Aggregation aggregation, int version, CacheExecutor cacheExecutor)
+    private static void aggregationConditionsToConditions(Aggregation aggregation, int version,
+                                                          CacheExecutor cacheExecutor)
         throws JsonProcessingException {
         if (null != aggregation.getAggregationConditions() && !aggregation.getAggregationConditions().isEmpty()) {
             Conditions conditions = Conditions.buildEmtpyConditions();
@@ -173,7 +172,7 @@ public class CacheUtils {
 
 
                 String fieldStr = cacheExecutor.remoteFieldLoad(aggregationCondition.getEntityClassId(),
-                                        aggregationCondition.getEntityFieldId(), aggregationCondition.getProfile(), version);
+                    aggregationCondition.getEntityFieldId(), aggregationCondition.getProfile(), version);
 
                 if (null == fieldStr) {
                     return;
