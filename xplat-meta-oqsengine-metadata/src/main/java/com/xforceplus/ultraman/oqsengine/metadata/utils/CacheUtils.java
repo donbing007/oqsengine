@@ -167,8 +167,10 @@ public class CacheUtils {
     private static void aggregationConditionsToConditions(Aggregation aggregation
                                                 , int version, CacheExecutor cacheExecutor)
         throws JsonProcessingException {
-        Conditions conditions = Conditions.buildEmtpyConditions();
+        Conditions conditions = null;
         if (null != aggregation.getAggregationConditions() && !aggregation.getAggregationConditions().isEmpty()) {
+            conditions = Conditions.buildEmtpyConditions();
+
             for (Aggregation.AggregationCondition aggregationCondition : aggregation.getAggregationConditions()) {
 
 
