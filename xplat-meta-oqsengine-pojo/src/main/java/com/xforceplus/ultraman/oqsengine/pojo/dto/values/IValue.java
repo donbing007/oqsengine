@@ -123,5 +123,22 @@ public interface IValue<T> extends Comparable<IValue> {
     }
 
     @Override
-    int compareTo(IValue o);
+    public int compareTo(IValue o);
+
+    /**
+     * 包含,如果只是一个值那么其等同于 equals.<br />
+     * 如果是类似于 StringsValue 包含的多值类型,那么意义为判断给定的值是否当前值持有.<br />
+     * <pre>
+     *     ["a", "b", "c"] include "a"
+     *     ["a", "b", "c"] not include "e"
+     * </pre>
+     * 上例中,a被包含了返回true, e不包含返回false.
+     * 除此之外等价于equals.
+     *
+     * @param o 需要检查的值.
+     * @return 结果, true包含, false不包含.
+     */
+    public default boolean include(IValue o) {
+        return this.equals(o);
+    }
 }

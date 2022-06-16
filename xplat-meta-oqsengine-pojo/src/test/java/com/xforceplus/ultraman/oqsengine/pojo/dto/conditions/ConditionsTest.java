@@ -10,6 +10,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -32,6 +33,11 @@ public class ConditionsTest {
         .withFieldType(FieldType.STRING)
         .withName("string-filed")
         .build();
+    private static final IEntityField stringsField = EntityField.Builder.anEntityField()
+        .withId(2000L)
+        .withFieldType(FieldType.STRINGS)
+        .withName("strings-filed")
+        .build();
     private static final IEntityClass matchEntityClass = EntityClass.Builder.anEntityClass()
         .withId(1000L)
         .withField(stringField)
@@ -52,6 +58,51 @@ public class ConditionsTest {
                 new Condition(stringField, ConditionOperator.LIKE, new StringValue(stringField, "一个"))
             );
         Assertions.assertTrue(conditions.match(entity));
+    }
+
+    @Test
+    public void testInMatch() throws Exception {
+        Collection<IEntity> entities = Arrays.asList(
+            Entity.Builder.anEntity()
+                .withEntityClassRef(matchEntityClass.ref())
+                .withId(1000)
+                .withValue(new StringValue(stringField, "v1"))
+                .withValue(new StringsValue(stringsField, "s1", "s2")).build(),
+            Entity.Builder.anEntity()
+                .withEntityClassRef(matchEntityClass.ref())
+                .withId(2000)
+                .withValue(new StringValue(stringField, "v2"))
+                .withValue(new StringsValue(stringsField, "s2", "s3", "s4")).build(),
+            Entity.Builder.anEntity()
+                .withEntityClassRef(matchEntityClass.ref())
+                .withId(3000)
+                .withValue(new StringValue(stringField, "v3"))
+                .withValue(new StringsValue(stringsField, "s3", "s4")).build()
+        );
+
+        Conditions conditions = Conditions.buildEmtpyConditions()
+            .addAnd(
+                new Condition(
+                    stringField,
+                    ConditionOperator.MULTIPLE_EQUALS,
+                    new StringValue(stringField, "v1"),
+                    new StringValue(stringField, "v3"))
+            );
+        Collection<IEntity> matchEntities = conditions.match(entities);
+        Assertions.assertEquals(2, matchEntities.size());
+        // id不等于2000的应该有2个.
+        Assertions.assertEquals(2, matchEntities.stream().filter(e -> e.id() != 2000).count());
+
+        conditions = Conditions.buildEmtpyConditions()
+            .addAnd(
+                new Condition(
+                    stringsField,
+                    ConditionOperator.MULTIPLE_EQUALS,
+                    new StringValue(stringField, "s2"),
+                    new StringValue(stringField, "s3"))
+            );
+        matchEntities = conditions.match(entities);
+        Assertions.assertEquals(3, matchEntities.size());
     }
 
     @Test

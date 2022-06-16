@@ -112,4 +112,42 @@ public class StringsValue extends AbstractValue<String[]> {
 
         return sourceValue.compareTo(targetValue);
     }
+
+    @Override
+    public boolean include(IValue o) {
+        if (StringsValue.class.isInstance(o)) {
+            // 只要otherValues中的任意一个在currentValues找到即为true.
+            String[] currentValues = this.getValue();
+            String[] otherValues = ((StringsValue) o).getValue();
+
+            for (String v : otherValues) {
+                if (v == null) {
+                    continue;
+                }
+
+                for (String cv : currentValues) {
+                    if (v.equals(cv)) {
+                        return true;
+                    }
+                }
+            }
+
+        } else if (StringValue.class.isInstance(o)) {
+            // 只要otherValue在currentValues匹配任意一个即为true.
+            String[] currentValues = this.getValue();
+            String otherValue = ((StringValue) o).getValue();
+            for (String cv : currentValues) {
+                if (cv == null) {
+                    continue;
+                }
+
+                if (otherValue.equals(cv)) {
+                    return true;
+                }
+            }
+
+        }
+
+        return false;
+    }
 }
