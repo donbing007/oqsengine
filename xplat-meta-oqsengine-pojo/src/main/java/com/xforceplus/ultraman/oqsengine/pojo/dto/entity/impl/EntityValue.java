@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import java.io.Serializable;
@@ -149,6 +150,20 @@ public class EntityValue implements IEntityValue, Cloneable, Serializable {
             return false;
         } else {
             return this.values.values().stream().filter(v -> v.isDirty()).count() > 0;
+        }
+    }
+
+    @Override
+    public void squeezeEmpty() {
+        if (this.values == null || this.values.isEmpty()) {
+            return;
+        }
+
+        long[] emptyValueFieldIds = this.values.entrySet().stream()
+            .filter(entry -> !EmptyTypedValue.class.isInstance(entry.getValue()))
+            .mapToLong(entity -> entity.getKey()).toArray();
+        for (long id : emptyValueFieldIds) {
+            this.values.remove(id);
         }
     }
 

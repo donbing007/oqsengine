@@ -1,8 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity;
 
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -121,6 +119,11 @@ public interface IEntityValue extends Cloneable {
             v.neat();
         }
     }
+
+    /**
+     * 将空值挤出,方法执行后不会再包含空值.
+     */
+    public void squeezeEmpty();
 
     /**
      * 克隆.
