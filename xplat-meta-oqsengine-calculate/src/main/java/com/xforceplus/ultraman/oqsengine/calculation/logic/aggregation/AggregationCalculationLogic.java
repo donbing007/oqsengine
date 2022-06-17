@@ -161,26 +161,11 @@ public class AggregationCalculationLogic implements CalculationLogic {
                 }
             } else if (CalculationScenarios.REPLACE == context.getScenariso()) {
                 Conditions conditions = conditionsOp.get();
+                IEntity oldEntity = buildOldEntity(context, triggerEntity);
+                boolean oldEntityMatch = conditions.match(oldEntity);
+                boolean newEntityMatch = conditions.match(triggerEntity);
+
                 if (aggregation.getAggregationType().equals(AggregationType.COUNT)) {
-                    /*
-                    由于count不指向任何一个实际的字段,所以必须获取改变前的实体和改变后的实体才能判断4种场景中的那种.
-                    从ValueChange中当前触发实例之前的值,替换回去.
-                    如果是EmptyTypeValue的将进行删除,表示原来没这个值.
-                     */
-                    IEntity oldEntity = triggerEntity.copy();
-                    context.getValueChanges().stream()
-                        .filter(vc -> vc.getEntityId() == oldEntity.id())
-                        .map(vc -> vc.getOldValue())
-                        .filter(od -> od.isPresent())
-                        .forEach(od -> {
-                            if (EmptyTypedValue.class.isInstance(od.get())) {
-                                oldEntity.entityValue().remove(od.get().getField());
-                            } else {
-                                oldEntity.entityValue().addValue(od.get());
-                            }
-                        });
-                    boolean oldEntityMatch = conditions.match(oldEntity);
-                    boolean newEntityMatch = conditions.match(triggerEntity);
 
                     if (oldEntityMatch && !newEntityMatch) {
                         // 原有匹配,新对象不匹配,需要减1.
@@ -204,42 +189,43 @@ public class AggregationCalculationLogic implements CalculationLogic {
 
                 } else {
 
-                    if (valueChange.isPresent()) {
-                        ValueChange vc = valueChange.get();
-
-                        IValue oldValue = vc.getOldValue().get();
-                        IValue newValue = vc.getNewValue().get();
-                        ;
-
-                        IEntity copyEntity = triggerEntity.copy();
-                        copyEntity.entityValue().addValue(oldValue);
-
-                        boolean oldValueMatch = conditions.match(copyEntity);
-
-                        copyEntity.entityValue().addValue(newValue);
-
-                        boolean newValueMatch = conditions.match(copyEntity);
-
-                        if (oldValueMatch && !newValueMatch) {
-                            // 原有匹配,新值不匹配.
+                    /*
+                    每一个分支都需要判断当前聚合的值是否有改变.
+                    如果没有改变也不代表不需要聚合,因为目标值可能变化.条件可能变化.
+                    所以当前目标字段值没有改变,就直接使用当前值.
+                     */
+                    if (oldEntityMatch && !newEntityMatch) {
+                        Optional<IValue> oldValueOp = findTriggerValue(valueChange, aggregation, triggerEntity, true);
+                        if (oldValueOp.isPresent()) {
+                            IValue oldValue = oldValueOp.get();
                             valueChange = Optional.of(
-                                ValueChange.build(vc.getEntityId(), oldValue, new EmptyTypedValue(vc.getField()))
+                                ValueChange.build(
+                                    triggerEntity.id(), oldValue, new EmptyTypedValue(oldValue.getField()))
                             );
-
-                        } else if (!oldValueMatch && newValueMatch) {
-                            // 旧有不匹配,新值匹配.
-                            valueChange = Optional.of(
-                                ValueChange.build(vc.getEntityId(), new EmptyTypedValue(vc.getField()), newValue)
-                            );
-
-                        } else if (!oldValueMatch && !newValueMatch) {
-
-                            // 前后都不匹配,过滤.
-
+                        } else {
                             return Optional.empty();
                         }
-                        // 都匹配,以
+
+                    } else if (!oldEntityMatch && newEntityMatch) {
+                        Optional<IValue> newValueOp = findTriggerValue(valueChange, aggregation, triggerEntity, false);
+                        if (newValueOp.isPresent()) {
+                            IValue newValue = newValueOp.get();
+                            valueChange = Optional.of(
+                                ValueChange.build(
+                                    triggerEntity.id(), new EmptyTypedValue(newValue.getField()), newValue)
+                            );
+                        } else {
+                            return Optional.empty();
+                        }
+
+                    } else if (oldEntityMatch && newEntityMatch) {
+                        // 原有匹配,新的也匹配,检查有没有valuechange,如果有那么也需要重新计算.
+                        if (!valueChange.isPresent()) {
+                            return Optional.empty();
+                        }
+
                     } else {
+                        // 原有不匹配,新的也不匹配.
                         return Optional.empty();
                     }
 
@@ -279,6 +265,38 @@ public class AggregationCalculationLogic implements CalculationLogic {
         }
 
         return Optional.empty();
+    }
+
+    private Optional<IValue> findTriggerValue(
+        Optional<ValueChange> valueChange, Aggregation aggregation, IEntity triggerEntity, boolean old) {
+        if (old) {
+            if (valueChange.isPresent()) {
+                return valueChange.get().getOldValue();
+            }
+        } else {
+            if (valueChange.isPresent()) {
+                return valueChange.get().getNewValue();
+            }
+        }
+
+        return triggerEntity.entityValue().getValue(aggregation.getFieldId());
+    }
+
+    // 构造目标实例的旧实例,包含这次操作之前的值.
+    private IEntity buildOldEntity(CalculationContext context, IEntity entity) {
+        IEntity copyEntity = entity.copy();
+        context.getValueChanges().stream()
+            .filter(vc -> vc.getEntityId() == copyEntity.id())
+            .map(vc -> vc.getOldValue())
+            .filter(od -> od.isPresent())
+            .forEach(od -> {
+                if (EmptyTypedValue.class.isInstance(od.get())) {
+                    copyEntity.entityValue().remove(od.get().getField());
+                } else {
+                    copyEntity.entityValue().addValue(od.get());
+                }
+            });
+        return copyEntity;
     }
 
     private Optional<ValueChange> findChange(CalculationContext context, Aggregation aggregation, IEntity entity) {
