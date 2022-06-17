@@ -62,7 +62,7 @@ public class IValueUtils {
             String[] rawValues = rawValue.split(",");
             IValue[] values = new IValue[rawValues.length];
             for (int i = 0; i < rawValues.length; i++) {
-                values[i] = deserialize(rawValue, entityField);
+                values[i] = deserialize(rawValues[i], entityField);
             }
             return new Condition(entityField, operator, values);
         }
