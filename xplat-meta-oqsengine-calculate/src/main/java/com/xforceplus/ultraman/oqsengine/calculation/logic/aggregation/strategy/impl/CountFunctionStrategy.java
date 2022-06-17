@@ -17,10 +17,15 @@ import java.util.Optional;
  */
 public class CountFunctionStrategy implements FunctionStrategy {
     @Override
-    public Optional<IValue> excute(Optional<IValue> currentValue, Optional<IValue> oldValue, Optional<IValue> newValue, CalculationContext context) {
+    public Optional<IValue> excute(
+        Optional<IValue> currentValue,
+        Optional<IValue> oldValue,
+        Optional<IValue> newValue,
+        CalculationContext context) {
         Optional<IValue> aggValue = Optional.of(currentValue.get().copy());
         Aggregation aggregation = ((Aggregation) context.getFocusField().config().getCalculation());
-        AggregationFunction function = AggregationFunctionFactoryImpl.getAggregationFunction(aggregation.getAggregationType());
+        AggregationFunction function =
+            AggregationFunctionFactoryImpl.getAggregationFunction(aggregation.getAggregationType());
         return function.excute(aggValue, oldValue, newValue);
     }
 }

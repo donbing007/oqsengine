@@ -161,41 +161,6 @@ public class MaxFunctionStrategy implements FunctionStrategy {
     }
 
     /**
-     * 得到统计值.
-     *
-     * @param aggregation             聚合配置.
-     * @param context            上下文信息.
-     * @return 统计数字.
-     */
-    private long countAggregationEntity(Aggregation aggregation, CalculationContext context) {
-        // 得到count值
-        Optional<IEntityClass> aggEntityClass =
-                context.getMetaManager().get().load(aggregation.getClassId(),
-                        context.getFocusEntity().entityClassRef().getProfile());
-        long count = 0;
-        if (aggEntityClass.isPresent()) {
-            Conditions conditions = Conditions.buildEmtpyConditions();
-            // 根据关系id得到关系字段
-            Optional<IEntityField> entityField = aggEntityClass.get().field(aggregation.getRelationId());
-            if (entityField.isPresent()) {
-                logger.info("max count relationId:{}, relationValue:{}",
-                        entityField.get().id(), context.getFocusEntity().id());
-                conditions.addAnd(new Condition(entityField.get(),
-                        ConditionOperator.EQUALS, new LongValue(entityField.get(), context.getFocusEntity().id())));
-            }
-            Page emptyPage = Page.emptyPage();
-            try {
-                context.getConditionsSelectStorage().get().select(conditions, aggEntityClass.get(),
-                        SelectConfig.Builder.anSelectConfig().withPage(emptyPage).build());
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-            count = emptyPage.getTotalCount();
-        }
-        return count;
-    }
-
-    /**
      * 用于统计该聚合下有多少条数据.
      *
      * @param value 字段信息.
