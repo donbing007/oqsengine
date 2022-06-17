@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.pojo.utils;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.BooleanValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
@@ -14,6 +16,7 @@ import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,6 +52,21 @@ public class IValueUtils {
         } else {
             return value.valueToString();
         }
+    }
+
+    /**
+     * deserialize string to Condition.
+     */
+    public static Condition deserializeCondition(String rawValue, ConditionOperator operator, IEntityField entityField) {
+        if (operator.equals(ConditionOperator.MULTIPLE_EQUALS)) {
+            String[] rawValues = rawValue.split(",");
+            IValue[] values = new IValue[rawValues.length];
+            for (int i = 0; i < rawValues.length; i++) {
+                values[i] = deserialize(rawValues[i], entityField);
+            }
+            return new Condition(entityField, operator, values);
+        }
+        return new Condition(entityField, operator, deserialize(rawValue, entityField));
     }
 
     /**

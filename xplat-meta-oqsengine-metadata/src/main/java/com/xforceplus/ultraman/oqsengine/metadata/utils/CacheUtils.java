@@ -170,7 +170,6 @@ public class CacheUtils {
 
             for (Aggregation.AggregationCondition aggregationCondition : aggregation.getAggregationConditions()) {
 
-
                 String fieldStr = cacheExecutor.remoteFieldLoad(aggregationCondition.getEntityClassId(),
                     aggregationCondition.getEntityFieldId(), aggregationCondition.getProfile(), version);
 
@@ -182,8 +181,8 @@ public class CacheUtils {
                     OBJECT_MAPPER.readValue(fieldStr, EntityField.class);
 
                 conditions.addAnd(
-                    new Condition(entityField, aggregationCondition.getConditionOperator(),
-                        IValueUtils.deserialize(aggregationCondition.getStringValue(), entityField))
+                    IValueUtils.deserializeCondition(aggregationCondition.getStringValue(),
+                        aggregationCondition.getConditionOperator(), entityField)
                 );
             }
             aggregation.setConditions(conditions);
