@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.calculation.function.aggregation;
 
+import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -18,9 +19,8 @@ public interface AggregationFunction {
 
     /**
      * 聚合执行.
-     *
      */
-    Optional<IValue> excute(Optional<IValue> agg, Optional<IValue> o, Optional<IValue> n);
+    Optional<IValue> excute(Optional<IValue> agg, ValueChange valueChange);
 
     /**
      * 聚合初始化方法.

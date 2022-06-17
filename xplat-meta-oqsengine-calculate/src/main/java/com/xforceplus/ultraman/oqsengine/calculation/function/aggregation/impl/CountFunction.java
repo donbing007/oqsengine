@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.impl;
 
 import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.AggregationFunction;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.BigDecimalSummaryStatistics;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
@@ -23,7 +24,10 @@ import java.util.stream.Collectors;
 public class CountFunction implements AggregationFunction {
 
     @Override
-    public Optional<IValue> excute(Optional<IValue> agg, Optional<IValue> o, Optional<IValue> n) {
+    public Optional<IValue> excute(Optional<IValue> agg, ValueChange valueChange) {
+        Optional<IValue> o = valueChange.getOldValue();
+        Optional<IValue> n = valueChange.getNewValue();
+
         if (!n.isPresent()) {
             return Optional.of(agg.get());
         }

@@ -1484,7 +1484,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             IEntityField field;
             for (IValue newValue : newEntity.entityValue().values()) {
                 field = newValue.getField();
-                oldValue = oldEntity.entityValue().getValue(field.id()).orElse(new EmptyTypedValue(field));
+                oldValue = oldEntity.entityValue().getValue(field).orElse(new EmptyTypedValue(field));
 
                 if (newValue.equals(oldValue)) {
                     continue;
