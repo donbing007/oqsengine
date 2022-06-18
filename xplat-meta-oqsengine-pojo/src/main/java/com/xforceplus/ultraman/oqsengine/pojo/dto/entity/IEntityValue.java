@@ -31,12 +31,11 @@ public interface IEntityValue extends Cloneable {
 
     /**
      * 获得该对象指定属性的数据.
+     * 无法获取特殊字段的值, 比如ID等特殊字段.请使用替代的<pre>getValue(IEntityField)}</pre>
      *
      * @param fieldName 字段名称.
      * @return 值.
-     * @deprecated 无法获取特殊字段的值, 比如ID等特殊字段.请使用替代的<pre>getValue(IEntityField)}</pre>
      */
-    @Deprecated
     public Optional<IValue> getValue(String fieldName);
 
     /**

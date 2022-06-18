@@ -406,6 +406,43 @@ public class AggregationCalculationLogic implements CalculationLogic {
     }
 
     @Override
+    public boolean need(CalculationContext context, IEntityClass entityClass, IEntityField field) {
+        Collection<IEntityClass> relationshipClass = entityClass.relationship().stream()
+            .filter(r -> r.getRelationType() == Relationship.RelationType.MANY_TO_ONE)
+            .map(r -> r.getRightEntityClass(entityClass.profile()))
+            .collect(Collectors.toList());
+
+        /*
+          关系中含有条件,并且条中出现目标字段的将返回true.
+         */
+        for (IEntityClass rec : relationshipClass) {
+            for (IEntityField relationField : rec.fields()) {
+                // 聚合指向当前字段且含有条件.判断条件中是否出现的字段有改变.
+                if (relationField.calculationType() == CalculationType.AGGREGATION
+                    && ((Aggregation) relationField.config().getCalculation()).getConditions().isPresent()
+                    && field.id() == ((Aggregation) relationField.config().getCalculation()).getFieldId()) {
+                    Conditions conditions =
+                        ((Aggregation) relationField.config().getCalculation()).getConditions().get();
+
+                    /*
+                    判断关系类型中的聚合字段条件中出现的字段有没有出现在valueChange中.
+                    如果出现表示需要重新判断是否需要聚合,所以当前字段不论有无改变都需要重新计算.
+                     */
+                    Collection<IEntityField> conditionFields = conditions.collectField();
+                    for (IEntityField conditionField : conditionFields) {
+                        if (context.getValueChanges().stream()
+                            .anyMatch(v -> v.getField().id() == conditionField.id())) {
+                            return true;
+                        }
+                    }
+                }
+
+            }
+        }
+        return false;
+    }
+
+    @Override
     public CalculationType supportType() {
         return CalculationType.AGGREGATION;
     }

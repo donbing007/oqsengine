@@ -8,6 +8,8 @@ import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import java.util.Collection;
 import java.util.Collections;
@@ -73,5 +75,17 @@ public interface CalculationLogic {
      */
     public default CalculationType supportType() {
         return CalculationType.UNKNOWN;
+    }
+
+    /**
+     * 由logic决定, 指定字段是否需要参与改变.
+     *
+     * @param context     上下文.
+     * @param entityClass 目标类型.
+     * @param field       目标字段.
+     * @return true需要, false不需要.
+     */
+    public default boolean need(CalculationContext context, IEntityClass entityClass, IEntityField field) {
+        return false;
     }
 }
