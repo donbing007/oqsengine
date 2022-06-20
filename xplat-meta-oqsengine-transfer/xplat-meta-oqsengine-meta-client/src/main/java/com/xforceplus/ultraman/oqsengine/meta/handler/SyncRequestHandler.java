@@ -540,7 +540,7 @@ public class SyncRequestHandler implements IRequestHandler {
     }
 
     private void addToForgotQueue(WatchElement watchElement) {
-        if (!forgotQueue.contains(watchElement)) {
+        if (forgotQueue.stream().noneMatch(watchElement::logicEquals)) {
             forgotQueue.add(watchElement);
         }
     }

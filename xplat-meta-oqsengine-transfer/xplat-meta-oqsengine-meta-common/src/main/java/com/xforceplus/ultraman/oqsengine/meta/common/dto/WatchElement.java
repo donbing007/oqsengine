@@ -1,7 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.meta.common.dto;
 
-import java.util.Objects;
-
 /**
  * watcher element.
  *
@@ -100,21 +98,7 @@ public class WatchElement {
         return new WatchElement(this.appId, this.env, this.version, this.status);
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof WatchElement)) {
-            return false;
-        }
-        WatchElement that = (WatchElement) o;
-        return version == that.version &&
-            Objects.equals(appId, that.appId) && Objects.equals(env, that.env) && status == that.status;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(appId, env, version, status, registerTime);
+    public boolean logicEquals(WatchElement w) {
+        return w.appId.equals(this.appId) && w.env.equals(this.env) && w.version == this.version;
     }
 }

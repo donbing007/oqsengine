@@ -94,6 +94,23 @@ public class RetryExecutor implements IDelayTaskExecutor<RetryExecutor.DelayTask
         public int compareTo(Delayed o) {
             return (int) (this.getDelay(TimeUnit.MILLISECONDS) - o.getDelay(TimeUnit.MILLISECONDS));
         }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof DelayTask)) {
+                return false;
+            }
+            DelayTask delayTask = (DelayTask) o;
+            return Objects.equals(element, delayTask.element);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(element);
+        }
     }
 
     /**
@@ -131,7 +148,7 @@ public class RetryExecutor implements IDelayTaskExecutor<RetryExecutor.DelayTask
                 return false;
             }
             Element element = (Element) o;
-            return Objects.equals(watch, element.watch) && Objects.equals(uid, element.uid) &&
+            return watch.logicEquals(element.watch) && Objects.equals(uid, element.uid) &&
                 Objects.equals(clientId, element.clientId);
         }
 
