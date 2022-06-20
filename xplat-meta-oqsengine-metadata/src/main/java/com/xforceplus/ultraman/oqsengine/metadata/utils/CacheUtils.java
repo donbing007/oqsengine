@@ -162,18 +162,16 @@ public class CacheUtils {
         return Collections.emptyList();
     }
 
-
-
-    private static void aggregationConditionsToConditions(Aggregation aggregation, int version, CacheExecutor cacheExecutor)
+    private static void aggregationConditionsToConditions(Aggregation aggregation, int version,
+                                                          CacheExecutor cacheExecutor)
         throws JsonProcessingException {
         if (null != aggregation.getAggregationConditions() && !aggregation.getAggregationConditions().isEmpty()) {
             Conditions conditions = Conditions.buildEmtpyConditions();
 
             for (Aggregation.AggregationCondition aggregationCondition : aggregation.getAggregationConditions()) {
 
-
                 String fieldStr = cacheExecutor.remoteFieldLoad(aggregationCondition.getEntityClassId(),
-                                        aggregationCondition.getEntityFieldId(), aggregationCondition.getProfile(), version);
+                    aggregationCondition.getEntityFieldId(), aggregationCondition.getProfile(), version);
 
                 if (null == fieldStr) {
                     return;
@@ -183,8 +181,8 @@ public class CacheUtils {
                     OBJECT_MAPPER.readValue(fieldStr, EntityField.class);
 
                 conditions.addAnd(
-                    new Condition(entityField, aggregationCondition.getConditionOperator(),
-                        IValueUtils.deserialize(aggregationCondition.getStringValue(), entityField))
+                    IValueUtils.deserializeCondition(aggregationCondition.getStringValue(),
+                        aggregationCondition.getConditionOperator(), entityField)
                 );
             }
             aggregation.setConditions(conditions);

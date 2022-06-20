@@ -252,6 +252,18 @@ public class Conditions implements Serializable {
     }
 
     /**
+     * 收集条件中的所有字段.
+     *
+     * @return 不重复的条件字段列表.
+     */
+    public Collection<IEntityField> collectField() {
+        return collectCondition().stream()
+            .map(c -> c.getField())
+            .distinct()
+            .collect(Collectors.toList());
+    }
+
+    /**
      * 查找符合条件的子树.
      * 假如这样的一个条件树.
      * and(red)               //1

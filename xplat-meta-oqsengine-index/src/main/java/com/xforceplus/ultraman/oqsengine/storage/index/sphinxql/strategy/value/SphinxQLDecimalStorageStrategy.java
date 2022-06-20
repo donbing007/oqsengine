@@ -76,7 +76,7 @@ public class SphinxQLDecimalStorageStrategy implements StorageStrategy {
 
     @Override
     public StorageValue toEmptyStorageValue(IEntityField field) {
-        return doBuildStorageValue(Long.toString(field.id()), "0.0");
+        return doBuildStorageValue(Long.toString(field.id()), null);
     }
 
     @Override

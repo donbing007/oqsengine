@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.impl;
 
 import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.AggregationFunction;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.BigDecimalSummaryStatistics;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
@@ -26,7 +27,10 @@ import java.util.stream.Collectors;
 public class AvgFunction implements AggregationFunction {
 
     @Override
-    public Optional<IValue> excute(Optional<IValue> agg, Optional<IValue> o, Optional<IValue> n) {
+    public Optional<IValue> excute(Optional<IValue> agg, ValueChange valueChange) {
+        Optional<IValue> o = valueChange.getOldValue();
+        Optional<IValue> n = valueChange.getNewValue();
+        
         if (!(agg != null && o != null && n != null)) {
             return Optional.empty();
         }
@@ -42,8 +46,8 @@ public class AvgFunction implements AggregationFunction {
                 aggValue = Optional.of(new DecimalValue(o.get().getField(), BigDecimal.ZERO));
             }
             BigDecimal temp = ((DecimalValue) agg.get()).getValue()
-                    .add(((DecimalValue) n.get()).getValue())
-                    .subtract(((DecimalValue) o.get()).getValue());
+                .add(((DecimalValue) n.get()).getValue())
+                .subtract(((DecimalValue) o.get()).getValue());
             aggValue.get().setStringValue(temp.toString());
             return Optional.of(aggValue.get());
         } else if (agg.get() instanceof LongValue) {
@@ -68,10 +72,11 @@ public class AvgFunction implements AggregationFunction {
         Optional<IValue> aggValue = Optional.of(agg.get().copy());
         if (agg.get() instanceof DecimalValue) {
             BigDecimalSummaryStatistics temp = values.stream().map(v -> ((DecimalValue) v.get()).getValue())
-                    .collect(BigDecimalSummaryStatistics.statistics());
+                .collect(BigDecimalSummaryStatistics.statistics());
             aggValue.get().setStringValue(temp.getAverage(MathContext.DECIMAL64).toString());
         } else if (agg.get() instanceof LongValue) {
-            LongSummaryStatistics temp = values.stream().map(o -> o.get()).collect(Collectors.summarizingLong(IValue::valueToLong));
+            LongSummaryStatistics temp =
+                values.stream().map(o -> o.get()).collect(Collectors.summarizingLong(IValue::valueToLong));
             aggValue.get().setStringValue(new DecimalFormat("0").format(temp.getAverage()));
         }
         return Optional.of(aggValue.get());
@@ -97,14 +102,15 @@ public class AvgFunction implements AggregationFunction {
     /**
      * 求平均值.
      *
-     * @param agg 聚合值.
-     * @param o 老值.
-     * @param n 新值.
+     * @param agg    聚合值.
+     * @param o      老值.
+     * @param n      新值.
      * @param ocount 分子值-总数查询老count出的结果.
      * @param ncount 分子值-总数查询新count出的结果.
      * @return 返回计算值.
      */
-    public Optional<IValue> excuteAvg(Optional<IValue> agg, Optional<IValue> o, Optional<IValue> n, long ocount, long ncount) {
+    public Optional<IValue> excuteAvg(Optional<IValue> agg, Optional<IValue> o, Optional<IValue> n, long ocount,
+                                      long ncount) {
         if (ncount == 0) {
             return Optional.of(new DecimalValue(o.get().getField(), BigDecimal.ZERO));
         }
@@ -117,10 +123,10 @@ public class AvgFunction implements AggregationFunction {
                 n = Optional.of(new DecimalValue(n.get().getField(), BigDecimal.ZERO));
             }
             BigDecimal temp = ((DecimalValue) agg.get()).getValue()
-                    .multiply(new BigDecimal(ocount), MathContext.DECIMAL64)
-                    .add(((DecimalValue) n.get()).getValue())
-                    .subtract(((DecimalValue) o.get()).getValue())
-                    .divide(new BigDecimal(ncount), MathContext.DECIMAL64);
+                .multiply(new BigDecimal(ocount), MathContext.DECIMAL64)
+                .add(((DecimalValue) n.get()).getValue())
+                .subtract(((DecimalValue) o.get()).getValue())
+                .divide(new BigDecimal(ncount), MathContext.DECIMAL64);
             aggValue.get().setStringValue(temp.toString());
             return Optional.of(aggValue.get());
         } else if (agg.get() instanceof LongValue) {

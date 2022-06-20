@@ -24,6 +24,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LookupValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
@@ -48,6 +49,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -207,6 +209,61 @@ public class CalculationTest extends AbstractContainerExtends {
 
     public void initSegment(SegmentInfo info) throws SQLException {
         segmentStorage.build(info);
+    }
+
+    /**
+     * 测试订单条件聚合订单项中数量大于1的订单项金额.
+     * 一开始创建的订单项数量只有1,所以应该不会被聚合.
+     * 测试会修改订单项的数量为2,这会满足条件应该被聚合.
+     */
+    @Test
+    public void testConditionSum() throws Exception {
+        IEntity user = entityHelper.buildUserEntity();
+        OqsResult<IEntity> results = entityManagementService.build(user);
+        Assertions.assertEquals(ResultStatus.SUCCESS, results.getResultStatus(), results.getMessage());
+
+        IEntity order = entityHelper.buildOrderEntity(user);
+        results = entityManagementService.build(order);
+        Assertions.assertEquals(ResultStatus.HALF_SUCCESS, results.getResultStatus(), results.getMessage());
+
+        // 数量只有1,应该不会被order的 "订单项数量大于1金额sum" 字段聚合.
+        IEntity orderItem = entityHelper.buildOrderItem(order);
+        orderItem.entityValue().addValue(
+            new LongValue(
+                MockEntityClassDefine.ORDER_ITEM_CLASS.field("数量").get(),
+                1L
+            )
+        );
+        results = entityManagementService.build(orderItem);
+        Assertions.assertEquals(ResultStatus.HALF_SUCCESS, results.getResultStatus(), results.getMessage());
+
+        order = entitySearchService.selectOne(order.id(), MockEntityClassDefine.ORDER_CLASS.ref()).getValue().get();
+        Assertions.assertEquals(new BigDecimal("0.0"),
+            order.entityValue().getValue("订单项数量大于1金额sum").get().getValue());
+
+        // 更新数量为2,应该被order "订单项数量大于1金额sum" 字段聚合.
+        orderItem = entitySearchService.selectOne(
+            orderItem.id(), MockEntityClassDefine.ORDER_ITEM_CLASS.ref()).getValue().get();
+        orderItem.entityValue().addValue(
+            new LongValue(
+                MockEntityClassDefine.ORDER_ITEM_CLASS.field("数量").get(),
+                2L
+            )
+        );
+        OqsResult<Map.Entry<IEntity, IValue[]>> replaceResult = entityManagementService.replace(orderItem);
+        Assertions.assertEquals(ResultStatus.SUCCESS, replaceResult.getResultStatus(), replaceResult.getMessage());
+
+        order = entitySearchService.selectOne(order.id(), MockEntityClassDefine.ORDER_CLASS.ref()).getValue().get();
+        Assertions.assertEquals(
+            orderItem.entityValue().getValue("金额").get().getValue(),
+            order.entityValue().getValue("订单项数量大于1金额sum").get().getValue()
+        );
+
+        Assertions.assertEquals(
+            orderItem.entityValue().getValue("金额").get().getValue(),
+            order.entityValue().getValue("总金额sum").get().getValue()
+        );
+
     }
 
     /**

@@ -35,6 +35,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Aggreg
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.EntityPackage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OqsEngineEntity;
@@ -70,9 +71,9 @@ import org.slf4j.LoggerFactory;
 /**
  * 测试类.
  * <pre>
- *                 A
- *     /      /        \          \
- * B(sum)  C(COUNT)  C(SUM)   C(SUM(condition))
+ *                                     A
+ *     /      /        /          /                \                     \
+ * B(sum)  C(COUNT)  C(SUM)   C(SUM(condition)) C(COUNT(condition)) C(SUM(condition-along))
  *    |
  * D(SUM)
  * </pre>
@@ -87,6 +88,8 @@ public class AggregationCalculationLogicTest {
 
     private static IEntityField A_LONG;
 
+    private static IEntityField A_STRING;
+
     private static IEntityField B_REF;
 
     private static IEntityField B_SUM;
@@ -96,6 +99,10 @@ public class AggregationCalculationLogicTest {
     private static IEntityField C_COUNT;
 
     private static IEntityField C_SUM_CONDITIONS;
+
+    private static IEntityField C_COUNT_CONDITIONS;
+
+    private static IEntityField C_SUM_CONDITIONS_ASTRING;
 
     private static IEntityField D_SUM;
 
@@ -131,6 +138,11 @@ public class AggregationCalculationLogicTest {
             .withId(Long.MAX_VALUE)
             .withFieldType(FieldType.LONG)
             .withName("a-long").build();
+
+        A_STRING = EntityField.Builder.anEntityField()
+            .withId(Long.MAX_VALUE - 25)
+            .withFieldType(FieldType.STRING)
+            .withName("a-string").build();
 
         B_REF = EntityField.Builder.anEntityField()
             .withId(Long.MAX_VALUE - 10)
@@ -207,6 +219,52 @@ public class AggregationCalculationLogicTest {
                     ).build()
             )
             .withName("c-sum-conditions").build();
+
+        C_COUNT_CONDITIONS = EntityField.Builder.anEntityField()
+            .withId(Long.MAX_VALUE - 23)
+            .withFieldType(FieldType.LONG)
+            .withConfig(
+                FieldConfig.Builder.anFieldConfig()
+                    .withCalculation(Aggregation.Builder.anAggregation()
+                        .withClassId(Long.MAX_VALUE)
+                        .withFieldId(Long.MAX_VALUE)
+                        .withRelationId(Long.MAX_VALUE - 20)
+                        .withConditions(
+                            Conditions.buildEmtpyConditions()
+                                .addAnd(
+                                    new Condition(
+                                        A_LONG, ConditionOperator.GREATER_THAN, new LongValue(A_LONG, 100L)
+                                    )
+                                )
+                        )
+                        .withAggregationType(AggregationType.COUNT)
+                        .build()
+                    ).build()
+            )
+            .withName("c-count-conditions").build();
+
+        C_SUM_CONDITIONS_ASTRING = EntityField.Builder.anEntityField()
+            .withId(Long.MAX_VALUE - 25)
+            .withFieldType(FieldType.LONG)
+            .withConfig(
+                FieldConfig.Builder.anFieldConfig()
+                    .withCalculation(Aggregation.Builder.anAggregation()
+                        .withClassId(Long.MAX_VALUE)
+                        .withFieldId(Long.MAX_VALUE)
+                        .withRelationId(Long.MAX_VALUE - 20)
+                        .withConditions(
+                            Conditions.buildEmtpyConditions()
+                                .addAnd(
+                                    new Condition(
+                                        A_STRING, ConditionOperator.EQUALS, new StringValue(A_STRING, "v1")
+                                    )
+                                )
+                        )
+                        .withAggregationType(AggregationType.SUM)
+                        .build()
+                    ).build()
+            )
+            .withName("c-sum-conditoons-astring").build();
 
         D_SUM = EntityField.Builder.anEntityField()
             .withId(Long.MAX_VALUE - 3)
@@ -320,7 +378,8 @@ public class AggregationCalculationLogicTest {
         C_CLASS = EntityClass.Builder.anEntityClass()
             .withId(Long.MAX_VALUE - 2)
             .withCode("c-class")
-            .withFields(Arrays.asList(C_COUNT, C_SUM, EntityField.ID_ENTITY_FIELD))
+            .withFields(
+                Arrays.asList(C_COUNT, C_SUM, C_COUNT_CONDITIONS, C_SUM_CONDITIONS, EntityField.ID_ENTITY_FIELD))
             .withRelations(Arrays.asList(
                 Relationship.Builder.anRelationship()
                     .withId(Long.MAX_VALUE - 20)
@@ -360,6 +419,9 @@ public class AggregationCalculationLogicTest {
             .withEntityClassRef(A_CLASS.ref())
             .withValue(
                 new LongValue(A_LONG, 100L)
+            )
+            .withValue(
+                new StringValue(A_STRING, "v1")
             ).build();
 
         entityB = Entity.Builder.anEntity()
@@ -465,6 +527,326 @@ public class AggregationCalculationLogicTest {
         masterStorage.addIEntity(entityD);
 
         aggregationCalculationLogic = new AggregationCalculationLogic();
+    }
+
+    /**
+     * 对象原始满足,修改某些字段后不满足.
+     * 应该被重新计算.
+     */
+    @Test
+    public void testEntityMatchToNotMatch() {
+        IEntity aggEntity = Entity.Builder.anEntity()
+            .withId(100000L)
+            .withEntityClassRef(C_CLASS.ref())
+            .withValue(
+                new LongValue(C_SUM_CONDITIONS_ASTRING, 90L)
+            ).build();
+        this.masterStorage.addIEntity(aggEntity);
+        CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()
+            .withMetaManager(metaManager)
+            .withScenarios(CalculationScenarios.REPLACE).withCalculationLogicFactory(new CalculationLogicFactory())
+            .build();
+        context.getCalculationLogicFactory().get().register(aggregationLogic);
+        context.focusEntity(aggEntity, C_CLASS);
+        context.focusField(C_SUM_CONDITIONS_ASTRING);
+
+        IEntity triggerEntity = Entity.Builder.anEntity()
+            .withId(1)
+            .withEntityClassRef(A_CLASS.ref())
+            .withValue(
+                new LongValue(A_LONG, 90L)
+            )
+            .withValue(
+                new StringValue(A_STRING, "v2")
+            ).build();
+        context.putEntityToCache(triggerEntity);
+        context.addValueChange(
+            ValueChange.build(1, new StringValue(A_STRING, "v1"), new StringValue(A_STRING, "v2")));
+        context.startMaintenance(triggerEntity);
+        Optional<IValue> targetValue = aggregationCalculationLogic.calculate(context);
+        Assertions.assertEquals(0L, targetValue.get().getValue());
+    }
+
+    /**
+     * 对象原始不满足,修改某些字段后满足.
+     * 应该被重新计算.
+     */
+    @Test
+    public void testEntityNotMatchToMatch() {
+        IEntity aggEntity = Entity.Builder.anEntity()
+            .withId(100000L)
+            .withEntityClassRef(C_CLASS.ref())
+            .withValue(
+                new LongValue(C_SUM_CONDITIONS_ASTRING, 0)
+            ).build();
+        this.masterStorage.addIEntity(aggEntity);
+        CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()
+            .withMetaManager(metaManager)
+            .withScenarios(CalculationScenarios.REPLACE).withCalculationLogicFactory(new CalculationLogicFactory())
+            .build();
+        context.getCalculationLogicFactory().get().register(aggregationLogic);
+        context.focusEntity(aggEntity, C_CLASS);
+        context.focusField(C_SUM_CONDITIONS_ASTRING);
+
+        IEntity triggerEntity = Entity.Builder.anEntity()
+            .withId(1)
+            .withEntityClassRef(A_CLASS.ref())
+            .withValue(
+                new LongValue(A_LONG, 90L)
+            )
+            .withValue(
+                new StringValue(A_STRING, "v1")
+            ).build();
+        context.putEntityToCache(triggerEntity);
+        context.addValueChange(
+            ValueChange.build(1, new StringValue(A_STRING, "v2"), new StringValue(A_STRING, "v1")));
+        context.startMaintenance(triggerEntity);
+        Optional<IValue> targetValue = aggregationCalculationLogic.calculate(context);
+        Assertions.assertEquals(90L, targetValue.get().getValue());
+    }
+
+    /**
+     * count测试为分3种情况.
+     * <ul>
+     *    <li>旧值符合,新值不符合,统计数量减1.</li>
+     *    <li>旧值不符合,新值符合, 统计数量加1.</li>
+     *    <li>旧值不符合,新值不符合/都符合, 不进行计算.</li>
+     * </ul>
+     * 这里测试情况1.
+     */
+    @Test
+    public void testReplaceConditionCountCase1() {
+        IEntity aggEntity = Entity.Builder.anEntity()
+            .withId(100000L)
+            .withEntityClassRef(C_CLASS.ref())
+            .withValue(
+                new LongValue(C_COUNT_CONDITIONS, 1)
+            ).build();
+        this.masterStorage.addIEntity(aggEntity);
+        CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()
+            .withMetaManager(metaManager)
+            .withScenarios(CalculationScenarios.REPLACE).withCalculationLogicFactory(new CalculationLogicFactory())
+            .build();
+        context.getCalculationLogicFactory().get().register(aggregationLogic);
+        context.focusEntity(aggEntity, C_CLASS);
+        context.focusField(C_COUNT_CONDITIONS);
+
+        IEntity triggerEntity = Entity.Builder.anEntity()
+            .withId(1)
+            .withEntityClassRef(A_CLASS.ref())
+            .withValue(
+                new LongValue(A_LONG, 90L)
+            ).build();
+        context.putEntityToCache(triggerEntity);
+        context.addValueChange(
+            ValueChange.build(1, new LongValue(A_LONG, 200L), new LongValue(A_LONG, 90L)));
+        context.startMaintenance(triggerEntity);
+        Optional<IValue> targetValue = aggregationCalculationLogic.calculate(context);
+        Assertions.assertEquals(0L, targetValue.get().getValue());
+    }
+
+    /**
+     * count测试为分3种情况.
+     * <ul>
+     *    <li>旧值符合,新值不符合,统计数量减1.</li>
+     *    <li>旧值不符合,新值符合, 统计数量加1.</li>
+     *    <li>旧值不符合,新值不符合/都符合, 不进行计算.</li>
+     * </ul>
+     * 这里测试情况2.
+     */
+    @Test
+    public void testReplaceConditionCountCase2() {
+        IEntity aggEntity = Entity.Builder.anEntity()
+            .withId(100000L)
+            .withEntityClassRef(C_CLASS.ref())
+            .withValue(
+                new LongValue(C_COUNT_CONDITIONS, 0)
+            ).build();
+        this.masterStorage.addIEntity(aggEntity);
+        CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()
+            .withMetaManager(metaManager)
+            .withScenarios(CalculationScenarios.REPLACE).withCalculationLogicFactory(new CalculationLogicFactory())
+            .build();
+        context.getCalculationLogicFactory().get().register(aggregationLogic);
+        context.focusEntity(aggEntity, C_CLASS);
+        context.focusField(C_COUNT_CONDITIONS);
+
+        IEntity triggerEntity = Entity.Builder.anEntity()
+            .withId(1)
+            .withEntityClassRef(A_CLASS.ref())
+            .withValue(
+                new LongValue(A_LONG, 200L)
+            ).build();
+        context.putEntityToCache(triggerEntity);
+        context.addValueChange(
+            ValueChange.build(1, new LongValue(A_LONG, 90L), new LongValue(A_LONG, 200L)));
+        context.startMaintenance(triggerEntity);
+        Optional<IValue> targetValue = aggregationCalculationLogic.calculate(context);
+        Assertions.assertEquals(1L, targetValue.get().getValue());
+    }
+
+    /**
+     * count测试为分3种情况.
+     * <ul>
+     *    <li>旧值符合,新值不符合,统计数量减1.</li>
+     *    <li>旧值不符合,新值符合, 统计数量加1.</li>
+     *    <li>旧值不符合,新值不符合/都符合, 不进行计算.</li>
+     * </ul>
+     * 这里测试情况3.
+     */
+    @Test
+    public void testReplaceConditionCountCase3() {
+        IEntity aggEntity = Entity.Builder.anEntity()
+            .withId(100000L)
+            .withEntityClassRef(C_CLASS.ref())
+            .withValue(
+                new LongValue(C_COUNT_CONDITIONS, 0)
+            ).build();
+        this.masterStorage.addIEntity(aggEntity);
+        CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()
+            .withMetaManager(metaManager)
+            .withScenarios(CalculationScenarios.REPLACE).withCalculationLogicFactory(new CalculationLogicFactory())
+            .build();
+        context.getCalculationLogicFactory().get().register(aggregationLogic);
+        context.focusEntity(aggEntity, C_CLASS);
+        context.focusField(C_COUNT_CONDITIONS);
+
+        IEntity triggerEntity = Entity.Builder.anEntity()
+            .withId(1)
+            .withEntityClassRef(A_CLASS.ref())
+            .withValue(
+                new LongValue(A_LONG, 90L)
+            ).build();
+        context.putEntityToCache(triggerEntity);
+        context.addValueChange(
+            ValueChange.build(1, new LongValue(A_LONG, 30L), new LongValue(A_LONG, 90L)));
+        context.startMaintenance(triggerEntity);
+        Optional<IValue> targetValue = aggregationCalculationLogic.calculate(context);
+        Assertions.assertFalse(targetValue.isPresent());
+    }
+
+    /**
+     * sum测试为分4种情况.
+     * <ul>
+     *    <li>旧值符合,新值不符合,需要减去原有旧值.</li>
+     *    <li>旧值不符合,新值符合, 需要增加新值.</li>
+     *    <li>旧值不符合,新值不符合, 不进行计算.</li>
+     *    <li>都符合,重新计算.</li>
+     * </ul>
+     * 这里测试情况1.
+     */
+    @Test
+    public void testReplaceConditionSumCase1() {
+        IEntity aggEntity = Entity.Builder.anEntity()
+            .withId(100000L)
+            .withEntityClassRef(C_CLASS.ref())
+            .withValue(
+                new LongValue(C_SUM_CONDITIONS, 200L)
+            ).build();
+        this.masterStorage.addIEntity(aggEntity);
+        CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()
+            .withMetaManager(metaManager)
+            .withScenarios(CalculationScenarios.REPLACE).withCalculationLogicFactory(new CalculationLogicFactory())
+            .build();
+        context.getCalculationLogicFactory().get().register(aggregationLogic);
+        context.focusEntity(aggEntity, C_CLASS);
+        context.focusField(C_SUM_CONDITIONS);
+
+        IEntity triggerEntity = Entity.Builder.anEntity()
+            .withId(1)
+            .withEntityClassRef(A_CLASS.ref())
+            .withValue(
+                new LongValue(A_LONG, 90L)
+            ).build();
+        context.putEntityToCache(triggerEntity);
+        context.addValueChange(
+            ValueChange.build(1, new LongValue(A_LONG, 200L), new LongValue(A_LONG, 90L)));
+        context.startMaintenance(triggerEntity);
+        Optional<IValue> targetValue = aggregationCalculationLogic.calculate(context);
+        Assertions.assertEquals(0L, targetValue.get().getValue());
+    }
+
+    /**
+     * sum测试为分4种情况.
+     * <ul>
+     *    <li>旧值符合,新值不符合,需要减去原有旧值.</li>
+     *    <li>旧值不符合,新值符合, 需要增加新值.</li>
+     *    <li>旧值不符合,新值不符合, 不进行计算.</li>
+     *    <li>都符合,重新计算.</li>
+     * </ul>
+     * 这里测试情况2.
+     */
+    @Test
+    public void testReplaceConditionSumCase2() {
+        IEntity aggEntity = Entity.Builder.anEntity()
+            .withId(100000L)
+            .withEntityClassRef(C_CLASS.ref())
+            .withValue(
+                new LongValue(C_SUM_CONDITIONS, 0)
+            ).build();
+        this.masterStorage.addIEntity(aggEntity);
+        CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()
+            .withMetaManager(metaManager)
+            .withScenarios(CalculationScenarios.REPLACE).withCalculationLogicFactory(new CalculationLogicFactory())
+            .build();
+        context.getCalculationLogicFactory().get().register(aggregationLogic);
+        context.focusEntity(aggEntity, C_CLASS);
+        context.focusField(C_SUM_CONDITIONS);
+
+        IEntity triggerEntity = Entity.Builder.anEntity()
+            .withId(1)
+            .withEntityClassRef(A_CLASS.ref())
+            .withValue(
+                new LongValue(A_LONG, 200L)
+            ).build();
+        context.putEntityToCache(triggerEntity);
+        context.addValueChange(
+            ValueChange.build(1, new LongValue(A_LONG, 90L), new LongValue(A_LONG, 200L)));
+        context.startMaintenance(triggerEntity);
+        Optional<IValue> targetValue = aggregationCalculationLogic.calculate(context);
+        Assertions.assertEquals(200L, targetValue.get().getValue());
+    }
+
+    /**
+     * sum测试为分4种情况.
+     * <ul>
+     *    <li>旧值符合,新值不符合,需要减去原有旧值.</li>
+     *    <li>旧值不符合,新值符合, 需要增加新值.</li>
+     *    <li>旧值不符合,新值不符合, 不进行计算.</li>
+     *    <li>都符合,重新计算.</li>
+     * </ul>
+     * 这里测试情况3.
+     */
+    @Test
+    public void testReplaceConditionSumCase3() {
+        IEntity aggEntity = Entity.Builder.anEntity()
+            .withId(100000L)
+            .withEntityClassRef(C_CLASS.ref())
+            .withValue(
+                new LongValue(C_SUM_CONDITIONS, 0)
+            ).build();
+        this.masterStorage.addIEntity(aggEntity);
+        CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()
+            .withMetaManager(metaManager)
+            .withScenarios(CalculationScenarios.REPLACE).withCalculationLogicFactory(new CalculationLogicFactory())
+            .build();
+        context.getCalculationLogicFactory().get().register(aggregationLogic);
+        context.focusEntity(aggEntity, C_CLASS);
+        context.focusField(C_SUM_CONDITIONS);
+
+        IEntity triggerEntity = Entity.Builder.anEntity()
+            .withId(1)
+            .withEntityClassRef(A_CLASS.ref())
+            .withValue(
+                new LongValue(A_LONG, 91L)
+            ).build();
+        context.putEntityToCache(triggerEntity);
+        context.addValueChange(
+            ValueChange.build(1, new LongValue(A_LONG, 90L), new LongValue(A_LONG, 91L)));
+        context.startMaintenance(triggerEntity);
+        Optional<IValue> targetValue = aggregationCalculationLogic.calculate(context);
+        // 应该空值返回,表示不作修改.
+        Assertions.assertFalse(targetValue.isPresent());
     }
 
     @Test
@@ -611,11 +993,12 @@ public class AggregationCalculationLogicTest {
             return InfuenceConsumer.Action.CONTINUE;
         });
 
-        Assertions.assertEquals(4, participants.size());
+        Assertions.assertEquals(5, participants.size());
         Assertions.assertEquals(A_CLASS.id(), participants.get(0).getEntityClass().id());
         Assertions.assertEquals(B_CLASS.id(), participants.get(1).getEntityClass().id());
         Assertions.assertEquals(C_CLASS.id(), participants.get(2).getEntityClass().id());
-        Assertions.assertEquals(D_CLASS.id(), participants.get(3).getEntityClass().id());
+        Assertions.assertEquals(C_CLASS.id(), participants.get(3).getEntityClass().id());
+        Assertions.assertEquals(D_CLASS.id(), participants.get(4).getEntityClass().id());
 
         // Count 场景
         context.focusEntity(targetEntity, A_CLASS);

@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.impl;
 
 import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.AggregationFunction;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.BigDecimalSummaryStatistics;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
@@ -26,7 +27,9 @@ import java.util.stream.Collectors;
 public class MaxFunction implements AggregationFunction {
 
     @Override
-    public Optional<IValue> excute(Optional<IValue> agg, Optional<IValue> o, Optional<IValue> n) {
+    public Optional<IValue> excute(Optional<IValue> agg, ValueChange valueChange) {
+        Optional<IValue> o = valueChange.getOldValue();
+        Optional<IValue> n = valueChange.getNewValue();
         if (!(agg.isPresent() & o.isPresent() && n.isPresent())) {
             return Optional.empty();
         }

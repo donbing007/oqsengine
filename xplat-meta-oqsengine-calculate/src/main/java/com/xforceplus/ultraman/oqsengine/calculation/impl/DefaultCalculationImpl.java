@@ -434,9 +434,12 @@ public class DefaultCalculationImpl implements Calculation {
             Infuence[] infuences = calculationFields.stream().map(f -> {
 
                 Optional<ValueChange> changeOp = context.getValueChange(context.getFocusEntity(), f);
+                // 复制一份新的logic,原因是有可能每一个字段会变化.
+                Collection<CalculationLogic> currentLogic = null;
+                Infuence infuence = null;
                 // 表示数量改变的id字段.
                 if (changeOp.isPresent()) {
-                    Infuence infuence = new Infuence(
+                    infuence = new Infuence(
                         context.getFocusEntity(),
                         CalculationParticipant.Builder.anParticipant()
                             .withEntityClass(context.getFocusClass())
@@ -447,12 +450,44 @@ public class DefaultCalculationImpl implements Calculation {
                             .build(),
                         changeOp.get());
 
+                    currentLogic = logics;
+
+                } else {
+
+                    currentLogic =
+                        logics.stream()
+                            .filter(l -> l.need(context, context.getFocusClass(), f)).collect(Collectors.toList());
+                    if (!currentLogic.isEmpty()) {
+
+                        Optional<IValue> valueOp = context.getFocusEntity().entityValue().getValue(f);
+                        IValue value;
+                        if (!valueOp.isPresent()) {
+                            value = new EmptyTypedValue(f);
+                        } else {
+                            value = valueOp.get();
+                        }
+
+                        infuence = new Infuence(
+                            context.getFocusEntity(),
+                            CalculationParticipant.Builder.anParticipant()
+                                .withEntityClass(context.getFocusClass())
+                                .withField(f)
+                                .withAffectedEntities(Arrays.asList(
+                                    context.getFocusEntity()
+                                ))
+                                .build(),
+                            ValueChange.build(context.getFocusEntity().id(), value, value)
+                        );
+                    }
+                }
+
+                if (infuence != null) {
                     /*
                     不断将影响树交由所有相关的logic构建,只到影响树不再改变或者达到 MAX_BUILD_INFUENCE_NUMBER 上限.
                     */
                     int oldSize = infuence.getSize();
                     for (int i = 0; i < MAX_BUILD_INFUENCE_NUMBER; i++) {
-                        for (CalculationLogic logic : logics) {
+                        for (CalculationLogic logic : currentLogic) {
                             context.focusField(f);
 
                             Timer.Sample sample = Timer.start(Metrics.globalRegistry);

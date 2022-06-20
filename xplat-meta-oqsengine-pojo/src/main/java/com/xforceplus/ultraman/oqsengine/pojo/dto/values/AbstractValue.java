@@ -16,7 +16,6 @@ import java.util.Optional;
 public abstract class AbstractValue<V> implements IValue<V>, Serializable {
 
     private boolean dirty;
-    private int valueSize;
     private String attachment;
     private IEntityField field;
     private V value;

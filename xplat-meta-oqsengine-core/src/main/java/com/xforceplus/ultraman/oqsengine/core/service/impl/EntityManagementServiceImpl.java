@@ -361,6 +361,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 for (int i = 0; i < entities.length; i++) {
                     currentEntity = entities[i];
                     currentEntityClass = entityClasses[i];
+
                     // 计算字段处理.
                     calculationContext.focusSourceEntity(currentEntity);
                     calculationContext.focusEntity(currentEntity, currentEntityClass);
@@ -371,6 +372,11 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     if (VerifierResult.OK != verify.getKey()) {
                         return transformVerifierResultToOperationResult(verify, currentEntity);
                     }
+
+                    /*
+                    只在时不需要空值,必须在校验之后否则无法给出必填字段设置为null的错误.
+                     */
+                    currentEntity.squeezeEmpty();
 
                     if (currentEntity.isDirty()) {
                         dirtyEntities.add(currentEntity);
@@ -503,8 +509,13 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     return transformVerifierResultToOperationResult(verify, entity);
                 }
 
+                /*
+                    只在时不需要空值,必须在校验之后否则无法给出必填字段设置为null的错误.
+                     */
+                currentEntity.squeezeEmpty();
+
                 // 非脏,不需要继续.
-                if (!entity.isDirty()) {
+                if (!currentEntity.isDirty()) {
 
                     if (logger.isDebugEnabled()) {
                         logger.debug("[build] The instance is not \"dirty\" and creation is abandoned.");
@@ -1473,7 +1484,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             IEntityField field;
             for (IValue newValue : newEntity.entityValue().values()) {
                 field = newValue.getField();
-                oldValue = oldEntity.entityValue().getValue(field.id()).orElse(new EmptyTypedValue(field));
+                oldValue = oldEntity.entityValue().getValue(field).orElse(new EmptyTypedValue(field));
 
                 if (newValue.equals(oldValue)) {
                     continue;
