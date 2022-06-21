@@ -4,6 +4,7 @@ import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationContext;
 import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationScenarios;
 import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.AggregationFunction;
 import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.AggregationFunctionFactoryImpl;
+import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.helper.AggregationAttachmentHelper;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.strategy.FunctionStrategy;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
@@ -61,7 +62,7 @@ public class MaxFunctionStrategy implements FunctionStrategy {
         long count;
         if (aggValue.get().valueToLong() == 0 || aggValue.get().valueToString().equals("0.0")
             || aggValue.get().getValue().equals(DateTimeValue.MIN_DATE_TIME)) {
-            count = countAggregationByAttachment(aggValue.get());
+            count = AggregationAttachmentHelper.count(aggValue.get(), 0);
             if (context.getScenariso().equals(CalculationScenarios.BUILD)) {
                 if (count == 0) {
                     aggValue.get().setStringValue(newValue.valueToString());
@@ -83,10 +84,12 @@ public class MaxFunctionStrategy implements FunctionStrategy {
                     try {
                         maxValue = maxAggregationEntity(aggregation, context, CalculationScenarios.DELETE);
                     } catch (SQLException e) {
-                        e.printStackTrace();
+                        throw new RuntimeException(e.getMessage(), e);
                     }
                     if (maxValue.isPresent()) {
-                        logger.info("找到最大数据 - maxValue:{}", maxValue.get().valueToString());
+                        if (logger.isDebugEnabled()) {
+                            logger.debug("Found max value {}", maxValue.get().valueToString());
+                        }
                         aggValue.get().setStringValue(maxValue.get().valueToString());
                         Optional<IValue> attAggValue = Optional.of(attachmentReplace(aggValue.get(), "-1", "0"));
                         return attAggValue;
@@ -105,7 +108,9 @@ public class MaxFunctionStrategy implements FunctionStrategy {
                             e.printStackTrace();
                         }
                         if (maxValue.isPresent()) {
-                            logger.info("找到最大数据 - maxValue:{}", maxValue.get().valueToString());
+                            if (logger.isDebugEnabled()) {
+                                logger.info("Found max value {}", maxValue.get().valueToString());
+                            }
                             if (checkMaxValue(maxValue.get(), newValue)) {
                                 aggValue.get().setStringValue(maxValue.get().valueToString());
                                 return aggValue;
@@ -132,7 +137,7 @@ public class MaxFunctionStrategy implements FunctionStrategy {
                     try {
                         maxValue = maxAggregationEntity(aggregation, context, CalculationScenarios.REPLACE);
                     } catch (SQLException e) {
-                        e.printStackTrace();
+                        throw new RuntimeException(e.getMessage(), e);
                     }
                     if (maxValue.isPresent()) {
                         if (checkMaxValue(maxValue.get(), newValue)) {
@@ -163,24 +168,6 @@ public class MaxFunctionStrategy implements FunctionStrategy {
             return function.excute(attAggValue, valueChange);
         }
         return function.excute(aggValue, valueChange);
-    }
-
-    /**
-     * 用于统计该聚合下有多少条数据.
-     *
-     * @param value 字段信息.
-     * @return 附件中的数量信息.
-     */
-    private long countAggregationByAttachment(IValue value) {
-        Optional attachmentOp = value.getAttachment();
-        if (attachmentOp.isPresent()) {
-            String attachment = (String) attachmentOp.get();
-            String[] att = StringUtils.split(attachment, "|");
-            if (att.length > 1) {
-                return Long.parseLong(att[0]);
-            }
-        }
-        return 0L;
     }
 
     /**

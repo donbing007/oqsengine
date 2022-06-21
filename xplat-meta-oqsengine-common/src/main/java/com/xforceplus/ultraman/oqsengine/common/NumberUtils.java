@@ -67,6 +67,25 @@ public final class NumberUtils {
     }
 
     /**
+     * 判断是否一个整数字符串.
+     *
+     * @param value 目标字符串.
+     * @return true 是, false 不是.
+     */
+    public static boolean isIntegerString(String value) {
+        if (StringUtils.isEmpty(value)) {
+            return false;
+        }
+
+        for (char c : value.toCharArray()) {
+            if ((int) c < (int) '0' || (int) c > (int) '9') {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
      * 判断指定整数的位数.
      *
      * @param value 目标值.

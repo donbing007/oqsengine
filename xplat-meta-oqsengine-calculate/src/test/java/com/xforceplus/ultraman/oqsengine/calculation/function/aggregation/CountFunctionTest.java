@@ -2,18 +2,15 @@ package com.xforceplus.ultraman.oqsengine.calculation.function.aggregation;
 
 import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.impl.CountFunction;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.AggregationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Aggregation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
-import java.math.BigDecimal;
-import java.util.Arrays;
 import java.util.Optional;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -28,148 +25,65 @@ import org.junit.jupiter.api.Test;
  */
 public class CountFunctionTest {
 
-    //-------------level 0--------------------
-    private IEntityField l0LongField = EntityField.Builder.anEntityField()
-        .withId(1000)
+    private IEntityField aggField = EntityField.Builder.anEntityField()
+        .withId(100)
         .withFieldType(FieldType.LONG)
-        .withName("l0-long")
-        .withConfig(FieldConfig.build().searchable(true)).build();
-    private IEntityField l0StringField = EntityField.Builder.anEntityField()
-        .withId(1001)
-        .withFieldType(FieldType.STRING)
-        .withName("l0-string")
-        .withConfig(FieldConfig.Builder.anFieldConfig()
-            .withSearchable(true)
-            .withFuzzyType(FieldConfig.FuzzyType.WILDCARD)
-            .withWildcardMinWidth(3).withWildcardMaxWidth(7).build()).build();
-    private IEntityField l0StringsField = EntityField.Builder.anEntityField()
-        .withId(1002)
-        .withFieldType(FieldType.STRINGS)
-        .withName("l0-strings")
-        .withConfig(FieldConfig.build().searchable(true)).build();
-    private IEntityField l0EnumField = EntityField.Builder.anEntityField()
-        .withId(1003)
-        .withFieldType(FieldType.ENUM)
-        .withName("l0-enum")
-        .withConfig(FieldConfig.build().searchable(true)).build();
-    private IEntityField l0DecimalField = EntityField.Builder.anEntityField()
-        .withId(1004)
-        .withFieldType(FieldType.DECIMAL)
-        .withName("l0-decimal")
-        .withConfig(FieldConfig.build().searchable(true)).build();
-    private IEntityField l0DatetimeField = EntityField.Builder.anEntityField()
-        .withId(1005)
-        .withFieldType(FieldType.DATETIME)
-        .withName("l0-datetime")
-        .withConfig(FieldConfig.build().searchable(true)).build();
-    private IEntityClass l0EntityClass = EntityClass.Builder.anEntityClass()
-        .withId(1)
-        .withLevel(0)
-        .withCode("l0")
-        .withField(l0LongField)
-        .withField(l0StringField)
-        .withField(l0StringsField)
-        .withField(l0EnumField)
-        .withField(l0DecimalField)
-        .withField(l0DatetimeField)
-        .build();
-
-    //-------------level 1--------------------
-    private IEntityField l1LongField = EntityField.Builder.anEntityField()
-        .withId(2000)
-        .withFieldType(FieldType.LONG)
-        .withName("l1-long")
-        .withConfig(FieldConfig.build().searchable(true)).build();
-    private IEntityField l1StringField = EntityField.Builder.anEntityField()
-        .withId(2001)
-        .withFieldType(FieldType.STRING)
-        .withName("l1-string")
-        .withConfig(FieldConfig.Builder.anFieldConfig()
-            .withSearchable(true)
-            .withFuzzyType(FieldConfig.FuzzyType.WILDCARD)
-            .withWildcardMinWidth(3).withWildcardMaxWidth(7).build()).build();
-    private IEntityClass l1EntityClass = EntityClass.Builder.anEntityClass()
-        .withId(2)
-        .withLevel(1)
-        .withCode("l1")
-        .withField(l1LongField)
-        .withField(l1StringField)
-        .withFather(l0EntityClass)
-        .build();
-
-    //-------------level 2--------------------
-    private IEntityField l2LongField = EntityField.Builder.anEntityField()
-        .withId(3000)
-        .withFieldType(FieldType.LONG)
-        .withName("l2-long")
-        .withConfig(FieldConfig.build().searchable(true)).build();
-    private IEntityField l2StringField = EntityField.Builder.anEntityField()
-        .withId(3001)
-        .withFieldType(FieldType.STRING)
-        .withName("l2-string")
-        .withConfig(FieldConfig.build().searchable(true)).build();
-    private IEntityField l2bigintField = EntityField.Builder.anEntityField()
-        .withId(3002)
-        .withFieldType(FieldType.LONG)
-        .withName("l2-bigint")
-        .withConfig(FieldConfig.build().searchable(true)).build();
-    private IEntityField l2StringSegmentationField = EntityField.Builder.anEntityField()
-        .withId(3003)
-        .withFieldType(FieldType.STRING)
-        .withName("l2-string-segmentation")
+        .withName("agg")
         .withConfig(
             FieldConfig.Builder.anFieldConfig()
-                .withFuzzyType(FieldConfig.FuzzyType.SEGMENTATION).withSearchable(true).build()).build();
-    private IEntityClass l2EntityClass = EntityClass.Builder.anEntityClass()
-        .withId(3)
-        .withLevel(2)
-        .withCode("l2")
-        .withField(l2LongField)
-        .withField(l2StringField)
-        .withField(l2bigintField)
-        .withField(l2StringSegmentationField)
-        .withFather(l1EntityClass)
-        .build();
+                .withCalculation(
+                    Aggregation.Builder.anAggregation()
+                        .withAggregationType(AggregationType.COUNT)
+                        .build()
+                ).build()
+        ).build();
 
+    /**
+     * 测试第一次创建.
+     */
     @Test
-    public void excute() {
-        CountFunction countFunction = new CountFunction();
+    public void testBuildFirst() throws Exception {
+        CountFunction function = new CountFunction();
 
-        LongValue agg1 = new LongValue(l2EntityClass.field("l1-long").get(), 3);
-        LongValue o1 = new LongValue(l2EntityClass.field("l1-long").get(), 1);
-        LongValue n1 = new LongValue(l2EntityClass.field("l1-long").get(), 2);
-        Optional<IValue> a1 = countFunction.excute(Optional.of(agg1), ValueChange.build(0, o1, n1));
-        Assertions.assertEquals(3L, a1.get().getValue());
+        IValue aggValue = new LongValue(aggField, 0, "0|0");
+        Optional<IValue> newAggValue = function.excute(Optional.of(aggValue),
+            ValueChange.build(
+                1,
+                new EmptyTypedValue(aggField),
+                new LongValue(aggField, 1)));
 
-        LongValue agg2 = new LongValue(l2EntityClass.field("l1-long").get(), 3);
-        LongValue o2 = new LongValue(l2EntityClass.field("l1-long").get(), 1);
-        EmptyTypedValue n2 = new EmptyTypedValue(l2EntityClass.field("l1-long").get());
-        Optional<IValue> a2 = countFunction.excute(Optional.of(agg2), ValueChange.build(0, o2, n2));
-        Assertions.assertEquals(2L, a2.get().getValue());
-
-        // build
-        LongValue agg4 = new LongValue(l2EntityClass.field("l1-long").get(), 3);
-        EmptyTypedValue o4 = new EmptyTypedValue(l2EntityClass.field("l1-long").get());
-        LongValue n4 = new LongValue(l2EntityClass.field("l1-long").get(), 1);
-        Optional<IValue> a4 = countFunction.excute(Optional.of(agg4), ValueChange.build(0, o4, n4));
-        Assertions.assertEquals(4L, a4.get().getValue());
+        Assertions.assertEquals(1L, newAggValue.get().getValue());
+        Assertions.assertEquals("0|0", newAggValue.get().getAttachment().get());
     }
 
+    /**
+     * 测试已有旧值.
+     */
     @Test
-    public void init() {
-        CountFunction countFunction = new CountFunction();
-        DecimalValue agg = new DecimalValue(l2EntityClass.field("l0-decimal").get(), new BigDecimal("3"));
-        DecimalValue o = new DecimalValue(l2EntityClass.field("l0-decimal").get(), new BigDecimal("1"));
-        DecimalValue n = new DecimalValue(l2EntityClass.field("l0-decimal").get(), new BigDecimal("2"));
-        Optional<IValue> a = countFunction.init(Optional.of(agg), Arrays.asList(Optional.of(o), Optional.of(n)));
-        System.out.println(a.get().getValue());
+    public void testBuildHaveOld() throws Exception {
+        CountFunction function = new CountFunction();
+        IValue aggValue = new LongValue(aggField, 10);
+        Optional<IValue> newAggValue = function.excute(Optional.of(aggValue),
+            ValueChange.build(
+                1,
+                new EmptyTypedValue(aggField),
+                new LongValue(aggField, 1)));
+        Assertions.assertEquals(11L, newAggValue.get().getValue());
+    }
 
-
-        LongValue agg1 = new LongValue(l2EntityClass.field("l1-long").get(), 3);
-        LongValue o1 = new LongValue(l2EntityClass.field("l1-long").get(), 1);
-        LongValue n1 = new LongValue(l2EntityClass.field("l1-long").get(), 2);
-        Optional<IValue> a1 = countFunction.init(Optional.of(agg1), Arrays.asList(Optional.of(o1), Optional.of(n1)));
-        System.out.println(a1.get().getValue());
+    /**
+     * 删除已经有的值.
+     */
+    @Test
+    public void testDeleteNotOld() throws Exception {
+        CountFunction function = new CountFunction();
+        IValue aggValue = new LongValue(aggField, 10);
+        Optional<IValue> newAggValue = function.excute(Optional.of(aggValue),
+            ValueChange.build(
+                1,
+                new LongValue(aggField, 1),
+                new EmptyTypedValue(aggField)));
+        Assertions.assertEquals(9L, newAggValue.get().getValue());
     }
 
 }

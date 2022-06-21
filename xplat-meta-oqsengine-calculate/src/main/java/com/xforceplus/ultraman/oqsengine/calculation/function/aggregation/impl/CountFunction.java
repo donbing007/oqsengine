@@ -1,13 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.impl;
 
 import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.AggregationFunction;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.BigDecimalSummaryStatistics;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.able.CalculationsAble;
 import java.util.List;
 import java.util.LongSummaryStatistics;
 import java.util.Optional;
@@ -31,55 +29,45 @@ public class CountFunction implements AggregationFunction {
         if (!n.isPresent()) {
             return Optional.of(agg.get());
         }
-        Optional<IValue> aggValue = Optional.of(agg.get().copy());
-        if (agg.get() instanceof LongValue) {
-            if (o.get() instanceof EmptyTypedValue || !o.isPresent()) {
-                o = Optional.of(new LongValue(o.get().getField(), 0L));
-            }
-            if (n.get() instanceof EmptyTypedValue || !n.isPresent()) {
-                n = Optional.of(new LongValue(n.get().getField(), 0L));
-            }
-            if (!(o.get().getValue().toString().equals("0")) && n.get().getValue().toString().equals("0")) {
-                Long temp = agg.get().valueToLong() - 1;
-                aggValue.get().setStringValue(temp.toString());
-            }
-            if (!agg.isPresent()) {
-                aggValue = Optional.of(new LongValue(n.get().getField(), 0L));
-            }
-            if (o.get().getValue().toString().equals("0") && !(n.get().getValue().toString().equals("0"))) {
-                Long temp = agg.get().valueToLong() + 1;
-                aggValue.get().setStringValue(temp.toString());
-            }
+
+        IValue aggCopyValue = agg.get().copy();
+
+        IValue<Long> oldValue;
+        IValue<Long> newValue;
+        if (!o.isPresent() || o.get() instanceof EmptyTypedValue) {
+            oldValue = new LongValue(o.get().getField(), 0L);
+        } else {
+            oldValue = o.get();
+        }
+
+        if (!n.isPresent() || n.get() instanceof EmptyTypedValue) {
+            newValue = new LongValue(n.get().getField(), 0L);
+        } else {
+            newValue = n.get();
+        }
+
+        if (!(oldValue.valueToLong() == 0) && newValue.valueToLong() == 0) {
+
+            aggCopyValue = (IValue) ((CalculationsAble) aggCopyValue).decrement();
+
+        } else if (oldValue.getValue() == 0 && newValue.getValue() != 0) {
+
+            aggCopyValue = (IValue) ((CalculationsAble) aggCopyValue).increment();
 
         }
-        return Optional.of(aggValue.get());
+
+        return Optional.of(aggCopyValue);
     }
 
     @Override
     public Optional<IValue> init(Optional<IValue> agg, List<Optional<IValue>> values) {
         Optional<IValue> aggValue = Optional.of(agg.get().copy());
         if (agg.get() instanceof LongValue) {
-            LongSummaryStatistics temp = values.stream().map(o -> o.get()).collect(Collectors.summarizingLong(IValue::valueToLong));
+            LongSummaryStatistics temp =
+                values.stream().map(o -> o.get()).collect(Collectors.summarizingLong(IValue::valueToLong));
             aggValue.get().setStringValue(String.valueOf(temp.getCount()));
         }
         return Optional.of(aggValue.get());
-    }
-
-    @Override
-    public Optional<Long> init(long agg, List<Long> values) {
-        LongSummaryStatistics temp = values.stream().collect(Collectors.summarizingLong(Long::longValue));
-        return Optional.of(temp.getCount());
-    }
-
-    @Override
-    public Optional<BigDecimal> init(BigDecimal agg, List<BigDecimal> values) {
-        BigDecimalSummaryStatistics temp = values.stream().collect(BigDecimalSummaryStatistics.statistics());
-        return Optional.of(BigDecimal.valueOf(temp.getCount()));
-    }
-
-    @Override
-    public Optional<LocalDateTime> init(LocalDateTime agg, List<LocalDateTime> values) {
-        return Optional.empty();
     }
 
 }

@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.strategy
 
 import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationContext;
 import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationScenarios;
+import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.helper.AggregationAttachmentHelper;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.strategy.FunctionStrategy;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
@@ -41,7 +42,7 @@ public class AvgFunctionStrategy implements FunctionStrategy {
         //焦点字段
         Aggregation aggregation = ((Aggregation) context.getFocusField().config().getCalculation());
         Optional<IValue> aggValue = Optional.of(currentValue.get().copy());
-        long count = countAggregationByAttachment(aggValue.get());
+        long count = AggregationAttachmentHelper.count(aggValue.get(), 0);
         if (count == 0) {
             if (!context.getFocusField().type().equals(FieldType.DATETIME)) {
                 Optional<IValue> attAggValue = Optional.of(
@@ -71,24 +72,6 @@ public class AvgFunctionStrategy implements FunctionStrategy {
                 attachmentReplace(aggValue.get(), oldValue, newValue, CalculationScenarios.REPLACE));
             return attAggValue;
         }
-    }
-
-    /**
-     * 用于统计该聚合下有多少条数据.
-     *
-     * @param value 字段信息.
-     * @return 附件中的数量信息.
-     */
-    private long countAggregationByAttachment(IValue value) {
-        Optional attachmentOp = value.getAttachment();
-        if (attachmentOp.isPresent()) {
-            String attachment = (String) attachmentOp.get();
-            String[] att = StringUtils.split(attachment, "|");
-            if (att.length > 1) {
-                return Long.parseLong(att[0]);
-            }
-        }
-        return 0L;
     }
 
     /**

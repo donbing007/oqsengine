@@ -3,12 +3,13 @@ package com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.impl;
 import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.AggregationFunction;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.BigDecimalSummaryStatistics;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.able.CalculationsAble;
 import java.util.List;
 import java.util.LongSummaryStatistics;
 import java.util.Optional;
@@ -30,37 +31,36 @@ public class SumFunction implements AggregationFunction {
         if (!(agg.isPresent() & o.isPresent() && n.isPresent())) {
             return Optional.empty();
         }
-        Optional<IValue> aggValue = Optional.of(agg.get().copy());
-        if (agg.get() instanceof DecimalValue) {
-            if (o.get() instanceof EmptyTypedValue || !o.isPresent()) {
-                o = Optional.of(new DecimalValue(o.get().getField(), BigDecimal.ZERO));
-            }
-            if (n.get() instanceof EmptyTypedValue || !n.isPresent()) {
-                n = Optional.of(new DecimalValue(n.get().getField(), BigDecimal.ZERO));
-            }
-            if (!agg.isPresent()) {
-                aggValue = Optional.of(new DecimalValue(n.get().getField(), BigDecimal.ZERO));
-            }
-            BigDecimal temp = ((DecimalValue) agg.get()).getValue()
-                .add(((DecimalValue) n.get()).getValue())
-                .subtract(((DecimalValue) o.get()).getValue());
-            aggValue.get().setStringValue(temp.toString());
-            return Optional.of(aggValue.get());
-        } else if (agg.get() instanceof LongValue) {
-            if (o.get() instanceof EmptyTypedValue || !o.isPresent()) {
-                o = Optional.of(new LongValue(o.get().getField(), 0L));
-            }
-            if (n.get() instanceof EmptyTypedValue || !n.isPresent()) {
-                n = Optional.of(new LongValue(n.get().getField(), 0L));
-            }
-            if (!agg.isPresent()) {
-                aggValue = Optional.of(new LongValue(n.get().getField(), 0L));
-            }
-            Long temp = agg.get().valueToLong() + n.get().valueToLong() - o.get().valueToLong();
-            aggValue.get().setStringValue(temp.toString());
-            return Optional.of(aggValue.get());
+
+        IValue aggCopyValue = agg.get().copy();
+
+        IValue oldValue;
+        if (o.get() instanceof EmptyTypedValue) {
+            oldValue = buildZeroValue(o.get().getField());
+        } else {
+            oldValue = o.get();
         }
-        return Optional.empty();
+        IValue newValue;
+
+        if (n.get() instanceof EmptyTypedValue) {
+            newValue = buildZeroValue(n.get().getField());
+        } else {
+            newValue = n.get();
+        }
+
+        CalculationsAble ca = (CalculationsAble) aggCopyValue;
+        return Optional.of((IValue) ca.plus(newValue).subtract(oldValue));
+    }
+
+    private IValue buildZeroValue(IEntityField field) {
+        if (FieldType.LONG == field.type()) {
+            return LongValue.zero(field);
+        } else if (FieldType.DECIMAL == field.type()) {
+            return DecimalValue.zero(field);
+        } else {
+            throw new IllegalArgumentException(String.format("Incompatible type. Expected [%s,%s].",
+                FieldType.LONG.name(), FieldType.DECIMAL.name()));
+        }
     }
 
     @Override
@@ -77,22 +77,4 @@ public class SumFunction implements AggregationFunction {
         }
         return Optional.of(aggValue.get());
     }
-
-    @Override
-    public Optional<Long> init(long agg, List<Long> values) {
-        LongSummaryStatistics temp = values.stream().collect(Collectors.summarizingLong(Long::longValue));
-        return Optional.of(temp.getSum());
-    }
-
-    @Override
-    public Optional<BigDecimal> init(BigDecimal agg, List<BigDecimal> values) {
-        BigDecimalSummaryStatistics temp = values.stream().collect(BigDecimalSummaryStatistics.statistics());
-        return Optional.of(temp.getSum());
-    }
-
-    @Override
-    public Optional<LocalDateTime> init(LocalDateTime agg, List<LocalDateTime> values) {
-        return Optional.empty();
-    }
-
 }
