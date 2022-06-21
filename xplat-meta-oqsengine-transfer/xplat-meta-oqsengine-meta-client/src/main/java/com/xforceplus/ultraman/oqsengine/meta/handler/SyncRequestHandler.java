@@ -95,7 +95,7 @@ public class SyncRequestHandler implements IRequestHandler {
         //  这里只判断是否watcher为空，如果服务watcher不为空
         if (null == watcher) {
             logger.warn("current gRpc-client is not init, can't offer appIds:{}.", watchElement);
-            forgotQueue.add(watchElement);
+            addToForgotQueue(watchElement);
             return false;
         }
 
@@ -129,7 +129,7 @@ public class SyncRequestHandler implements IRequestHandler {
         } else {
             //  watchExecutor not ready
             if (!requestWatchExecutor.isAlive(watcher.uid())) {
-                forgotQueue.add(watchElement);
+
             } else {
                 if (!send(
                     watcher.clientId(),
@@ -537,5 +537,11 @@ public class SyncRequestHandler implements IRequestHandler {
      */
     public Queue<WatchElement> getForgotQueue() {
         return forgotQueue;
+    }
+
+    private void addToForgotQueue(WatchElement watchElement) {
+        if (forgotQueue.stream().noneMatch(watchElement::logicEquals)) {
+            forgotQueue.add(watchElement);
+        }
     }
 }
