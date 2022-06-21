@@ -75,11 +75,14 @@ public class EntityClassSyncExecutor implements SyncExecutor {
         ThreadUtils.shutdown(thread, SHUT_DOWN_WAIT_TIME_OUT);
     }
 
+
+
     /**
      * 同步appId对应的EntityClass package.
+     *
      */
     @Override
-    public void sync(String appId, String env, int version, EntityClassSyncRspProto entityClassSyncRspProto) {
+    public boolean sync(String appId, String env, int version, EntityClassSyncRspProto entityClassSyncRspProto) {
         int expiredVersion = -1;
         MetaChangePayLoad metaChangePayLoad = null;
 
@@ -93,7 +96,8 @@ public class EntityClassSyncExecutor implements SyncExecutor {
             //  准备,是否可以加锁更新，不成功直接返回失败
             step = prepared(appId, version);
             if (!step.getStepDefinition().equals(SyncStep.StepDefinition.SUCCESS)) {
-                throw new MetaSyncClientException(step.messageFormat(), false);
+                logger.warn("ignore data sync! another job is on processing, raw info : {}", step.messageFormat());
+                return false;
             }
             openPrepare = true;
 
@@ -118,6 +122,8 @@ public class EntityClassSyncExecutor implements SyncExecutor {
             }
 
             metaChangePayLoad = (MetaChangePayLoad) step.getData();
+
+            return true;
         } finally {
             //  如果成功、执行publish
             if (step.getStepDefinition().equals(SyncStep.StepDefinition.SUCCESS)) {

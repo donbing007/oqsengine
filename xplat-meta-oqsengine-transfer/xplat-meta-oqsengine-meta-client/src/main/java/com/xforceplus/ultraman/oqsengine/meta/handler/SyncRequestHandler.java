@@ -129,7 +129,7 @@ public class SyncRequestHandler implements IRequestHandler {
         } else {
             //  watchExecutor not ready
             if (!requestWatchExecutor.isAlive(watcher.uid())) {
-
+                addToForgotQueue(watchElement);
             } else {
                 if (!send(
                     watcher.clientId(),
@@ -333,7 +333,7 @@ public class SyncRequestHandler implements IRequestHandler {
                     entityClassSyncResponse.getEnv(), entityClassSyncResponse.getVersion(), e.getMessage()));
         }
 
-        if (!entityClassSyncResponse.getForce()) {
+        if (null != entityClassSyncRequestBuilder && !entityClassSyncResponse.getForce()) {
             EntityClassSyncRequest entityClassSyncRequest = entityClassSyncRequestBuilder
                 .setClientId(requestWatchExecutor.watcher().clientId())
                 .setUid(entityClassSyncResponse.getUid())
@@ -352,7 +352,7 @@ public class SyncRequestHandler implements IRequestHandler {
             }
         }
 
-        if (entityClassSyncRequestBuilder.getStatus() == SYNC_OK.ordinal()) {
+        if (null != entityClassSyncRequestBuilder && entityClassSyncRequestBuilder.getStatus() == SYNC_OK.ordinal()) {
             metricsRecorder.info(entityClassSyncResponse.getAppId(), SyncCode.SYNC_DATA_OK.name(),
                 String.format("sync-data ok, uid : %s, env : %s, version : %s", entityClassSyncResponse.getUid(),
                     entityClassSyncResponse.getEnv(), entityClassSyncResponse.getVersion()));
@@ -389,13 +389,18 @@ public class SyncRequestHandler implements IRequestHandler {
 
             //  当前关注此版本
             if (entityClassSyncResponse.getForce() || requestWatchExecutor.watcher().onWatch(w)) {
+                boolean needReturnResult = false;
                 //  执行外部传入的执行器
                 try {
-                    syncExecutor
+                    needReturnResult = syncExecutor
                         .sync(entityClassSyncResponse.getAppId(), entityClassSyncResponse.getEnv(), entityClassSyncResponse.getVersion(),
                             result);
                 } catch (Exception e) {
                     throw new MetaSyncClientException(e.getMessage(), false);
+                }
+
+                if (!needReturnResult) {
+                    return null;
                 }
                 requestWatchExecutor.update(w);
 

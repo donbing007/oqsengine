@@ -213,11 +213,12 @@ public class EntityClassSyncClientTest extends BaseTest {
         MockServer.isTestOk = true;
 
         try {
-            Thread.sleep(10000);
+            Thread.sleep(5000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
 
+        StreamObserver observer = requestWatchExecutor.watcher().observer();
         MockServer.isTestOk = false;
 
         /*
@@ -243,15 +244,15 @@ public class EntityClassSyncClientTest extends BaseTest {
         MockServer.isTestOk = true;
 
         try {
-            Thread.sleep(5000);
+            Thread.sleep(10_000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
 
         Assertions.assertNotNull(requestWatchExecutor.watcher().observer());
 
-        StreamObserver observer = requestWatchExecutor.watcher().observer();
-        Assertions.assertNotEquals(observer.toString(), requestWatchExecutor.watcher().observer().toString());
+
+        Assertions.assertNotEquals(observer, requestWatchExecutor.watcher().observer());
         Assertions.assertNotNull(requestWatchExecutor.watcher().uid());
         Assertions.assertNotEquals(uid, requestWatchExecutor.watcher().uid());
 

@@ -171,44 +171,40 @@ public class StorageMetaManager implements MetaManager {
      * @return 版本号.
      */
     public int need(String appId, String env, boolean reset) {
-        try {
-            cacheExecutor.appEnvSet(appId, env);
-            String cacheEnv = cacheExecutor.appEnvGet(appId);
+        cacheExecutor.appEnvSet(appId, env);
+        String cacheEnv = cacheExecutor.appEnvGet(appId);
 
-            if (!cacheEnv.equals(env)) {
-                logger
-                    .warn("appId [{}], param env [{}] not equals to cache's env [{}], will use cache to register.",
-                        appId, env, cacheEnv);
+        if (!cacheEnv.equals(env)) {
+            logger
+                .warn("appId [{}], param env [{}] not equals to cache's env [{}], will use cache to register.",
+                    appId, env, cacheEnv);
 
-                throw new RuntimeException("appId has been init with another Id, need failed...");
-            }
-
-            int version = NOT_EXIST_VERSION;
-            if (!reset) {
-                version = cacheExecutor.version(appId);
-            }
-
-            if (metaModel.getModel().equals(MetaModel.CLIENT_SYNC)) {
-                WatchElement watchElement = new WatchElement(appId, env, version, WatchElement.ElementStatus.Register);
-                if (reset) {
-                    requestHandler.reset(watchElement);
-                } else {
-                    requestHandler.register(watchElement);
-                }
-
-                if (reset || version <= NOT_EXIST_VERSION) {
-                    version = waitForMetaSync(appId);
-                }
-            } else {
-                if (version <= NOT_EXIST_VERSION) {
-                    throw new RuntimeException(
-                        String.format("local cache has not init this version of appId [%s].", appId));
-                }
-            }
-            return version;
-        } catch (Exception e) {
-            throw e;
+            throw new RuntimeException("appId has been init with another Id, need failed...");
         }
+
+        int version = NOT_EXIST_VERSION;
+        if (!reset) {
+            version = cacheExecutor.version(appId);
+        }
+
+        if (metaModel.getModel().equals(MetaModel.CLIENT_SYNC)) {
+            WatchElement watchElement = new WatchElement(appId, env, version, WatchElement.ElementStatus.Register);
+            if (reset) {
+                requestHandler.reset(watchElement);
+            } else {
+                requestHandler.register(watchElement);
+            }
+
+            if (reset || version <= NOT_EXIST_VERSION) {
+                version = waitForMetaSync(appId);
+            }
+        } else {
+            if (version <= NOT_EXIST_VERSION) {
+                throw new RuntimeException(
+                    String.format("local cache has not init this version of appId [%s].", appId));
+            }
+        }
+        return version;
     }
 
     /**
