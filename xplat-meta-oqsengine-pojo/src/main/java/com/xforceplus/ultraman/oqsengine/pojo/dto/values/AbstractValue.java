@@ -70,8 +70,6 @@ public abstract class AbstractValue<V> implements IValue<V>, Serializable {
         this.value = fromString(value);
     }
 
-    abstract V fromString(String value);
-
     @Override
     public boolean isDirty() {
         return this.dirty;
@@ -149,6 +147,8 @@ public abstract class AbstractValue<V> implements IValue<V>, Serializable {
     protected boolean skipTypeCheckWithCopy() {
         return false;
     }
+
+    abstract V fromString(String value);
 
     /**
      * 检查目标字段元信息的类型和当前是否相符.

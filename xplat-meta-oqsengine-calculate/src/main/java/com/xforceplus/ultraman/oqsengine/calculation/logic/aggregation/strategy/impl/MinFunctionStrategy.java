@@ -4,6 +4,7 @@ import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationContext;
 import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationScenarios;
 import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.AggregationFunction;
 import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.AggregationFunctionFactoryImpl;
+import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.helper.AggregationAttachmentHelper;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.strategy.FunctionStrategy;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
@@ -61,7 +62,7 @@ public class MinFunctionStrategy implements FunctionStrategy {
         long count;
         if (aggValue.get().valueToLong() == 0 || aggValue.get().valueToString().equals("0.0")
             || aggValue.get().getValue().equals(DateTimeValue.MIN_DATE_TIME)) {
-            count = countAggregationByAttachment(aggValue.get());
+            count = AggregationAttachmentHelper.count(aggValue.get(), 0);
 
             if (logger.isDebugEnabled()) {
                 logger.debug("minExcute Count:{}, agg-value:{}, n-value:{}", count,
@@ -73,7 +74,7 @@ public class MinFunctionStrategy implements FunctionStrategy {
                     aggValue.get().setStringValue(newValue.valueToString());
 
                     if (logger.isDebugEnabled()) {
-                        logger.debug("第一条数据计算 - return agg-value:{}, n-value:{}",
+                        logger.debug("first - return agg-value:{}, n-value:{}",
                             aggValue.get().valueToString(), newValue.valueToString());
                     }
 
@@ -99,7 +100,7 @@ public class MinFunctionStrategy implements FunctionStrategy {
                     try {
                         minValue = minAggregationEntity(aggregation, context, CalculationScenarios.DELETE);
                     } catch (SQLException e) {
-                        e.printStackTrace();
+                        throw new RuntimeException(e.getMessage(), e);
                     }
                     if (minValue.isPresent()) {
                         if (logger.isDebugEnabled()) {
@@ -125,7 +126,7 @@ public class MinFunctionStrategy implements FunctionStrategy {
                         try {
                             minValue = minAggregationEntity(aggregation, context, CalculationScenarios.REPLACE);
                         } catch (SQLException e) {
-                            e.printStackTrace();
+                            throw new RuntimeException(e.getMessage(), e);
                         }
                         if (minValue.isPresent()) {
                             if (logger.isDebugEnabled()) {
@@ -190,24 +191,6 @@ public class MinFunctionStrategy implements FunctionStrategy {
                 aggValue.get().valueToString(), newValue.valueToString(), oldValue.valueToString());
         }
         return function.excute(aggValue, valueChange);
-    }
-
-    /**
-     * 用于统计该聚合下有多少条数据.
-     *
-     * @param value 字段信息.
-     * @return 附件中的数量信息.
-     */
-    private long countAggregationByAttachment(IValue value) {
-        Optional attachmentOp = value.getAttachment();
-        if (attachmentOp.isPresent()) {
-            String attachment = (String) attachmentOp.get();
-            String[] att = StringUtils.split(attachment, "|");
-            if (att.length > 1) {
-                return Long.parseLong(att[0]);
-            }
-        }
-        return 0L;
     }
 
     /**
@@ -304,7 +287,7 @@ public class MinFunctionStrategy implements FunctionStrategy {
                         Optional<IEntity> entity = masterStorage.selectOne(entityRefs.get(0).getId(), entityClass);
 
                         if (logger.isDebugEnabled()) {
-                            logger.info("minAggregationEntity:entityRefs:{}",
+                            logger.debug("minAggregationEntity:entityRefs:{}",
                                 entity.get().entityValue().values().stream().toArray());
                         }
 
