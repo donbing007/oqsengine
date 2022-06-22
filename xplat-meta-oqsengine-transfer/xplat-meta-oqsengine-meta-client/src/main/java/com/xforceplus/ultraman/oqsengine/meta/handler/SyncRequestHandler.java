@@ -333,29 +333,31 @@ public class SyncRequestHandler implements IRequestHandler {
                     entityClassSyncResponse.getEnv(), entityClassSyncResponse.getVersion(), e.getMessage()));
         }
 
-        if (null != entityClassSyncRequestBuilder && !entityClassSyncResponse.getForce()) {
-            EntityClassSyncRequest entityClassSyncRequest = entityClassSyncRequestBuilder
-                .setClientId(requestWatchExecutor.watcher().clientId())
-                .setUid(entityClassSyncResponse.getUid())
-                .build();
-            try {
-                //  回写处理结果, entityClassSyncRequest为空则代表传输存在问题.
-                SendUtils.sendRequest(requestWatchExecutor.watcher(),
-                    entityClassSyncRequest,
-                    true
-                );
-            } catch (Exception e) {
-                metricsRecorder.error(entityClassSyncRequest.getAppId(), SyncCode.SEND_REQUEST_ERROR.name(),
-                    String.format("send sync result failed, env :%s, version : %s, cause : %s",
-                        entityClassSyncResponse.getEnv(), entityClassSyncResponse.getVersion(), e.getMessage()));
-                throw e;
+        if (null != entityClassSyncRequestBuilder) {
+            if (!entityClassSyncResponse.getForce()) {
+                EntityClassSyncRequest entityClassSyncRequest = entityClassSyncRequestBuilder
+                    .setClientId(requestWatchExecutor.watcher().clientId())
+                    .setUid(entityClassSyncResponse.getUid())
+                    .build();
+                try {
+                    //  回写处理结果, entityClassSyncRequest为空则代表传输存在问题.
+                    SendUtils.sendRequest(requestWatchExecutor.watcher(),
+                        entityClassSyncRequest,
+                        true
+                    );
+                } catch (Exception e) {
+                    metricsRecorder.error(entityClassSyncRequest.getAppId(), SyncCode.SEND_REQUEST_ERROR.name(),
+                        String.format("send sync result failed, env :%s, version : %s, cause : %s",
+                            entityClassSyncResponse.getEnv(), entityClassSyncResponse.getVersion(), e.getMessage()));
+                    throw e;
+                }
             }
-        }
 
-        if (null != entityClassSyncRequestBuilder && entityClassSyncRequestBuilder.getStatus() == SYNC_OK.ordinal()) {
-            metricsRecorder.info(entityClassSyncResponse.getAppId(), SyncCode.SYNC_DATA_OK.name(),
-                String.format("sync-data ok, uid : %s, env : %s, version : %s", entityClassSyncResponse.getUid(),
-                    entityClassSyncResponse.getEnv(), entityClassSyncResponse.getVersion()));
+            if (entityClassSyncRequestBuilder.getStatus() == SYNC_OK.ordinal()) {
+                metricsRecorder.info(entityClassSyncResponse.getAppId(), SyncCode.SYNC_DATA_OK.name(),
+                    String.format("sync-data ok, uid : %s, env : %s, version : %s", entityClassSyncResponse.getUid(),
+                        entityClassSyncResponse.getEnv(), entityClassSyncResponse.getVersion()));
+            }
         }
     }
 
