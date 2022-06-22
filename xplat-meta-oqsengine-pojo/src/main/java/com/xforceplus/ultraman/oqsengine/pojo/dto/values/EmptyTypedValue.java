@@ -27,6 +27,11 @@ public class EmptyTypedValue extends AbstractValue {
     }
 
     @Override
+    protected IValue doCopy(Object value) {
+        return this;
+    }
+
+    @Override
     protected boolean skipTypeCheckWithCopy() {
         return true;
     }

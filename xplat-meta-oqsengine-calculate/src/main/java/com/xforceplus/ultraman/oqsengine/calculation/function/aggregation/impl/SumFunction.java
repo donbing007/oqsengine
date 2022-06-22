@@ -3,13 +3,12 @@ package com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.impl;
 import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.AggregationFunction;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.BigDecimalSummaryStatistics;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.able.CalculationsAble;
+import com.xforceplus.ultraman.oqsengine.pojo.utils.IValueUtils;
 import java.util.List;
 import java.util.LongSummaryStatistics;
 import java.util.Optional;
@@ -36,31 +35,20 @@ public class SumFunction implements AggregationFunction {
 
         IValue oldValue;
         if (o.get() instanceof EmptyTypedValue) {
-            oldValue = buildZeroValue(o.get().getField());
+            oldValue = IValueUtils.zero(o.get().getField());
         } else {
             oldValue = o.get();
         }
         IValue newValue;
 
         if (n.get() instanceof EmptyTypedValue) {
-            newValue = buildZeroValue(n.get().getField());
+            newValue = IValueUtils.zero(n.get().getField());
         } else {
             newValue = n.get();
         }
 
         CalculationsAble ca = (CalculationsAble) aggCopyValue;
         return Optional.of((IValue) ca.plus(newValue).subtract(oldValue));
-    }
-
-    private IValue buildZeroValue(IEntityField field) {
-        if (FieldType.LONG == field.type()) {
-            return LongValue.zero(field);
-        } else if (FieldType.DECIMAL == field.type()) {
-            return DecimalValue.zero(field);
-        } else {
-            throw new IllegalArgumentException(String.format("Incompatible type. Expected [%s,%s].",
-                FieldType.LONG.name(), FieldType.DECIMAL.name()));
-        }
     }
 
     @Override

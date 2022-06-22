@@ -22,6 +22,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
+import com.xforceplus.ultraman.oqsengine.pojo.utils.IValueUtils;
+import com.xforceplus.ultraman.oqsengine.storage.ConditionsSelectStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import java.math.BigDecimal;
@@ -48,6 +50,14 @@ public class MinFunctionStrategy implements FunctionStrategy {
         Optional<IValue> currentValue, ValueChange valueChange, CalculationContext context) {
         IValue oldValue = valueChange.getOldValue().orElse(new EmptyTypedValue(valueChange.getField()));
         IValue newValue = valueChange.getNewValue().orElse(new EmptyTypedValue(valueChange.getField()));
+
+        if (oldValue instanceof EmptyTypedValue) {
+            oldValue = IValueUtils.zero(oldValue.getField());
+        }
+
+        if (newValue instanceof EmptyTypedValue) {
+            newValue = IValueUtils.zero(newValue.getField());
+        }
 
         if (logger.isDebugEnabled()) {
             logger.debug("begin excuteMin current:{}, o-value:{}, n-value:{}",
@@ -251,27 +261,30 @@ public class MinFunctionStrategy implements FunctionStrategy {
                                                   CalculationScenarios calculationScenarios) throws SQLException {
         MasterStorage masterStorage = context.getResourceWithEx(() -> context.getMasterStorage());
         // 得到最大值
-        Optional<IEntityClass> aggEntityClass =
-                context.getMetaManager().get().load(
-                    aggregation.getClassId(), context.getFocusEntity().entityClassRef().getProfile());
-        if (aggEntityClass.isPresent()) {
+        Optional<IEntityClass> targetEntityClass =
+            context.getMetaManager().get().load(
+                aggregation.getClassId(), context.getFocusEntity().entityClassRef().getProfile());
+        if (targetEntityClass.isPresent()) {
 
-            IEntityClass entityClass = aggEntityClass.get();
+            IEntityClass entityClass = targetEntityClass.get();
 
             Conditions conditions = Conditions.buildEmtpyConditions();
             // 根据关系id得到关系字段
-            Optional<IEntityField> entityField = aggEntityClass.get().field(aggregation.getRelationId());
+            Optional<IEntityField> entityField = targetEntityClass.get().field(aggregation.getRelationId());
             if (entityField.isPresent()) {
                 conditions.addAnd(new Condition(entityField.get(),
                     ConditionOperator.EQUALS, new LongValue(entityField.get(), context.getFocusEntity().id())));
 
             }
+            ConditionsSelectStorage selectStorage =
+                context.getResourceWithEx(() -> context.getConditionsSelectStorage());
+
             Page emptyPage = Page.newSinglePage(2);
             List<EntityRef> entityRefs =
-                (List<EntityRef>) context.getConditionsSelectStorage().get().select(conditions, aggEntityClass.get(),
+                (List<EntityRef>) selectStorage.select(conditions, targetEntityClass.get(),
                     SelectConfig.Builder.anSelectConfig()
                         .withPage(emptyPage)
-                        .withSort(Sort.buildAscSort(aggEntityClass.get().field(aggregation.getFieldId()).get()))
+                        .withSort(Sort.buildAscSort(targetEntityClass.get().field(aggregation.getFieldId()).get()))
                         .build()
                 );
             if (logger.isDebugEnabled()) {

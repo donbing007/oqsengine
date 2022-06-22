@@ -88,6 +88,11 @@ public class StringsValue extends AbstractValue<String[]> {
         return new StringsValue(newField, getValue(), attachment);
     }
 
+    @Override
+    protected IValue<String[]> doCopy(String[] value) {
+        return new StringsValue(getField(), value, getAttachment().orElse(null));
+    }
+
     /**
      * 将字符串拆分为字符串数组.
      */
