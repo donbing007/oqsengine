@@ -1,9 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.values;
 
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.able.CalculationsAble;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.able.NumberPredefinedValueAble;
 import java.math.BigDecimal;
 
 /**
@@ -13,8 +11,7 @@ import java.math.BigDecimal;
  * @version 0.1 2020/3/3 16:45
  * @since 1.8
  */
-public class DecimalValue extends AbstractValue<BigDecimal>
-    implements NumberPredefinedValueAble<BigDecimal>, CalculationsAble<BigDecimal> {
+public class DecimalValue extends AbstractValue<BigDecimal> implements CalculationsAble<BigDecimal> {
 
     public DecimalValue(IEntityField field, BigDecimal value) {
         this(field, value, null);
@@ -40,6 +37,11 @@ public class DecimalValue extends AbstractValue<BigDecimal>
     @Override
     protected IValue<BigDecimal> doCopy(IEntityField newField, String attachment) {
         return new DecimalValue(newField, getValue(), attachment);
+    }
+
+    @Override
+    protected IValue<BigDecimal> doCopy(BigDecimal value) {
+        return new DecimalValue(getField(), value, getAttachment().orElse(null));
     }
 
     @Override
@@ -70,31 +72,6 @@ public class DecimalValue extends AbstractValue<BigDecimal>
         }
 
         return wellValue;
-    }
-
-    @Override
-    public IValue<BigDecimal> max() {
-        return new DecimalValue(getField(), new BigDecimal(Long.MAX_VALUE), getAttachment().orElse(null));
-    }
-
-    @Override
-    public IValue<BigDecimal> min() {
-        return new DecimalValue(getField(), new BigDecimal(Long.MIN_VALUE), getAttachment().orElse(null));
-    }
-
-    /**
-     * 获取0值表示.
-     *
-     * @param field 目标字段.
-     * @return 0值.
-     */
-    public static IValue<BigDecimal> zero(IEntityField field) {
-        if (field.type() != FieldType.DECIMAL) {
-            throw new IllegalArgumentException(
-                String.format("Incompatible type. Expected %s.", FieldType.DECIMAL.name()));
-        }
-
-        return new DecimalValue(field, BigDecimal.ZERO);
     }
 
     @Override

@@ -37,6 +37,11 @@ public class FormulaTypedValue extends AbstractValue<Map<String, Object>> {
     }
 
     @Override
+    protected IValue<Map<String, Object>> doCopy(Map<String, Object> value) {
+        return new FormulaTypedValue(getField(), value, getAttachment().orElse(null));
+    }
+
+    @Override
     protected boolean skipTypeCheckWithCopy() {
         return true;
     }

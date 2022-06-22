@@ -81,8 +81,9 @@ public class TimeOutNeedTest {
     private static SyncExecutor mockSyncExecutor() {
         return new SyncExecutor() {
             @Override
-            public void sync(String appId, String env, int version, EntityClassSyncRspProto entityClassSyncRspProto) {
-
+            public boolean sync(String appId, String env, int version,
+                                EntityClassSyncRspProto entityClassSyncRspProto) {
+                return false;
             }
 
             @Override

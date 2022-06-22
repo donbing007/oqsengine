@@ -81,6 +81,14 @@ public interface IValue<T> extends Comparable<IValue> {
     }
 
     /**
+     * 复制一个新值, 使用新的值,新的字段和附件.
+     *
+     * @param value 新的值.
+     * @return 新实例.
+     */
+    public IValue<T> copy(T value);
+
+    /**
      * 复制一个新的实体.使用新的字段和新的附件,但是值为当前实例的.
      *
      * @param newField   新的字段.

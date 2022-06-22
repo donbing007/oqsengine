@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.values;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.able.NumberPredefinedValueAble;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -17,7 +16,7 @@ import org.slf4j.LoggerFactory;
  * @version 0.1 2020/2/18 20:54
  * @since 1.8
  */
-public class DateTimeValue extends AbstractValue<LocalDateTime> implements NumberPredefinedValueAble<LocalDateTime> {
+public class DateTimeValue extends AbstractValue<LocalDateTime> {
 
     private final Logger logger = LoggerFactory.getLogger(DateTimeValue.class);
 
@@ -64,6 +63,11 @@ public class DateTimeValue extends AbstractValue<LocalDateTime> implements Numbe
     }
 
     @Override
+    protected IValue<LocalDateTime> doCopy(LocalDateTime value) {
+        return new DateTimeValue(getField(), value, getAttachment().orElse(null));
+    }
+
+    @Override
     public String valueToString() {
         return Long.toString(valueToLong());
     }
@@ -78,15 +82,5 @@ public class DateTimeValue extends AbstractValue<LocalDateTime> implements Numbe
      */
     public static LocalDateTime toLocalDateTime(long timestamp) {
         return LocalDateTime.ofInstant(Instant.ofEpochMilli(timestamp), ZONE_ID);
-    }
-
-    @Override
-    public IValue<LocalDateTime> max() {
-        return new DateTimeValue(getField(), LocalDateTime.MAX, getAttachment().orElse(null));
-    }
-
-    @Override
-    public IValue<LocalDateTime> min() {
-        return new DateTimeValue(getField(), LocalDateTime.MIN, getAttachment().orElse(null));
     }
 }

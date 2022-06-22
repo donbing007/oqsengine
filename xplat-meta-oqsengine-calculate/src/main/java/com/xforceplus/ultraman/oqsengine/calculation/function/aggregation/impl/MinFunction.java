@@ -9,7 +9,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.able.NumberPredefinedValueAble;
+import com.xforceplus.ultraman.oqsengine.pojo.utils.IValueUtils;
 import java.util.List;
 import java.util.LongSummaryStatistics;
 import java.util.Optional;
@@ -39,10 +39,6 @@ public class MinFunction implements AggregationFunction {
             return Optional.empty();
         }
 
-        if (!NumberPredefinedValueAble.class.isInstance(agg.get())) {
-            return Optional.empty();
-        }
-
         IValue aggCopyValue = agg.get().copy();
         if (n.get() instanceof EmptyTypedValue) {
             return Optional.of(aggCopyValue);
@@ -60,15 +56,16 @@ public class MinFunction implements AggregationFunction {
         }
 
         if (invalid) {
-            aggCopyValue = ((NumberPredefinedValueAble) agg.get()).max();
+            // 这里需要重新复制一份的原因是需要增加附件.
+            aggCopyValue = IValueUtils.max(aggCopyValue.getField()).copy(
+                (String) aggCopyValue.getAttachment().orElse(null));
         }
 
         IValue newValue = n.get();
-        IValue aggValue = aggCopyValue;
 
-        int result = newValue.compareTo(aggValue);
+        int result = newValue.compareTo(aggCopyValue);
         if (result < 0) {
-            aggCopyValue.setStringValue(newValue.valueToString());
+            aggCopyValue = agg.get().copy(newValue.getValue());
         }
 
         return Optional.of(aggCopyValue);

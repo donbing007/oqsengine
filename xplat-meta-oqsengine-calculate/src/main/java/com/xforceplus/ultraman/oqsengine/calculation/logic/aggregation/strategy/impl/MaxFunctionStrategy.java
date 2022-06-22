@@ -22,6 +22,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
+import com.xforceplus.ultraman.oqsengine.pojo.utils.IValueUtils;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import java.math.BigDecimal;
@@ -49,6 +50,14 @@ public class MaxFunctionStrategy implements FunctionStrategy {
         Optional<IValue> currentValue, ValueChange valueChange, CalculationContext context) {
         IValue oldValue = valueChange.getOldValue().orElse(new EmptyTypedValue(valueChange.getField()));
         IValue newValue = valueChange.getNewValue().orElse(new EmptyTypedValue(valueChange.getField()));
+
+        if (oldValue instanceof EmptyTypedValue) {
+            oldValue = IValueUtils.zero(oldValue.getField());
+        }
+
+        if (newValue instanceof EmptyTypedValue) {
+            newValue = IValueUtils.zero(newValue.getField());
+        }
 
         if (logger.isDebugEnabled()) {
             logger.debug("begin excuteMax agg:{}, o-value:{}, n-value:{}",

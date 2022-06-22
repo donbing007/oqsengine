@@ -16,7 +16,6 @@ import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Date;
-import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -194,6 +193,68 @@ public class IValueUtils {
             return toValue.setScale(precision, RoundingMode.valueOf(model));
         }
         return toValue;
+    }
+
+    /**
+     * 获取指定数字类型的最大值.
+     *
+     * @param field 目标字段.
+     * @return 最大值.
+     */
+    public static IValue max(IEntityField field) {
+        switch (field.type()) {
+            case DECIMAL:
+                return new DecimalValue(field, new BigDecimal(Long.MAX_VALUE));
+            case LONG:
+                return new LongValue(field, Long.MAX_VALUE);
+            case DATETIME:
+                return new DateTimeValue(field, LocalDateTime.MAX);
+            default: {
+                throw new IllegalArgumentException(
+                    String.format("The current type(%s) has no maximum value.", field.type().name()));
+            }
+        }
+    }
+
+    /**
+     * 获取指定数字类型的最小值.
+     *
+     * @param field 目标字段.
+     * @return 最小值.
+     */
+    public static IValue min(IEntityField field) {
+        switch (field.type()) {
+            case DECIMAL:
+                return new DecimalValue(field, new BigDecimal(Long.MIN_VALUE));
+            case LONG:
+                return new LongValue(field, Long.MIN_VALUE);
+            case DATETIME:
+                return new DateTimeValue(field, LocalDateTime.MIN);
+            default: {
+                throw new IllegalArgumentException(
+                    String.format("The current type(%s) has no maximum value.", field.type().name()));
+            }
+        }
+    }
+
+    /**
+     * 获取指定数字类型的0值表示.
+     * 不包含时间类型.
+     *
+     * @param field 目标字段.
+     * @return 0值.
+     */
+    public static IValue zero(IEntityField field) {
+        switch (field.type()) {
+            case DECIMAL:
+                return new DecimalValue(field, BigDecimal.ZERO);
+            case LONG:
+                return new LongValue(field, 0L);
+            default: {
+                throw new IllegalArgumentException(
+                    String.format("The current type(%s) has no maximum value.", field.type().name()));
+            }
+        }
     }
 
 

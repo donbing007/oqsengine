@@ -106,6 +106,18 @@ public abstract class AbstractValue<V> implements IValue<V>, Serializable {
     }
 
     @Override
+    public IValue<V> copy(V value) {
+        if (!getValue().getClass().equals(value.getClass())) {
+            throw new IllegalArgumentException(
+                String.format("Copy a value of type %s, but receives an unexpected type %s.",
+                    getField().name(), value.getClass().getSimpleName())
+            );
+        }
+
+        return doCopy(value);
+    }
+
+    @Override
     public String toString() {
         final StringBuffer sb = new StringBuffer();
         sb.append(this.getClass().getSimpleName()).append("{");
@@ -143,6 +155,8 @@ public abstract class AbstractValue<V> implements IValue<V>, Serializable {
     }
 
     protected abstract IValue<V> doCopy(IEntityField newField, String attachment);
+
+    protected abstract IValue<V> doCopy(V value);
 
     protected boolean skipTypeCheckWithCopy() {
         return false;

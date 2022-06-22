@@ -44,4 +44,9 @@ public class BooleanValue extends AbstractValue<Boolean> {
         return new BooleanValue(newField, getValue(), attachment);
     }
 
+    @Override
+    protected IValue<Boolean> doCopy(Boolean value) {
+        return new BooleanValue(getField(), value, getAttachment().orElse(null));
+    }
+
 }
