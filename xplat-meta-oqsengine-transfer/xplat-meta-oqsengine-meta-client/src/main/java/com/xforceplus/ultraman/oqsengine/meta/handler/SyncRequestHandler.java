@@ -114,7 +114,7 @@ public class SyncRequestHandler implements IRequestHandler {
                 if (!send(watcher.clientId(), watcher.uid(), true, true, RequestStatus.REGISTER, w)) {
                     metricsRecorder.error(
                         w.getAppId(), SyncCode.REGISTER_ERROR.name(),
-                        String.format("send register failed, env %s", w.getEnv())
+                        String.format("send register failed, exist watchElement, env %s", w.getEnv())
                     );
 
                     return false;
