@@ -80,7 +80,7 @@ public class GRpcServer implements IBasicSyncExecutor {
                             clientIdString = "request not call from oqs-server.";
                         }
 
-                        logger.debug("clientId : {}, authority : {}, methodName : {}"
+                        logger.info("clientId : {}, authority : {}, methodName : {}"
                             , clientIdString
                             , call.getAuthority()
                             , call.getMethodDescriptor().getFullMethodName()
