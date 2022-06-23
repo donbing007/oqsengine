@@ -765,8 +765,8 @@ public class SQLMasterStorage implements MasterStorage {
 
                 throw new SQLException(
                     String.format(
-                        "Unexpected error occurred in field resolution with field name %s and error message %s.",
-                        storageName, ex.getMessage()), ex);
+                        "Unexpected error occurred in field resolution with field name %s and error message %s.[%s]",
+                        storageName, ex.getMessage(), masterStorageEntity.getId()), ex);
             }
         }
 
