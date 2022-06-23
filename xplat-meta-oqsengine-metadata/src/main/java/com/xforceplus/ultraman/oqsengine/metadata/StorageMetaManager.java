@@ -53,6 +53,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import javax.annotation.PostConstruct;
@@ -82,6 +84,8 @@ public class StorageMetaManager implements MetaManager {
     private AbstractMetaModel metaModel;
 
     private static int NEED_MAX_WAIT_LOOPS = 60;
+
+    private Set<String> lockedNeedApp = new ConcurrentSkipListSet<>();
 
     public StorageMetaManager(AbstractMetaModel metaModel) {
         this.metaModel = metaModel;
@@ -171,6 +175,18 @@ public class StorageMetaManager implements MetaManager {
      * @return 版本号.
      */
     public int need(String appId, String env, boolean reset) {
+        if (lockedNeedApp.add(appId)) {
+            try {
+                return internalNeed(appId, env, reset);
+            } finally {
+                lockedNeedApp.remove(appId);
+            }
+        } else {
+            return waitForMetaSync(appId);
+        }
+    }
+
+    private int internalNeed(String appId, String env, boolean reset) {
         cacheExecutor.appEnvSet(appId, env);
         String cacheEnv = cacheExecutor.appEnvGet(appId);
 

@@ -4,8 +4,17 @@ import static com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams.SH
 
 import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncGrpc;
+import com.xforceplus.ultraman.oqsengine.meta.utils.ClientIdUtils;
+import io.grpc.CallOptions;
+import io.grpc.Channel;
+import io.grpc.ClientCall;
+import io.grpc.ClientInterceptor;
+import io.grpc.ForwardingClientCall;
+import io.grpc.ForwardingClientCallListener;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.Metadata;
+import io.grpc.MethodDescriptor;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Resource;
 import org.slf4j.Logger;
@@ -37,10 +46,36 @@ public class MetaSyncGRpcClient implements GRpcClient {
         this.port = port;
     }
 
+    private final String clientId = ClientIdUtils.generate();
+
     @Override
     public void start() {
 
         channel = ManagedChannelBuilder.forAddress(host, port)
+            .intercept(new ClientInterceptor() {
+                Metadata.Key<String> metaClientId = Metadata.Key.of("clientId", Metadata.ASCII_STRING_MARSHALLER);
+
+                @Override
+                public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(MethodDescriptor<ReqT, RespT> method,
+                                                                           CallOptions callOptions, Channel next) {
+
+                    return new ForwardingClientCall.SimpleForwardingClientCall<ReqT, RespT>(next.newCall(method, callOptions)) {
+
+                        @Override
+                        public void start(Listener<RespT> responseListener, Metadata headers) {
+                            headers.put(metaClientId, clientId);
+
+                            super.start(new ForwardingClientCallListener.SimpleForwardingClientCallListener<RespT>(responseListener) {
+                                @Override
+                                public void onHeaders(Metadata headers) {
+                                    super.onHeaders(headers);
+                                }
+                            }, headers);
+                        }
+                    };
+
+                }
+            })
             .usePlaintext()
             .keepAliveTime(grpcParams.getDefaultHeartbeatTimeout(), TimeUnit.MILLISECONDS)
             .keepAliveTimeout(grpcParams.getDefaultHeartbeatTimeout(), TimeUnit.MILLISECONDS)
@@ -48,7 +83,7 @@ public class MetaSyncGRpcClient implements GRpcClient {
 
         stub = EntityClassSyncGrpc.newStub(channel);
 
-        logger.info("gRpc-client successfully connects to {}:{}!", host, port);
+        logger.info("gRpc-client successfully connects to {}:{}, grpc-clientId : {}!", host, port, clientId);
 
         isClientOpen = true;
     }

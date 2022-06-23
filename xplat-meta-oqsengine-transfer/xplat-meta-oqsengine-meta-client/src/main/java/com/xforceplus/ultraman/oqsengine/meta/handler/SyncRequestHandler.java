@@ -111,7 +111,8 @@ public class SyncRequestHandler implements IRequestHandler {
             }
 
             if (watchElement.getVersion() == NOT_EXIST_VERSION || watchElement.getVersion() > w.getVersion()) {
-                if (!send(watcher.clientId(), watcher.uid(), true, true, RequestStatus.REGISTER, w)) {
+
+                if (!send(watcher.clientId(), watcher.uid(), true, true, RequestStatus.REGISTER, watchElement)) {
                     metricsRecorder.error(
                         w.getAppId(), SyncCode.REGISTER_ERROR.name(),
                         String.format("send register failed, exist watchElement, env %s", w.getEnv())
