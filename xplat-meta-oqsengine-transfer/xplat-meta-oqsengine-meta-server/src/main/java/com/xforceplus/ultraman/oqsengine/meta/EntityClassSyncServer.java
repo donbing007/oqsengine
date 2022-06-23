@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.meta;
 
+import com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus;
 import com.xforceplus.ultraman.oqsengine.meta.common.executor.IBasicSyncExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncGrpc;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest;
@@ -41,6 +42,8 @@ public class EntityClassSyncServer extends EntityClassSyncGrpc.EntityClassSyncIm
         return new StreamObserver<EntityClassSyncRequest>() {
             @Override
             public void onNext(EntityClassSyncRequest entityClassSyncRequest) {
+                logger.info("grpc-request out : clientId : {}， appId : {}, status : {}", entityClassSyncRequest.getClientId(), entityClassSyncRequest.getAppId(),
+                    RequestStatus.getInstance(entityClassSyncRequest.getStatus()));
                 responseHandler.invoke(entityClassSyncRequest, responseStreamObserver);
             }
 

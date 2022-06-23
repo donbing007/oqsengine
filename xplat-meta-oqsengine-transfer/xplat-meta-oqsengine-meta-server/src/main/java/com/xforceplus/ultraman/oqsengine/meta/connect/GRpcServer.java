@@ -5,6 +5,8 @@ import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams;
 import com.xforceplus.ultraman.oqsengine.meta.common.executor.IBasicSyncExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.ThreadUtils;
 import io.grpc.BindableService;
+import io.grpc.Grpc;
+import io.grpc.HttpConnectProxiedSocketAddress;
 import io.grpc.Metadata;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
@@ -14,6 +16,7 @@ import io.grpc.ServerInterceptor;
 import io.grpc.internal.GrpcUtil;
 import io.grpc.netty.NettyServerBuilder;
 import java.io.IOException;
+import java.net.SocketAddress;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
@@ -75,14 +78,17 @@ public class GRpcServer implements IBasicSyncExecutor {
                                                                                  Metadata headers,
                                                                                  ServerCallHandler<ReqT, RespT> next) {
 
+
+                        SocketAddress socketAddress = call.getAttributes().get(Grpc.TRANSPORT_ATTR_REMOTE_ADDR);
+
                         String clientIdString = headers.get(metaClientId);
                         if (null == clientIdString || clientIdString.isEmpty()) {
-                            clientIdString = "request not call from oqs-server.";
+                            clientIdString = "unknown clientId";
                         }
 
-                        logger.info("clientId : {}, authority : {}, methodName : {}"
+                        logger.info("ip : {}, clientId : {}, methodName : {}"
+                            , null != socketAddress ? socketAddress.toString() : "unknown"
                             , clientIdString
-                            , call.getAuthority()
                             , call.getMethodDescriptor().getFullMethodName()
                             );
 
