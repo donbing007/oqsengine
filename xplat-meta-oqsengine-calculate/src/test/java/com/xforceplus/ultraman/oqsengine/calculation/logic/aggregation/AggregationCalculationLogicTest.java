@@ -1423,20 +1423,22 @@ public class AggregationCalculationLogicTest {
         context.focusField(A_LONG);
 
         aggregationCalculationLogic.scope(context, infuence);
-        List<Participant> participants = new ArrayList<>();
+        List<IEntityField> participants = new ArrayList<>();
         infuence.scan((parentParticipant, participant, infuenceInner) -> {
 
-            participants.add(participant);
+            participants.add(participant.getField());
 
             return InfuenceConsumer.Action.CONTINUE;
         });
 
-        Assertions.assertEquals(5, participants.size());
-        Assertions.assertEquals(A_CLASS.id(), participants.get(0).getEntityClass().id());
-        Assertions.assertEquals(B_CLASS.id(), participants.get(1).getEntityClass().id());
-        Assertions.assertEquals(C_CLASS.id(), participants.get(2).getEntityClass().id());
-        Assertions.assertEquals(C_CLASS.id(), participants.get(3).getEntityClass().id());
-        Assertions.assertEquals(D_CLASS.id(), participants.get(4).getEntityClass().id());
+        Assertions.assertEquals(7, participants.size());
+        Assertions.assertEquals(A_LONG, participants.get(0));
+        Assertions.assertEquals(B_SUM, participants.get(1));
+        Assertions.assertEquals(C_SUM, participants.get(2));
+        Assertions.assertEquals(C_SUM_CONDITIONS, participants.get(3));
+        Assertions.assertEquals(C_MIN_CONDITIONS, participants.get(4));
+        Assertions.assertEquals(C_MAX_CONDITIONS, participants.get(5));
+        Assertions.assertEquals(D_SUM, participants.get(6));
 
         // Count 场景
         context.focusEntity(targetEntity, A_CLASS);
