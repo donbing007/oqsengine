@@ -1,6 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.storage.pojo;
 
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import java.io.Serializable;
@@ -107,14 +106,6 @@ public class EntityPackage implements Serializable {
 
         if (strict) {
             if (!entity.entityClassRef().equals(entityClass.ref())) {
-                throw new IllegalArgumentException(
-                    String.format(
-                        "The type declared by the current instance does not match the specified type.[%s - %s]",
-                        entity.entityClassRef(), entityClass.ref()));
-            }
-        } else {
-            EntityClassRef entityClassRef = entity.entityClassRef();
-            if (entityClass.isCompatibility(entityClassRef.getId())) {
                 throw new IllegalArgumentException(
                     String.format(
                         "The type declared by the current instance does not match the specified type.[%s - %s]",
