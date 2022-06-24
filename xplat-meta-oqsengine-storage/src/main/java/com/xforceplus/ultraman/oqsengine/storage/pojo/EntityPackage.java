@@ -114,7 +114,7 @@ public class EntityPackage implements Serializable {
             }
         } else {
             EntityClassRef entityClassRef = entity.entityClassRef();
-            if (entityClassRef.getId() != entityClass.id() || !entityClassRef.getCode().equals(entityClass.code())) {
+            if (entityClass.isCompatibility(entityClassRef.getId())) {
                 throw new IllegalArgumentException(
                     String.format(
                         "The type declared by the current instance does not match the specified type.[%s - %s]",
