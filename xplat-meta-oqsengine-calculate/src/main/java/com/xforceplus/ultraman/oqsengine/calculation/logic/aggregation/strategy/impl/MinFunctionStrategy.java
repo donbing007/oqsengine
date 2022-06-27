@@ -55,11 +55,11 @@ public class MinFunctionStrategy implements FunctionStrategy {
         如果为EmptyValue,那么将设置为最大值,之后的任何值都会小于这个最大值.
          */
         if (oldValue instanceof EmptyTypedValue) {
-            oldValue = IValueUtils.max(oldValue.getField());
+            oldValue = IValueUtils.zero(oldValue.getField());
         }
 
         if (newValue instanceof EmptyTypedValue) {
-            newValue = IValueUtils.max(newValue.getField());
+            newValue = IValueUtils.zero(newValue.getField());
         }
 
         if (logger.isDebugEnabled()) {

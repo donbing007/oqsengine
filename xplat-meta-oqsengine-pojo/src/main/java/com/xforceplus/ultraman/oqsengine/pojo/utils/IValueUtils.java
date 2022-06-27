@@ -14,7 +14,9 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Date;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -250,6 +252,9 @@ public class IValueUtils {
                 return new DecimalValue(field, BigDecimal.ZERO);
             case LONG:
                 return new LongValue(field, 0L);
+            case DATETIME:
+                return new DateTimeValue(field,
+                    LocalDateTime.of(LocalDate.of(1970, 1, 1), LocalTime.MIN));
             default: {
                 throw new IllegalArgumentException(
                     String.format("The current type(%s) has no maximum value.", field.type().name()));

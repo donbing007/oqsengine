@@ -130,6 +130,13 @@ public interface IValue<T> extends Comparable<IValue> {
         return true;
     }
 
+    /**
+     * 两个IValue进行计算.
+     * 小于0表示当前值小于目标, 大于0表示当前值大于目标, 等于0两边相等.
+     *
+     * @param o 需要计算的目标.
+     * @return 结果.
+     */
     @Override
     public int compareTo(IValue o);
 

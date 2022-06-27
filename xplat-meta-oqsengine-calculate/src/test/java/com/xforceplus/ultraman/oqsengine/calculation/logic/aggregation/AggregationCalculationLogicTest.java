@@ -882,6 +882,7 @@ public class AggregationCalculationLogicTest {
         CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()
             .withMetaManager(metaManager)
             .withMasterStorage(this.masterStorage)
+            .withConditionsSelectStorage(this.conditionSelectStorage)
             .withScenarios(CalculationScenarios.REPLACE).withCalculationLogicFactory(new CalculationLogicFactory())
             .build();
         context.getCalculationLogicFactory().get().register(aggregationLogic);
