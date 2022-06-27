@@ -51,12 +51,15 @@ public class MaxFunctionStrategy implements FunctionStrategy {
         IValue oldValue = valueChange.getOldValue().orElse(new EmptyTypedValue(valueChange.getField()));
         IValue newValue = valueChange.getNewValue().orElse(new EmptyTypedValue(valueChange.getField()));
 
+        /*
+        如果为EmptyValue,那么将设置为最小值,之后的任何值都会大于这个最大值.
+         */
         if (oldValue instanceof EmptyTypedValue) {
-            oldValue = IValueUtils.zero(oldValue.getField());
+            oldValue = IValueUtils.min(oldValue.getField());
         }
 
         if (newValue instanceof EmptyTypedValue) {
-            newValue = IValueUtils.zero(newValue.getField());
+            newValue = IValueUtils.min(newValue.getField());
         }
 
         if (logger.isDebugEnabled()) {

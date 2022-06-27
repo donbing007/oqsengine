@@ -57,10 +57,6 @@ public class MockEntityClassDefine {
 
     private static long odLookupOriginalEntityClassId = baseClassId - 8;
     private static long odLookupTargetEntityClassId = baseClassId - 9;
-    private static long doLookupEntityClassId = baseClassId - 10;
-    private static long doLookupTargetOriginalEntityClassId = baseClassId - 11;
-    private static long ooLookupOriginalEntityClassId = baseClassId - 12;
-    private static long ooLookupTargetOriginalEntityClassId = baseClassId - 13;
 
     public static IEntityClass L0_ENTITY_CLASS;
     public static IEntityClass L1_ENTITY_CLASS;

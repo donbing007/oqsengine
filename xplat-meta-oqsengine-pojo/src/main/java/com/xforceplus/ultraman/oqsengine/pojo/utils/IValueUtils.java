@@ -208,7 +208,7 @@ public class IValueUtils {
             case LONG:
                 return new LongValue(field, Long.MAX_VALUE);
             case DATETIME:
-                return new DateTimeValue(field, LocalDateTime.MAX);
+                return new DateTimeValue(field, DateTimeValue.MAX_DATE_TIME);
             default: {
                 throw new IllegalArgumentException(
                     String.format("The current type(%s) has no maximum value.", field.type().name()));
@@ -229,7 +229,7 @@ public class IValueUtils {
             case LONG:
                 return new LongValue(field, Long.MIN_VALUE);
             case DATETIME:
-                return new DateTimeValue(field, LocalDateTime.MIN);
+                return new DateTimeValue(field, DateTimeValue.MIN_DATE_TIME);
             default: {
                 throw new IllegalArgumentException(
                     String.format("The current type(%s) has no maximum value.", field.type().name()));

@@ -51,12 +51,15 @@ public class MinFunctionStrategy implements FunctionStrategy {
         IValue oldValue = valueChange.getOldValue().orElse(new EmptyTypedValue(valueChange.getField()));
         IValue newValue = valueChange.getNewValue().orElse(new EmptyTypedValue(valueChange.getField()));
 
+        /*
+        如果为EmptyValue,那么将设置为最大值,之后的任何值都会小于这个最大值.
+         */
         if (oldValue instanceof EmptyTypedValue) {
-            oldValue = IValueUtils.zero(oldValue.getField());
+            oldValue = IValueUtils.max(oldValue.getField());
         }
 
         if (newValue instanceof EmptyTypedValue) {
-            newValue = IValueUtils.zero(newValue.getField());
+            newValue = IValueUtils.max(newValue.getField());
         }
 
         if (logger.isDebugEnabled()) {
