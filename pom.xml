@@ -136,7 +136,8 @@
                                 </pre-commit>
                                 <commit-msg>
                                     echo "Begin validate commit message."
-                                    sh ./script/validate-commit-message.sh
+                                    export git_message_file=$(echo $1)
+                                    sh ./script/git/validate-commit-message.sh
                                 </commit-msg>
                             </hooks>
                         </configuration>
