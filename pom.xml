@@ -133,8 +133,11 @@
                                 <pre-commit>
                                     echo "Begin the pre-Commit check."
                                     exec mvn checkstyle:check
-                                    sh ./script/validate-commit-message.sh
                                 </pre-commit>
+                                <commit-msg>
+                                    echo "Begin validate commit message."
+                                    sh ./script/validate-commit-message.sh
+                                </commit-msg>
                             </hooks>
                         </configuration>
                     </execution>
