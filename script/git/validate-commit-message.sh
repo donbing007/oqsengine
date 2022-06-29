@@ -100,8 +100,20 @@ checkBody() {
   fi
 }
 
-checkBlank
-checkHeaderFormat
-checkHeaderType
-checkSecondLine
-checkBody
+run() {
+  local merge_regex='^Merge\sbranch.*'
+  local count=$(echo "${commit_msg}" | grep -Ec "$merge_regex")
+  if [ ${count} -eq 0 ]
+  then
+    checkBlank
+    checkHeaderFormat
+    checkHeaderType
+    checkSecondLine
+    checkBody
+  else
+    echo "Merage branch, pass."
+  fi
+}
+
+run
+
