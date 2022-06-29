@@ -2,10 +2,15 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.conditions;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -22,6 +27,83 @@ import org.junit.jupiter.api.Test;
  * @since <pre>Feb 22, 2020</pre>
  */
 public class ConditionsTest {
+
+    private static final IEntityField stringField = EntityField.Builder.anEntityField()
+        .withId(1000L)
+        .withFieldType(FieldType.STRING)
+        .withName("string-filed")
+        .build();
+    private static final IEntityField stringsField = EntityField.Builder.anEntityField()
+        .withId(2000L)
+        .withFieldType(FieldType.STRINGS)
+        .withName("strings-filed")
+        .build();
+    private static final IEntityClass matchEntityClass = EntityClass.Builder.anEntityClass()
+        .withId(1000L)
+        .withField(stringField)
+        .withName("matchEntityClass")
+        .build();
+
+    @Test
+    public void testLikeMatch() throws Exception {
+        IEntity entity = Entity.Builder.anEntity()
+            .withEntityClassRef(matchEntityClass.ref())
+            .withId(100)
+            .withValue(
+                new StringValue(stringField, "这是一个测试")
+            ).build();
+
+        Conditions conditions = Conditions.buildEmtpyConditions()
+            .addAnd(
+                new Condition(stringField, ConditionOperator.LIKE, new StringValue(stringField, "一个"))
+            );
+        Assertions.assertTrue(conditions.match(entity));
+    }
+
+    @Test
+    public void testInMatch() throws Exception {
+        Collection<IEntity> entities = Arrays.asList(
+            Entity.Builder.anEntity()
+                .withEntityClassRef(matchEntityClass.ref())
+                .withId(1000)
+                .withValue(new StringValue(stringField, "v1"))
+                .withValue(new StringsValue(stringsField, "s1", "s2")).build(),
+            Entity.Builder.anEntity()
+                .withEntityClassRef(matchEntityClass.ref())
+                .withId(2000)
+                .withValue(new StringValue(stringField, "v2"))
+                .withValue(new StringsValue(stringsField, "s2", "s3", "s4")).build(),
+            Entity.Builder.anEntity()
+                .withEntityClassRef(matchEntityClass.ref())
+                .withId(3000)
+                .withValue(new StringValue(stringField, "v3"))
+                .withValue(new StringsValue(stringsField, "s3", "s4")).build()
+        );
+
+        Conditions conditions = Conditions.buildEmtpyConditions()
+            .addAnd(
+                new Condition(
+                    stringField,
+                    ConditionOperator.MULTIPLE_EQUALS,
+                    new StringValue(stringField, "v1"),
+                    new StringValue(stringField, "v3"))
+            );
+        Collection<IEntity> matchEntities = conditions.match(entities);
+        Assertions.assertEquals(2, matchEntities.size());
+        // id不等于2000的应该有2个.
+        Assertions.assertEquals(2, matchEntities.stream().filter(e -> e.id() != 2000).count());
+
+        conditions = Conditions.buildEmtpyConditions()
+            .addAnd(
+                new Condition(
+                    stringsField,
+                    ConditionOperator.MULTIPLE_EQUALS,
+                    new StringValue(stringField, "s2"),
+                    new StringValue(stringField, "s3"))
+            );
+        matchEntities = conditions.match(entities);
+        Assertions.assertEquals(3, matchEntities.size());
+    }
 
     @Test
     public void testScan() throws Exception {
@@ -153,12 +235,7 @@ public class ConditionsTest {
             ConditionOperator.GREATER_THAN,
             new StringValue(new EntityField(1, "test", FieldType.STRING), "test.value"));
 
-        try {
-            new Conditions(wrongCondition);
-            Assertions.fail("Attempt to add error condition, but no error.");
-        } catch (IllegalArgumentException ex) {
-            ex.printStackTrace();
-        }
+        Assertions.assertThrows(IllegalArgumentException.class, () -> new Conditions(wrongCondition));
 
         Condition correctCondition = new Condition(
             new EntityField(1, "test", FieldType.STRING),
@@ -168,12 +245,7 @@ public class ConditionsTest {
         Conditions conditions = new Conditions(correctCondition);
         Assertions.assertEquals(1, conditions.size());
 
-        try {
-            conditions.addAnd(wrongCondition);
-            Assertions.fail("Attempt to add error condition, but no error.");
-        } catch (IllegalArgumentException ex) {
-            ex.printStackTrace();
-        }
+        Assertions.assertThrows(IllegalArgumentException.class, () -> conditions.addAnd(wrongCondition));
     }
 
     @Test

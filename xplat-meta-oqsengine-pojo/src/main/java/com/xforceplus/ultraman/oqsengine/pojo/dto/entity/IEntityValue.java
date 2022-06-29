@@ -22,7 +22,16 @@ public interface IEntityValue extends Cloneable {
     public int size();
 
     /**
+     * 根据字段实例获取实段实例.
+     *
+     * @param field 字段.
+     * @return 实例.
+     */
+    public Optional<IValue> getValue(IEntityField field);
+
+    /**
      * 获得该对象指定属性的数据.
+     * 无法获取特殊字段的值, 比如ID等特殊字段.请使用替代的<pre>getValue(IEntityField)}</pre>
      *
      * @param fieldName 字段名称.
      * @return 值.
@@ -31,6 +40,7 @@ public interface IEntityValue extends Cloneable {
 
     /**
      * 根据字段 id 查询当前值.
+     * 无法获取特殊字段的值, 比如ID等特殊字段.请使用替代的<pre>getValue(IEntityField)}</pre>
      *
      * @param fieldId 字段 id.
      * @return 值.
@@ -107,6 +117,11 @@ public interface IEntityValue extends Cloneable {
             v.neat();
         }
     }
+
+    /**
+     * 将空值挤出,方法执行后不会再包含空值.
+     */
+    public void squeezeEmpty();
 
     /**
      * 克隆.

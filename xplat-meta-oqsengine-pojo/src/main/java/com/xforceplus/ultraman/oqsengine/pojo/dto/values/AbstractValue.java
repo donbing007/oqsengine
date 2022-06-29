@@ -20,8 +20,6 @@ public abstract class AbstractValue<V> implements IValue<V>, Serializable {
     private IEntityField field;
     private V value;
 
-
-
     /**
      * 构造一个新的逻辑值.
      * 默认没有附件.
@@ -72,8 +70,6 @@ public abstract class AbstractValue<V> implements IValue<V>, Serializable {
         this.value = fromString(value);
     }
 
-    abstract V fromString(String value);
-
     @Override
     public boolean isDirty() {
         return this.dirty;
@@ -110,6 +106,18 @@ public abstract class AbstractValue<V> implements IValue<V>, Serializable {
     }
 
     @Override
+    public IValue<V> copy(V value) {
+        if (!getValue().getClass().equals(value.getClass())) {
+            throw new IllegalArgumentException(
+                String.format("Copy a value of type %s, but receives an unexpected type %s.",
+                    getField().name(), value.getClass().getSimpleName())
+            );
+        }
+
+        return doCopy(value);
+    }
+
+    @Override
     public String toString() {
         final StringBuffer sb = new StringBuffer();
         sb.append(this.getClass().getSimpleName()).append("{");
@@ -141,11 +149,20 @@ public abstract class AbstractValue<V> implements IValue<V>, Serializable {
         return Objects.hash(field, value, attachment);
     }
 
+    @Override
+    public int compareTo(IValue o) {
+        return ((Comparable) this.getValue()).compareTo(o.getValue());
+    }
+
     protected abstract IValue<V> doCopy(IEntityField newField, String attachment);
+
+    protected abstract IValue<V> doCopy(V value);
 
     protected boolean skipTypeCheckWithCopy() {
         return false;
     }
+
+    abstract V fromString(String value);
 
     /**
      * 检查目标字段元信息的类型和当前是否相符.

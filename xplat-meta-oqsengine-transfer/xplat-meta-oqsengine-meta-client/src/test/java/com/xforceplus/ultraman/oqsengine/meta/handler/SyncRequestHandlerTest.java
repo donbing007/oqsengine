@@ -63,8 +63,6 @@ public class SyncRequestHandlerTest extends BaseTest {
         });
         String appId = "testExecutor";
         int version = 1;
-        check(appId, version, SYNC_FAIL.ordinal(),
-                entityClassSyncResponseGenerator(appId, version, false, mockSelfFatherAncestorsGenerate(System.currentTimeMillis())));
 
         check(appId, version, SYNC_OK.ordinal(),
                 entityClassSyncResponseGenerator(appId, version, true, mockSelfFatherAncestorsGenerate(System.currentTimeMillis())));
@@ -96,7 +94,8 @@ public class SyncRequestHandlerTest extends BaseTest {
                 .getDeclaredMethod("execute", new Class[]{EntityClassSyncResponse.class});
         m0.setAccessible(true);
 
-        EntityClassSyncRequest.Builder builder = (EntityClassSyncRequest.Builder) m0.invoke(requestHandler, entityClassSyncResponse);
+        EntityClassSyncRequest.Builder builder =
+            (EntityClassSyncRequest.Builder) m0.invoke(requestHandler, entityClassSyncResponse);
 
         Assertions.assertNotNull(builder);
         EntityClassSyncRequest entityClassSyncRequest = builder.build();

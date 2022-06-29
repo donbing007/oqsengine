@@ -4,6 +4,7 @@ import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.PO
 
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.executor.IDelayTaskExecutor;
+import java.util.Objects;
 import java.util.concurrent.DelayQueue;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
@@ -44,7 +45,9 @@ public class RetryExecutor implements IDelayTaskExecutor<RetryExecutor.DelayTask
     public void offer(DelayTask task) {
         if (isActive) {
             try {
-                delayTasks.offer(task);
+                if (!delayTasks.contains(task)) {
+                    delayTasks.offer(task);
+                }
             } catch (Exception e) {
                 logger.warn("offer failed, message : {}", e.getMessage());
             }
@@ -91,6 +94,23 @@ public class RetryExecutor implements IDelayTaskExecutor<RetryExecutor.DelayTask
         public int compareTo(Delayed o) {
             return (int) (this.getDelay(TimeUnit.MILLISECONDS) - o.getDelay(TimeUnit.MILLISECONDS));
         }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof DelayTask)) {
+                return false;
+            }
+            DelayTask delayTask = (DelayTask) o;
+            return Objects.equals(element, delayTask.element);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(element);
+        }
     }
 
     /**
@@ -100,7 +120,6 @@ public class RetryExecutor implements IDelayTaskExecutor<RetryExecutor.DelayTask
         private final WatchElement watch;
         private final String uid;
         private final String clientId;
-
 
         public Element(WatchElement w, String uid, String clientId) {
             this.uid = uid;
@@ -118,6 +137,24 @@ public class RetryExecutor implements IDelayTaskExecutor<RetryExecutor.DelayTask
 
         public String getClientId() {
             return clientId;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof Element)) {
+                return false;
+            }
+            Element element = (Element) o;
+            return watch.logicEquals(element.watch) && Objects.equals(uid, element.uid) &&
+                Objects.equals(clientId, element.clientId);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(watch, uid, clientId);
         }
     }
 

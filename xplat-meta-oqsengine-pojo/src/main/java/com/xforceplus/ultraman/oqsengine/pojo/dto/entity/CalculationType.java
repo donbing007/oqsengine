@@ -56,7 +56,7 @@ public enum CalculationType {
     private boolean deleteNeedNotChange;
 
     private CalculationType(int symbol) {
-        this(symbol, 0, false, false, false);
+        this(symbol, 0, false, true, false);
     }
 
     private CalculationType(int symbol, int priority) {

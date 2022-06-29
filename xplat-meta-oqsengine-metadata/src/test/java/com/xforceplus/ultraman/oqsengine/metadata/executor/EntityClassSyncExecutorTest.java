@@ -62,7 +62,7 @@ public class EntityClassSyncExecutorTest extends AbstractMetaTestHelper {
 
         for (ExpectedEntityStorage e : expectedEntityStorageList) {
             Collection<EntityClassStorage> res = CacheToStorageGenerator.toEntityClassStorages(
-                    DefaultCacheExecutor.OBJECT_MAPPER,
+                    newVersion,
                     MetaInitialization.getInstance().getCacheExecutor().multiRemoteRead(
                         Collections.singletonList(e.getSelf()), newVersion
                     )

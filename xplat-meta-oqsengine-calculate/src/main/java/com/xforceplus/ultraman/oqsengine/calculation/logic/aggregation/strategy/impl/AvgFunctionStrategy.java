@@ -2,23 +2,17 @@ package com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.strategy
 
 import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationContext;
 import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationScenarios;
+import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.helper.AggregationAttachmentHelper;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.strategy.FunctionStrategy;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Aggregation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
-import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
-import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import java.math.BigDecimal;
 import java.math.MathContext;
-import java.sql.SQLException;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -36,18 +30,23 @@ public class AvgFunctionStrategy implements FunctionStrategy {
     final Logger logger = LoggerFactory.getLogger(AvgFunctionStrategy.class);
 
     @Override
-    public Optional<IValue> excute(Optional<IValue> currentValue, Optional<IValue> oldValue, Optional<IValue> newValue, CalculationContext context) {
+    public Optional<IValue> excute(
+        Optional<IValue> currentValue, ValueChange valueChange, CalculationContext context) {
+        IValue oldValue = valueChange.getOldValue().orElse(new EmptyTypedValue(valueChange.getField()));
+        IValue newValue = valueChange.getNewValue().orElse(new EmptyTypedValue(valueChange.getField()));
+
         if (logger.isDebugEnabled()) {
             logger.debug("begin excuteAvg agg:{}, o-value:{}, n-value:{}",
-                currentValue.get().valueToString(), oldValue.get().valueToString(), newValue.get().valueToString());
+                currentValue.get().valueToString(), oldValue.valueToString(), newValue.valueToString());
         }
         //焦点字段
         Aggregation aggregation = ((Aggregation) context.getFocusField().config().getCalculation());
         Optional<IValue> aggValue = Optional.of(currentValue.get().copy());
-        long count = countAggregationByAttachment(aggValue.get());
+        long count = AggregationAttachmentHelper.count(aggValue.get(), 0);
         if (count == 0) {
             if (!context.getFocusField().type().equals(FieldType.DATETIME)) {
-                Optional<IValue> attAggValue = Optional.of(attachmentReplace(aggValue.get(), oldValue.get(), newValue.get(), CalculationScenarios.BUILD));
+                Optional<IValue> attAggValue = Optional.of(
+                    attachmentReplace(aggValue.get(), oldValue, newValue, CalculationScenarios.BUILD));
                 return attAggValue;
             }
             return aggValue;
@@ -56,79 +55,31 @@ public class AvgFunctionStrategy implements FunctionStrategy {
         // 判断聚合的对象信息是否是当前来源的数据
         if (aggregation.getClassId() == context.getSourceEntity().entityClassRef().getId()) {
             if (context.getScenariso().equals(CalculationScenarios.BUILD)) {
-                Optional<IValue> attAggValue = Optional.of(attachmentReplace(aggValue.get(), oldValue.get(), newValue.get(), CalculationScenarios.BUILD));
+                Optional<IValue> attAggValue = Optional.of(
+                    attachmentReplace(aggValue.get(), oldValue, newValue, CalculationScenarios.BUILD));
                 return attAggValue;
             } else if (context.getScenariso().equals(CalculationScenarios.DELETE)) {
-                Optional<IValue> attAggValue = Optional.of(attachmentReplace(aggValue.get(), oldValue.get(), newValue.get(), CalculationScenarios.DELETE));
+                Optional<IValue> attAggValue = Optional.of(
+                    attachmentReplace(aggValue.get(), oldValue, newValue, CalculationScenarios.DELETE));
                 return attAggValue;
             } else {
-                Optional<IValue> attAggValue = Optional.of(attachmentReplace(aggValue.get(), oldValue.get(), newValue.get(), CalculationScenarios.REPLACE));
+                Optional<IValue> attAggValue = Optional.of(
+                    attachmentReplace(aggValue.get(), oldValue, newValue, CalculationScenarios.REPLACE));
                 return attAggValue;
             }
         } else {
-            Optional<IValue> attAggValue = Optional.of(attachmentReplace(aggValue.get(), oldValue.get(), newValue.get(), CalculationScenarios.REPLACE));
+            Optional<IValue> attAggValue = Optional.of(
+                attachmentReplace(aggValue.get(), oldValue, newValue, CalculationScenarios.REPLACE));
             return attAggValue;
         }
     }
 
     /**
-     * 得到统计值.
-     *
-     * @param aggregation             聚合配置.
-     * @param context            上下文信息.
-     * @return 统计数字.
-     */
-    private long countAggregationEntity(Aggregation aggregation, CalculationContext context) {
-        // 得到count值
-        Optional<IEntityClass> aggEntityClass =
-                context.getMetaManager().get().load(aggregation.getClassId(), context.getFocusEntity().entityClassRef().getProfile());
-        long count = 0;
-        if (aggEntityClass.isPresent()) {
-            Conditions conditions = Conditions.buildEmtpyConditions();
-            // 根据关系id得到关系字段
-            Optional<IEntityField> entityField = aggEntityClass.get().field(aggregation.getRelationId());
-            if (entityField.isPresent()) {
-                logger.info("avg count relationId:{}, relationValue:{}",
-                        entityField.get().id(), context.getFocusEntity().id());
-                conditions.addAnd(new Condition(entityField.get(),
-                        ConditionOperator.EQUALS, new LongValue(entityField.get(), context.getFocusEntity().id())));
-            }
-            Page emptyPage = Page.emptyPage();
-            try {
-                context.getConditionsSelectStorage().get().select(conditions, aggEntityClass.get(),
-                        SelectConfig.Builder.anSelectConfig().withPage(emptyPage).build());
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-            count = emptyPage.getTotalCount();
-        }
-        return count;
-    }
-
-    /**
-     * 用于统计该聚合下有多少条数据.
-     *
-     * @param value 字段信息.
-     * @return 附件中的数量信息.
-     */
-    private long countAggregationByAttachment(IValue value) {
-        Optional attachmentOp = value.getAttachment();
-        if (attachmentOp.isPresent()) {
-            String attachment = (String) attachmentOp.get();
-            String[] att = StringUtils.split(attachment, "|");
-            if (att.length > 1) {
-                return Long.parseLong(att[0]);
-            }
-        }
-        return 0L;
-    }
-
-    /**
      * 替换附件信息.
      *
-     * @param value 字段.
-     * @param o 旧值参数.
-     * @param n 新值参数.
+     * @param value                字段.
+     * @param o                    旧值参数.
+     * @param n                    新值参数.
      * @param calculationScenarios 操作类型.
      * @return 新的附件.
      */
@@ -156,7 +107,7 @@ public class AvgFunctionStrategy implements FunctionStrategy {
                     } else {
                         count = Long.parseLong(att[0]);
                         sum = new BigDecimal(att[1]).add(new BigDecimal(n.valueToString()))
-                                .subtract(new BigDecimal(o.valueToString()));
+                            .subtract(new BigDecimal(o.valueToString()));
                     }
                     BigDecimal temp;
                     if (count != 0) {
@@ -182,7 +133,8 @@ public class AvgFunctionStrategy implements FunctionStrategy {
                         sum = Long.parseLong(att[1]) - Long.parseLong(o.valueToString());
                         count = Long.parseLong(att[0]) - 1;
                     } else {
-                        sum = Long.parseLong(att[1]) + Long.parseLong(n.valueToString()) - Long.parseLong(o.valueToString());
+                        sum = Long.parseLong(att[1]) + Long.parseLong(n.valueToString()) - Long.parseLong(
+                            o.valueToString());
                         count = Long.parseLong(att[0]);
                     }
                     Long temp;

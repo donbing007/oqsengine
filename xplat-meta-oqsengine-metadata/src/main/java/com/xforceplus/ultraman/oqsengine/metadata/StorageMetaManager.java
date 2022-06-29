@@ -25,7 +25,6 @@ import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncR
 import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.CacheExecutor;
-import com.xforceplus.ultraman.oqsengine.metadata.cache.DefaultCacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.HealthCheckEntityClass;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.log.UpGradeLog;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.AppSimpleInfo;
@@ -54,6 +53,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import javax.annotation.PostConstruct;
@@ -83,6 +84,8 @@ public class StorageMetaManager implements MetaManager {
     private AbstractMetaModel metaModel;
 
     private static int NEED_MAX_WAIT_LOOPS = 60;
+
+    private Set<String> lockedNeedApp = new ConcurrentSkipListSet<>();
 
     public StorageMetaManager(AbstractMetaModel metaModel) {
         this.metaModel = metaModel;
@@ -172,44 +175,52 @@ public class StorageMetaManager implements MetaManager {
      * @return 版本号.
      */
     public int need(String appId, String env, boolean reset) {
-        try {
-            cacheExecutor.appEnvSet(appId, env);
-            String cacheEnv = cacheExecutor.appEnvGet(appId);
-
-            if (!cacheEnv.equals(env)) {
-                logger
-                    .warn("appId [{}], param env [{}] not equals to cache's env [{}], will use cache to register.",
-                        appId, env, cacheEnv);
-
-                throw new RuntimeException("appId has been init with another Id, need failed...");
+        if (lockedNeedApp.add(appId)) {
+            try {
+                return internalNeed(appId, env, reset);
+            } finally {
+                lockedNeedApp.remove(appId);
             }
-
-            int version = NOT_EXIST_VERSION;
-            if (!reset) {
-                version = cacheExecutor.version(appId);
-            }
-
-            if (metaModel.getModel().equals(MetaModel.CLIENT_SYNC)) {
-                WatchElement watchElement = new WatchElement(appId, env, version, WatchElement.ElementStatus.Register);
-                if (reset) {
-                    requestHandler.reset(watchElement);
-                } else {
-                    requestHandler.register(watchElement);
-                }
-
-                if (reset || version <= NOT_EXIST_VERSION) {
-                    version = waitForMetaSync(appId);
-                }
-            } else {
-                if (version <= NOT_EXIST_VERSION) {
-                    throw new RuntimeException(
-                        String.format("local cache has not init this version of appId [%s].", appId));
-                }
-            }
-            return version;
-        } catch (Exception e) {
-            throw e;
+        } else {
+            return waitForMetaSync(appId);
         }
+    }
+
+    private int internalNeed(String appId, String env, boolean reset) {
+        cacheExecutor.appEnvSet(appId, env);
+        String cacheEnv = cacheExecutor.appEnvGet(appId);
+
+        if (!cacheEnv.equals(env)) {
+            logger
+                .warn("appId [{}], param env [{}] not equals to cache's env [{}], will use cache to register.",
+                    appId, env, cacheEnv);
+
+            throw new RuntimeException("appId has been init with another Id, need failed...");
+        }
+
+        int version = NOT_EXIST_VERSION;
+        if (!reset) {
+            version = cacheExecutor.version(appId);
+        }
+
+        if (metaModel.getModel().equals(MetaModel.CLIENT_SYNC)) {
+            WatchElement watchElement = new WatchElement(appId, env, version, WatchElement.ElementStatus.Register);
+            if (reset) {
+                requestHandler.reset(watchElement);
+            } else {
+                requestHandler.register(watchElement);
+            }
+
+            if (reset || version <= NOT_EXIST_VERSION) {
+                version = waitForMetaSync(appId);
+            }
+        } else {
+            if (version <= NOT_EXIST_VERSION) {
+                throw new RuntimeException(
+                    String.format("local cache has not init this version of appId [%s].", appId));
+            }
+        }
+        return version;
     }
 
     /**
@@ -277,7 +288,7 @@ public class StorageMetaManager implements MetaManager {
             }
 
             Collection<EntityClassStorage> result = CacheToStorageGenerator.toEntityClassStorages(
-                DefaultCacheExecutor.OBJECT_MAPPER,
+                currentVersion,
                 cacheExecutor.multiRemoteRead(
                     cacheExecutor.appEntityIdList(appId, currentVersion), currentVersion
                 )
@@ -476,7 +487,7 @@ public class StorageMetaManager implements MetaManager {
             builder.withVersion(Integer.parseInt(vn));
 
             //  entityFields & profile & relations
-            withFieldsRelations(builder, profile, keyValues, this::load, this::withProfilesLoad);
+            withFieldsRelations(builder, profile, keyValues, version, this::load, this::withProfilesLoad);
 
             //  father
             String father = keyValues.remove(ELEMENT_FATHER);
@@ -498,7 +509,7 @@ public class StorageMetaManager implements MetaManager {
         }
     }
 
-    private void withFieldsRelations(EntityClass.Builder builder, String profile, Map<String, String> keyValues,
+    private void withFieldsRelations(EntityClass.Builder builder, String profile, Map<String, String> keyValues, int version,
                                      BiFunction<Long, String, Optional<IEntityClass>> rightEntityClassLoader,
                                      Function<Long, Collection<IEntityClass>> rightFamilyEntityClassLoader) throws
         JsonProcessingException {
@@ -515,12 +526,18 @@ public class StorageMetaManager implements MetaManager {
         while (iterator.hasNext()) {
             Map.Entry<String, String> entry = iterator.next();
             if (entry.getKey().startsWith(ELEMENT_FIELDS + ".")) {
-                fields.add(CacheUtils.resetCalculation(OBJECT_MAPPER.readValue(entry.getValue(), EntityField.class)));
+                EntityField entityField =
+                    OBJECT_MAPPER.readValue(entry.getValue(), EntityField.class);
+
+                fields.add(CacheUtils.resetCalculation(entityField, version, cacheExecutor));
             } else if (entry.getKey().startsWith(ELEMENT_PROFILES + "." + ELEMENT_FIELDS)) {
                 String key = parseOneKeyFromProfileEntity(entry.getKey());
                 if (key.equals(profile)) {
                     profileFound = true;
-                    fields.add(CacheUtils.resetCalculation(OBJECT_MAPPER.readValue(entry.getValue(), EntityField.class)));
+                    EntityField entityField =
+                        OBJECT_MAPPER.readValue(entry.getValue(), EntityField.class);
+
+                    fields.add(CacheUtils.resetCalculation(entityField, version, cacheExecutor));
                 }
             } else if (entry.getKey().startsWith(ELEMENT_PROFILES + "." + ELEMENT_RELATIONS)) {
                 if (!profile.equals(OqsProfile.UN_DEFINE_PROFILE)) {

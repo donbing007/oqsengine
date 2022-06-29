@@ -1,15 +1,15 @@
 package com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.impl;
 
 import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.AggregationFunction;
+import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.helper.AggregationAttachmentHelper;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.BigDecimalSummaryStatistics;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import com.xforceplus.ultraman.oqsengine.pojo.utils.IValueUtils;
 import java.util.List;
 import java.util.LongSummaryStatistics;
 import java.util.Optional;
@@ -25,53 +25,50 @@ import java.util.stream.Collectors;
  */
 public class MinFunction implements AggregationFunction {
 
+    /**
+     * 只处理DecimalValue, LongValue和DateTimeValue 三种值类型.
+     * 处理步骤.
+     * 1. 如果新值为空,那直接使用当前min值.
+     * 2. 如果当前计算值不存在,那假定为极大值参与比较.
+     */
     @Override
-    public Optional<IValue> excute(Optional<IValue> agg, Optional<IValue> o, Optional<IValue> n) {
+    public Optional<IValue> excute(Optional<IValue> agg, ValueChange valueChange) {
+        Optional<IValue> o = valueChange.getOldValue();
+        Optional<IValue> n = valueChange.getNewValue();
         if (!(agg.isPresent() & o.isPresent() && n.isPresent())) {
             return Optional.empty();
         }
-        Optional<IValue> aggValue = Optional.of(agg.get().copy());
-        if (agg.get() instanceof DecimalValue) {
-            if (o.get() instanceof EmptyTypedValue || !o.isPresent()) {
-                o = Optional.of(new DecimalValue(o.get().getField(), BigDecimal.ZERO));
-            }
-            if (n.get() instanceof EmptyTypedValue || !n.isPresent()) {
-                n = Optional.of(new DecimalValue(n.get().getField(), BigDecimal.ZERO));
-            }
-            if (!agg.isPresent()) {
-                aggValue = Optional.of(new DecimalValue(n.get().getField(), BigDecimal.ZERO));
-            }
-            double temp = Math.min(((DecimalValue) n.get()).getValue().doubleValue(), ((DecimalValue) agg.get()).getValue().doubleValue());
-            aggValue.get().setStringValue(String.valueOf(temp));
-            return Optional.of(aggValue.get());
-        } else if (agg.get() instanceof LongValue) {
-            if (o.get() instanceof EmptyTypedValue || !o.isPresent()) {
-                o = Optional.of(new LongValue(o.get().getField(), 0L));
-            }
-            if (n.get() instanceof EmptyTypedValue || !n.isPresent()) {
-                n = Optional.of(new LongValue(n.get().getField(), 0L));
-            }
-            if (!agg.isPresent()) {
-                aggValue = Optional.of(new LongValue(n.get().getField(), 0L));
-            }
-            long temp = Math.min(n.get().valueToLong(), agg.get().valueToLong());
-            aggValue.get().setStringValue(String.valueOf(temp));
-            return Optional.of(aggValue.get());
-        } else if (agg.get() instanceof DateTimeValue) {
-            if (o.get() instanceof EmptyTypedValue || !o.isPresent()) {
-                o = Optional.of(new DateTimeValue(o.get().getField(), LocalDateTime.MAX));
-            }
-            if (n.get() instanceof EmptyTypedValue || !n.isPresent()) {
-                n = Optional.of(new DateTimeValue(n.get().getField(), LocalDateTime.MAX));
-            }
-            if (!agg.isPresent()) {
-                aggValue = Optional.of(new DateTimeValue(n.get().getField(), LocalDateTime.MAX));
-            }
-            long temp = Math.min(n.get().valueToLong(), agg.get().valueToLong());
-            aggValue.get().setStringValue(String.valueOf(temp));
-            return Optional.of(aggValue.get());
+
+        IValue aggCopyValue = agg.get().copy();
+        if (n.get() instanceof EmptyTypedValue) {
+            return Optional.of(aggCopyValue);
         }
-        return Optional.empty();
+
+        boolean invalid;
+        // 用以判断数量是否为0.
+        final int zeroCount = 0;
+        if (!agg.isPresent()) {
+            invalid = true;
+        } else if (agg.isPresent() && AggregationAttachmentHelper.count(agg.get()) <= zeroCount) {
+            invalid = true;
+        } else {
+            invalid = false;
+        }
+
+        if (invalid) {
+            // 这里需要重新复制一份的原因是需要增加附件.
+            aggCopyValue = IValueUtils.max(aggCopyValue.getField()).copy(
+                (String) aggCopyValue.getAttachment().orElse(null));
+        }
+
+        IValue newValue = n.get();
+
+        int result = newValue.compareTo(aggCopyValue);
+        if (result < 0) {
+            aggCopyValue = agg.get().copy(newValue.getValue());
+        }
+
+        return Optional.of(aggCopyValue);
     }
 
     @Override
@@ -79,37 +76,18 @@ public class MinFunction implements AggregationFunction {
         Optional<IValue> aggValue = Optional.of(agg.get().copy());
         if (agg.get() instanceof DecimalValue) {
             BigDecimalSummaryStatistics temp = values.stream().map(v -> ((DecimalValue) v.get()).getValue())
-                    .collect(BigDecimalSummaryStatistics.statistics());
+                .collect(BigDecimalSummaryStatistics.statistics());
             aggValue.get().setStringValue(temp.getMin().toString());
         } else if (agg.get() instanceof LongValue) {
-            LongSummaryStatistics temp = values.stream().map(o -> o.get()).collect(Collectors.summarizingLong(IValue::valueToLong));
+            LongSummaryStatistics temp =
+                values.stream().map(o -> o.get()).collect(Collectors.summarizingLong(IValue::valueToLong));
             aggValue.get().setStringValue(String.valueOf(temp.getMin()));
         } else if (agg.get() instanceof DateTimeValue) {
             LongSummaryStatistics temp = values.stream().map(v -> v.get().valueToLong())
-                    .collect(Collectors.summarizingLong(Long::longValue));
+                .collect(Collectors.summarizingLong(Long::longValue));
             aggValue.get().setStringValue(String.valueOf(temp.getMin()));
         }
         return Optional.of(aggValue.get());
-    }
-
-    @Override
-    public Optional<Long> init(long agg, List<Long> values) {
-        LongSummaryStatistics temp = values.stream().collect(Collectors.summarizingLong(Long::longValue));
-        return Optional.of(temp.getMin());
-    }
-
-    @Override
-    public Optional<BigDecimal> init(BigDecimal agg, List<BigDecimal> values) {
-        BigDecimalSummaryStatistics temp = values.stream().collect(BigDecimalSummaryStatistics.statistics());
-        return Optional.of(temp.getMin());
-    }
-
-    @Override
-    public Optional<LocalDateTime> init(LocalDateTime agg, List<LocalDateTime> values) {
-        ZoneOffset zone = ZoneOffset.of(ZoneOffset.systemDefault().getId());
-        LongSummaryStatistics temp = values.stream().map(v -> v.toEpochSecond(zone))
-                .collect(Collectors.summarizingLong(Long::longValue));
-        return Optional.of(LocalDateTime.ofEpochSecond(temp.getMin(), 0, zone));
     }
 
 }

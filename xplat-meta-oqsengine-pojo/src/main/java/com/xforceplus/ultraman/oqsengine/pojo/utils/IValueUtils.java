@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.pojo.utils;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.BooleanValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
@@ -12,7 +14,9 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Date;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,6 +53,21 @@ public class IValueUtils {
         } else {
             return value.valueToString();
         }
+    }
+
+    /**
+     * deserialize string to Condition.
+     */
+    public static Condition deserializeCondition(String rawValue, ConditionOperator operator, IEntityField entityField) {
+        if (operator.equals(ConditionOperator.MULTIPLE_EQUALS)) {
+            String[] rawValues = rawValue.split(",");
+            IValue[] values = new IValue[rawValues.length];
+            for (int i = 0; i < rawValues.length; i++) {
+                values[i] = deserialize(rawValues[i], entityField);
+            }
+            return new Condition(entityField, operator, values);
+        }
+        return new Condition(entityField, operator, deserialize(rawValue, entityField));
     }
 
     /**
@@ -176,6 +195,71 @@ public class IValueUtils {
             return toValue.setScale(precision, RoundingMode.valueOf(model));
         }
         return toValue;
+    }
+
+    /**
+     * 获取指定数字类型的最大值.
+     *
+     * @param field 目标字段.
+     * @return 最大值.
+     */
+    public static IValue max(IEntityField field) {
+        switch (field.type()) {
+            case DECIMAL:
+                return new DecimalValue(field, new BigDecimal(Long.MAX_VALUE));
+            case LONG:
+                return new LongValue(field, Long.MAX_VALUE);
+            case DATETIME:
+                return new DateTimeValue(field, DateTimeValue.MAX_DATE_TIME);
+            default: {
+                throw new IllegalArgumentException(
+                    String.format("The current type(%s) has no maximum value.", field.type().name()));
+            }
+        }
+    }
+
+    /**
+     * 获取指定数字类型的最小值.
+     *
+     * @param field 目标字段.
+     * @return 最小值.
+     */
+    public static IValue min(IEntityField field) {
+        switch (field.type()) {
+            case DECIMAL:
+                return new DecimalValue(field, new BigDecimal(Long.MIN_VALUE));
+            case LONG:
+                return new LongValue(field, Long.MIN_VALUE);
+            case DATETIME:
+                return new DateTimeValue(field, DateTimeValue.MIN_DATE_TIME);
+            default: {
+                throw new IllegalArgumentException(
+                    String.format("The current type(%s) has no maximum value.", field.type().name()));
+            }
+        }
+    }
+
+    /**
+     * 获取指定数字类型的0值表示.
+     * 不包含时间类型.
+     *
+     * @param field 目标字段.
+     * @return 0值.
+     */
+    public static IValue zero(IEntityField field) {
+        switch (field.type()) {
+            case DECIMAL:
+                return new DecimalValue(field, BigDecimal.ZERO);
+            case LONG:
+                return new LongValue(field, 0L);
+            case DATETIME:
+                return new DateTimeValue(field,
+                    LocalDateTime.of(LocalDate.of(1970, 1, 1), LocalTime.MIN));
+            default: {
+                throw new IllegalArgumentException(
+                    String.format("The current type(%s) has no maximum value.", field.type().name()));
+            }
+        }
     }
 
 

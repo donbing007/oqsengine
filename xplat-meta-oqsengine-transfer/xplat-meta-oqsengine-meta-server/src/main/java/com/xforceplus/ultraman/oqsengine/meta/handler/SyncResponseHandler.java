@@ -128,6 +128,10 @@ public class SyncResponseHandler implements IResponseHandler {
     @Override
     public void invoke(EntityClassSyncRequest entityClassSyncRequest,
                        StreamObserver<EntityClassSyncResponse> responseStreamObserver) {
+
+        logger.info("grpc-request in : clientId : {}， appId : {}, status : {}", entityClassSyncRequest.getClientId(), entityClassSyncRequest.getAppId(),
+            RequestStatus.getInstance(entityClassSyncRequest.getStatus()));
+
         //  处理心跳
         String uid = entityClassSyncRequest.getUid();
         if (!uid.isEmpty()) {

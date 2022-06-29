@@ -68,8 +68,9 @@ public class BaseTest {
             final Map<String, Integer> stringIntegerMap = new HashMap<>();
 
             @Override
-            public void sync(String appId, String env, int version, EntityClassSyncRspProto entityClassSyncRspProto) {
+            public boolean sync(String appId, String env, int version, EntityClassSyncRspProto entityClassSyncRspProto) {
                 stringIntegerMap.put(appId, version);
+                return true;
             }
 
             @Override

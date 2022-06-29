@@ -9,6 +9,7 @@ import com.google.protobuf.DoubleValue;
 import com.google.protobuf.Int64Value;
 import com.google.protobuf.StringValue;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.DomainCondition;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo;
@@ -18,7 +19,6 @@ import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.ProfileStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.RelationStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.utils.CacheUtils;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.AggregationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassType;
@@ -144,8 +144,11 @@ public class EntityClassStorageBuilderUtils {
             throw new MetaSyncClientException("entityClass-version is invalid.", false);
         }
         storage.setVersion(version);
+
         //  father
-        storage.setFatherId(entityClassInfo.getFather());
+        if (entityClassInfo.getFather() > 0) {
+            storage.setFatherId(entityClassInfo.getFather());
+        }
 
         //  relations
         storage.setRelations(toRelationStorageList(entityClassInfo.getRelationsList()));
@@ -246,7 +249,7 @@ public class EntityClassStorageBuilderUtils {
     }
 
     private static AbstractCalculation toCalculator(long fieldId, FieldType fieldType,
-                                                      com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator calculator) {
+                                                    com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator calculator) {
         CalculationType calculationType = toCalculationType(calculator);
 
         switch (calculationType) {
@@ -268,7 +271,8 @@ public class EntityClassStorageBuilderUtils {
         }
     }
 
-    private static Lookup toLookup(long fieldId, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator calculator) {
+    private static Lookup toLookup(long fieldId,
+                                   com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator calculator) {
         if (!CacheUtils.validBusinessId(calculator.getLookupEntityClassId())) {
             throw new MetaSyncClientException(
                 String.format("[lookup-entityClassId] could not be zero, current-fieldId %d", fieldId), false);
@@ -280,13 +284,14 @@ public class EntityClassStorageBuilderUtils {
         }
 
         return Lookup.Builder.anLookup()
-                    .withClassId(calculator.getLookupEntityClassId())
-                    .withFieldId(calculator.getLookupEntityFieldId())
-                    .withRelationId(calculator.getLookupRelationId())
-                    .build();
+            .withClassId(calculator.getLookupEntityClassId())
+            .withFieldId(calculator.getLookupEntityFieldId())
+            .withRelationId(calculator.getLookupRelationId())
+            .build();
     }
 
-    private static AutoFill toAutoFill(long fieldId, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator calculator) {
+    private static AutoFill toAutoFill(long fieldId,
+                                       com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator calculator) {
 
         AutoFill.DomainNoType domainNoType = AutoFill.DomainNoType.instance(calculator.getDomainNoSenior());
 
@@ -302,7 +307,8 @@ public class EntityClassStorageBuilderUtils {
             //  普通自增编号
             case NORMAL: {
                 if (calculator.getPatten().isEmpty()) {
-                    throw new MetaSyncClientException(String.format("[autoFill-patten] could not be null, fieldId [%d]", fieldId),
+                    throw new MetaSyncClientException(
+                        String.format("[autoFill-patten] could not be null, fieldId [%d]", fieldId),
                         false);
                 }
 
@@ -312,14 +318,16 @@ public class EntityClassStorageBuilderUtils {
             case SENIOR: {
                 //  判断表达式不能为空
                 if (calculator.getExpression().isEmpty()) {
-                    throw new MetaSyncClientException(String.format("[autoFill-expression] could not be null, fieldId [%d]", fieldId),
+                    throw new MetaSyncClientException(
+                        String.format("[autoFill-expression] could not be null, fieldId [%d]", fieldId),
                         false);
                 }
 
                 break;
             }
             default: {
-                throw new MetaSyncClientException(String.format("[autoFill-domainNoType] should not be null, fieldId [%d]", fieldId),
+                throw new MetaSyncClientException(
+                    String.format("[autoFill-domainNoType] should not be null, fieldId [%d]", fieldId),
                     false);
             }
         }
@@ -398,32 +406,47 @@ public class EntityClassStorageBuilderUtils {
         return builder.build();
     }
 
-    private static Aggregation toAggregation(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator calculator) {
+    private static Aggregation toAggregation(
+        com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator calculator) {
 
-        Conditions conditions = null;
-        if (!calculator.getCondition().isEmpty()) {
-            conditions = converConditions(calculator.getCondition());
-        }
-        Aggregation.Builder builder = Aggregation.Builder.anAggregation()
-                .withClassId(calculator.getAggregationBoId())
-                .withFieldId(calculator.getAggregationFieldId())
-                .withAggregationType(AggregationType.getInstance(calculator.getAggregationType()))
-                .withRelationId(calculator.getAggregationRelationId())
-                .withAggregationByFields(calculator.getAggregationByFieldsMap())
-                .withConditions(conditions);
-        return builder.build();
+        return Aggregation.Builder.anAggregation()
+            .withClassId(calculator.getAggregationBoId())
+            .withFieldId(calculator.getAggregationFieldId())
+            .withAggregationType(AggregationType.getInstance(calculator.getAggregationType()))
+            .withRelationId(calculator.getAggregationRelationId())
+            .withAggregationByFields(calculator.getAggregationByFieldsMap())
+            .withAggregationConditions(
+                aggregationConditions(calculator.getDomainConditionsList())
+            ).build();
     }
 
-    /**
-     * 转换条件信息.
-     */
-    private static Conditions converConditions(String condition) {
-        String[] conditionArray = condition.substring(1, condition.length() - 1).split("\\[\\]");
-        for (String s : conditionArray) {
-            String [] array = s.split("\\s+");
+    private static List<Aggregation.AggregationCondition> aggregationConditions(
+        List<DomainCondition> domainConditions) {
+
+        List<Aggregation.AggregationCondition> aggregationConditions = new ArrayList<>();
+        if (null != domainConditions) {
+
+            for (DomainCondition domainCondition : domainConditions) {
+                Aggregation.AggregationCondition aggregationCondition =
+                    Aggregation.AggregationCondition.Builder
+                        .anAggregationCondition()
+                        .withEntityClassId(domainCondition.getEntityId())
+                        .withEntityClassCode(domainCondition.getEntityCode())
+                        .withEntityFieldCode(domainCondition.getEntityFieldCode())
+                        .withEntityFieldId(domainCondition.getEntityFieldId())
+                        .withProfile(domainCondition.getProfile())
+                        .withStringValue(domainCondition.getValues())
+                        .withConditionOperator(
+                            ConditionOperatorMap.instance(domainCondition.getOperator()).getConditionOperator())
+                        .withEntityFieldType(FieldType.fromRawType(domainCondition.getFieldType().name()))
+                        .build();
+
+                aggregationConditions.add(aggregationCondition);
+            }
         }
-        return null;
+        return aggregationConditions;
     }
+
 
     /**
      * 转换FieldConfig.
@@ -462,7 +485,8 @@ public class EntityClassStorageBuilderUtils {
         return builder.build();
     }
 
-    private static CalculationType toCalculationType(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator calculator) {
+    private static CalculationType toCalculationType(
+        com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.Calculator calculator) {
         try {
             Integer type = calculator.getCalculateType();
             return CalculationType.getInstance(type.byteValue());

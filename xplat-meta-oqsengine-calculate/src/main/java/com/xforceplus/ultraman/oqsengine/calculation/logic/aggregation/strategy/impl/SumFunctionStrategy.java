@@ -4,6 +4,7 @@ import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationContext;
 import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.AggregationFunction;
 import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.AggregationFunctionFactoryImpl;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.strategy.FunctionStrategy;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Aggregation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import java.util.Optional;
@@ -17,10 +18,14 @@ import java.util.Optional;
  */
 public class SumFunctionStrategy implements FunctionStrategy {
     @Override
-    public Optional<IValue> excute(Optional<IValue> currentValue, Optional<IValue> oldValue, Optional<IValue> newValue, CalculationContext context) {
+    public Optional<IValue> excute(
+        Optional<IValue> currentValue, ValueChange valueChange, CalculationContext context) {
+
         Optional<IValue> aggValue = Optional.of(currentValue.get().copy());
         Aggregation aggregation = ((Aggregation) context.getFocusField().config().getCalculation());
-        AggregationFunction function = AggregationFunctionFactoryImpl.getAggregationFunction(aggregation.getAggregationType());
-        return function.excute(aggValue, oldValue, newValue);
+        AggregationFunction function =
+            AggregationFunctionFactoryImpl.getAggregationFunction(aggregation.getAggregationType());
+        return function.excute(aggValue, valueChange);
+
     }
 }

@@ -1,9 +1,13 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
@@ -34,6 +38,27 @@ public class EntityValue implements IEntityValue, Cloneable, Serializable {
     @Override
     public int size() {
         return values == null ? 0 : values.size();
+    }
+
+    @Override
+    public Optional<IValue> getValue(IEntityField field) {
+        if (field.config().isIdentifie()) {
+
+            return Optional.of(new LongValue(field, entity.id()));
+
+        } else if (field.config().getFieldSense() != FieldConfig.FieldSense.NORMAL) {
+
+            switch (field.config().getFieldSense()) {
+                case UPDATE_TIME: {
+                    return Optional.of(new DateTimeValue(field, DateTimeValue.toLocalDateTime(entity.time())));
+                }
+                default: {
+                    return Optional.empty();
+                }
+            }
+        } else {
+            return getValue(field.id());
+        }
     }
 
     @Override
@@ -125,6 +150,20 @@ public class EntityValue implements IEntityValue, Cloneable, Serializable {
             return false;
         } else {
             return this.values.values().stream().filter(v -> v.isDirty()).count() > 0;
+        }
+    }
+
+    @Override
+    public void squeezeEmpty() {
+        if (this.values == null || this.values.isEmpty()) {
+            return;
+        }
+
+        long[] emptyValueFieldIds = this.values.entrySet().stream()
+            .filter(entry -> EmptyTypedValue.class.isInstance(entry.getValue()))
+            .mapToLong(entity -> entity.getKey()).toArray();
+        for (long id : emptyValueFieldIds) {
+            this.values.remove(id);
         }
     }
 

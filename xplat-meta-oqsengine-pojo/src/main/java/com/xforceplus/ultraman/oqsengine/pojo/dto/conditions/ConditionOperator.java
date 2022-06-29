@@ -8,7 +8,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import java.math.BigDecimal;
-import java.util.Arrays;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
@@ -33,7 +32,7 @@ public enum ConditionOperator {
         if (values.length > 0) {
             return entity -> {
                 IEntityValue entityValue = entity.entityValue();
-                Optional<IValue> valueOp = entityValue.getValue(field.id());
+                Optional<IValue> valueOp = entityValue.getValue(field);
                 if (valueOp.isPresent()) {
                     IValue targetValue = valueOp.get();
                     return targetValue.valueToString()
@@ -54,7 +53,7 @@ public enum ConditionOperator {
         if (values.length > 0) {
             return entity -> {
                 IEntityValue entityValue = entity.entityValue();
-                Optional<IValue> valueOp = entityValue.getValue(field.id());
+                Optional<IValue> valueOp = entityValue.getValue(field);
                 if (valueOp.isPresent()) {
                     IValue targetValue = valueOp.get();
                     return targetValue.getValue().equals(values[0].getValue());
@@ -74,7 +73,7 @@ public enum ConditionOperator {
         if (values.length > 0) {
             return entity -> {
                 IEntityValue entityValue = entity.entityValue();
-                Optional<IValue> valueOp = entityValue.getValue(field.id());
+                Optional<IValue> valueOp = entityValue.getValue(field);
                 if (valueOp.isPresent()) {
                     IValue targetValue = valueOp.get();
                     return !targetValue.getValue().equals(values[0].getValue());
@@ -94,7 +93,7 @@ public enum ConditionOperator {
         if (values.length > 0) {
             return entity -> {
                 IEntityValue entityValue = entity.entityValue();
-                Optional<IValue> valueOp = entityValue.getValue(field.id());
+                Optional<IValue> valueOp = entityValue.getValue(field);
                 return valueOp.filter(left ->
                     numberValueCompare(left, values[0], i -> i > 0)).isPresent();
             };
@@ -110,7 +109,7 @@ public enum ConditionOperator {
         if (values.length > 0) {
             return entity -> {
                 IEntityValue entityValue = entity.entityValue();
-                Optional<IValue> valueOp = entityValue.getValue(field.id());
+                Optional<IValue> valueOp = entityValue.getValue(field);
                 return valueOp.filter(left ->
                     numberValueCompare(left, values[0], i -> i >= 0)).isPresent();
             };
@@ -126,7 +125,7 @@ public enum ConditionOperator {
         if (values.length > 0) {
             return entity -> {
                 IEntityValue entityValue = entity.entityValue();
-                Optional<IValue> valueOp = entityValue.getValue(field.id());
+                Optional<IValue> valueOp = entityValue.getValue(field);
                 return valueOp.filter(left ->
                     numberValueCompare(left, values[0], i -> i < 0)).isPresent();
             };
@@ -142,7 +141,7 @@ public enum ConditionOperator {
         if (values.length > 0) {
             return entity -> {
                 IEntityValue entityValue = entity.entityValue();
-                Optional<IValue> valueOp = entityValue.getValue(field.id());
+                Optional<IValue> valueOp = entityValue.getValue(field);
                 return valueOp.filter(left ->
                     numberValueCompare(left, values[0], i -> i <= 0)).isPresent();
             };
@@ -157,9 +156,18 @@ public enum ConditionOperator {
     MULTIPLE_EQUALS("IN", (field, values) -> {
         return entity -> {
             IEntityValue entityValue = entity.entityValue();
-            Optional<IValue> valueOp = entityValue.getValue(field.id());
-            return valueOp.filter(left -> Arrays.stream(values)
-                .anyMatch(x -> x.getValue().equals(left.getValue()))).isPresent();
+            Optional<IValue> valueOp = entityValue.getValue(field);
+            if (valueOp.isPresent()) {
+
+                IValue leftValue = valueOp.get();
+                for (IValue rightValue : values) {
+                    if (leftValue.include(rightValue)) {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         };
     }),
 
@@ -169,7 +177,7 @@ public enum ConditionOperator {
     IS_NULL("ISNULL", (field, values) -> {
         return entity -> {
             IEntityValue entityValue = entity.entityValue();
-            Optional<IValue> valueOp = entityValue.getValue(field.id());
+            Optional<IValue> valueOp = entityValue.getValue(field);
             return !valueOp.isPresent();
         };
     }),
@@ -180,7 +188,7 @@ public enum ConditionOperator {
     IS_NOT_NULL("ISNOTNULL", (field, values) -> {
         return entity -> {
             IEntityValue entityValue = entity.entityValue();
-            Optional<IValue> valueOp = entityValue.getValue(field.id());
+            Optional<IValue> valueOp = entityValue.getValue(field);
             return valueOp.isPresent();
         };
     });

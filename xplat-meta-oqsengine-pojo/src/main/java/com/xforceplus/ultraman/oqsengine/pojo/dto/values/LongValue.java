@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.values;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.able.CalculationsAble;
 
 /**
  * 表示一个整数.
@@ -9,7 +10,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
  * @version 0.1 2020/2/18 20:54
  * @since 1.8
  */
-public class LongValue extends AbstractValue<Long> {
+public class LongValue extends AbstractValue<Long> implements CalculationsAble<Long> {
 
     public LongValue(IEntityField field, int value) {
         super(field, (long) value);
@@ -43,7 +44,38 @@ public class LongValue extends AbstractValue<Long> {
     }
 
     @Override
+    protected IValue<Long> doCopy(Long value) {
+        return new LongValue(getField(), value, getAttachment().orElse(null));
+    }
+
+    @Override
     public boolean compareByString() {
         return false;
+    }
+
+    @Override
+    public CalculationsAble<Long> plus(IValue<Long> other) {
+        long left = this.getValue();
+        long right = other.getValue();
+
+        return new LongValue(getField(), left + right, getAttachment().orElse("null"));
+    }
+
+    @Override
+    public CalculationsAble<Long> subtract(IValue<Long> other) {
+        long left = this.getValue();
+        long right = other.getValue();
+
+        return new LongValue(getField(), left - right, getAttachment().orElse("null"));
+    }
+
+    @Override
+    public CalculationsAble<Long> decrement() {
+        return new LongValue(getField(), getValue() - 1, getAttachment().orElse("null"));
+    }
+
+    @Override
+    public CalculationsAble<Long> increment() {
+        return new LongValue(getField(), getValue() + 1, getAttachment().orElse("null"));
     }
 }

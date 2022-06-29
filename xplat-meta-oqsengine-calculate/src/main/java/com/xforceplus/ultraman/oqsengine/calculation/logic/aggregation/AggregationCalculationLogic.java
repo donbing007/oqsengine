@@ -16,9 +16,6 @@ import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.CalculationP
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
-import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.AggregationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
@@ -34,11 +31,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
-import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
-import com.xforceplus.ultraman.oqsengine.storage.ConditionsSelectStorage;
-import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import java.math.BigDecimal;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -79,6 +72,7 @@ public class AggregationCalculationLogic implements CalculationLogic {
             return Optional.empty();
         }
         Aggregation aggregation = ((Aggregation) aggregationField.config().getCalculation());
+
         //获取被聚合的entity信息（修改后的）
         IEntity triggerEntity = null;
         Optional<IEntity> triggerEntityOp = context.getMaintenanceTriggerEntity();
@@ -101,54 +95,146 @@ public class AggregationCalculationLogic implements CalculationLogic {
             return aggregationValue;
         }
 
-        // 计算相关的字段定义
-        Optional<IValue> newValue = null;
-        Optional<IValue> oldValue = null;
-
         // 正常情况两个对象只存在一个一对多，在cache中该对象也只会存在一个实例
         triggerEntity = triggerEntityOp.get();
+
+        // 计算相关的字段定义
+        Optional<ValueChange> valueChange;
+
         if (aggregation.getAggregationType().equals(AggregationType.COUNT)) {
+
             if (context.getScenariso().equals(CalculationScenarios.BUILD)) {
-                newValue = Optional.of(new LongValue(aggregationField, 1));
-                oldValue = Optional.of(new EmptyTypedValue(aggregationField));
+                valueChange = Optional.of(
+                    ValueChange.build(
+                        triggerEntity.id(),
+                        new EmptyTypedValue(aggregationField),
+                        new LongValue(aggregationField, 1)));
             } else if (context.getScenariso().equals(CalculationScenarios.DELETE)) {
-                oldValue = Optional.of(new LongValue(aggregationField, 1));
-                newValue = Optional.of(new EmptyTypedValue(aggregationField));
+                valueChange = Optional.of(
+                    ValueChange.build(
+                        triggerEntity.id(),
+                        new LongValue(aggregationField, 1),
+                        new EmptyTypedValue(aggregationField)));
             } else {
-                return Optional.empty();
+                /*
+                如果不含条件,更新忽略操作.因为数量没有变化.
+                否则不退出,设置改为为空.
+                 */
+                if (aggregation.getConditions().isPresent()) {
+                    valueChange = Optional.empty();
+                } else {
+                    return Optional.empty();
+                }
             }
+
         } else {
-            Optional<IEntityClass> triggerEntityClassOp = context.getMetaManager().get().load(triggerEntity.entityClassRef());
-            if (!triggerEntityClassOp.isPresent()) {
-                throw new CalculationException(
-                    String.format("The expected target object meta information was not found.[%s]",
-                        triggerEntity.entityClassRef()));
-            }
 
-            IEntityClass triggerEntityClass = triggerEntityClassOp.get();
-            Optional<IEntityField> triggerFieldOp = triggerEntityClass.field(aggregation.getFieldId());
-            if (!triggerFieldOp.isPresent()) {
-                throw new CalculationException(
-                    String.format("The expected field (%s) does not exist.", aggregation.getFieldId()));
-            }
-
-            Optional<ValueChange> triggerEntityFieldValueChange =
-                context.getValueChange(triggerEntity, triggerFieldOp.get());
-            if (!triggerEntityClassOp.isPresent()) {
-                // 没有改变,原样返回.
-                return Optional.empty();
-            }
-
-            // 修改前
-            oldValue = triggerEntityFieldValueChange.get().getOldValue();
-            // 修改后.
-            newValue = triggerEntityFieldValueChange.get().getNewValue();
+            valueChange = findChange(context, aggregation, triggerEntity);
 
         }
-        //拿到数据后开始进行判断数据是否符合条件
-        boolean pass = checkEntityByCondition(((Aggregation) aggregationField.config().getCalculation()).getConditions());
-        if (!pass) {
-            return Optional.empty();
+
+        /*
+           如果设置了条件,表示这是一个条件聚合.
+           创建和删除场景最为简单,直接判断当前触发对象是否符合条件.
+           更新场景分为如下情况.
+           1. 旧值符合,新值不符合,需要减去原有旧值.
+           2. 旧值不符合,新值符合, 需要增加新值.
+           3. 旧值不符合,新值不符合, 不进行计算.
+           4. 都符合,重新计算.
+           注意: count 这里较为特殊.因为count不指定具体的值,只关心实例数量.也分为4种情况.
+           1. 旧实例符合,新实例不符合,统计值减1..
+           2. 旧实例不符合,新实例符合, 统计值加1.
+           3. 旧值不符合,新值不符合, 不进行计算.
+           4. 都符合,不进行计算.
+        */
+        Optional<Conditions> conditionsOp = aggregation.getConditions();
+        if (conditionsOp.isPresent()) {
+            if (CalculationScenarios.BUILD == context.getScenariso()
+                || CalculationScenarios.DELETE == context.getScenariso()) {
+                // 状态改变才进行判定.
+                if (valueChange.isPresent()) {
+                    if (!conditionsOp.get().match(triggerEntity)) {
+                        return Optional.empty();
+                    }
+                } else {
+                    return Optional.empty();
+                }
+            } else if (CalculationScenarios.REPLACE == context.getScenariso()) {
+                Conditions conditions = conditionsOp.get();
+                IEntity oldEntity = buildOldEntity(context, triggerEntity);
+                boolean oldEntityMatch = conditions.match(oldEntity);
+                boolean newEntityMatch = conditions.match(triggerEntity);
+
+                if (aggregation.getAggregationType().equals(AggregationType.COUNT)) {
+
+                    if (oldEntityMatch && !newEntityMatch) {
+                        // 原有匹配,新对象不匹配,需要减1.
+                        valueChange = Optional.of(
+                            ValueChange.build(
+                                triggerEntity.id(),
+                                new LongValue(aggregationField, 1),
+                                new EmptyTypedValue(aggregationField))
+                        );
+                    } else if (!oldEntityMatch && newEntityMatch) {
+                        valueChange = Optional.of(
+                            ValueChange.build(
+                                triggerEntity.id(),
+                                new EmptyTypedValue(aggregationField),
+                                new LongValue(aggregationField, 1))
+                        );
+                    } else {
+                        // 原有不匹配,现在不匹配 或者 原有匹配,现在匹配 都不需要重新计算.
+                        return Optional.empty();
+                    }
+
+                } else {
+
+                    /*
+                    每一个分支都需要判断当前聚合的值是否有改变.
+                    如果没有改变也不代表不需要聚合,因为目标值可能变化.条件可能变化.
+                    所以当前目标字段值没有改变,就直接使用当前值.
+                     */
+                    if (oldEntityMatch && !newEntityMatch) {
+                        Optional<IValue> oldValueOp = findTriggerValue(valueChange, aggregation, triggerEntity, true);
+                        if (oldValueOp.isPresent()) {
+                            IValue oldValue = oldValueOp.get();
+                            valueChange = Optional.of(
+                                ValueChange.build(
+                                    triggerEntity.id(), oldValue, new EmptyTypedValue(oldValue.getField()))
+                            );
+                        } else {
+                            return Optional.empty();
+                        }
+
+                    } else if (!oldEntityMatch && newEntityMatch) {
+                        Optional<IValue> newValueOp = findTriggerValue(valueChange, aggregation, triggerEntity, false);
+                        if (newValueOp.isPresent()) {
+                            IValue newValue = newValueOp.get();
+                            valueChange = Optional.of(
+                                ValueChange.build(
+                                    triggerEntity.id(), new EmptyTypedValue(newValue.getField()), newValue)
+                            );
+                        } else {
+                            return Optional.empty();
+                        }
+
+                    } else if (oldEntityMatch && newEntityMatch) {
+                        // 原有匹配,新的也匹配,检查有没有valuechange,如果有那么也需要重新计算.
+                        if (!valueChange.isPresent()) {
+                            return Optional.empty();
+                        }
+
+                    } else {
+                        // 原有不匹配,新的也不匹配.
+                        return Optional.empty();
+                    }
+
+                }
+            }
+        } else {
+            if (!valueChange.isPresent()) {
+                return Optional.empty();
+            }
         }
 
         try {
@@ -156,19 +242,19 @@ public class AggregationCalculationLogic implements CalculationLogic {
             AggregationType aggregationType = aggregation.getAggregationType();
             if (aggregationType.equals(AggregationType.AVG)) {
                 FunctionStrategy functionStrategy = new AvgFunctionStrategy();
-                return functionStrategy.excute(aggregationValue, oldValue, newValue, context);
+                return functionStrategy.excute(aggregationValue, valueChange.get(), context);
             } else if (aggregationType.equals(AggregationType.MAX)) {
                 FunctionStrategy functionStrategy = new MaxFunctionStrategy();
-                return functionStrategy.excute(aggregationValue, oldValue, newValue, context);
+                return functionStrategy.excute(aggregationValue, valueChange.get(), context);
             } else if (aggregationType.equals(AggregationType.MIN)) {
                 FunctionStrategy functionStrategy = new MinFunctionStrategy();
-                return functionStrategy.excute(aggregationValue, oldValue, newValue, context);
+                return functionStrategy.excute(aggregationValue, valueChange.get(), context);
             } else if (aggregationType.equals(AggregationType.SUM)) {
                 FunctionStrategy functionStrategy = new SumFunctionStrategy();
-                return functionStrategy.excute(aggregationValue, oldValue, newValue, context);
+                return functionStrategy.excute(aggregationValue, valueChange.get(), context);
             } else if (aggregationType.equals(AggregationType.COUNT)) {
                 FunctionStrategy functionStrategy = new CountFunctionStrategy();
-                return functionStrategy.excute(aggregationValue, oldValue, newValue, context);
+                return functionStrategy.excute(aggregationValue, valueChange.get(), context);
             }
         } catch (Exception ex) {
             throw new CalculationException(
@@ -179,6 +265,57 @@ public class AggregationCalculationLogic implements CalculationLogic {
         }
 
         return Optional.empty();
+    }
+
+    private Optional<IValue> findTriggerValue(
+        Optional<ValueChange> valueChange, Aggregation aggregation, IEntity triggerEntity, boolean old) {
+        if (old) {
+            if (valueChange.isPresent()) {
+                return valueChange.get().getOldValue();
+            }
+        } else {
+            if (valueChange.isPresent()) {
+                return valueChange.get().getNewValue();
+            }
+        }
+
+        return triggerEntity.entityValue().getValue(aggregation.getFieldId());
+    }
+
+    // 构造目标实例的旧实例,包含这次操作之前的值.
+    private IEntity buildOldEntity(CalculationContext context, IEntity entity) {
+        IEntity copyEntity = entity.copy();
+        context.getValueChanges().stream()
+            .filter(vc -> vc.getEntityId() == copyEntity.id())
+            .map(vc -> vc.getOldValue())
+            .filter(od -> od.isPresent())
+            .forEach(od -> {
+                if (EmptyTypedValue.class.isInstance(od.get())) {
+                    copyEntity.entityValue().remove(od.get().getField());
+                } else {
+                    copyEntity.entityValue().addValue(od.get());
+                }
+            });
+        return copyEntity;
+    }
+
+    private Optional<ValueChange> findChange(CalculationContext context, Aggregation aggregation, IEntity entity) {
+        Optional<IEntityClass> triggerEntityClassOp =
+            context.getMetaManager().get().load(entity.entityClassRef());
+        if (!triggerEntityClassOp.isPresent()) {
+            throw new CalculationException(
+                String.format("The expected target object meta information was not found.[%s]",
+                    entity.entityClassRef()));
+        }
+
+        IEntityClass triggerEntityClass = triggerEntityClassOp.get();
+        Optional<IEntityField> triggerFieldOp = triggerEntityClass.field(aggregation.getFieldId());
+        if (!triggerFieldOp.isPresent()) {
+            throw new CalculationException(
+                String.format("The expected field (%s) does not exist.", aggregation.getFieldId()));
+        }
+
+        return context.getValueChange(entity, triggerFieldOp.get());
     }
 
     @Override
@@ -269,57 +406,45 @@ public class AggregationCalculationLogic implements CalculationLogic {
     }
 
     @Override
+    public boolean need(CalculationContext context, IEntityClass entityClass, IEntityField field) {
+        Collection<IEntityClass> relationshipClass = entityClass.relationship().stream()
+            .filter(r -> r.getRelationType() == Relationship.RelationType.MANY_TO_ONE)
+            .map(r -> r.getRightEntityClass(entityClass.profile()))
+            .collect(Collectors.toList());
+
+        /*
+          关系中含有条件,并且条中出现目标字段的将返回true.
+         */
+        for (IEntityClass rec : relationshipClass) {
+            for (IEntityField relationField : rec.fields()) {
+                // 聚合指向当前字段且含有条件.判断条件中是否出现的字段有改变.
+                if (relationField.calculationType() == CalculationType.AGGREGATION
+                    && ((Aggregation) relationField.config().getCalculation()).getConditions().isPresent()
+                    && field.id() == ((Aggregation) relationField.config().getCalculation()).getFieldId()) {
+                    Conditions conditions =
+                        ((Aggregation) relationField.config().getCalculation()).getConditions().get();
+
+                    /*
+                    判断关系类型中的聚合字段条件中出现的字段有没有出现在valueChange中.
+                    如果出现表示需要重新判断是否需要聚合,所以当前字段不论有无改变都需要重新计算.
+                     */
+                    Collection<IEntityField> conditionFields = conditions.collectField();
+                    for (IEntityField conditionField : conditionFields) {
+                        if (context.getValueChanges().stream()
+                            .anyMatch(v -> v.getField().id() == conditionField.id())) {
+                            return true;
+                        }
+                    }
+                }
+
+            }
+        }
+        return false;
+    }
+
+    @Override
     public CalculationType supportType() {
         return CalculationType.AGGREGATION;
-    }
-
-    /**
-     * 根据条件和id来判断这条数据是否符合聚合范围.
-     *
-     * @param conditions  条件信息.
-     * @return 是否符合.
-     */
-    private boolean checkEntityByCondition(Conditions conditions) {
-        if (conditions == null || conditions.size() == 0) {
-            return true;
-        }
-        return true;
-    }
-
-    /**
-     * 得到统计值.
-     *
-     * @param aggregation             聚合配置.
-     * @param sourceEntity            来源实例.
-     * @param entityClass             对象结构.
-     * @param metaManager             meta.
-     * @param conditionsSelectStorage 条件查询.
-     * @return 统计数字.
-     */
-    private long countAggregationEntity(Aggregation aggregation, IEntity sourceEntity, IEntityClass entityClass,
-                                        MetaManager metaManager, ConditionsSelectStorage conditionsSelectStorage) {
-        // 得到count值
-        Optional<IEntityClass> aggEntityClass =
-            metaManager.load(aggregation.getClassId(), sourceEntity.entityClassRef().getProfile());
-        long count = 0;
-        if (aggEntityClass.isPresent()) {
-            Conditions conditions = aggregation.getConditions();
-            // 根据关系id得到关系字段
-            Optional<IEntityField> entityField = aggEntityClass.get().field(aggregation.getRelationId());
-            if (entityField.isPresent()) {
-                conditions.addAnd(new Condition(entityField.get(),
-                    ConditionOperator.EQUALS, new LongValue(entityField.get(), sourceEntity.id())));
-            }
-            Page emptyPage = Page.emptyPage();
-            try {
-                conditionsSelectStorage.select(conditions, aggEntityClass.get(),
-                    SelectConfig.Builder.anSelectConfig().withPage(emptyPage).build());
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-            count = emptyPage.getTotalCount();
-        }
-        return count;
     }
 
     /**

@@ -38,7 +38,7 @@ public class AggregationFunctionFactoryImpl {
                 return new SumFunction();
             default:
                 throw new IllegalArgumentException(
-                        String.format("Unrecognized physical aggregationFunction type.[%d]", aggregationType.toString()));
+                    String.format("Unrecognized physical aggregationFunction type.[%d]", aggregationType.toString()));
         }
     }
 }

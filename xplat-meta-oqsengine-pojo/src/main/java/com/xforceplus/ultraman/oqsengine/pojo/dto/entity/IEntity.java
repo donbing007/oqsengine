@@ -117,6 +117,13 @@ public interface IEntity {
     }
 
     /**
+     * 挤出所有空值.
+     */
+    public default void squeezeEmpty() {
+        entityValue().squeezeEmpty();
+    }
+
+    /**
      * 使当前对象是干净的.
      */
     public default void neat() {

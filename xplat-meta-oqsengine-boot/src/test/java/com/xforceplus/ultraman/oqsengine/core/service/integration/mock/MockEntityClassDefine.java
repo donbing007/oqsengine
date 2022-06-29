@@ -3,6 +3,8 @@ package com.xforceplus.ultraman.oqsengine.core.service.integration.mock;
 import com.xforceplus.ultraman.oqsengine.common.profile.OqsProfile;
 import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.SegmentInfo;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.AggregationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
@@ -16,6 +18,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Aggreg
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.AutoFill;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Formula;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Lookup;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.sql.Types;
@@ -54,10 +57,6 @@ public class MockEntityClassDefine {
 
     private static long odLookupOriginalEntityClassId = baseClassId - 8;
     private static long odLookupTargetEntityClassId = baseClassId - 9;
-    private static long doLookupEntityClassId = baseClassId - 10;
-    private static long doLookupTargetOriginalEntityClassId = baseClassId - 11;
-    private static long ooLookupOriginalEntityClassId = baseClassId - 12;
-    private static long ooLookupTargetOriginalEntityClassId = baseClassId - 13;
 
     public static IEntityClass L0_ENTITY_CLASS;
     public static IEntityClass L1_ENTITY_CLASS;
@@ -68,7 +67,7 @@ public class MockEntityClassDefine {
     /*
      * 用户(用户名称, 用户编号, 订单总数count, 总消费金额sum, 平均消费金额avg, 最大消费金额max, 最小消费金额min)
      *   |---订单 (订单号, 下单时间, 订单项总数count, 总金额sum, 最大金额max, 最小金额min, 用户编号lookup, 总数量sum, 最大数量max, 最小数量min, 最大时间max,
-     *   最小时间min, 平均数量avg, 订单项平均价格formula)
+     *   最小时间min, 平均数量avg, 订单项平均价格formula, 订单项数量大于1金额sum)
      *        |---订单项 (单号lookup, 物品名称, 金额, 数量, 时间)
      */
     public static IEntityClass USER_CLASS;
@@ -150,6 +149,8 @@ public class MockEntityClassDefine {
         orderTotalTimeMaxFieldId,
         // 订单最小时间.
         orderTotalTimeMinFieldId,
+        //订单项数量大于1金额sum
+        orderTotalGtOnePriceSumFieldId,
         // 订单lookup用户编号.
         orderUserCodeLookupFieldId,
         // 订单-订单项外键标识.
@@ -619,7 +620,6 @@ public class MockEntityClassDefine {
                             .withCalculation(
                                 Aggregation.Builder.anAggregation()
                                     .withAggregationType(AggregationType.AVG)
-                                    .withConditions(Conditions.buildEmtpyConditions())
                                     .withClassId(orderClassId)
                                     .withFieldId(Long.MAX_VALUE - FieldId.orderTotalPriceSumFieldId.ordinal())
                                     .withRelationId(orderUserForeignField.id()).build()
@@ -639,7 +639,6 @@ public class MockEntityClassDefine {
                             .withCalculation(
                                 Aggregation.Builder.anAggregation()
                                     .withAggregationType(AggregationType.MAX)
-                                    .withConditions(Conditions.buildEmtpyConditions())
                                     .withClassId(orderClassId)
                                     .withFieldId(Long.MAX_VALUE - FieldId.orderTotalPriceSumFieldId.ordinal())
                                     .withRelationId(orderUserForeignField.id()).build()
@@ -659,7 +658,6 @@ public class MockEntityClassDefine {
                             .withCalculation(
                                 Aggregation.Builder.anAggregation()
                                     .withAggregationType(AggregationType.MIN)
-                                    .withConditions(Conditions.buildEmtpyConditions())
                                     .withClassId(orderClassId)
                                     .withFieldId(Long.MAX_VALUE - FieldId.orderTotalPriceSumFieldId.ordinal())
                                     .withRelationId(orderUserForeignField.id()).build()
@@ -683,22 +681,22 @@ public class MockEntityClassDefine {
             ).build();
 
         SIMPLE_ORDER_CLASS = EntityClass.Builder.anEntityClass()
-                .withId(orderClassId)
-                .withCode("order")
-                .withLevel(0)
-                .withField(
-                        EntityField.Builder.anEntityField()
-                                .withId(Long.MAX_VALUE - FieldId.orderCreateTimeFieldId.ordinal())
-                                .withFieldType(FieldType.DATETIME)
-                                .withName("下单时间")
-                                .withConfig(
-                                        FieldConfig.Builder.anFieldConfig()
-                                                .withSearchable(true)
-                                                .withFuzzyType(FieldConfig.FuzzyType.NOT)
-                                                .withFieldSense(FieldConfig.FieldSense.NORMAL)
-                                                .withRequired(true).build()
-                                ).build()
-                ).build();
+            .withId(orderClassId)
+            .withCode("order")
+            .withLevel(0)
+            .withField(
+                EntityField.Builder.anEntityField()
+                    .withId(Long.MAX_VALUE - FieldId.orderCreateTimeFieldId.ordinal())
+                    .withFieldType(FieldType.DATETIME)
+                    .withName("下单时间")
+                    .withConfig(
+                        FieldConfig.Builder.anFieldConfig()
+                            .withSearchable(true)
+                            .withFuzzyType(FieldConfig.FuzzyType.NOT)
+                            .withFieldSense(FieldConfig.FieldSense.NORMAL)
+                            .withRequired(true).build()
+                    ).build()
+            ).build();
 
         ORDER_CLASS = EntityClass.Builder.anEntityClass()
             .withId(orderClassId)
@@ -963,6 +961,58 @@ public class MockEntityClassDefine {
                     )
                     .build()
             )
+            .withField(
+                EntityField.Builder.anEntityField()
+                    .withId(Long.MAX_VALUE - FieldId.orderTotalGtOnePriceSumFieldId.ordinal())
+                    .withFieldType(FieldType.DECIMAL)
+                    .withName("订单项数量大于1金额sum")
+                    .withConfig(
+                        FieldConfig.Builder.anFieldConfig()
+                            .withLen(19)
+                            .withPrecision(6)
+                            .withScale(1)
+                            .withCalculation(
+                                Aggregation.Builder.anAggregation()
+                                    .withClassId(orderItemClassId)
+                                    .withFieldId(Long.MAX_VALUE - FieldId.orderItemPriceFieldId.ordinal())
+                                    .withRelationId(orderOrderItemForeignField.id())
+                                    .withAggregationType(AggregationType.SUM)
+                                    .withConditions(
+                                        // 数量大于1才需要聚合.
+                                        Conditions.buildEmtpyConditions()
+                                            .addAnd(
+                                                new Condition(
+                                                    EntityField.Builder.anEntityField()
+                                                        .withId(Long.MAX_VALUE - FieldId.orderItemNumFieldId.ordinal())
+                                                        .withFieldType(FieldType.LONG)
+                                                        .withName("数量")
+                                                        .withConfig(
+                                                            FieldConfig.Builder.anFieldConfig()
+                                                                .withSearchable(true)
+                                                                .withLen(19)
+                                                                .withPrecision(6).build()
+                                                        ).build(),
+                                                    ConditionOperator.GREATER_THAN,
+                                                    new LongValue(
+                                                        EntityField.Builder.anEntityField()
+                                                            .withId(
+                                                                Long.MAX_VALUE - FieldId.orderItemNumFieldId.ordinal())
+                                                            .withFieldType(FieldType.LONG)
+                                                            .withName("数量")
+                                                            .withConfig(
+                                                                FieldConfig.Builder.anFieldConfig()
+                                                                    .withSearchable(true)
+                                                                    .withLen(19)
+                                                                    .withPrecision(6).build()
+                                                            ).build(),
+                                                        1L
+                                                    )
+                                                )
+                                            )
+                                    ).build()
+                            ).build()
+                    ).build()
+            )
             .withField(orderUserForeignField)
             .withRelations(
                 Arrays.asList(
@@ -1195,7 +1245,8 @@ public class MockEntityClassDefine {
             Mockito.when(metaManager.load(e.id(), null)).thenReturn(Optional.of(e));
             Mockito.when(metaManager.load(e.ref())).thenReturn(Optional.of(e));
         }
-        Mockito.when(metaManager.appLoad(Mockito.anyString())).thenReturn(Stream.of(ORDER_CLASS).collect(Collectors.toList()));
+        Mockito.when(metaManager.appLoad(Mockito.anyString()))
+            .thenReturn(Stream.of(ORDER_CLASS).collect(Collectors.toList()));
 
     }
 
@@ -1204,7 +1255,8 @@ public class MockEntityClassDefine {
      */
     public static void changeOrder(MetaManager metaManager) {
         Mockito.when(metaManager.load(SIMPLE_ORDER_CLASS.id(), "")).thenReturn(Optional.of(SIMPLE_ORDER_CLASS));
-        Mockito.when(metaManager.load(SIMPLE_ORDER_CLASS.id(), OqsProfile.UN_DEFINE_PROFILE)).thenReturn(Optional.of(SIMPLE_ORDER_CLASS));
+        Mockito.when(metaManager.load(SIMPLE_ORDER_CLASS.id(), OqsProfile.UN_DEFINE_PROFILE))
+            .thenReturn(Optional.of(SIMPLE_ORDER_CLASS));
         Mockito.when(metaManager.load(SIMPLE_ORDER_CLASS.id(), null)).thenReturn(Optional.of(SIMPLE_ORDER_CLASS));
         Mockito.when(metaManager.load(SIMPLE_ORDER_CLASS.ref())).thenReturn(Optional.of(SIMPLE_ORDER_CLASS));
     }

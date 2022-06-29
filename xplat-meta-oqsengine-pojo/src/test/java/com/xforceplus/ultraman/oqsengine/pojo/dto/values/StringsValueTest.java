@@ -10,6 +10,18 @@ import org.junit.jupiter.api.Test;
 public class StringsValueTest {
 
     @Test
+    public void testInclude() throws Exception {
+        StringsValue value = new StringsValue(EntityField.CREATE_TIME_FILED, "a", "b", "c");
+        Assertions.assertTrue(value.include(
+            new StringsValue(EntityField.CREATE_TIME_FILED, "c")
+        ));
+
+        Assertions.assertTrue(value.include(
+            new StringValue(EntityField.CREATE_TIME_FILED, "c")
+        ));
+    }
+
+    @Test
     public void testEquals() throws Exception {
         StringsValue one = new StringsValue(EntityField.CREATE_TIME_FILED, "a", "b");
         StringsValue two = new StringsValue(EntityField.CREATE_TIME_FILED, "a", "c");

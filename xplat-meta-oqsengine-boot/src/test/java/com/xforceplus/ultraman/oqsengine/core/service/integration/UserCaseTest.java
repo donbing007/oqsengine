@@ -17,6 +17,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EnumValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LookupValue;
@@ -164,6 +165,34 @@ public class UserCaseTest {
         }
     }
 
+    @Test
+    public void testNull() throws Exception {
+        IEntity entity = Entity.Builder.anEntity()
+            .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
+            .withValues(Arrays.asList(
+                    new EmptyTypedValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get()),
+                    new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "0")
+                )
+            ).build();
+
+        Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(entity).getResultStatus());
+
+        Conditions conditions = Conditions.buildEmtpyConditions()
+            .addAnd(
+                new Condition(
+                    MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(),
+                    ConditionOperator.IS_NULL,
+                    new EmptyTypedValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get())
+                )
+            );
+        Collection<IEntity> entities = entitySearchService.selectByConditions(
+            conditions,
+            MockEntityClassDefine.L2_ENTITY_CLASS.ref(),
+            ServiceSelectConfig.Builder.anSearchConfig().build()).getValue().get();
+        Assertions.assertEquals(1, entities.size());
+        Assertions.assertEquals(entity.id(), entities.stream().findFirst().get().id());
+    }
+
     /**
      * 测试事务内统计和事务外统计的正确性.
      */
@@ -172,7 +201,7 @@ public class UserCaseTest {
         Transaction tx = transactionManager.create(5000);
         transactionManager.bind(tx.id());
 
-        com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[] targetEntities =
+        IEntity[] targetEntities =
             IntStream.range(0, 10).mapToObj(i ->
                 Entity.Builder.anEntity()
                     .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
@@ -1376,5 +1405,60 @@ public class UserCaseTest {
             entity.id(), MockEntityClassDefine.L2_ENTITY_CLASS.ref()).getValue().get();
 
         Assertions.assertEquals("a,c", entity.entityValue().getValue("l2-strings").get().valueToString());
+    }
+
+    /**
+     * 测试批量更新使用父类更新子类.
+     */
+    @Test
+    public void testReplaceFather() throws Exception {
+        IEntity entity0 = Entity.Builder.anEntity()
+            .withId(10000000L)
+            .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
+            .withValue(
+                new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 100L)
+            )
+            .withValue(
+                new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "v1")
+            ).build();
+        entityManagementService.build(entity0);
+
+        IEntity entity1 = Entity.Builder.anEntity()
+            .withId(10000001L)
+            .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
+            .withValue(
+                new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 102L)
+            )
+            .withValue(
+                new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "v2")
+            ).build();
+        entityManagementService.build(entity1);
+
+        IEntity replaceEntity0 = Entity.Builder.anEntity()
+            .withId(10000000L)
+            .withEntityClassRef(MockEntityClassDefine.L0_ENTITY_CLASS.ref())
+            .withValue(
+                new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 200L)
+            ).build();
+        IEntity replaceEntity1 = Entity.Builder.anEntity()
+            .withId(10000001L)
+            .withEntityClassRef(MockEntityClassDefine.L1_ENTITY_CLASS.ref())
+            .withValue(
+                new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 201L)
+            ).build();
+        OqsResult result = entityManagementService.replace(new IEntity[] {replaceEntity0, replaceEntity1});
+        Assertions.assertTrue(result.isSuccess());
+
+        IEntity replaceEntity = entitySearchService
+            .selectOne(10000000L, MockEntityClassDefine.L2_ENTITY_CLASS.ref()).getValue().get();
+
+        Assertions.assertEquals(200L, replaceEntity.entityValue().getValue("l0-long").get().getValue());
+        Assertions.assertEquals("v1", replaceEntity.entityValue().getValue("l2-string").get().getValue());
+
+        replaceEntity = entitySearchService
+            .selectOne(10000001L, MockEntityClassDefine.L2_ENTITY_CLASS.ref()).getValue().get();
+
+        Assertions.assertEquals(201L, replaceEntity.entityValue().getValue("l0-long").get().getValue());
+        Assertions.assertEquals("v2", replaceEntity.entityValue().getValue("l2-string").get().getValue());
     }
 }

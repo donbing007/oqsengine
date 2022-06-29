@@ -57,7 +57,6 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -389,7 +388,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
         //  当存在旧版本时，获取旧版本信息.
         if (oldVersion > NOT_EXIST_VERSION) {
             oldMetas = CacheToStorageGenerator
-                .toEntityClassStorages(OBJECT_MAPPER,
+                .toEntityClassStorages(version,
                     remoteMultiplyLoading(appEntityIdList(appId, oldVersion), oldVersion));
         }
 
@@ -476,6 +475,47 @@ public class DefaultCacheExecutor implements CacheExecutor {
         throws JsonProcessingException {
         if (null != ids && ids.size() > 0) {
             return remoteMultiplyLoading(ids, version);
+        }
+        return null;
+    }
+
+    @Override
+    public String remoteFieldLoad(long entityClassId, long entityFieldId, String profile, int version)
+        throws JsonProcessingException {
+        String[] keys = {
+            entityStorageKeys
+        };
+
+        //  get from redis
+        String redisValue = syncCommands.evalsha(
+            entityClassStorageScriptSha,
+            ScriptOutputType.VALUE,
+            keys, version + "", Long.toString(entityClassId));
+
+        //  读取entityClass信息
+        Map<String, String> storageValues = OBJECT_MAPPER.readValue(redisValue, Map.class);
+        if (null == storageValues) {
+            return null;
+        }
+
+        //  从field中找.
+        String value = storageValues.get(ELEMENT_FIELDS + "." + entityFieldId);
+        if (null != value && !value.isEmpty()) {
+            return value;
+        }
+
+        //  从profile中找.
+        value = storageValues.get(generateProfileEntity(profile, entityFieldId));
+        if (null != value && !value.isEmpty()) {
+            return value;
+        }
+
+        //  递归从父类中找.
+        String fatherIdString = storageValues.get(ELEMENT_FATHER);
+        if (null != value && !value.isEmpty()) {
+            entityClassId = Long.parseLong(fatherIdString);
+
+            return remoteFieldLoad(entityClassId, entityFieldId, profile, version);
         }
         return null;
     }
@@ -1009,7 +1049,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
         syncCommands.hset(key, ELEMENT_VERSION, Integer.toString(newStorage.getVersion()));
 
         //  father & ancestors
-        if (null != newStorage.getFatherId()) {
+        if (null != newStorage.getFatherId() && newStorage.getFatherId() > 0) {
             syncCommands.hset(key, ELEMENT_FATHER, Long.toString(newStorage.getFatherId()));
             if (null != newStorage.getAncestors() && newStorage.getAncestors().size() > 0) {
                 try {

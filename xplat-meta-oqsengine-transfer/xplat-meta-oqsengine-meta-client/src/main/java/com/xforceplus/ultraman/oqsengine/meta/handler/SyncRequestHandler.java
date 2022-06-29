@@ -95,7 +95,7 @@ public class SyncRequestHandler implements IRequestHandler {
         //  这里只判断是否watcher为空，如果服务watcher不为空
         if (null == watcher) {
             logger.warn("current gRpc-client is not init, can't offer appIds:{}.", watchElement);
-            forgotQueue.add(watchElement);
+            addToForgotQueue(watchElement);
             return false;
         }
 
@@ -111,10 +111,11 @@ public class SyncRequestHandler implements IRequestHandler {
             }
 
             if (watchElement.getVersion() == NOT_EXIST_VERSION || watchElement.getVersion() > w.getVersion()) {
-                if (!send(watcher.clientId(), watcher.uid(), true, true, RequestStatus.REGISTER, w)) {
+
+                if (!send(watcher.clientId(), watcher.uid(), true, true, RequestStatus.REGISTER, watchElement)) {
                     metricsRecorder.error(
                         w.getAppId(), SyncCode.REGISTER_ERROR.name(),
-                        String.format("send register failed, env %s", w.getEnv())
+                        String.format("send register failed, exist watchElement, env %s", w.getEnv())
                     );
 
                     return false;
@@ -129,7 +130,7 @@ public class SyncRequestHandler implements IRequestHandler {
         } else {
             //  watchExecutor not ready
             if (!requestWatchExecutor.isAlive(watcher.uid())) {
-                forgotQueue.add(watchElement);
+                addToForgotQueue(watchElement);
             } else {
                 if (!send(
                     watcher.clientId(),
@@ -333,29 +334,31 @@ public class SyncRequestHandler implements IRequestHandler {
                     entityClassSyncResponse.getEnv(), entityClassSyncResponse.getVersion(), e.getMessage()));
         }
 
-        if (!entityClassSyncResponse.getForce()) {
-            EntityClassSyncRequest entityClassSyncRequest = entityClassSyncRequestBuilder
-                .setClientId(requestWatchExecutor.watcher().clientId())
-                .setUid(entityClassSyncResponse.getUid())
-                .build();
-            try {
-                //  回写处理结果, entityClassSyncRequest为空则代表传输存在问题.
-                SendUtils.sendRequest(requestWatchExecutor.watcher(),
-                    entityClassSyncRequest,
-                    true
-                );
-            } catch (Exception e) {
-                metricsRecorder.error(entityClassSyncRequest.getAppId(), SyncCode.SEND_REQUEST_ERROR.name(),
-                    String.format("send sync result failed, env :%s, version : %s, cause : %s",
-                        entityClassSyncResponse.getEnv(), entityClassSyncResponse.getVersion(), e.getMessage()));
-                throw e;
+        if (null != entityClassSyncRequestBuilder) {
+            if (!entityClassSyncResponse.getForce()) {
+                EntityClassSyncRequest entityClassSyncRequest = entityClassSyncRequestBuilder
+                    .setClientId(requestWatchExecutor.watcher().clientId())
+                    .setUid(entityClassSyncResponse.getUid())
+                    .build();
+                try {
+                    //  回写处理结果, entityClassSyncRequest为空则代表传输存在问题.
+                    SendUtils.sendRequest(requestWatchExecutor.watcher(),
+                        entityClassSyncRequest,
+                        true
+                    );
+                } catch (Exception e) {
+                    metricsRecorder.error(entityClassSyncRequest.getAppId(), SyncCode.SEND_REQUEST_ERROR.name(),
+                        String.format("send sync result failed, env :%s, version : %s, cause : %s",
+                            entityClassSyncResponse.getEnv(), entityClassSyncResponse.getVersion(), e.getMessage()));
+                    throw e;
+                }
             }
-        }
 
-        if (entityClassSyncRequestBuilder.getStatus() == SYNC_OK.ordinal()) {
-            metricsRecorder.info(entityClassSyncResponse.getAppId(), SyncCode.SYNC_DATA_OK.name(),
-                String.format("sync-data ok, uid : %s, env : %s, version : %s", entityClassSyncResponse.getUid(),
-                    entityClassSyncResponse.getEnv(), entityClassSyncResponse.getVersion()));
+            if (entityClassSyncRequestBuilder.getStatus() == SYNC_OK.ordinal()) {
+                metricsRecorder.info(entityClassSyncResponse.getAppId(), SyncCode.SYNC_DATA_OK.name(),
+                    String.format("sync-data ok, uid : %s, env : %s, version : %s", entityClassSyncResponse.getUid(),
+                        entityClassSyncResponse.getEnv(), entityClassSyncResponse.getVersion()));
+            }
         }
     }
 
@@ -389,13 +392,18 @@ public class SyncRequestHandler implements IRequestHandler {
 
             //  当前关注此版本
             if (entityClassSyncResponse.getForce() || requestWatchExecutor.watcher().onWatch(w)) {
+                boolean needReturnResult = false;
                 //  执行外部传入的执行器
                 try {
-                    syncExecutor
+                    needReturnResult = syncExecutor
                         .sync(entityClassSyncResponse.getAppId(), entityClassSyncResponse.getEnv(), entityClassSyncResponse.getVersion(),
                             result);
                 } catch (Exception e) {
                     throw new MetaSyncClientException(e.getMessage(), false);
+                }
+
+                if (!needReturnResult) {
+                    return null;
                 }
                 requestWatchExecutor.update(w);
 
@@ -537,5 +545,11 @@ public class SyncRequestHandler implements IRequestHandler {
      */
     public Queue<WatchElement> getForgotQueue() {
         return forgotQueue;
+    }
+
+    private void addToForgotQueue(WatchElement watchElement) {
+        if (forgotQueue.stream().noneMatch(watchElement::logicEquals)) {
+            forgotQueue.add(watchElement);
+        }
     }
 }

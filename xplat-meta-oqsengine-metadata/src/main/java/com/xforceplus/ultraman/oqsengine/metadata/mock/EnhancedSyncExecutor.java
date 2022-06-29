@@ -20,15 +20,19 @@ public class EnhancedSyncExecutor extends EntityClassSyncExecutor {
      * 同步appId对应的EntityClass package.
      */
     @Override
-    public void sync(String appId, String env, int version, EntityClassSyncRspProto entityClassSyncRspProto) {
+    public boolean sync(String appId, String env, int version, EntityClassSyncRspProto entityClassSyncRspProto) {
+        boolean isSuccess = false;
         try {
-            super.sync(appId, env, version, entityClassSyncRspProto);
+            isSuccess = super.sync(appId, env, version, entityClassSyncRspProto);
         } catch (Exception e) {
             throw e;
         }
 
-        syncedEntityClassMaps
-            .putIfAbsent(appId + "_" + version, entityClassSyncRspProto.getEntityClassesList());
+        if (isSuccess) {
+            syncedEntityClassMaps
+                .putIfAbsent(appId + "_" + version, entityClassSyncRspProto.getEntityClassesList());
+        }
+        return isSuccess;
     }
 
     public List<EntityClassInfo> getEntityClasses(String appId, int version) {

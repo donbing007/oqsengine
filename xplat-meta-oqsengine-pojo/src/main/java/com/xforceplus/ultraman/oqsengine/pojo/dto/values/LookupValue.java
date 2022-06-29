@@ -50,11 +50,21 @@ public class LookupValue extends AbstractValue<Long> {
 
     @Override
     protected IValue<Long> doCopy(IEntityField newField, String attachment) {
-        return new LongValue(newField, getValue(), attachment);
+        return new LookupValue(newField, getValue(), attachment);
+    }
+
+    @Override
+    protected IValue<Long> doCopy(Long value) {
+        return new LookupValue(getField(), value, getAttachment().orElse(null));
     }
 
     @Override
     protected boolean skipTypeCheckWithCopy() {
         return true;
+    }
+
+    @Override
+    public int compareTo(IValue o) {
+        return 0;
     }
 }

@@ -134,6 +134,11 @@
                                     echo "Begin the pre-Commit check."
                                     exec mvn checkstyle:check
                                 </pre-commit>
+                                <commit-msg>
+                                    echo "Begin validate commit message."
+                                    export git_message_file=$(echo $1)
+                                    sh ./script/git/validate-commit-message.sh
+                                </commit-msg>
                             </hooks>
                         </configuration>
                     </execution>

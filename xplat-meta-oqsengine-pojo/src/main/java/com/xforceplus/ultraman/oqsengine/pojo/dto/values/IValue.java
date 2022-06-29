@@ -11,7 +11,7 @@ import java.util.Optional;
  * @version 0.1 2020/2/18 20:54
  * @since 1.8
  */
-public interface IValue<T> {
+public interface IValue<T> extends Comparable<IValue> {
 
     /**
      * 属性值相关的字段信息.
@@ -81,6 +81,14 @@ public interface IValue<T> {
     }
 
     /**
+     * 复制一个新值, 使用新的值,新的字段和附件.
+     *
+     * @param value 新的值.
+     * @return 新实例.
+     */
+    public IValue<T> copy(T value);
+
+    /**
      * 复制一个新的实体.使用新的字段和新的附件,但是值为当前实例的.
      *
      * @param newField   新的字段.
@@ -120,5 +128,32 @@ public interface IValue<T> {
      */
     public default boolean compareByString() {
         return true;
+    }
+
+    /**
+     * 两个IValue进行计算.
+     * 小于0表示当前值小于目标, 大于0表示当前值大于目标, 等于0两边相等.
+     *
+     * @param o 需要计算的目标.
+     * @return 结果.
+     */
+    @Override
+    public int compareTo(IValue o);
+
+    /**
+     * 包含,如果只是一个值那么其等同于 equals.<br />
+     * 如果是类似于 StringsValue 包含的多值类型,那么意义为判断给定的值是否当前值持有.<br />
+     * <pre>
+     *     ["a", "b", "c"] include "a"
+     *     ["a", "b", "c"] not include "e"
+     * </pre>
+     * 上例中,a被包含了返回true, e不包含返回false.
+     * 除此之外等价于equals.
+     *
+     * @param o 需要检查的值.
+     * @return 结果, true包含, false不包含.
+     */
+    public default boolean include(IValue o) {
+        return this.equals(o);
     }
 }

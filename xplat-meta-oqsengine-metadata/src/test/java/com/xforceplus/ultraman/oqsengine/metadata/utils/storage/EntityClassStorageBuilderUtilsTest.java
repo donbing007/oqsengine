@@ -48,7 +48,9 @@ public class EntityClassStorageBuilderUtilsTest {
 
                 Assertions.assertNotNull(entityClassStorage);
 
-                Assertions.assertEquals(expectedEntityStorage.getFather(), entityClassStorage.getFatherId());
+                if (expectedEntityStorage.getFather() > 0) {
+                    Assertions.assertEquals(expectedEntityStorage.getFather(), entityClassStorage.getFatherId());
+                }
             }
         );
     }

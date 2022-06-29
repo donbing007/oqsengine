@@ -97,4 +97,8 @@ public class WatchElement {
 
         return new WatchElement(this.appId, this.env, this.version, this.status);
     }
+
+    public boolean logicEquals(WatchElement w) {
+        return w.appId.equals(this.appId) && w.env.equals(this.env) && w.version == this.version;
+    }
 }

@@ -25,8 +25,9 @@ public class DateTimeValue extends AbstractValue<LocalDateTime> {
      */
     public static final ZoneId ZONE_ID = ZoneId.of("Asia/Shanghai");
 
-    public static final LocalDateTime MIN_DATE_TIME = LocalDateTime.of(LocalDate.of(0, 1, 1),
-        LocalTime.MIN);
+    public static final LocalDateTime MIN_DATE_TIME = LocalDateTime.of(LocalDate.of(0, 1, 1), LocalTime.MIN);
+
+    public static final LocalDateTime MAX_DATE_TIME = LocalDateTime.of(LocalDate.of(9999, 1, 1), LocalTime.MAX);
 
     public DateTimeValue(IEntityField field, LocalDateTime value) {
         super(field, value);
@@ -60,6 +61,11 @@ public class DateTimeValue extends AbstractValue<LocalDateTime> {
     @Override
     protected IValue<LocalDateTime> doCopy(IEntityField newField, String attachment) {
         return new DateTimeValue(newField, getValue(), attachment);
+    }
+
+    @Override
+    protected IValue<LocalDateTime> doCopy(LocalDateTime value) {
+        return new DateTimeValue(getField(), value, getAttachment().orElse(null));
     }
 
     @Override

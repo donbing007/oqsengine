@@ -7,6 +7,7 @@ import com.xforceplus.ultraman.oqsengine.calculation.context.DefaultCalculationC
 import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFactory;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
+import com.xforceplus.ultraman.oqsengine.common.map.MapUtils;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.common.mode.OqsMode;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
@@ -50,6 +51,7 @@ import java.sql.SQLException;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -361,6 +363,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 for (int i = 0; i < entities.length; i++) {
                     currentEntity = entities[i];
                     currentEntityClass = entityClasses[i];
+
                     // 计算字段处理.
                     calculationContext.focusSourceEntity(currentEntity);
                     calculationContext.focusEntity(currentEntity, currentEntityClass);
@@ -371,6 +374,11 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     if (VerifierResult.OK != verify.getKey()) {
                         return transformVerifierResultToOperationResult(verify, currentEntity);
                     }
+
+                    /*
+                    只在时不需要空值,必须在校验之后否则无法给出必填字段设置为null的错误.
+                     */
+                    currentEntity.squeezeEmpty();
 
                     if (currentEntity.isDirty()) {
                         dirtyEntities.add(currentEntity);
@@ -503,8 +511,13 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     return transformVerifierResultToOperationResult(verify, entity);
                 }
 
+                /*
+                    只在时不需要空值,必须在校验之后否则无法给出必填字段设置为null的错误.
+                     */
+                currentEntity.squeezeEmpty();
+
                 // 非脏,不需要继续.
-                if (!entity.isDirty()) {
+                if (!currentEntity.isDirty()) {
 
                     if (logger.isDebugEnabled()) {
                         logger.debug("[build] The instance is not \"dirty\" and creation is abandoned.");
@@ -625,11 +638,11 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             return oqsResult;
         }
 
-        Map<Long, IEntityClass> entityClassTable = Arrays.stream(entityClasses).collect(Collectors.toMap(
-            ec -> ec.id(),
-            ec -> ec,
-            (ec0, ec1) -> ec0
-        ));
+        // 对象信息速查看,key为对象实例id,值为相应的entityClass
+        Map<Long, IEntityClass> entityClassTable = new HashMap<>(MapUtils.calculateInitSize(dirtyEntities.length));
+        for (int i = 0; i < dirtyEntities.length; i++) {
+            entityClassTable.put(dirtyEntities[i].id(), entityClasses[i]);
+        }
         // help gc
         entityClasses = null;
 
@@ -711,7 +724,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
                             newEntity.markTime();
 
-                            IEntityClass entityClass = entityClassTable.get(newEntity.entityClassRef().getId());
+                            IEntityClass entityClass = entityClassTable.get(newEntity.id());
                             Map.Entry<VerifierResult, IEntityField> verify = verifyFields(entityClass, newEntity);
                             if (VerifierResult.OK != verify.getKey()) {
                                 return transformVerifierResultToOperationResult(verify, newEntity);
@@ -731,7 +744,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     EntityPackage entityPackage = new EntityPackage();
                     // 忽略掉所有替换后计算后仍然是干净的对象,表示没有任何改变.
                     targetEntities.stream().filter(e -> e.isDirty()).forEach(e ->
-                        entityPackage.put(e, entityClassTable.get(e.entityClassRef().getId()), false)
+                        entityPackage.put(e, entityClassTable.get(e.id()), false)
                     );
 
                     if (entityPackage.isEmpty()) {
@@ -1473,7 +1486,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             IEntityField field;
             for (IValue newValue : newEntity.entityValue().values()) {
                 field = newValue.getField();
-                oldValue = oldEntity.entityValue().getValue(field.id()).orElse(new EmptyTypedValue(field));
+                oldValue = oldEntity.entityValue().getValue(field).orElse(new EmptyTypedValue(field));
 
                 if (newValue.equals(oldValue)) {
                     continue;

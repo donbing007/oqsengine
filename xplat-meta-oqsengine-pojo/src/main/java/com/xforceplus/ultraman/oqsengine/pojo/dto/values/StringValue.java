@@ -33,4 +33,9 @@ public class StringValue extends AbstractValue<String> {
     protected IValue<String> doCopy(IEntityField newField, String attachment) {
         return new StringValue(newField, getValue(), attachment);
     }
+
+    @Override
+    protected IValue<String> doCopy(String value) {
+        return new StringValue(getField(), value, getAttachment().orElse(null));
+    }
 }

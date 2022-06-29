@@ -5,11 +5,18 @@ import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams;
 import com.xforceplus.ultraman.oqsengine.meta.common.executor.IBasicSyncExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.ThreadUtils;
 import io.grpc.BindableService;
+import io.grpc.Grpc;
+import io.grpc.HttpConnectProxiedSocketAddress;
+import io.grpc.Metadata;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
+import io.grpc.ServerCall;
+import io.grpc.ServerCallHandler;
+import io.grpc.ServerInterceptor;
 import io.grpc.internal.GrpcUtil;
 import io.grpc.netty.NettyServerBuilder;
 import java.io.IOException;
+import java.net.SocketAddress;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
@@ -49,6 +56,11 @@ public class GRpcServer implements IBasicSyncExecutor {
         this.port = port;
     }
 
+    private boolean interceptOn = true;
+
+    public void setInterceptOn(boolean interceptOn) {
+        this.interceptOn = interceptOn;
+    }
 
     @Override
     @PostConstruct
@@ -56,8 +68,36 @@ public class GRpcServer implements IBasicSyncExecutor {
         entityClassSyncServer.start();
 
         try {
-            grpcServer = serverBuilder().build()
-                .start();
+            ServerBuilder serverBuilder = serverBuilder();
+            if (interceptOn) {
+                serverBuilder.intercept(new ServerInterceptor() {
+                    Metadata.Key<String> metaClientId = Metadata.Key.of("clientId", Metadata.ASCII_STRING_MARSHALLER);
+
+                    @Override
+                    public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> call,
+                                                                                 Metadata headers,
+                                                                                 ServerCallHandler<ReqT, RespT> next) {
+
+
+                        SocketAddress socketAddress = call.getAttributes().get(Grpc.TRANSPORT_ATTR_REMOTE_ADDR);
+
+                        String clientIdString = headers.get(metaClientId);
+                        if (null == clientIdString || clientIdString.isEmpty()) {
+                            clientIdString = "unknown clientId";
+                        }
+
+                        logger.info("ip : {}, clientId : {}, methodName : {}"
+                            , null != socketAddress ? socketAddress.toString() : "unknown"
+                            , clientIdString
+                            , call.getMethodDescriptor().getFullMethodName()
+                            );
+
+                        return next.startCall(call, headers);
+                    }
+                });
+            }
+
+            grpcServer = serverBuilder.build().start();
         } catch (IOException e) {
             logger.info("gRpcServer start failed, message : {}", e.getMessage());
             System.exit(-1);

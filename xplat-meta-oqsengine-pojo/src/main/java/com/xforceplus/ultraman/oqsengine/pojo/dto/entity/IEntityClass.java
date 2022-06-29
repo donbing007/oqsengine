@@ -156,7 +156,13 @@ public interface IEntityClass {
      * @return true 兼容, false 不兼容.
      */
     default boolean isCompatibility(long id) {
-        return family().stream().filter(e -> e.id() == id).count() >= 1;
+        for (IEntityClass entityClass : family()) {
+            if (entityClass.id() == id) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

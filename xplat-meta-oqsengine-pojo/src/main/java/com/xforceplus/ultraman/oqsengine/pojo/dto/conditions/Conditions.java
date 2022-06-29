@@ -3,17 +3,21 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.validation.ConditionValidation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.validation.fieldtype.ConditionOperatorFieldValidationFactory;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
-import com.xforceplus.ultraman.oqsengine.pojo.query.MemQuery;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import java.io.Serializable;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * 表示一系列条件组合.只支持以 And 方式进行组合.
@@ -110,16 +114,6 @@ public class Conditions implements Serializable {
     }
 
     /**
-     * 内存中查找.
-     *
-     * @param entities 输入数据对象列表
-     * @return 返回过滤的数据对象列表
-     */
-    public Collection<IEntity> match(Collection<IEntity> entities) {
-        return MemQuery.query(entities, this);
-    }
-
-    /**
      * 以 OR 连接一个新的条件.
      * 只有当所有条件都是 string 并且没有封闭时才可以.
      *
@@ -139,6 +133,49 @@ public class Conditions implements Serializable {
     public Conditions addOr(Conditions conditions, boolean close) {
 
         return doAdd(ConditionLink.OR, conditions, close);
+    }
+
+    /**
+     * 判断指定对象是否匹配当前条件.
+     * 注意: 这里不能处理条件单独指定元信息的情况.出现这种情况将会被判断为不匹配.
+     *
+     * @param entities 需要被判断的对象实例.
+     * @return 匹配的实例.
+     */
+    public Collection<IEntity> match(Collection<IEntity> entities) {
+        if (entities == null || entities.isEmpty() || this.isEmtpy()) {
+            return Collections.emptyList();
+        }
+
+        PredicateHolder holder = new PredicateHolder();
+        this.scan(holder::accept, holder::accept, holder::accept);
+
+        Predicate<IEntity> predicate = holder.getPredicate();
+
+        return Optional.ofNullable(entities)
+            .orElseGet(Collections::emptyList)
+            .stream()
+            .filter(predicate).collect(Collectors.toList());
+    }
+
+    /**
+     * 匹配的单体版本.
+     * 注意: 这里不能处理条件单独指定元信息的情况.出现这种情况将会被判断为不匹配.
+     *
+     * @param entity 需要判断的实体.
+     * @return true 匹配, false 不匹配.
+     */
+    public boolean match(IEntity entity) {
+        if (entity == null || this.isEmtpy()) {
+            return false;
+        }
+
+        PredicateHolder holder = new PredicateHolder();
+        this.scan(holder::accept, holder::accept, holder::accept);
+
+        Predicate<IEntity> predicate = holder.getPredicate();
+
+        return predicate.test(entity);
     }
 
     /**
@@ -212,6 +249,18 @@ public class Conditions implements Serializable {
         List<Condition> conditionList = new LinkedList<>();
         iterTree(c -> isValueNode(c), c -> conditionList.add(((ValueConditionNode) c).getCondition()), false);
         return conditionList;
+    }
+
+    /**
+     * 收集条件中的所有字段.
+     *
+     * @return 不重复的条件字段列表.
+     */
+    public Collection<IEntityField> collectField() {
+        return collectCondition().stream()
+            .map(c -> c.getField())
+            .distinct()
+            .collect(Collectors.toList());
     }
 
     /**
@@ -536,6 +585,119 @@ public class Conditions implements Serializable {
                 }
             }
 
+        }
+    }
+
+    /**
+     * 用以match的解析器.
+     */
+    private static class PredicateHolder {
+
+        private Deque<Object> stack = new LinkedList<>();
+
+        public void accept(LinkConditionNode linkConditionNode) {
+            stack.push(linkConditionNode.getLink());
+        }
+
+        public void accept(ValueConditionNode valueConditionNode) {
+            Predicate<Entity> next = toPredicate(valueConditionNode);
+            if (!stack.isEmpty()) {
+                Object peek = stack.peek();
+                if (peek != null) {
+                    if (peek instanceof ConditionLink) {
+                        ConditionLink linkNode = (ConditionLink) peek;
+                        stack.pop();
+                        Object nextPeek = stack.peek();
+                        if (nextPeek instanceof Predicate) {
+                            stack.pop();
+                            if (linkNode.equals(ConditionLink.AND)) {
+                                Predicate<Entity> and = ((Predicate<Entity>) nextPeek).and(next);
+                                next = and;
+                            } else if (linkNode.equals(ConditionLink.OR)) {
+                                Predicate<Entity> or = ((Predicate<Entity>) nextPeek).or(next);
+                                next = or;
+                            }
+                        }
+                    }
+                }
+            }
+            stack.push(next);
+        }
+
+        public void accept(ParentheseConditionNode parentheseConditionNode) {
+            if (parentheseConditionNode.isLeft()) {
+                stack.push(parentheseConditionNode);
+            } else if (parentheseConditionNode.isRight()) {
+                Predicate<Entity> unWrapper = null;
+                while (stack.size() > 0) {
+                    Object pop = stack.pop();
+                    if (pop instanceof ParentheseConditionNode) {
+                        break;
+                    } else if (pop instanceof Predicate) {
+                        unWrapper = (Predicate<Entity>) pop;
+                    }
+                }
+
+                if (unWrapper != null) {
+                    stack.push(unWrapper);
+                }
+            }
+        }
+
+        private Predicate<Entity> toPredicate(ValueConditionNode node) {
+            Condition condition = node.getCondition();
+            IEntityField field = condition.getField();
+            ConditionOperator operator = condition.getOperator();
+            Predicate<Entity> predicate = operator.getPredicate(field, condition.getValues());
+            return predicate;
+        }
+
+        /**
+         * get predicate.
+         *
+         * @return 生成出来的Predicate
+         */
+        private Predicate<IEntity> getPredicate() {
+            while (stack.size() > 1) {
+                Object expectedPredicate = stack.pop();
+
+                Predicate<Entity> next = null;
+                if (expectedPredicate instanceof Predicate) {
+
+                    if (stack.isEmpty()) {
+                        return (Predicate<IEntity>) expectedPredicate;
+                    }
+
+                    Object expectedLinkOrNull = stack.peek();
+                    if (expectedLinkOrNull instanceof ConditionLink) {
+                        Object link = stack.pop();
+                        if (!stack.isEmpty()) {
+                            Object expectedPredicateNext = stack.peek();
+                            if (expectedPredicateNext instanceof Predicate) {
+                                stack.pop();
+                                if (link.equals(ConditionLink.AND)) {
+                                    Predicate<Entity> and = ((Predicate<Entity>) expectedPredicate).and(
+                                        (Predicate<? super Entity>) expectedPredicateNext);
+                                    next = and;
+                                } else if (link.equals(ConditionLink.OR)) {
+                                    Predicate<Entity> or = ((Predicate<Entity>) expectedPredicate).or(
+                                        (Predicate<? super Entity>) expectedPredicateNext);
+                                    next = or;
+                                }
+                            }
+                        }
+                    } else {
+                        throw new RuntimeException("Syntax error");
+                    }
+                } else {
+                    throw new RuntimeException("Syntax error");
+                }
+                if (next != null) {
+                    stack.push(next);
+                }
+            }
+
+            return (Predicate<IEntity>) stack.pop();
         }
     }
 }

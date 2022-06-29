@@ -76,11 +76,7 @@ public class AggregationInitLogic implements InitIvalueLogic {
 
             Aggregation aggregation = (Aggregation) participant.getField().config().getCalculation();
 
-            Conditions conditions = aggregation.getConditions();
-
-            if (conditions == null) {
-                conditions = Conditions.buildEmtpyConditions();
-            }
+            Conditions conditions = aggregation.getConditions().orElse(Conditions.buildEmtpyConditions());
 
             // 获取聚合关系信息
             List<Relationship> relationships = participant.getEntityClass().relationship().stream().filter(relationship ->
