@@ -138,9 +138,7 @@ public interface IValue<T> extends Comparable<IValue> {
      * @return 结果.
      */
     @Override
-    public default int compareTo(IValue o) {
-        return ((Comparable) this.getValue()).compareTo(o.getValue());
-    }
+    public int compareTo(IValue o);
 
     /**
      * 包含,如果只是一个值那么其等同于 equals.<br />

@@ -149,6 +149,11 @@ public abstract class AbstractValue<V> implements IValue<V>, Serializable {
         return Objects.hash(field, value, attachment);
     }
 
+    @Override
+    public int compareTo(IValue o) {
+        return ((Comparable) this.getValue()).compareTo(o.getValue());
+    }
+
     protected abstract IValue<V> doCopy(IEntityField newField, String attachment);
 
     protected abstract IValue<V> doCopy(V value);
