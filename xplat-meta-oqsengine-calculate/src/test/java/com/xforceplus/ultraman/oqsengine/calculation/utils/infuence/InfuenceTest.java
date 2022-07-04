@@ -835,7 +835,7 @@ public class InfuenceTest {
                 .withField(EntityField.UPDATE_TIME_FILED).build()
         );
 
-        Assertions.assertEquals("\n(a,createTime)··\n |- (b,updateTime)\n", infuence.toString());
+        Assertions.assertEquals("(a,createTime)\n   L---(b,updateTime)", infuence.toString());
 
         // 多结点
         rootEntity = Entity.Builder.anEntity()
@@ -877,7 +877,10 @@ public class InfuenceTest {
                 .build());
 
         Assertions.assertEquals(
-            "\n(a,createTime)······\n |- (d,createTime)····\n |- (b,createTime)····\n·· |- (c,createTime)··\n",
+            "(a,createTime)\n"
+                + "   L---(d,createTime)\n"
+                + "   L---(b,createTime)\n"
+                + "      L---(c,createTime)",
             infuence.toString());
     }
 
