@@ -67,24 +67,26 @@ import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * 测试类.
  * <pre>
- *                                                         A
- *     /      /        /          /                   /                     \                        \
- * B(sum)  C(COUNT)  C(SUM)   C(SUM(condition)) C(COUNT(condition)) C(SUM(condition-along)) C(MIN(condition)) C(MAX(condititon))
- *    |
- * D(SUM)
+ *  A
+ *  |- B(SUM)
+ *  |   |- D(SUM)
+ *  |- B_LONG
+ *  |   |- D(MAX(condition))
+ *  |- C(COUNT)
+ *  |- C(SUM)
+ *  |- C(SUM(condition))
+ *  |- C(COUNT(condition))
+ *  |- C(SUM(condition-along))
+ *  |- C(MIN(condition)
+ *  |- C(MAX(condition)
  * </pre>
  * <em>注意: 所有的测试都基于发起聚合的实体一定早于被聚合的实体被创建.</em>
  */
 public class AggregationCalculationLogicTest {
-
-    final Logger logger = LoggerFactory.getLogger(AggregationCalculationLogicTest.class);
-
 
     private AggregationCalculationLogic aggregationCalculationLogic;
 
@@ -97,6 +99,8 @@ public class AggregationCalculationLogicTest {
     private static IEntityField B_REF;
 
     private static IEntityField B_SUM;
+
+    private static IEntityField B_LONG;
 
     private static IEntityField C_SUM;
 
@@ -113,6 +117,8 @@ public class AggregationCalculationLogicTest {
     private static IEntityField C_SUM_CONDITIONS_ASTRING;
 
     private static IEntityField D_SUM;
+
+    private static IEntityField D_MAX_CONDITIONS;
 
     private static IEntityClass A_CLASS;
 
@@ -137,6 +143,31 @@ public class AggregationCalculationLogicTest {
 
     private MockConditionSelectStorage conditionSelectStorage;
 
+    enum ClassIndex {
+        A_CLASS,
+        B_CLASS,
+        C_CLASS,
+        D_CLASS
+    }
+
+    enum FieldIndex {
+        A_LONG,
+        A_STRING,
+        A_REF,
+        B_REF,
+        B_SUM,
+        B_LONG,
+        C_SUM,
+        C_COUNT,
+        C_SUM_CONDITIONS,
+        C_MIN_CONDITIONS,
+        C_MAX_CONDITIONS,
+        C_COUNT_CONDITIONS,
+        C_SUM_CONDITIONS_ASTRING,
+        D_SUM,
+        D_MAX_CONDITIONS
+    }
+
     /**
      * 初始化.
      */
@@ -144,34 +175,34 @@ public class AggregationCalculationLogicTest {
     public void before() {
 
         A_LONG = EntityField.Builder.anEntityField()
-            .withId(Long.MAX_VALUE)
+            .withId(getFieldId(FieldIndex.A_LONG))
             .withFieldType(FieldType.LONG)
             .withName("a-long").build();
 
         A_STRING = EntityField.Builder.anEntityField()
-            .withId(Long.MAX_VALUE - 25)
+            .withId(getFieldId(FieldIndex.A_STRING))
             .withFieldType(FieldType.STRING)
             .withName("a-string").build();
 
         A_REF = EntityField.Builder.anEntityField()
-            .withId(Long.MAX_VALUE - 27)
+            .withId(getFieldId(FieldIndex.A_REF))
             .withFieldType(FieldType.LONG)
             .withName("relc").build();
 
         B_REF = EntityField.Builder.anEntityField()
-            .withId(Long.MAX_VALUE - 10)
+            .withId(getFieldId(FieldIndex.B_REF))
             .withFieldType(FieldType.LONG)
             .withName("relb").build();
 
         B_SUM = EntityField.Builder.anEntityField()
-            .withId(Long.MAX_VALUE - 1)
+            .withId(getFieldId(FieldIndex.B_SUM))
             .withFieldType(FieldType.LONG)
             .withName("b-sum-a")
             .withConfig(
                 FieldConfig.Builder.anFieldConfig()
                     .withCalculation(Aggregation.Builder.anAggregation()
-                        .withClassId(Long.MAX_VALUE)
-                        .withFieldId(Long.MAX_VALUE)
+                        .withClassId(getClassId(ClassIndex.A_CLASS))
+                        .withFieldId(getFieldId(FieldIndex.A_LONG))
                         .withRelationId(Long.MAX_VALUE - 10)
                         .withAggregationType(AggregationType.SUM)
                         .build()
@@ -179,15 +210,21 @@ public class AggregationCalculationLogicTest {
             )
             .build();
 
+        B_LONG = EntityField.Builder.anEntityField()
+            .withId(getFieldId(FieldIndex.B_LONG))
+            .withFieldType(FieldType.LONG)
+            .withName("b-long")
+            .build();
+
         C_SUM = EntityField.Builder.anEntityField()
-            .withId(Long.MAX_VALUE - 21)
+            .withId(getFieldId(FieldIndex.C_SUM))
             .withFieldType(FieldType.LONG)
             .withName("c-sum-a")
             .withConfig(
                 FieldConfig.Builder.anFieldConfig()
                     .withCalculation(Aggregation.Builder.anAggregation()
-                        .withClassId(Long.MAX_VALUE)
-                        .withFieldId(Long.MAX_VALUE)
+                        .withClassId(getClassId(ClassIndex.A_CLASS))
+                        .withFieldId(getFieldId(FieldIndex.A_LONG))
                         .withRelationId(Long.MAX_VALUE - 20)
                         .withAggregationType(AggregationType.SUM)
                         .build()
@@ -196,13 +233,13 @@ public class AggregationCalculationLogicTest {
             .build();
 
         C_COUNT = EntityField.Builder.anEntityField()
-            .withId(Long.MAX_VALUE - 2)
+            .withId(getFieldId(FieldIndex.C_COUNT))
             .withFieldType(FieldType.LONG)
             .withConfig(
                 FieldConfig.Builder.anFieldConfig()
                     .withCalculation(Aggregation.Builder.anAggregation()
-                        .withClassId(Long.MAX_VALUE)
-                        .withFieldId(Long.MAX_VALUE)
+                        .withClassId(getClassId(ClassIndex.A_CLASS))
+                        .withFieldId(getFieldId(FieldIndex.A_LONG))
                         .withRelationId(Long.MAX_VALUE - 20)
                         .withAggregationType(AggregationType.COUNT)
                         .build()
@@ -212,13 +249,13 @@ public class AggregationCalculationLogicTest {
 
         // sum的条件聚合
         C_SUM_CONDITIONS = EntityField.Builder.anEntityField()
-            .withId(Long.MAX_VALUE - 22)
+            .withId(getFieldId(FieldIndex.C_SUM_CONDITIONS))
             .withFieldType(FieldType.LONG)
             .withConfig(
                 FieldConfig.Builder.anFieldConfig()
                     .withCalculation(Aggregation.Builder.anAggregation()
-                        .withClassId(Long.MAX_VALUE)
-                        .withFieldId(Long.MAX_VALUE)
+                        .withClassId(getClassId(ClassIndex.A_CLASS))
+                        .withFieldId(getFieldId(FieldIndex.A_LONG))
                         .withRelationId(Long.MAX_VALUE - 20)
                         .withConditions(
                             Conditions.buildEmtpyConditions()
@@ -235,13 +272,13 @@ public class AggregationCalculationLogicTest {
             .withName("c-sum-conditions").build();
 
         C_COUNT_CONDITIONS = EntityField.Builder.anEntityField()
-            .withId(Long.MAX_VALUE - 23)
+            .withId(getFieldId(FieldIndex.C_COUNT_CONDITIONS))
             .withFieldType(FieldType.LONG)
             .withConfig(
                 FieldConfig.Builder.anFieldConfig()
                     .withCalculation(Aggregation.Builder.anAggregation()
-                        .withClassId(Long.MAX_VALUE)
-                        .withFieldId(Long.MAX_VALUE)
+                        .withClassId(getClassId(ClassIndex.A_CLASS))
+                        .withFieldId(getFieldId(FieldIndex.A_LONG))
                         .withRelationId(Long.MAX_VALUE - 20)
                         .withConditions(
                             Conditions.buildEmtpyConditions()
@@ -258,13 +295,13 @@ public class AggregationCalculationLogicTest {
             .withName("c-count-conditions").build();
 
         C_MIN_CONDITIONS = EntityField.Builder.anEntityField()
-            .withId(Long.MAX_VALUE - 26)
+            .withId(getFieldId(FieldIndex.C_MIN_CONDITIONS))
             .withFieldType(FieldType.LONG)
             .withConfig(
                 FieldConfig.Builder.anFieldConfig()
                     .withCalculation(Aggregation.Builder.anAggregation()
-                        .withClassId(Long.MAX_VALUE)
-                        .withFieldId(Long.MAX_VALUE)
+                        .withClassId(getClassId(ClassIndex.A_CLASS))
+                        .withFieldId(getFieldId(FieldIndex.A_LONG))
                         .withRelationId(A_REF.id())
                         .withConditions(
                             Conditions.buildEmtpyConditions()
@@ -279,13 +316,13 @@ public class AggregationCalculationLogicTest {
             .withName("c-min-conditions").build();
 
         C_MAX_CONDITIONS = EntityField.Builder.anEntityField()
-            .withId(Long.MAX_VALUE - 27)
+            .withId(getFieldId(FieldIndex.C_MAX_CONDITIONS))
             .withFieldType(FieldType.LONG)
             .withConfig(
                 FieldConfig.Builder.anFieldConfig()
                     .withCalculation(Aggregation.Builder.anAggregation()
-                        .withClassId(Long.MAX_VALUE)
-                        .withFieldId(Long.MAX_VALUE)
+                        .withClassId(getClassId(ClassIndex.A_CLASS))
+                        .withFieldId(getFieldId(FieldIndex.A_LONG))
                         .withRelationId(A_REF.id())
                         .withConditions(
                             Conditions.buildEmtpyConditions()
@@ -300,13 +337,13 @@ public class AggregationCalculationLogicTest {
             .withName("c-min-conditions").build();
 
         C_SUM_CONDITIONS_ASTRING = EntityField.Builder.anEntityField()
-            .withId(Long.MAX_VALUE - 25)
+            .withId(getFieldId(FieldIndex.C_SUM_CONDITIONS_ASTRING))
             .withFieldType(FieldType.LONG)
             .withConfig(
                 FieldConfig.Builder.anFieldConfig()
                     .withCalculation(Aggregation.Builder.anAggregation()
-                        .withClassId(Long.MAX_VALUE)
-                        .withFieldId(Long.MAX_VALUE)
+                        .withClassId(getClassId(ClassIndex.A_CLASS))
+                        .withFieldId(getFieldId(FieldIndex.A_LONG))
                         .withRelationId(Long.MAX_VALUE - 20)
                         .withConditions(
                             Conditions.buildEmtpyConditions()
@@ -323,22 +360,43 @@ public class AggregationCalculationLogicTest {
             .withName("c-sum-conditoons-astring").build();
 
         D_SUM = EntityField.Builder.anEntityField()
-            .withId(Long.MAX_VALUE - 3)
+            .withId(getFieldId(FieldIndex.D_SUM))
             .withFieldType(FieldType.LONG)
             .withConfig(
                 FieldConfig.Builder.anFieldConfig()
                     .withCalculation(Aggregation.Builder.anAggregation()
-                        .withClassId(Long.MAX_VALUE - 1)
-                        .withFieldId(Long.MAX_VALUE - 1)
+                        .withClassId(getClassId(ClassIndex.B_CLASS))
+                        .withFieldId(getFieldId(FieldIndex.B_SUM))
                         .withRelationId(Long.MAX_VALUE - 30)
                         .withAggregationType(AggregationType.SUM)
                         .build()
                     ).build()
             )
-            .withName("d-sum-a").build();
+            .withName("d-sum-b").build();
+
+        D_MAX_CONDITIONS = EntityField.Builder.anEntityField()
+            .withId(getFieldId(FieldIndex.D_MAX_CONDITIONS))
+            .withFieldType(FieldType.LONG)
+            .withConfig(
+                FieldConfig.Builder.anFieldConfig()
+                    .withCalculation(Aggregation.Builder.anAggregation()
+                        .withClassId(getClassId(ClassIndex.B_CLASS))
+                        .withFieldId(getFieldId(FieldIndex.B_LONG))
+                        .withRelationId(Long.MAX_VALUE - 30)
+                        .withAggregationType(AggregationType.MAX)
+                        .withConditions(
+                            Conditions.buildEmtpyConditions()
+                                .addAnd(
+                                    new Condition(B_SUM, ConditionOperator.GREATER_THAN, new LongValue(B_SUM, 1000L))
+                                )
+                        )
+                        .build()
+                    ).build()
+            )
+            .withName("d-max-condition-b").build();
 
         A_CLASS = EntityClass.Builder.anEntityClass()
-            .withId(Long.MAX_VALUE)
+            .withId(getClassId(ClassIndex.A_CLASS))
             .withCode("a-class")
             .withFields(Arrays.asList(A_LONG, EntityField.ID_ENTITY_FIELD))
             .withRelations(Arrays.asList(
@@ -392,9 +450,9 @@ public class AggregationCalculationLogicTest {
             .build();
 
         B_CLASS = EntityClass.Builder.anEntityClass()
-            .withId(Long.MAX_VALUE - 1)
+            .withId(getClassId(ClassIndex.B_CLASS))
             .withCode("b-class")
-            .withFields(Arrays.asList(B_SUM, EntityField.ID_ENTITY_FIELD))
+            .withFields(Arrays.asList(B_SUM, B_LONG, EntityField.ID_ENTITY_FIELD))
             .withRelations(Arrays.asList(
                 Relationship.Builder.anRelationship()
                     .withId(Long.MAX_VALUE - 300)
@@ -433,7 +491,7 @@ public class AggregationCalculationLogicTest {
             .build();
 
         C_CLASS = EntityClass.Builder.anEntityClass()
-            .withId(Long.MAX_VALUE - 2)
+            .withId(getClassId(ClassIndex.C_CLASS))
             .withCode("c-class")
             .withFields(
                 Arrays.asList(
@@ -460,9 +518,9 @@ public class AggregationCalculationLogicTest {
             .build();
 
         D_CLASS = EntityClass.Builder.anEntityClass()
-            .withId(Long.MAX_VALUE - 3)
+            .withId(getClassId(ClassIndex.D_CLASS))
             .withCode("d-class")
-            .withFields(Arrays.asList(D_SUM, EntityField.ID_ENTITY_FIELD))
+            .withFields(Arrays.asList(D_SUM, D_MAX_CONDITIONS, EntityField.ID_ENTITY_FIELD))
             .withRelations(Arrays.asList(
                 Relationship.Builder.anRelationship()
                     .withId(Long.MAX_VALUE - 30)
@@ -1900,4 +1958,11 @@ public class AggregationCalculationLogicTest {
         }
     }
 
+    private long getFieldId(FieldIndex fieldIndex) {
+        return Long.MAX_VALUE - fieldIndex.ordinal();
+    }
+
+    private long getClassId(ClassIndex classIndex) {
+        return Long.MAX_VALUE - classIndex.ordinal();
+    }
 }
