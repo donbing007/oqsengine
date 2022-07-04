@@ -80,9 +80,9 @@ public interface CalculationLogic {
     /**
      * 由logic决定, 指定字段是否需要参与改变.
      *
-     * @param context     上下文.
-     * @param entityClass 目标类型.
-     * @param field       目标字段.
+     * @param context     计算上下文.
+     * @param entityClass 当前操作目标类型.
+     * @param field       当前需要判断的字段.
      * @return true需要, false不需要.
      */
     public default boolean need(CalculationContext context, IEntityClass entityClass, IEntityField field) {
