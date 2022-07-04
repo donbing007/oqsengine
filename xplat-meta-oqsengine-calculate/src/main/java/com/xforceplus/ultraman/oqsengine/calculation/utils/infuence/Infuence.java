@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.calculation.utils.infuence;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -13,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
@@ -38,9 +38,9 @@ public class Infuence {
      * 构造一个新的影响树.
      * 不允许在一个影响传播链上出现相同的参与者.
      *
-     * @param entity 起源对象实例.
+     * @param entity      起源对象实例.
      * @param participant 参与者.
-     * @param change 值改变.
+     * @param change      值改变.
      */
     public Infuence(IEntity entity, Participant participant, ValueChange change) {
         this(entity, participant, change, false);
@@ -90,8 +90,8 @@ public class Infuence {
     /**
      * 增加影响.
      *
-     * @param parentParticipant      传递影响的参与者.
-     * @param newParticipant 新的参与者.
+     * @param parentParticipant 传递影响的参与者.
+     * @param newParticipant    新的参与者.
      * @return false 出现重复不允许传播, true成功.
      */
     public boolean impact(Participant parentParticipant, Participant newParticipant) {
@@ -156,7 +156,8 @@ public class Infuence {
         if (node.isPresent()) {
             List<Node> children = node.get().getChildren();
             if (!children.isEmpty()) {
-                List<Participant> participants = children.stream().map(Node::getParticipant).collect(Collectors.toList());
+                List<Participant> participants =
+                    children.stream().map(Node::getParticipant).collect(Collectors.toList());
                 return Optional.of(participants);
             }
         }
@@ -262,94 +263,46 @@ public class Infuence {
 
     @Override
     public String toString() {
+        if (rootNode == null) {
+            return "";
+        }
+
         if (empty()) {
             return rootNode.toString();
         }
 
-        TreeSize treeSize = getTreeSize();
-        /*
-        构造一个结点buff二维数组,行数量等于有效结点数量,列数量等于树的高度.
-               A
-             /   \
-            B     C
-            这样的树目标是构造出如下的矩阵.
-
-             A ·
-             L B
-             L C
-
-             L 表示连接线.
-         */
-        Node[][] buff = new Node[size][treeSize.getHigh() + 1];
-
-        // 横轴
-        int horizontal = 0;
-        // 坚轴
-        int vertical = 0;
-        buff[vertical][horizontal] = rootNode;
-        Deque<Node> stack = new LinkedList<>();
-        rootNode.getChildren().forEach(c -> stack.push(c));
-
+        Node point;
+        Deque<Node> stack = new ArrayDeque<>();
+        stack.push(rootNode);
+        StringBuffer buffer = new StringBuffer();
         while (!stack.isEmpty()) {
-            Node node = stack.pop();
+            point = stack.pop();
 
-            // 找到父结点坐标.
-            boolean found = false;
-            for (int v = 0; v < buff.length; v++) {
-                if (found) {
-                    break;
-                }
-                for (int h = 0; h < buff[v].length; h++) {
-                    if (node.getParent().get() == buff[v][h]) {
-                        // 设定子元素的坐标.
-                        vertical = v;
-                        horizontal = h;
-                        found = true;
-                        break;
-                    }
-                }
+            if (rootNode != point) {
+                buffer.append('\n');
+            }
+            for (int i = 0; i < point.getLevel(); i++) {
+                buffer.append("   ");
             }
 
-            if (found) {
-
-                vertical++;
-                horizontal++;
-
-                //从当前结点坐的 x 轴偏移一格开始找可用的 y 坐标.
-                for (int v = vertical; v < buff.length; v++) {
-                    if (buff[v][horizontal] != null) {
-                        continue;
-                    } else {
-                        vertical = v;
-                        break;
-                    }
-                }
-
-                buff[vertical][horizontal - 1] = LevelNode.getInstance();
-                buff[vertical][horizontal] = node;
-
-            } else {
-                throw new IllegalArgumentException();
+            if (rootNode != point) {
+                buffer.append('L');
             }
 
-            node.getChildren().forEach(c -> stack.push(c));
+            if (point.getLevel() > 0) {
+                buffer.append("---");
+            }
+
+
+            buffer.append(point);
+
+            for (Node child : point.getChildren()) {
+                stack.push(child);
+            }
+
         }
 
-        final StringBuilder sb = new StringBuilder();
-        sb.append('\n');
-        for (int v = 0; v < buff.length; v++) {
-            for (int h = 0; h < buff[v].length; h++) {
-                if (buff[v][h] == null) {
-                    sb.append("··");
-                } else if (buff[v][h] == LevelNode.getInstance()) {
-                    sb.append(" |- ");
-                } else {
-                    sb.append(buff[v][h].toString());
-                }
-            }
-            sb.append('\n');
-        }
-        return sb.toString();
+        return buffer.toString();
     }
 
     // 插入影响
@@ -448,50 +401,6 @@ public class Infuence {
         // 这里假设越往后的node的level越深.
         nodes.add(node);
     }
-
-    // 序号
-    private TreeSize getTreeSize() {
-        AtomicInteger maxWide = new AtomicInteger(0);
-        AtomicInteger maxHigh = new AtomicInteger(0);
-
-        AtomicInteger currentLevel = new AtomicInteger(0);
-        AtomicInteger currentWide = new AtomicInteger(1);
-        bfsIter((node, level) -> {
-            if (level == currentLevel.get()) {
-                currentWide.incrementAndGet();
-            } else {
-
-                maxHigh.incrementAndGet();
-
-                if (currentWide.get() > maxWide.get()) {
-                    maxWide.set(currentWide.get());
-                }
-            }
-
-            return InfuenceConsumer.Action.CONTINUE;
-        });
-
-        return new TreeSize(maxWide.get(), maxHigh.get());
-    }
-
-    private static class TreeSize {
-        private int wide;
-        private int high;
-
-        public TreeSize(int wide, int high) {
-            this.wide = wide;
-            this.high = high;
-        }
-
-        public int getWide() {
-            return wide;
-        }
-
-        public int getHigh() {
-            return high;
-        }
-    }
-
 
     /**
      * 表示一个影响结点.

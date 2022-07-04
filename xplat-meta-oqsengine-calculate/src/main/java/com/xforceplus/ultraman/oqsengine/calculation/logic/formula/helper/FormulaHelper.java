@@ -5,7 +5,11 @@ import com.xforceplus.ultraman.oqsengine.calculation.dto.ExecutionWrapper;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.ExpressionWrapper;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationException;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.aviator.AviatorHelper;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Formula;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import java.util.HashMap;
 import java.util.List;
@@ -23,7 +27,7 @@ public class FormulaHelper {
     private static final Logger LOGGER = LoggerFactory.getLogger(FormulaHelper.class);
     public static final String FORMULA_CTX_PARAM = "FORMULA_CTX_PARAM";
 
-    private static ExecutionWrapper<?> toExecutionWrapper(String expression, List<String> args, IEntity entity)
+    private static ExecutionWrapper<?> toExecutionWrapper(String expression, List<String> args, IEntity entity, IEntityClass entityClass)
         throws CalculationException {
 
         ExpressionWrapper expressionWrapper = ExpressionWrapper.Builder.anExpression()
@@ -31,12 +35,12 @@ public class FormulaHelper {
             .withCached(true)
             .build();
 
-        Map<String, Object> runtimeParams = toRuntimeParams(args, entity);
+        Map<String, Object> runtimeParams = toRuntimeParams(args, entity, entityClass);
 
         return new ExecutionWrapper<>(expressionWrapper, runtimeParams);
     }
 
-    private static Map<String, Object> toRuntimeParams(List<String> args, IEntity entity)
+    private static Map<String, Object> toRuntimeParams(List<String> args, IEntity entity, IEntityClass entityClass)
         throws CalculationException {
         Map<String, Object> map = new HashMap<>();
         if (LOGGER.isDebugEnabled()) {
@@ -48,8 +52,17 @@ public class FormulaHelper {
                 if (valueOp.isPresent()) {
                     map.put(arg, valueOp.get().getValue());
                 } else {
-                    throw new CalculationException(
-                        String.format("[formula/seniorAutoFill] execution absence param [%s]", arg));
+                    Optional<IEntityField> entityFieldOptional =
+                        entityClass.field(arg);
+
+                    Object defaultValue = null;
+                    if (entityFieldOptional.isPresent()) {
+                        IEntityField entityField = entityFieldOptional.get();
+                        if (entityField.calculationType() == CalculationType.FORMULA) {
+                            defaultValue = ((Formula) entityField.config().getCalculation()).getFailedDefaultValue();
+                        }
+                    }
+                    map.put(arg, defaultValue);
                 }
             }
         }
@@ -70,7 +83,7 @@ public class FormulaHelper {
         throws CalculationException {
         //  获取公式执行对象
         ExecutionWrapper<?> executionWrapper =
-            toExecutionWrapper(expression, args, context.getFocusEntity());
+            toExecutionWrapper(expression, args, context.getFocusEntity(), context.getFocusClass());
 
         executionWrapper.getParams().put(FORMULA_CTX_PARAM, context.getFocusField());
 
