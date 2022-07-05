@@ -351,7 +351,9 @@ public class DefaultCalculationImpl implements Calculation {
 
 
         // 过滤掉缓存中已经存在的.
-        long[] notCacheIds = Arrays.stream(ids).filter(id -> !context.getEntityToCache(id).isPresent()).toArray();
+        long[] notCacheIds = Arrays.stream(ids)
+            .filter(id -> !context.getEntityToCache(id).isPresent())
+            .distinct().toArray();
 
         if (notCacheIds.length > 0) {
 
@@ -368,20 +370,10 @@ public class DefaultCalculationImpl implements Calculation {
             entities.forEach(e -> context.putEntityToCache(e));
         }
 
-        /*
-        已经加载过的实例表.
-        用以如果影响实例出现重复时,不会造成互相影响.
-         */
-        Map<Long, IEntity> haveGetEntities = new HashMap<>();
-        return Arrays.stream(ids)
-            .mapToObj(id -> {
-                IEntity haveGetEntity = haveGetEntities.get(id);
-                if (haveGetEntity != null) {
-                    return Optional.of(haveGetEntity.copy());
-                } else {
-                    return context.getEntityToCache(id);
-                }
-            }).filter(op -> op.isPresent()).map(op -> op.get()).toArray(IEntity[]::new);
+        return Arrays.stream(ids).mapToObj(id -> context.getEntityToCache(id))
+            .filter(op -> op.isPresent())
+            .map(op -> op.get())
+            .toArray(IEntity[]::new);
     }
 
     // 获取影响树列表.

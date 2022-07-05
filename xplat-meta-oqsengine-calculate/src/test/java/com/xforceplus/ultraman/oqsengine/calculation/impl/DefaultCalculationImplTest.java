@@ -313,6 +313,7 @@ public class DefaultCalculationImplTest {
         context.getCalculationLogicFactory().get().register(lookupLogic);
         context.getCalculationLogicFactory().get().register(aggregationLogic);
 
+        context.focusSourceEntity(entityA);
         context.focusEntity(entityA, A_CLASS);
         context.addValueChange(
             ValueChange.build(entityA.id(), new EmptyTypedValue(A_LONG), new LongValue(A_LONG, 200L))
@@ -365,6 +366,7 @@ public class DefaultCalculationImplTest {
         context.getCalculationLogicFactory().get().register(aggregationLogic);
 
         context.focusEntity(entityA, A_CLASS);
+        context.focusSourceEntity(entityA);
         context.addValueChange(
             ValueChange.build(entityA.id(), new EmptyTypedValue(A_LONG), new LongValue(A_LONG, 200L))
         );
