@@ -267,57 +267,6 @@ public class AggregationCalculationLogic implements CalculationLogic {
         return Optional.empty();
     }
 
-    private Optional<IValue> findTriggerValue(
-        Optional<ValueChange> valueChange, Aggregation aggregation, IEntity triggerEntity, boolean old) {
-        if (old) {
-            if (valueChange.isPresent()) {
-                return valueChange.get().getOldValue();
-            }
-        } else {
-            if (valueChange.isPresent()) {
-                return valueChange.get().getNewValue();
-            }
-        }
-
-        return triggerEntity.entityValue().getValue(aggregation.getFieldId());
-    }
-
-    // 构造目标实例的旧实例,包含这次操作之前的值.
-    private IEntity buildOldEntity(CalculationContext context, IEntity entity) {
-        IEntity copyEntity = entity.copy();
-        context.getValueChanges().stream()
-            .filter(vc -> vc.getEntityId() == copyEntity.id())
-            .map(vc -> vc.getOldValue())
-            .filter(od -> od.isPresent())
-            .forEach(od -> {
-                if (EmptyTypedValue.class.isInstance(od.get())) {
-                    copyEntity.entityValue().remove(od.get().getField());
-                } else {
-                    copyEntity.entityValue().addValue(od.get());
-                }
-            });
-        return copyEntity;
-    }
-
-    private Optional<ValueChange> findChange(CalculationContext context, Aggregation aggregation, IEntity entity) {
-        Optional<IEntityClass> triggerEntityClassOp =
-            context.getMetaManager().get().load(entity.entityClassRef());
-        if (!triggerEntityClassOp.isPresent()) {
-            throw new CalculationException(
-                String.format("The expected target object meta information was not found.[%s]",
-                    entity.entityClassRef()));
-        }
-
-        IEntityClass triggerEntityClass = triggerEntityClassOp.get();
-        Optional<IEntityField> triggerFieldOp = triggerEntityClass.field(aggregation.getFieldId());
-        if (!triggerFieldOp.isPresent()) {
-            throw new CalculationException(
-                String.format("The expected field (%s) does not exist.", aggregation.getFieldId()));
-        }
-
-        return context.getValueChange(entity, triggerFieldOp.get());
-    }
-
     @Override
     public void scope(CalculationContext context, Infuence infuence) {
         infuence.scan((parentParticipant, participant, infuenceInner) -> {
@@ -329,19 +278,37 @@ public class AggregationCalculationLogic implements CalculationLogic {
             迭代所有关系中的字段,判断是否有可能会对当前参与者发起聚合 - MANY_TO_ONE的关系.
              */
             List<Relationship> relationships = participantClass.relationship().stream()
-                .filter(relationship ->
-                    relationship.getRelationType().equals(Relationship.RelationType.MANY_TO_ONE))
+                .filter(r -> r.getRelationType() == Relationship.RelationType.MANY_TO_ONE)
                 .collect(Collectors.toList());
 
             for (Relationship r : relationships) {
                 IEntityClass relationshipClass = r.getRightEntityClass(participantClass.ref().getProfile());
+                /*
+                以下字段会被加入到影响树中.
+                1. 是聚合字段.
+                2. 聚合目标字段是当前参与者相关字段.
+                3. 聚合条件中出现了参与者相关字段.
+                4. 是count类型聚合,并且当前参与者相关字段是标识字段.
+                 */
                 List<IEntityField> fields = relationshipClass.fields().stream()
                     .filter(f -> f.calculationType() == CalculationType.AGGREGATION)
-                    .filter(f -> ((((Aggregation) f.config().getCalculation()).getFieldId() == participantField.id())
-                        || (((Aggregation) f.config().getCalculation()).getAggregationType()
-                        .equals(AggregationType.COUNT))
-                        || (participantField.name().equals(EntityField.ID_ENTITY_FIELD.name()))
-                    )).collect(Collectors.toList());
+                    .filter(f -> {
+                        Aggregation aggregation = (Aggregation) f.config().getCalculation();
+
+                        if (aggregation.getFieldId() == participantField.id()) {
+                            //符合条件2.
+                            return true;
+                        } else if (this.isNeedConditionField(context, participantField, f)) {
+                            // 符合条件3.
+                            return true;
+                        } else if (aggregation.getAggregationType() == AggregationType.COUNT
+                            && participantField.config().isIdentifie()) {
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    })
+                    .collect(Collectors.toList());
                 if (fields != null && fields.size() > 0) {
                     fields.forEach(f -> {
                         Aggregation aggregation = (Aggregation) f.config().getCalculation();
@@ -405,6 +372,14 @@ public class AggregationCalculationLogic implements CalculationLogic {
         return affectedEntityIds;
     }
 
+    /**
+     * 由于聚合字段含有条件,这里会判断目标字段是否出现在了关系对象中其他聚合字段的条件中.
+     *
+     * @param context     计算上下文.
+     * @param entityClass 当前操作目标类型.
+     * @param field       当前需要判断的字段.
+     * @return true 需要, false不需要.
+     */
     @Override
     public boolean need(CalculationContext context, IEntityClass entityClass, IEntityField field) {
         Collection<IEntityClass> relationshipClass = entityClass.relationship().stream()
@@ -417,26 +392,9 @@ public class AggregationCalculationLogic implements CalculationLogic {
          */
         for (IEntityClass rec : relationshipClass) {
             for (IEntityField relationField : rec.fields()) {
-                // 聚合指向当前字段且含有条件.判断条件中是否出现的字段有改变.
-                if (relationField.calculationType() == CalculationType.AGGREGATION
-                    && ((Aggregation) relationField.config().getCalculation()).getConditions().isPresent()
-                    && field.id() == ((Aggregation) relationField.config().getCalculation()).getFieldId()) {
-                    Conditions conditions =
-                        ((Aggregation) relationField.config().getCalculation()).getConditions().get();
-
-                    /*
-                    判断关系类型中的聚合字段条件中出现的字段有没有出现在valueChange中.
-                    如果出现表示需要重新判断是否需要聚合,所以当前字段不论有无改变都需要重新计算.
-                     */
-                    Collection<IEntityField> conditionFields = conditions.collectField();
-                    for (IEntityField conditionField : conditionFields) {
-                        if (context.getValueChanges().stream()
-                            .anyMatch(v -> v.getField().id() == conditionField.id())) {
-                            return true;
-                        }
-                    }
+                if (isNeedRootField(context, relationField)) {
+                    return true;
                 }
-
             }
         }
         return false;
@@ -459,6 +417,115 @@ public class AggregationCalculationLogic implements CalculationLogic {
             CalculationScenarios.REPLACE,
             CalculationScenarios.DELETE
         };
+    }
+
+    /*
+    判断指定指定是否应该追随加入某个影响链中.
+       A
+       |
+       B
+    这里的字段是B.
+    这里处于判定条件改变造成的改变.
+    currentField 当前字段.
+    targetField        需要判断的字段.
+     */
+    private boolean isNeedConditionField(CalculationContext context, IEntityField currentField,
+                                         IEntityField targetField) {
+        if (targetField.calculationType() == CalculationType.AGGREGATION
+            && Aggregation.class.isInstance(targetField.config().getCalculation())
+            && ((Aggregation) targetField.config().getCalculation()).getConditions().isPresent()) {
+
+            Conditions conditions =
+                ((Aggregation) targetField.config().getCalculation()).getConditions().get();
+            // 判断当前的条件中出现的字段是否指向上层.
+            return conditions.collectField().stream().anyMatch(cf -> cf.id() == currentField.id());
+        }
+
+        return false;
+    }
+
+    /*
+    判断指定的字段是否应该为一个影响树的根结点.
+    字段本身可能并未改变,但是可能由于条件改变造成当前字段影响的聚合字段需要重新计算.
+         A
+         |
+         B
+      这里判定A是否应该作为一个树的根结点.
+     */
+    private boolean isNeedRootField(CalculationContext context, IEntityField field) {
+        // 聚合指向当前字段且含有条件.判断条件中是否出现的字段有改变.
+        if (field.calculationType() == CalculationType.AGGREGATION
+            && Aggregation.class.isInstance(field.config().getCalculation())
+            && ((Aggregation) field.config().getCalculation()).getConditions().isPresent()
+            && field.id() == ((Aggregation) field.config().getCalculation()).getFieldId()) {
+            Conditions conditions =
+                ((Aggregation) field.config().getCalculation()).getConditions().get();
+
+            /*
+              判断关系类型中的聚合字段条件中出现的字段有没有出现在valueChange中.
+              如果出现表示需要重新判断是否需要聚合,所以当前字段不论有无改变都需要重新计算.
+             */
+            Collection<IEntityField> conditionFields = conditions.collectField();
+
+            for (IEntityField conditionField : conditionFields) {
+                if (context.getValueChanges().stream().anyMatch(v -> v.getField().id() == conditionField.id())) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private Optional<IValue> findTriggerValue(
+        Optional<ValueChange> valueChange, Aggregation aggregation, IEntity triggerEntity, boolean old) {
+        if (old) {
+            if (valueChange.isPresent()) {
+                return valueChange.get().getOldValue();
+            }
+        } else {
+            if (valueChange.isPresent()) {
+                return valueChange.get().getNewValue();
+            }
+        }
+
+        return triggerEntity.entityValue().getValue(aggregation.getFieldId());
+    }
+
+    // 构造目标实例的旧实例,包含这次操作之前的值.
+    private IEntity buildOldEntity(CalculationContext context, IEntity entity) {
+        IEntity copyEntity = entity.copy();
+        context.getValueChanges().stream()
+            .filter(vc -> vc.getEntityId() == copyEntity.id())
+            .map(vc -> vc.getOldValue())
+            .filter(od -> od.isPresent())
+            .forEach(od -> {
+                if (EmptyTypedValue.class.isInstance(od.get())) {
+                    copyEntity.entityValue().remove(od.get().getField());
+                } else {
+                    copyEntity.entityValue().addValue(od.get());
+                }
+            });
+        return copyEntity;
+    }
+
+    private Optional<ValueChange> findChange(CalculationContext context, Aggregation aggregation, IEntity entity) {
+        Optional<IEntityClass> triggerEntityClassOp =
+            context.getMetaManager().get().load(entity.entityClassRef());
+        if (!triggerEntityClassOp.isPresent()) {
+            throw new CalculationException(
+                String.format("The expected target object meta information was not found.[%s]",
+                    entity.entityClassRef()));
+        }
+
+        IEntityClass triggerEntityClass = triggerEntityClassOp.get();
+        Optional<IEntityField> triggerFieldOp = triggerEntityClass.field(aggregation.getFieldId());
+        if (!triggerFieldOp.isPresent()) {
+            throw new CalculationException(
+                String.format("The expected field (%s) does not exist.", aggregation.getFieldId()));
+        }
+
+        return context.getValueChange(entity, triggerFieldOp.get());
     }
 
 }

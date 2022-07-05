@@ -1456,6 +1456,59 @@ public class AggregationCalculationLogicTest {
 
     }
 
+    /**
+     * 测试条件scope.<br />
+     * 预计会构造出如下的影响树.
+     * <pre>
+     *  A_long
+     *  |- B(SUM)
+     *  |   |- D(SUM)
+     *  |   |- D(MAX(condition))  B(SUM) > 1000 虽然不是指向的字段没有改变,但是被影响的字段出现在条件中.
+     *  |- C(SUM)
+     *  |- C(SUM(condition))   A_long > 100 由于目标是A所以应该出现.
+     *  |- C(MIN(condition)    A_long > 100 由于目标是A所以应该出现.
+     *  |- C(MAX(condition)    A_long > 100 由于目标是A所以应该出现.
+     * </pre>
+     */
+    @Test
+    public void testConditionScope() {
+        CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()
+            .withScenarios(CalculationScenarios.BUILD)
+            .build();
+        IEntity sourceEntity = Entity.Builder.anEntity()
+            .withId(Long.MAX_VALUE)
+            .withEntityClassRef(A_CLASS.ref())
+            .withValue(
+                new LongValue(A_LONG, 2000L)
+            ).build();
+        Infuence infuence = new Infuence(
+            sourceEntity,
+            CalculationParticipant.Builder.anParticipant()
+                .withEntityClass(A_CLASS)
+                .withField(A_LONG)
+                .withAffectedEntities(Arrays.asList(sourceEntity)).build(),
+            ValueChange.build(
+                sourceEntity.id(),
+                new LongValue(A_LONG, 1000L),
+                new LongValue(A_LONG, 2000L))
+        );
+        context.focusEntity(sourceEntity, A_CLASS);
+        context.focusField(A_LONG);
+
+        aggregationCalculationLogic.scope(context, infuence);
+
+        String expected = "(a-class,a-long)\n"
+            + "   L---(c-class,c-min-conditions)\n"
+            + "   L---(c-class,c-min-conditions)\n"
+            + "   L---(c-class,c-sum-conditions)\n"
+            + "   L---(c-class,c-sum-a)\n"
+            + "   L---(b-class,b-sum-a)\n"
+            + "      L---(d-class,d-max-condition-b)\n"
+            + "      L---(d-class,d-sum-b)";
+
+        Assertions.assertEquals(expected, infuence.toString());
+    }
+
     @Test
     public void scope() {
         CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext().build();
