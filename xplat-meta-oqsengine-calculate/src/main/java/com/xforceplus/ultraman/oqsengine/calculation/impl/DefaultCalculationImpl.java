@@ -178,6 +178,21 @@ public class DefaultCalculationImpl implements Calculation {
                     return InfuenceConsumer.Action.CONTINUE;
                 }
 
+                /*
+                 * 如果树中出现当前源头对象参与者,那么直接忽略.
+                 * 原因是已经在计算阶段处理完成.
+                 */
+                IEntity sourceEntity = context.getSourceEntity();
+                IEntityClass sourceEntityClass =
+                    context.getResourceWithEx(() -> context.getMetaManager()).load(sourceEntity.entityClassRef()).get();
+
+                if (sourceEntityClass.field(participant.getField().id()).isPresent()) {
+                    parentParticipant.get().getAffectedEntities().forEach(e -> {
+                        participant.addAffectedEntity(e);
+                    });
+                    return InfuenceConsumer.Action.CONTINUE;
+                }
+
                 CalculationLogic logic =
                     calculationLogicFactory.getCalculationLogic(participant.getField().calculationType());
 
@@ -237,19 +252,6 @@ public class DefaultCalculationImpl implements Calculation {
 
                 // 重新计算影响的entity.
                 for (IEntity affectedEntitiy : affectedEntities) {
-                    /*
-                     * 如果树中出现当前源头对象参与者,那么直接忽略.
-                     * 原因是已经在计算阶段处理完成.
-                     */
-                    IEntity sourceEntity = context.getSourceEntity();
-                    IEntityClass sourceEntityClass =
-                        context.getResourceWithEx(() -> context.getMetaManager()).load(sourceEntity.entityClassRef())
-                            .get();
-
-                    if (sourceEntityClass.field(participant.getField().id()).isPresent()) {
-                        break;
-                    }
-
                     context.focusEntity(affectedEntitiy, participant.getEntityClass());
                     context.focusField(participant.getField());
 
