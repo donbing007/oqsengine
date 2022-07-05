@@ -175,9 +175,7 @@ public class DefaultCalculationImpl implements Calculation {
 
             infuence.scan((parentParticipant, participant, infuenceInner) -> {
                 if (!parentParticipant.isPresent()) {
-                    if (participant.getField().calculationType() == CalculationType.STATIC) {
-                        return InfuenceConsumer.Action.CONTINUE;
-                    }
+                    return InfuenceConsumer.Action.CONTINUE;
                 }
                 CalculationLogic logic =
                     calculationLogicFactory.getCalculationLogic(participant.getField().calculationType());
