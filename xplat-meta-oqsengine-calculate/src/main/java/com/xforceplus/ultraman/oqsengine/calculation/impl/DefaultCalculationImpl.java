@@ -277,6 +277,8 @@ public class DefaultCalculationImpl implements Calculation {
                     if (affectedInfo == null) {
                         throw new CalculationException(
                             "An unexpected error occurred and the expected instance was not found in the calculation.");
+                    } else {
+                        affectedInfos.remove(affectedInfo);
                     }
 
                     context.startMaintenance(affectedInfo.getTriggerEntity());
