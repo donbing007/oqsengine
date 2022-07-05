@@ -228,7 +228,7 @@ public class DefaultCalculationImpl implements Calculation {
                             }
                             return true;
                         })
-                        .mapToLong(a -> a.getAffectedEntityId()).toArray();
+                        .mapToLong(a -> a.getAffectedEntityId()).distinct().toArray();
                     if (affectedEntityIds.length > 0) {
                         if (!context.tryLocksEntity(affectedEntityIds)) {
                             throw new CalculationException(
@@ -368,11 +368,20 @@ public class DefaultCalculationImpl implements Calculation {
             entities.forEach(e -> context.putEntityToCache(e));
         }
 
-        // 从缓存中加载出目标实例.
+        /*
+        已经加载过的实例表.
+        用以如果影响实例出现重复时,不会造成互相影响.
+         */
+        Map<Long, IEntity> haveGetEntities = new HashMap<>();
         return Arrays.stream(ids)
-            .mapToObj(id -> context.getEntityToCache(id))
-            .filter(op -> op.isPresent())
-            .map(op -> op.get()).toArray(IEntity[]::new);
+            .mapToObj(id -> {
+                IEntity haveGetEntity = haveGetEntities.get(id);
+                if (haveGetEntity != null) {
+                    return Optional.of(haveGetEntity.copy());
+                } else {
+                    return context.getEntityToCache(id);
+                }
+            }).filter(op -> op.isPresent()).map(op -> op.get()).toArray(IEntity[]::new);
     }
 
     // 获取影响树列表.
