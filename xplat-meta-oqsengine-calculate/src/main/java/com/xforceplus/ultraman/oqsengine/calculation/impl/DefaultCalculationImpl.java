@@ -177,6 +177,19 @@ public class DefaultCalculationImpl implements Calculation {
                 if (!parentParticipant.isPresent()) {
                     return InfuenceConsumer.Action.CONTINUE;
                 }
+
+                /*
+                 * 如果树中出现当前源头对象参与者,那么直接忽略.
+                 * 原因是已经在计算阶段处理完成.
+                 */
+                IEntity sourceEntity = context.getSourceEntity();
+                IEntityClass sourceEntityClass =
+                    context.getResourceWithEx(() -> context.getMetaManager()).load(sourceEntity.entityClassRef()).get();
+
+                if (sourceEntityClass.field(participant.getField().id()).isPresent()) {
+                    return InfuenceConsumer.Action.CONTINUE;
+                }
+
                 CalculationLogic logic =
                     calculationLogicFactory.getCalculationLogic(participant.getField().calculationType());
 
