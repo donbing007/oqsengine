@@ -235,7 +235,7 @@ public class CalculationTest extends AbstractContainerExtends {
             )
         );
         results = entityManagementService.build(orderItem);
-        Assertions.assertEquals(ResultStatus.HALF_SUCCESS, results.getResultStatus(), results.getMessage());
+        Assertions.assertEquals(ResultStatus.SUCCESS, results.getResultStatus(), results.getMessage());
 
         order = entitySearchService.selectOne(order.id(), MockEntityClassDefine.ORDER_CLASS.ref()).getValue().get();
         Assertions.assertEquals(new BigDecimal("0.0"),
@@ -619,7 +619,7 @@ public class CalculationTest extends AbstractContainerExtends {
         IEntity orderItem = entityHelper.buildOrderItem(order);
         oqsResult = entityManagementService.build(orderItem);
 
-        Assertions.assertEquals(ResultStatus.HALF_SUCCESS, oqsResult.getResultStatus(),
+        Assertions.assertEquals(ResultStatus.SUCCESS, oqsResult.getResultStatus(),
             oqsResult.getMessage());
         order = entitySearchService.selectOne(order.id(), MockEntityClassDefine.ORDER_CLASS.ref()).getValue().get();
         user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).getValue().get();
@@ -662,7 +662,7 @@ public class CalculationTest extends AbstractContainerExtends {
         user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).getValue().get();
         IEntity orderItem1 = entityHelper.buildOrderItem(order1);
         oqsResult = entityManagementService.build(orderItem1);
-        Assertions.assertEquals(ResultStatus.HALF_SUCCESS, oqsResult.getResultStatus(),
+        Assertions.assertEquals(ResultStatus.SUCCESS, oqsResult.getResultStatus(),
             oqsResult.getMessage());
 
         order = entitySearchService.selectOne(order1.id(), MockEntityClassDefine.ORDER_CLASS.ref()).getValue().get();
@@ -740,7 +740,7 @@ public class CalculationTest extends AbstractContainerExtends {
             oqsResult.getMessage());
         IEntity orderItem = entityHelper.buildOrderItem(order);
         oqsResult = entityManagementService.build(orderItem);
-        Assertions.assertEquals(ResultStatus.HALF_SUCCESS, oqsResult.getResultStatus(),
+        Assertions.assertEquals(ResultStatus.SUCCESS, oqsResult.getResultStatus(),
             oqsResult.getMessage());
 
         user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).getValue().get();
@@ -828,7 +828,7 @@ public class CalculationTest extends AbstractContainerExtends {
             oqsResult.getMessage());
         IEntity orderItem = entityHelper.buildOrderItem(order);
         oqsResult = entityManagementService.build(orderItem);
-        Assertions.assertEquals(ResultStatus.HALF_SUCCESS, oqsResult.getResultStatus(),
+        Assertions.assertEquals(ResultStatus.SUCCESS, oqsResult.getResultStatus(),
             oqsResult.getMessage());
 
         user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).getValue().get();
