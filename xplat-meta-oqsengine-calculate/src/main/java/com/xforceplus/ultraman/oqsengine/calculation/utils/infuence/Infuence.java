@@ -233,6 +233,9 @@ public class Infuence {
      * @param consumer 对于每一个结点调用的消费实现.
      */
     public void scan(InfuenceConsumer consumer) {
+        if (this.rootNode == null) {
+            return;
+        }
         scan(consumer, rootNode.getParticipant());
     }
 
@@ -381,6 +384,36 @@ public class Infuence {
                     case OVER_SELF: {
                         break;
                     }
+                    case OVER_REMOVE_SELF: {
+                        // 终结并且删除子树.
+                        Optional<Node> parentNode = node.getParent();
+                        if (parentNode.isPresent()) {
+                            Node parent = parentNode.get();
+                            parent.removeChild(node);
+
+                            // 需要从快捷方式中移除.
+                            bfsIter((n, l) -> {
+                                Participant p = n.getParticipant();
+                                List<Node> nodes = participantNodeSearchHelper.get(p);
+                                if (nodes != null) {
+                                    nodes.remove(n);
+                                    size--;
+                                    if (nodes.isEmpty()) {
+                                        participantNodeSearchHelper.remove(p);
+                                    }
+                                }
+
+                                return InfuenceConsumer.Action.CONTINUE;
+                            }, node);
+
+                        } else {
+                            // 当前就是根结点.
+                            this.rootNode = null;
+                            this.size = 0;
+                            this.participantNodeSearchHelper.clear();
+                        }
+                        break;
+                    }
                     default: {
                         throw new IllegalArgumentException("Error action.");
                     }
@@ -447,6 +480,12 @@ public class Infuence {
 
             child.setParent(this);
             this.children.add(child);
+        }
+
+        public void removeChild(Node child) {
+            if (this.children != null) {
+                this.children.remove(child);
+            }
         }
 
         public int getLevel() {
