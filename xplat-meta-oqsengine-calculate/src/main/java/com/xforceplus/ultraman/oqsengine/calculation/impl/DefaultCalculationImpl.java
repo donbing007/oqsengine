@@ -12,6 +12,7 @@ import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.CalculationParticipant;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
@@ -28,6 +29,8 @@ import io.micrometer.core.instrument.Timer;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -515,7 +518,56 @@ public class DefaultCalculationImpl implements Calculation {
                 return Optional.empty();
             }).filter(o -> o.isPresent()).map(o -> o.get()).toArray(Infuence[]::new);
 
-            return infuences;
+
+            // 参与者速查表.key为参与者,value未使用.
+            Map<Participant, Object> participantDuplicateTable = new HashMap<>();
+
+            /*
+            A <- B              1
+            C <- D <- B         2
+            E <- B              3
+            应该只保留2号树.这里是防止进行重复计算.
+            这里会跳过所有静态字段,只处理根结点是计算字段树.
+             */
+            for (Infuence infuence : infuences) {
+                infuence.scan((parentParticipantOp, participant, infuenceInner) -> {
+                    // 如果当前是根影响力,那么查看字段是否为非计算字段,是的话跳过.
+                    if (!parentParticipantOp.isPresent()) {
+                        if (participant.getField().calculationType() == CalculationType.STATIC) {
+                            // 终止当前影响力的所有迭代.
+                            return InfuenceConsumer.Action.OVER;
+                        }
+                    }
+                    if (participantDuplicateTable.containsKey(participant)) {
+                        // 已经参加其他树的参与者,终止迭代并且当前结点开始的所有子树.
+                        return InfuenceConsumer.Action.OVER_REMOVE_SELF;
+                    } else {
+                        participantDuplicateTable.put(participant, null);
+                        return InfuenceConsumer.Action.CONTINUE;
+                    }
+                });
+            }
+
+            for (Infuence infuence : infuences) {
+                infuence.scan((parentParticipantOp, participant, infuenceInner) -> {
+                    // 只判根影响力是静态字段.
+                    if (!parentParticipantOp.isPresent()) {
+                        if (participant.getField().calculationType() != CalculationType.STATIC) {
+                            // 终止当前影响力的所有迭代.
+                            return InfuenceConsumer.Action.OVER;
+                        }
+                    }
+                    if (participantDuplicateTable.containsKey(participant)) {
+                        // 已经参加其他树的参与者,终止迭代并且当前结点开始的所有子树.
+                        return InfuenceConsumer.Action.OVER_REMOVE_SELF;
+                    } else {
+                        participantDuplicateTable.put(participant, null);
+                        return InfuenceConsumer.Action.CONTINUE;
+                    }
+                });
+            }
+
+            return Arrays.stream(infuences).filter(i -> !i.empty()).toArray(Infuence[]::new);
 
         } finally {
 

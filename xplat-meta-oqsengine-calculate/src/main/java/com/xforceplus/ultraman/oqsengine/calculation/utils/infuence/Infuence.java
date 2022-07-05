@@ -213,13 +213,18 @@ public class Infuence {
 
     /**
      * 判断是否为空影响树. 空影响表示发起源影响力没有任何作用.
+     * 两种情况会认为是空,只有一个根结点或者没有任何结点.
      *
      * @return true 空, false 非空.
      */
     public boolean empty() {
-        // 只有一个根结点.
-        final int onlyRoot = 1;
-        return getSize() == onlyRoot;
+        if (rootNode == null) {
+            return true;
+        } else {
+            // 只有一个根结点.
+            final int onlyRoot = 1;
+            return getSize() == onlyRoot;
+        }
     }
 
     /**
