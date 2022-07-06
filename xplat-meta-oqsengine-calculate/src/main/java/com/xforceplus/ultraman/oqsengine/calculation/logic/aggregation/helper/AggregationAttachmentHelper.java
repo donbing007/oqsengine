@@ -1,8 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.helper;
 
+import com.xforceplus.ultraman.oqsengine.calculation.dto.agg.CollectAttachment;
 import com.xforceplus.ultraman.oqsengine.common.NumberUtils;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -13,6 +16,8 @@ import java.util.Optional;
  * @since 1.8
  */
 public class AggregationAttachmentHelper {
+
+    public static final String COLLECT_ATTACHMENT_DIVIDE = ",";
 
     private static final char DIVIDER = '|';
     private static final int COUNT_INDEX = 0;
@@ -79,6 +84,36 @@ public class AggregationAttachmentHelper {
         buff.append(count).append(DIVIDER).append(sum);
         return buff.toString();
     }
+
+
+
+    /**
+     * 将原始的attachment转为CollectAttachment对象.
+     *
+     * @param fieldValues 字段原始值.
+     * @param attachment 附件信息.
+     *
+     *
+     * @return
+     */
+    public static Optional<CollectAttachment> buildCollectAttachment(String[] fieldValues, String attachment) {
+        //  构造
+        Map<String, Integer> collectElements = new LinkedHashMap<>();
+        if (fieldValues.length > 0) {
+            String[] attachments = attachment.split(COLLECT_ATTACHMENT_DIVIDE);
+            //  字段长度与统计长度必须相等
+            if (fieldValues.length != attachments.length) {
+                return Optional.empty();
+            }
+
+            for (int i = 0; i < fieldValues.length; i++) {
+                collectElements.put(fieldValues[i], Integer.parseInt(attachments[i]));
+            }
+        }
+
+        return Optional.of(new CollectAttachment(collectElements));
+    }
+
 
     private static long readLong(IValue value, int index) {
         if (value.getField().calculationType() != CalculationType.AGGREGATION) {

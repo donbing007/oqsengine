@@ -5,8 +5,8 @@ import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationScenario
 import com.xforceplus.ultraman.oqsengine.calculation.dto.AffectedInfo;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationException;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.CalculationLogic;
-import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.strategy.FunctionStrategy;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.strategy.impl.AvgFunctionStrategy;
+import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.strategy.impl.CollectFunctionStrategy;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.strategy.impl.CountFunctionStrategy;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.strategy.impl.MaxFunctionStrategy;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.strategy.impl.MinFunctionStrategy;
@@ -31,6 +31,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -88,6 +89,8 @@ public class AggregationCalculationLogic implements CalculationLogic {
                         return Optional.of(new LongValue(aggregationField, 0, "0|0"));
                     case DECIMAL:
                         return Optional.of(new DecimalValue(aggregationField, BigDecimal.ZERO, "0|0.0"));
+                    case STRINGS:
+                        return Optional.of(new StringsValue(aggregationField, new String[0], ""));
                     default:
                         return Optional.of(new DateTimeValue(aggregationField, DateTimeValue.MIN_DATE_TIME, "0|0"));
                 }
@@ -231,30 +234,39 @@ public class AggregationCalculationLogic implements CalculationLogic {
 
                 }
             }
-        } else {
-            if (!valueChange.isPresent()) {
-                return Optional.empty();
-            }
         }
 
+        if (!valueChange.isPresent()) {
+            return Optional.empty();
+        }
+
+        ValueChange vc = valueChange.get();
         try {
             //拿到数据后开始运算
             AggregationType aggregationType = aggregation.getAggregationType();
-            if (aggregationType.equals(AggregationType.AVG)) {
-                FunctionStrategy functionStrategy = new AvgFunctionStrategy();
-                return functionStrategy.excute(aggregationValue, valueChange.get(), context);
-            } else if (aggregationType.equals(AggregationType.MAX)) {
-                FunctionStrategy functionStrategy = new MaxFunctionStrategy();
-                return functionStrategy.excute(aggregationValue, valueChange.get(), context);
-            } else if (aggregationType.equals(AggregationType.MIN)) {
-                FunctionStrategy functionStrategy = new MinFunctionStrategy();
-                return functionStrategy.excute(aggregationValue, valueChange.get(), context);
-            } else if (aggregationType.equals(AggregationType.SUM)) {
-                FunctionStrategy functionStrategy = new SumFunctionStrategy();
-                return functionStrategy.excute(aggregationValue, valueChange.get(), context);
-            } else if (aggregationType.equals(AggregationType.COUNT)) {
-                FunctionStrategy functionStrategy = new CountFunctionStrategy();
-                return functionStrategy.excute(aggregationValue, valueChange.get(), context);
+
+            switch (aggregationType) {
+                case AVG: {
+                    return new AvgFunctionStrategy().excute(aggregationValue, vc, context);
+                }
+                case MAX: {
+                    return new MaxFunctionStrategy().excute(aggregationValue, vc, context);
+                }
+                case MIN: {
+                    return new MinFunctionStrategy().excute(aggregationValue, vc, context);
+                }
+                case SUM: {
+                    return new SumFunctionStrategy().excute(aggregationValue, vc, context);
+                }
+                case COUNT: {
+                    return new CountFunctionStrategy().excute(aggregationValue, vc, context);
+                }
+                case COLLECT: {
+                    return new CollectFunctionStrategy().excute(aggregationValue, vc, context);
+                }
+                default: {
+                    break;
+                }
             }
         } catch (Exception ex) {
             throw new CalculationException(
