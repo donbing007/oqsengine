@@ -195,6 +195,79 @@ public class InfuenceTest {
         Assertions.assertEquals("a, b, d, c, e, b, a, ", buff.toString());
     }
 
+    @Test
+    public void testMove() throws Exception {
+        IEntity rootEntity = Entity.Builder.anEntity()
+            .withId(Long.MAX_VALUE)
+            .withEntityClassRef(A_CLASS.ref()).build();
+        Infuence infuence = new Infuence(rootEntity,
+            CalculationParticipant.Builder.anParticipant()
+                .withEntityClass(A_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build(),
+            new ValueChange(
+                rootEntity.id(),
+                new DateTimeValue(EntityField.CREATE_TIME_FILED, LocalDateTime.MAX),
+                new DateTimeValue(EntityField.CREATE_TIME_FILED, LocalDateTime.MAX)
+            ), false);
+
+        infuence.impact(
+            CalculationParticipant.Builder.anParticipant()
+                .withEntityClass(A_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build(),
+            CalculationParticipant.Builder.anParticipant()
+                .withEntityClass(B_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build()
+        );
+        infuence.impact(CalculationParticipant.Builder.anParticipant()
+                .withEntityClass(B_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build(),
+            CalculationParticipant.Builder.anParticipant()
+                .withEntityClass(C_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build()
+        );
+
+        infuence.impact(CalculationParticipant.Builder.anParticipant()
+                .withEntityClass(A_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build(),
+            CalculationParticipant.Builder.anParticipant()
+                .withEntityClass(D_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build());
+        infuence.impact(CalculationParticipant.Builder.anParticipant()
+                .withEntityClass(D_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build(),
+            CalculationParticipant.Builder.anParticipant()
+                .withEntityClass(E_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build());
+
+        // 移动D子树至C,成为C的子树.
+        boolean result = infuence.move(
+            CalculationParticipant.Builder.anParticipant()
+                .withEntityClass(D_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build(),
+            CalculationParticipant.Builder.anParticipant()
+                .withEntityClass(C_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build()
+        );
+        Assertions.assertTrue(result);
+        String expecte = "(a,createTime)\n"
+            + "   L---(b,createTime)\n"
+            + "      L---(c,createTime)\n"
+            + "         L---(d,createTime)\n"
+            + "            L---(e,createTime)";
+        Assertions.assertEquals(expecte, infuence.toString());
+    }
+
     /**
      * 测试在如下多分支情况下,允许多分支之间重复,但是不允许同一分支下出现重复.
      * .....A

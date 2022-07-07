@@ -86,13 +86,17 @@ public class FormulaCalculationLogic implements CalculationLogic {
                     List<String> args = formula.getArgs();
                     if (args.size() > 0) {
                         if (args.contains(participantField.name())) {
-                            infuenceInner.impact(
-                                participant,
-                                CalculationParticipant.Builder.anParticipant()
-                                    .withEntityClass(participantClass)
-                                    .withField(f)
-                                    .build()
-                            );
+
+                            Participant p = CalculationParticipant.Builder.anParticipant()
+                                .withEntityClass(participantClass)
+                                .withField(f)
+                                .build();
+
+                            if (!infuenceInner.move(p, participant)) {
+
+                                infuenceInner.impact(participant, p);
+
+                            }
                         }
                     }
                 });
