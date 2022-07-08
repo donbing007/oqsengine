@@ -35,10 +35,10 @@ public class MockEntityHelper {
 
     public IEntity buildCollectEntity() {
         return Entity.Builder.anEntity()
-                    .withEntityClassRef(MockEntityClassDefine.F_CLASS.ref())
+                    .withEntityClassRef(MockEntityClassDefine.COLLECT_MAIN_CLASS.ref())
                     .withValue(
                         new StringsValue(
-                            MockEntityClassDefine.F_CLASS.field("f-collect-s").get(),
+                            MockEntityClassDefine.COLLECT_MAIN_CLASS.field("f-collect-s").get(),
                             new String[0],
                             ""
                         )
@@ -47,13 +47,13 @@ public class MockEntityHelper {
 
     public IEntity buildCollectedEntity(String last, long foreignId) {
         IEntityField entityField =
-            MockEntityClassDefine.S_CLASS.field("s-string").get();
+            MockEntityClassDefine.COLLECT_DETAILS_CLASS.field("s-string").get();
 
         IEntityField foreignEntityField =
-            MockEntityClassDefine.S_CLASS.field("collect关联").get();
+            MockEntityClassDefine.COLLECT_DETAILS_CLASS.field("collect关联").get();
 
         return Entity.Builder.anEntity()
-            .withEntityClassRef(MockEntityClassDefine.S_CLASS.ref())
+            .withEntityClassRef(MockEntityClassDefine.COLLECT_DETAILS_CLASS.ref())
             .withValues(
                 Arrays.asList(
                     new LongValue(foreignEntityField, foreignId),

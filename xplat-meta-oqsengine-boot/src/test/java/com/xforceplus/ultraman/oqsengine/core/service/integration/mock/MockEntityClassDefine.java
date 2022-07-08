@@ -59,8 +59,8 @@ public class MockEntityClassDefine {
     private static long odLookupOriginalEntityClassId = baseClassId - 8;
     private static long odLookupTargetEntityClassId = baseClassId - 9;
 
-    private static long fEntityClassId = baseClassId - 10;
-    private static long sEntityClassId = baseClassId - 11;
+    private static long collectMainEntityClassId = baseClassId - 10;
+    private static long collectDetailsEntityClassId = baseClassId - 11;
 
     public static IEntityClass L0_ENTITY_CLASS;
     public static IEntityClass L1_ENTITY_CLASS;
@@ -68,9 +68,9 @@ public class MockEntityClassDefine {
     public static IEntityClass DRIVER_ENTITY_CLASS;
     public static IEntityClass LOOKUP_ENTITY_CLASS;
 
-    public static IEntityClass F_CLASS;
+    public static IEntityClass COLLECT_MAIN_CLASS;
 
-    public static IEntityClass S_CLASS;
+    public static IEntityClass COLLECT_DETAILS_CLASS;
 
     /*
      * 用户(用户名称, 用户编号, 订单总数count, 总消费金额sum, 平均消费金额avg, 最大消费金额max, 最小消费金额min)
@@ -1234,8 +1234,8 @@ public class MockEntityClassDefine {
             ).build();
 
         //  明细
-        S_CLASS = EntityClass.Builder.anEntityClass()
-            .withId(sEntityClassId)
+        COLLECT_DETAILS_CLASS = EntityClass.Builder.anEntityClass()
+            .withId(collectDetailsEntityClassId)
             .withCode("s-class")
             .withFields(
                 Collections.singletonList(EntityField.Builder.anEntityField()
@@ -1250,10 +1250,10 @@ public class MockEntityClassDefine {
                     .withId(collectForeignField.id())
                     .withEntityField(collectForeignField)
                     .withCode("f-collect")
-                    .withLeftEntityClassId(sEntityClassId)
+                    .withLeftEntityClassId(collectDetailsEntityClassId)
                     .withLeftEntityClassCode("s-class")
-                    .withRightEntityClassId(fEntityClassId)
-                    .withRightEntityClassLoader((id, a) -> Optional.of(F_CLASS))
+                    .withRightEntityClassId(collectMainEntityClassId)
+                    .withRightEntityClassLoader((id, a) -> Optional.of(COLLECT_MAIN_CLASS))
                     .withBelongToOwner(true)
                     .withIdentity(false)
                     .withRelationType(Relationship.RelationType.MANY_TO_ONE)
@@ -1262,8 +1262,8 @@ public class MockEntityClassDefine {
             .build();
 
         //  头
-        F_CLASS = EntityClass.Builder.anEntityClass()
-            .withId(fEntityClassId)
+        COLLECT_MAIN_CLASS = EntityClass.Builder.anEntityClass()
+            .withId(collectMainEntityClassId)
             .withCode("f-class")
             .withField(
                 EntityField.Builder.anEntityField()
@@ -1275,7 +1275,7 @@ public class MockEntityClassDefine {
                             .withSearchable(true)
                             .withCalculation(Aggregation.Builder
                                 .anAggregation()
-                                .withClassId(sEntityClassId)
+                                .withClassId(collectDetailsEntityClassId)
                                 .withFieldId(Long.MAX_VALUE - FieldId.collectTargetFieldId.ordinal())
                                 .withAggregationType(AggregationType.COLLECT)
                                 .withRelationId(collectForeignField.id())
@@ -1288,10 +1288,10 @@ public class MockEntityClassDefine {
                 Relationship.Builder.anRelationship()
                     .withId(collectForeignField.id())
                     .withCode("f-collect")
-                    .withLeftEntityClassId(fEntityClassId)
+                    .withLeftEntityClassId(collectMainEntityClassId)
                     .withLeftEntityClassCode("f-class")
-                    .withRightEntityClassId(sEntityClassId)
-                    .withRightEntityClassLoader((id, a) -> Optional.of(S_CLASS))
+                    .withRightEntityClassId(collectDetailsEntityClassId)
+                    .withRightEntityClassLoader((id, a) -> Optional.of(COLLECT_DETAILS_CLASS))
                     .withBelongToOwner(false)
                     .withIdentity(false)
                     .withRelationType(Relationship.RelationType.ONE_TO_MANY)
@@ -1325,8 +1325,8 @@ public class MockEntityClassDefine {
             OD_LOOKUP_ORIGINAL_ENTITY_CLASS,
             OD_LOOKUP_TARGET_ENTITY_CLASS,
 
-            F_CLASS,
-            S_CLASS
+            COLLECT_MAIN_CLASS,
+            COLLECT_DETAILS_CLASS
         };
 
         for (IEntityClass e : es) {

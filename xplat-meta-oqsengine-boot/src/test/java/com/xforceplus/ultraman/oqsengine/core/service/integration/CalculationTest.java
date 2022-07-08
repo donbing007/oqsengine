@@ -231,10 +231,10 @@ public class CalculationTest extends AbstractContainerExtends {
 
         Conditions conditions = Conditions.buildEmtpyConditions();
         conditions.addAnd(new Condition(
-            MockEntityClassDefine.F_CLASS.field("f-collect-s").get(),
+            MockEntityClassDefine.COLLECT_MAIN_CLASS.field("f-collect-s").get(),
             ConditionOperator.EQUALS,
             new StringsValue(
-                MockEntityClassDefine.F_CLASS.field("f-collect-s").get(),
+                MockEntityClassDefine.COLLECT_MAIN_CLASS.field("f-collect-s").get(),
                 "s-string" + "_" + "A"
             )));
 
@@ -279,14 +279,14 @@ public class CalculationTest extends AbstractContainerExtends {
 
         Conditions conditionsIn = Conditions.buildEmtpyConditions();
         conditionsIn.addAnd(new Condition(
-            MockEntityClassDefine.F_CLASS.field("f-collect-s").get(),
+            MockEntityClassDefine.COLLECT_MAIN_CLASS.field("f-collect-s").get(),
             ConditionOperator.MULTIPLE_EQUALS,
             new StringsValue(
-                MockEntityClassDefine.F_CLASS.field("f-collect-s").get(),
+                MockEntityClassDefine.COLLECT_MAIN_CLASS.field("f-collect-s").get(),
                 "s-string" + "_" + "AB"
             ),
             new StringsValue(
-            MockEntityClassDefine.F_CLASS.field("f-collect-s").get(),
+            MockEntityClassDefine.COLLECT_MAIN_CLASS.field("f-collect-s").get(),
             "s-string" + "_" + "BA"
             )
         ));
@@ -310,10 +310,10 @@ public class CalculationTest extends AbstractContainerExtends {
 
         Conditions conditionsNotIn = Conditions.buildEmtpyConditions();
         conditionsNotIn.addAnd(new Condition(
-            MockEntityClassDefine.F_CLASS.field("f-collect-s").get(),
+            MockEntityClassDefine.COLLECT_MAIN_CLASS.field("f-collect-s").get(),
             ConditionOperator.NOT_EQUALS,
             new StringsValue(
-                MockEntityClassDefine.F_CLASS.field("f-collect-s").get(),
+                MockEntityClassDefine.COLLECT_MAIN_CLASS.field("f-collect-s").get(),
                 "s-string" + "_" + "AB"
             )
         ));
