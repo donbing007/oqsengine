@@ -3,14 +3,17 @@ package com.xforceplus.ultraman.oqsengine.core.service.integration.mock;
 import com.github.javafaker.Faker;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LookupValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import java.math.BigDecimal;
 import java.time.ZoneId;
+import java.util.Arrays;
 import java.util.Locale;
 
 /**
@@ -27,6 +30,39 @@ public class MockEntityHelper {
 
     public MockEntityHelper(LongIdGenerator idGenerator) {
         this.idGenerator = idGenerator;
+    }
+
+
+    public IEntity buildCollectEntity() {
+        return Entity.Builder.anEntity()
+                    .withEntityClassRef(MockEntityClassDefine.F_CLASS.ref())
+                    .withValue(
+                        new StringsValue(
+                            MockEntityClassDefine.F_CLASS.field("f-collect-s").get(),
+                            new String[0],
+                            ""
+                        )
+                    ).build();
+    }
+
+    public IEntity buildCollectedEntity(String last, long foreignId) {
+        IEntityField entityField =
+            MockEntityClassDefine.S_CLASS.field("s-string").get();
+
+        IEntityField foreignEntityField =
+            MockEntityClassDefine.S_CLASS.field("collect关联").get();
+
+        return Entity.Builder.anEntity()
+            .withEntityClassRef(MockEntityClassDefine.S_CLASS.ref())
+            .withValues(
+                Arrays.asList(
+                    new LongValue(foreignEntityField, foreignId),
+                    new StringValue(
+                        entityField,
+                        entityField.name() + "_" + last
+                    )
+                )
+            ).build();
     }
 
     /**
@@ -156,6 +192,34 @@ public class MockEntityHelper {
      * 构造一个静态 lookup 动态的动态一端.
      */
     public IEntity buildOdLookupTargetEntity() {
+        return Entity.Builder.anEntity()
+            .withEntityClassRef(MockEntityClassDefine.OD_LOOKUP_TARGET_ENTITY_CLASS.ref())
+            .withValue(
+                new LongValue(
+                    MockEntityClassDefine.OD_LOOKUP_TARGET_ENTITY_CLASS.field("od-lookup-target-long").get(),
+                    faker.number().numberBetween(100, 10000)
+                )
+            ).build();
+    }
+
+    /**
+     * 构造一个聚合对象.
+     */
+    public IEntity buildOdAggCollectEntity(IEntity targetEntity) {
+        return Entity.Builder.anEntity()
+            .withEntityClassRef(MockEntityClassDefine.OD_LOOKUP_ORIGINAL_ENTITY_CLASS.ref())
+            .withValue(
+                new LookupValue(
+                    MockEntityClassDefine.OD_LOOKUP_ORIGINAL_ENTITY_CLASS.field("od-lookup-original-long").get(),
+                    targetEntity.id()
+                )
+            ).build();
+    }
+
+    /**
+     * 构造一个被聚合对象.
+     */
+    public IEntity buildOdAggCollectTargetEntity() {
         return Entity.Builder.anEntity()
             .withEntityClassRef(MockEntityClassDefine.OD_LOOKUP_TARGET_ENTITY_CLASS.ref())
             .withValue(

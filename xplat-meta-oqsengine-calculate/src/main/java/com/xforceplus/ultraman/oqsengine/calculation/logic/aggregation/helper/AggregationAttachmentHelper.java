@@ -94,7 +94,7 @@ public class AggregationAttachmentHelper {
      * @param attachment 附件信息.
      *
      *
-     * @return
+     * @return collect附件.
      */
     public static Optional<CollectAttachment> buildCollectAttachment(String[] fieldValues, String attachment) {
         //  构造

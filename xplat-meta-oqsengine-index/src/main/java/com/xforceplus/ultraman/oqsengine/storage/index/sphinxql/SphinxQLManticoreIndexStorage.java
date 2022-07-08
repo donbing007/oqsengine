@@ -10,11 +10,14 @@ import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.AggregationType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.AnyEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Aggregation;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.executor.ResourceTask;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
@@ -479,10 +482,11 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
                 buff.append(wrapperAttributeF(field, storageValue, false)).append(' ');
 
             } else if (AnyStorageValue.isAttachemntStorageName(attr.getKey())) {
+
                 // 附件
                 StorageValue storageValue = storageStrategyFactory.getStrategy(FieldType.STRING)
                     .convertIndexStorageValue(
-                        AnyStorageValue.compatibleStorageName(attr.getKey()), attr.getValue(), true, true);
+                        AnyStorageValue.compatibleStorageName(attr.getKey()), attr.getValue(), field.indexAttachment(), true);
 
                 buff.append(wrapperAttributeF(field, storageValue, true)).append(' ');
             }

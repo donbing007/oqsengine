@@ -202,6 +202,10 @@ public class EntityField implements IEntityField, Serializable {
         return this.calculationType;
     }
 
+    public boolean indexAttachment() {
+        return config.indexAttachment();
+    }
+
     public String getDictId() {
         return dictId;
     }

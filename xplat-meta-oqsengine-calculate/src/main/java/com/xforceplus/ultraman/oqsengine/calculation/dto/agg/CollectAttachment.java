@@ -4,6 +4,8 @@ import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.helper.Ag
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -19,6 +21,11 @@ public class CollectAttachment {
     //  当前水位.
     private int used;
 
+    /**
+     * 构造函数.
+     *
+     * @param collectElements 当前已存在的元素对.
+     */
     public CollectAttachment(Map<String, Integer> collectElements) {
 
         this.collectElements = collectElements;
@@ -61,39 +68,28 @@ public class CollectAttachment {
      * @return              值对象.
      */
     public IValue toIValue(IEntityField entityField) {
-        String attachment = toAttachment();
-        String[] collect = toCollect();
 
-        return new StringsValue(entityField, collect, attachment);
-    }
-
-    /**
-     * 构建attachment存储值.
-     *
-     * @return 存储值.
-     */
-    public String toAttachment() {
         if (collectElements.isEmpty()) {
-            return "";
+            return null;
         }
 
-        return collectElements
-                    .values()
-                    .stream()
-                    .map(String::valueOf)
-                    .collect(Collectors.joining(AggregationAttachmentHelper.COLLECT_ATTACHMENT_DIVIDE));
-    }
+        List<Integer> attachments = new ArrayList<>();
+        List<String> collect = new ArrayList<>();
 
-    /**
-     * 构建attachment存储值.
-     *
-     * @return 存储值.
-     */
-    public String[] toCollect() {
-        if (collectElements.isEmpty()) {
-            return new String[0];
-        }
+        collectElements.entrySet().stream().filter(
+            e -> {
+                return e.getValue() > 0;
+            }
+        ).forEach(
+            e -> {
+                collect.add(e.getKey());
+                attachments.add(e.getValue());
+            }
+        );
 
-        return collectElements.keySet().toArray(new String[0]);
+        String attachmentStr =
+            attachments.stream().map(String::valueOf).collect(Collectors.joining(AggregationAttachmentHelper.COLLECT_ATTACHMENT_DIVIDE));
+
+        return new StringsValue(entityField, collect.toArray(new String[0]), attachmentStr);
     }
 }
