@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.calculation.function.aggregation;
 
 import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.impl.AvgFunction;
+import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.impl.CollectFunction;
 import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.impl.CountFunction;
 import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.impl.MaxFunction;
 import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.impl.MinFunction;
@@ -36,6 +37,8 @@ public class AggregationFunctionFactoryImpl {
                 return new MinFunction();
             case SUM:
                 return new SumFunction();
+            case COLLECT:
+                return new CollectFunction();
             default:
                 throw new IllegalArgumentException(
                     String.format("Unrecognized physical aggregationFunction type.[%d]", aggregationType.toString()));
