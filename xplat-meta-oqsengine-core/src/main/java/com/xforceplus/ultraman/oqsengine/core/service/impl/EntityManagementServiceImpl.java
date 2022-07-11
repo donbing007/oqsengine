@@ -512,8 +512,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 }
 
                 /*
-                    只在时不需要空值,必须在校验之后否则无法给出必填字段设置为null的错误.
-                     */
+                    创建时不需要空值,必须在校验之后否则无法给出必填字段设置为null的错误.
+                */
                 currentEntity.squeezeEmpty();
 
                 // 非脏,不需要继续.

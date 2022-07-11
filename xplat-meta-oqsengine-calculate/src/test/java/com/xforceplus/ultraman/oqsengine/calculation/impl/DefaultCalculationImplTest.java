@@ -17,7 +17,10 @@ import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
 import com.xforceplus.ultraman.oqsengine.lock.LocalResourceLocker;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MockMetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.AggregationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
@@ -27,7 +30,9 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Aggregation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Formula;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Lookup;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
@@ -36,6 +41,7 @@ import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.EntityPackage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OqsEngineEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
+import java.lang.reflect.Method;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -53,11 +59,15 @@ import org.junit.jupiter.api.Test;
 
 /**
  * 计算字段计算器测试. 测试构造如下的一个情况.
+ * <pre>
  * A
- * /     \
- * B(sum)  C(lookup)
- * /
- * D(SUM)
+ * |---B_SUM
+ *       |------D_SUM
+ * |---B_LOOKUP
+ *        |------B_FORMULA
+ *            |-------------D_SUM_CONDITION (聚合B_DECIMAL普通字段,条件: B_FORMULA != 7)
+ * |---C_LOOKUP
+ * </pre>
  *
  * @author dongbin
  * @version 0.1 2021/10/14 10:26:24
@@ -65,58 +75,352 @@ import org.junit.jupiter.api.Test;
  */
 public class DefaultCalculationImplTest {
 
+    private static enum FieldIndex {
+        A_LONG,
+        B_SUM,
+        B_LOOKUP,
+        B_DECIMAL,
+        B_FORMULA,
+        D_SUM,
+        D_SUM_CONDITION,
+        C_LOOKUP
+    }
+
+    private static enum ClassIndex {
+        A_CLASS,
+        B_CLASS,
+        C_CLASS,
+        D_CLASS,
+    }
+
+    private static enum RelationIndex {
+        B_A,
+        A_B,
+        B_D,
+        D_B,
+        A_C,
+        C_A,
+    }
+
+    private static IEntityClass A_CLASS;
+    private static IEntityClass B_CLASS;
+    private static IEntityClass C_CLASS;
+    private static IEntityClass D_CLASS;
+
+    private static long getFieldId(FieldIndex fieldIndex) {
+        // 避免和默认ID系统字段冲突,因为默认的EntityField.ID_ENTITY_FIELD的id是 Long.MAX_VALUE.
+        return Long.MAX_VALUE - 1000 - fieldIndex.ordinal();
+    }
+
+    private static long getClassId(ClassIndex classIndex) {
+        return Long.MAX_VALUE - classIndex.ordinal();
+    }
+
+    private static long getRelationIndex(RelationIndex relationIndex) {
+        return Long.MAX_VALUE - relationIndex.ordinal();
+    }
+
     private static IEntityField A_LONG = EntityField.Builder.anEntityField()
-        .withId(Long.MAX_VALUE - 100)
+        .withId(getFieldId(FieldIndex.A_LONG))
         .withFieldType(FieldType.LONG)
         .withName("a-long").build();
 
     private static IEntityField B_SUM = EntityField.Builder.anEntityField()
-        .withId(Long.MAX_VALUE - 200)
+        .withId(getFieldId(FieldIndex.B_SUM))
         .withFieldType(FieldType.LONG)
         .withName("b-sum-a")
         .withConfig(
             FieldConfig.Builder.anFieldConfig()
-                .withCalculation(Aggregation.Builder.anAggregation().build()).build()
+                .withCalculation(
+                    Aggregation.Builder.anAggregation()
+                        .withAggregationType(AggregationType.SUM)
+                        .withRelationId(getRelationIndex(RelationIndex.B_A))
+                        .withClassId(getClassId(ClassIndex.A_CLASS))
+                        .withFieldId(getFieldId(FieldIndex.A_LONG))
+                        .build()
+                ).build()
         )
         .build();
 
+    private static IEntityField B_LOOKUP = EntityField.Builder.anEntityField()
+        .withId(getFieldId(FieldIndex.B_LOOKUP))
+        .withFieldType(FieldType.LONG)
+        .withName("b-lookup-a")
+        .withConfig(
+            FieldConfig.Builder.anFieldConfig()
+                .withCalculation(
+                    Lookup.Builder.anLookup()
+                        .withClassId(getClassId(ClassIndex.A_CLASS))
+                        .withFieldId(getFieldId(FieldIndex.A_LONG))
+                        .build()
+                ).build()
+        ).build();
+
+    private static IEntityField B_DECIMAL = EntityField.Builder.anEntityField()
+        .withId(getFieldId(FieldIndex.B_DECIMAL))
+        .withFieldType(FieldType.DECIMAL)
+        .withName("b-decimal").build();
+
+    private static IEntityField B_FORMULA = EntityField.Builder.anEntityField()
+        .withId(getFieldId(FieldIndex.B_FORMULA))
+        .withFieldType(FieldType.LONG)
+        .withName("b-formula")
+        .withConfig(
+            FieldConfig.Builder.anFieldConfig()
+                .withCalculation(
+                    Formula.Builder.anFormula()
+                        .withLevel(0)
+                        .withFailedPolicy(Formula.FailedPolicy.THROW_EXCEPTION)
+                        .withExpression("return ${b-lookup-a} + ${b-sum-a}")
+                        .withArgs(Arrays.asList("b-lookup-a", "b-sum-a"))
+                        .build()
+                ).build()
+        ).build();
+
     private static IEntityField C_LOOKUP = EntityField.Builder.anEntityField()
-        .withId(Long.MAX_VALUE - 300)
+        .withId(getFieldId(FieldIndex.C_LOOKUP))
         .withFieldType(FieldType.LONG)
         .withConfig(
             FieldConfig.Builder.anFieldConfig()
-                .withCalculation(Lookup.Builder.anLookup().build()).build()
-        )
-        .withName("c-lookup-a").build();
+                .withCalculation(
+                    Lookup.Builder.anLookup()
+                        .withClassId(getClassId(ClassIndex.A_CLASS))
+                        .withFieldId(getFieldId(FieldIndex.A_LONG))
+                        .build()
+                ).build()
+        ).withName("c-lookup-a").build();
 
     private static IEntityField D_SUM = EntityField.Builder.anEntityField()
-        .withId(Long.MAX_VALUE - 400)
+        .withId(getFieldId(FieldIndex.D_SUM))
         .withFieldType(FieldType.LONG)
         .withConfig(
             FieldConfig.Builder.anFieldConfig()
-                .withCalculation(Aggregation.Builder.anAggregation().build()).build()
+                .withCalculation(
+                    Aggregation.Builder.anAggregation()
+                        .withClassId(getClassId(ClassIndex.B_CLASS))
+                        .withFieldId(getFieldId(FieldIndex.B_SUM))
+                        .withRelationId(getRelationIndex(RelationIndex.D_B))
+                        .withAggregationType(AggregationType.SUM)
+                        .build()
+                ).build()
         )
-        .withName("d-sum-a").build();
+        .withName("d-sum-b").build();
 
-    private static IEntityClass A_CLASS = EntityClass.Builder.anEntityClass()
-        .withId(Long.MAX_VALUE)
-        .withCode("a-class")
-        .withField(A_LONG).build();
+    private static IEntityField D_SUM_CONDITION = EntityField.Builder.anEntityField()
+        .withId(getFieldId(FieldIndex.D_SUM_CONDITION))
+        .withFieldType(FieldType.LONG)
+        .withName("d-sum-condition-b")
+        .withConfig(
+            FieldConfig.Builder.anFieldConfig()
+                .withCalculation(
+                    Aggregation.Builder.anAggregation()
+                        .withClassId(getClassId(ClassIndex.B_CLASS))
+                        .withFieldId(getFieldId(FieldIndex.B_DECIMAL))
+                        .withAggregationType(AggregationType.SUM)
+                        .withRelationId(getRelationIndex(RelationIndex.D_B))
+                        .withConditions(
+                            Conditions.buildEmtpyConditions()
+                                .addAnd(
+                                    new Condition(
+                                        B_FORMULA,
+                                        ConditionOperator.NOT_EQUALS,
+                                        new LongValue(B_FORMULA, 7L)
+                                    )
+                                )
+                        ).build()
+                ).build()
+        ).build();
 
-    private static IEntityClass B_CLASS = EntityClass.Builder.anEntityClass()
-        .withId(Long.MAX_VALUE - 1)
-        .withCode("b-class")
-        .withField(B_SUM).build();
+    static {
 
-    private static IEntityClass C_CLASS = EntityClass.Builder.anEntityClass()
-        .withId(Long.MAX_VALUE - 2)
-        .withCode("c-class")
-        .withField(C_LOOKUP).build();
+        A_CLASS = EntityClass.Builder.anEntityClass()
+            .withId(getClassId(ClassIndex.A_CLASS))
+            .withCode("a-class")
+            .withRelations(
+                Arrays.asList(
+                    Relationship.Builder.anRelationship()
+                        .withId(getRelationIndex(RelationIndex.B_A))
+                        .withCode("b_a")
+                        .withBelongToOwner(true)
+                        .withLeftEntityClassId(getClassId(ClassIndex.A_CLASS))
+                        .withLeftEntityClassCode("a-class")
+                        .withRelationType(Relationship.RelationType.MANY_TO_ONE)
+                        .withStrong(true)
+                        .withRightEntityClassId(getClassId(ClassIndex.B_CLASS))
+                        .withRightEntityClassLoader((aLong, s) -> Optional.of(B_CLASS))
+                        .withRightFamilyEntityClassLoader(aLong -> Arrays.asList(B_CLASS))
+                        .build(),
+                    Relationship.Builder.anRelationship()
+                        .withId(getRelationIndex(RelationIndex.A_B))
+                        .withCode("a_b")
+                        .withBelongToOwner(true)
+                        .withLeftEntityClassId(getClassId(ClassIndex.A_CLASS))
+                        .withLeftEntityClassCode("a-class")
+                        .withRelationType(Relationship.RelationType.ONE_TO_MANY)
+                        .withStrong(true)
+                        .withRightEntityClassId(getClassId(ClassIndex.B_CLASS))
+                        .withRightEntityClassLoader((aLong, s) -> Optional.of(B_CLASS))
+                        .withRightFamilyEntityClassLoader(aLong -> Arrays.asList(B_CLASS))
+                        .build(),
+                    Relationship.Builder.anRelationship()
+                        .withId(getRelationIndex(RelationIndex.A_C))
+                        .withCode("a_c")
+                        .withBelongToOwner(true)
+                        .withLeftEntityClassId(getClassId(ClassIndex.A_CLASS))
+                        .withLeftEntityClassCode("a-class")
+                        .withRelationType(Relationship.RelationType.ONE_TO_MANY)
+                        .withStrong(true)
+                        .withRightEntityClassId(getClassId(ClassIndex.C_CLASS))
+                        .withRightEntityClassLoader((aLong, s) -> Optional.of(C_CLASS))
+                        .withRightFamilyEntityClassLoader(aLong -> Arrays.asList(C_CLASS))
+                        .build(),
+                    Relationship.Builder.anRelationship()
+                        .withId(getRelationIndex(RelationIndex.C_A))
+                        .withCode("c_a")
+                        .withBelongToOwner(true)
+                        .withLeftEntityClassId(getClassId(ClassIndex.A_CLASS))
+                        .withLeftEntityClassCode("a-class")
+                        .withRelationType(Relationship.RelationType.MANY_TO_ONE)
+                        .withStrong(true)
+                        .withRightEntityClassId(getClassId(ClassIndex.C_CLASS))
+                        .withRightEntityClassLoader((aLong, s) -> Optional.of(C_CLASS))
+                        .withRightFamilyEntityClassLoader(aLong -> Arrays.asList(C_CLASS))
+                        .build()
+                )
+            )
+            .withField(A_LONG).build();
 
-    private static IEntityClass D_CLASS = EntityClass.Builder.anEntityClass()
-        .withId(Long.MAX_VALUE - 3)
-        .withCode("d-class")
-        .withField(D_SUM).build();
+        B_CLASS = EntityClass.Builder.anEntityClass()
+            .withId(getClassId(ClassIndex.B_CLASS))
+            .withCode("b-class")
+            .withField(B_SUM)
+            .withField(B_FORMULA)
+            .withField(B_SUM)
+            .withField(B_LOOKUP)
+            .withField(B_DECIMAL)
+            .withRelations(
+                Arrays.asList(
+                    Relationship.Builder.anRelationship()
+                        .withId(getRelationIndex(RelationIndex.B_A))
+                        .withCode("b_a")
+                        .withBelongToOwner(false)
+                        .withLeftEntityClassId(getClassId(ClassIndex.B_CLASS))
+                        .withLeftEntityClassCode("b-class")
+                        .withRelationType(Relationship.RelationType.ONE_TO_MANY)
+                        .withStrong(true)
+                        .withRightEntityClassId(getClassId(ClassIndex.A_CLASS))
+                        .withRightEntityClassLoader((aLong, s) -> Optional.of(A_CLASS))
+                        .withRightFamilyEntityClassLoader(aLong -> Arrays.asList(A_CLASS))
+                        .build(),
+                    Relationship.Builder.anRelationship()
+                        .withId(getRelationIndex(RelationIndex.A_B))
+                        .withCode("a_b")
+                        .withBelongToOwner(false)
+                        .withLeftEntityClassId(getClassId(ClassIndex.B_CLASS))
+                        .withLeftEntityClassCode("b-class")
+                        .withRelationType(Relationship.RelationType.MANY_TO_ONE)
+                        .withStrong(true)
+                        .withRightEntityClassId(getClassId(ClassIndex.A_CLASS))
+                        .withRightEntityClassLoader((aLong, s) -> Optional.of(A_CLASS))
+                        .withRightFamilyEntityClassLoader(aLong -> Arrays.asList(A_CLASS))
+                        .build(),
+                    Relationship.Builder.anRelationship()
+                        .withId(getRelationIndex(RelationIndex.B_D))
+                        .withCode("b_d")
+                        .withBelongToOwner(true)
+                        .withLeftEntityClassId(getClassId(ClassIndex.B_CLASS))
+                        .withLeftEntityClassCode("b-class")
+                        .withRelationType(Relationship.RelationType.MANY_TO_ONE)
+                        .withStrong(true)
+                        .withRightEntityClassId(getClassId(ClassIndex.D_CLASS))
+                        .withRightEntityClassLoader((aLong, s) -> Optional.of(D_CLASS))
+                        .withRightFamilyEntityClassLoader(aLong -> Arrays.asList(D_CLASS))
+                        .build(),
+                    Relationship.Builder.anRelationship()
+                        .withId(getRelationIndex(RelationIndex.D_B))
+                        .withCode("d_b")
+                        .withBelongToOwner(true)
+                        .withLeftEntityClassId(getClassId(ClassIndex.B_CLASS))
+                        .withLeftEntityClassCode("b-class")
+                        .withRelationType(Relationship.RelationType.ONE_TO_MANY)
+                        .withStrong(true)
+                        .withRightEntityClassId(getClassId(ClassIndex.D_CLASS))
+                        .withRightEntityClassLoader((aLong, s) -> Optional.of(D_CLASS))
+                        .withRightFamilyEntityClassLoader(aLong -> Arrays.asList(D_CLASS))
+                        .build()
+                )
+            )
+            .build();
+
+        C_CLASS = EntityClass.Builder.anEntityClass()
+            .withId(Long.MAX_VALUE - 2)
+            .withCode("c-class")
+            .withRelations(
+                Arrays.asList(
+                    Relationship.Builder.anRelationship()
+                        .withId(getRelationIndex(RelationIndex.C_A))
+                        .withCode("c_a")
+                        .withBelongToOwner(true)
+                        .withLeftEntityClassId(getClassId(ClassIndex.C_CLASS))
+                        .withLeftEntityClassCode("c-class")
+                        .withRelationType(Relationship.RelationType.MANY_TO_ONE)
+                        .withStrong(true)
+                        .withRightEntityClassId(getClassId(ClassIndex.A_CLASS))
+                        .withRightEntityClassLoader((aLong, s) -> Optional.of(A_CLASS))
+                        .withRightFamilyEntityClassLoader(aLong -> Arrays.asList(A_CLASS))
+                        .build(),
+                    Relationship.Builder.anRelationship()
+                        .withId(getRelationIndex(RelationIndex.A_C))
+                        .withCode("a_c")
+                        .withBelongToOwner(true)
+                        .withLeftEntityClassId(getClassId(ClassIndex.C_CLASS))
+                        .withLeftEntityClassCode("c-class")
+                        .withRelationType(Relationship.RelationType.ONE_TO_MANY)
+                        .withStrong(true)
+                        .withRightEntityClassId(getClassId(ClassIndex.A_CLASS))
+                        .withRightEntityClassLoader((aLong, s) -> Optional.of(A_CLASS))
+                        .withRightFamilyEntityClassLoader(aLong -> Arrays.asList(A_CLASS))
+                        .build()
+                )
+            )
+            .withField(C_LOOKUP).build();
+
+        D_CLASS = EntityClass.Builder.anEntityClass()
+            .withId(Long.MAX_VALUE - 3)
+            .withCode("d-class")
+            .withField(D_SUM)
+            .withField(D_SUM_CONDITION)
+            .withRelations(
+                Arrays.asList(
+                    Relationship.Builder.anRelationship()
+                        .withId(getRelationIndex(RelationIndex.D_B))
+                        .withCode("d_b")
+                        .withBelongToOwner(true)
+                        .withLeftEntityClassId(getClassId(ClassIndex.D_CLASS))
+                        .withLeftEntityClassCode("d-class")
+                        .withRelationType(Relationship.RelationType.MANY_TO_ONE)
+                        .withStrong(true)
+                        .withRightEntityClassId(getClassId(ClassIndex.B_CLASS))
+                        .withRightEntityClassLoader((aLong, s) -> Optional.of(B_CLASS))
+                        .withRightFamilyEntityClassLoader(aLong -> Arrays.asList(B_CLASS))
+                        .build(),
+                    Relationship.Builder.anRelationship()
+                        .withId(getRelationIndex(RelationIndex.B_D))
+                        .withCode("b_d")
+                        .withBelongToOwner(true)
+                        .withLeftEntityClassId(getClassId(ClassIndex.D_CLASS))
+                        .withLeftEntityClassCode("d-class")
+                        .withRelationType(Relationship.RelationType.ONE_TO_MANY)
+                        .withStrong(true)
+                        .withRightEntityClassId(getClassId(ClassIndex.B_CLASS))
+                        .withRightEntityClassLoader((aLong, s) -> Optional.of(B_CLASS))
+                        .withRightFamilyEntityClassLoader(aLong -> Arrays.asList(B_CLASS))
+                        .build()
+                )
+            )
+            .build();
+    }
+
 
     private IEntity entityA = Entity.Builder.anEntity()
         .withId(Long.MAX_VALUE)
@@ -247,6 +551,37 @@ public class DefaultCalculationImplTest {
         masterStorage.addIEntity(entityB);
         masterStorage.addIEntity(entityC);
         masterStorage.addIEntity(entityD);
+
+    }
+
+    /**
+     * 测试影响树的构造.
+     */
+    @Test
+    public void testScope() throws Exception {
+        CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()
+            .withMetaManager(metaManager)
+            .withScenarios(CalculationScenarios.REPLACE).withCalculationLogicFactory(new CalculationLogicFactory())
+            .build();
+        context.focusEntity(entityA, A_CLASS);
+        context.addValueChange(
+            ValueChange.build(entityA.id(), new LongValue(A_LONG, 50L), new LongValue(A_LONG, 100L)));
+        context.focusSourceEntity(entityA);
+
+        DefaultCalculationImpl calculation = new DefaultCalculationImpl();
+        Method scopeMethod = DefaultCalculationImpl.class.getDeclaredMethod(
+            "scope", new Class[] {CalculationContext.class});
+        scopeMethod.setAccessible(true);
+        Infuence[] infuences = (Infuence[]) scopeMethod.invoke(calculation, new Object[] {context});
+        Assertions.assertTrue(infuences.length == 1);
+        String expectedInfuence = "(a-class,a-long)\n"
+            + "   L---(b-class,b-sum-a)\n"
+            + "      L---(b-class,b-formula)\n"
+            + "         L---(d-class,d-sum-condition-b)\n"
+            + "      L---(d-class,d-sum-b)\n"
+            + "   L---(c-class,c-lookup-a)\n"
+            + "   L---(b-class,b-lookup-a)";
+        Assertions.assertEquals(expectedInfuence, infuences[0]);
 
     }
 
