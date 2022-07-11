@@ -85,7 +85,9 @@ public class DefaultCalculationImplTest {
         B_FORMULA,
         D_SUM,
         D_SUM_CONDITION,
-        C_LOOKUP
+        C_LOOKUP,
+        F_COLLECT,
+        S_STRING
     }
 
     private static enum ClassIndex {
@@ -177,7 +179,7 @@ public class DefaultCalculationImplTest {
                     Formula.Builder.anFormula()
                         .withLevel(0)
                         .withFailedPolicy(Formula.FailedPolicy.THROW_EXCEPTION)
-                        .withExpression("return ${b-lookup-a} + ${b-sum-a}")
+                        .withExpression("return ${b-lookup-a} + ${b-sum-a};")
                         .withArgs(Arrays.asList("b-lookup-a", "b-sum-a"))
                         .build()
                 ).build()
@@ -238,16 +240,20 @@ public class DefaultCalculationImplTest {
         ).build();
 
     private static IEntityField F_COLLECT = EntityField.Builder.anEntityField()
-        .withId(Long.MAX_VALUE - 500)
+        .withId(getFieldId(FieldIndex.F_COLLECT))
         .withFieldType(FieldType.STRINGS)
         .withConfig(
             FieldConfig.Builder.anFieldConfig()
-                .withCalculation(Aggregation.Builder.anAggregation().build()).build()
+                .withCalculation(
+                    Aggregation.Builder.anAggregation()
+                        .withAggregationType(AggregationType.COLLECT)
+                        .build()
+                ).build()
         )
         .withName("f-collect-s").build();
 
     private static IEntityField S_STRING = EntityField.Builder.anEntityField()
-        .withId(Long.MAX_VALUE - 600)
+        .withId(getFieldId(FieldIndex.S_STRING))
         .withFieldType(FieldType.STRING)
         .withName("s-string").build();
 
@@ -462,6 +468,7 @@ public class DefaultCalculationImplTest {
     private IEntity entityB = Entity.Builder.anEntity()
         .withId(Long.MAX_VALUE - 1)
         .withEntityClassRef(B_CLASS.ref())
+        .withValue(new LongValue(B_LOOKUP, 100L))
         .withValue(new LongValue(B_SUM, 100L))
         .build();
 
@@ -651,6 +658,7 @@ public class DefaultCalculationImplTest {
             .withScenarios(CalculationScenarios.BUILD).withCalculationLogicFactory(new CalculationLogicFactory())
             .build();
         context.getCalculationLogicFactory().get().register(aggregationLogic);
+        context.focusSourceEntity(entityB);
         context.focusEntity(entityB, B_CLASS);
 
         DefaultCalculationImpl calculation = new DefaultCalculationImpl();
