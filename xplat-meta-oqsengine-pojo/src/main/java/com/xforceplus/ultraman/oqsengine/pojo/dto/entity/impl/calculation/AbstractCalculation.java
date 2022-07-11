@@ -50,5 +50,15 @@ public abstract class AbstractCalculation implements Serializable {
     }
 
     public abstract AbstractCalculation clone();
+
+
+    /**
+     * 是否需要在创建索引时索引附件信息.
+     *
+     * @return 默认为true，子类可重载逻辑.
+     */
+    public boolean indexAttachment() {
+        return true;
+    }
 }
 

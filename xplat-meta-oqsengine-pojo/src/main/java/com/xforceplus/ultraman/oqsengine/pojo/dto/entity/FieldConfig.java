@@ -373,6 +373,18 @@ public class FieldConfig implements Serializable {
     }
 
     /**
+     * 是否可以进行附件索引.
+     *
+     * @return true 可以, false 不可以.
+     */
+    public boolean indexAttachment() {
+        if (null == calculation) {
+            return true;
+        }
+        return calculation.indexAttachment();
+    }
+
+    /**
      * 获取最大值.
      *
      * @return 最大值.

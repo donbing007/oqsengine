@@ -37,6 +37,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import com.xforceplus.ultraman.oqsengine.storage.ConditionsSelectStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.EntityPackage;
@@ -94,6 +95,8 @@ public class AggregationCalculationLogicTest {
 
     private static IEntityField A_STRING;
 
+    private static IEntityField S_STRING;
+
     private static IEntityField A_REF;
 
     private static IEntityField B_REF;
@@ -120,6 +123,8 @@ public class AggregationCalculationLogicTest {
 
     private static IEntityField D_MAX_CONDITIONS;
 
+    private static IEntityField F_COLLECT;
+
     private static IEntityClass A_CLASS;
 
     private static IEntityClass B_CLASS;
@@ -128,6 +133,10 @@ public class AggregationCalculationLogicTest {
 
     private static IEntityClass D_CLASS;
 
+    private static IEntityClass F_CLASS;
+
+    private static IEntityClass S_CLASS;
+
     private IEntity entityA;
 
     private IEntity entityB;
@@ -135,6 +144,10 @@ public class AggregationCalculationLogicTest {
     private IEntity entityD;
 
     private IEntity entityC;
+
+    private IEntity entityS;
+
+    private IEntity entityF;
 
     private AggregationCalculationLogicTest.MockLogic aggregationLogic;
 
@@ -147,7 +160,11 @@ public class AggregationCalculationLogicTest {
         A_CLASS,
         B_CLASS,
         C_CLASS,
-        D_CLASS
+        D_CLASS,
+
+        //  collect
+        F_CLASS,
+        S_CLASS
     }
 
     enum FieldIndex {
@@ -165,7 +182,9 @@ public class AggregationCalculationLogicTest {
         C_COUNT_CONDITIONS,
         C_SUM_CONDITIONS_ASTRING,
         D_SUM,
-        D_MAX_CONDITIONS
+        D_MAX_CONDITIONS,
+        S_STRING,
+        F_COLLECT
     }
 
     /**
@@ -395,6 +414,27 @@ public class AggregationCalculationLogicTest {
             )
             .withName("d-max-condition-b").build();
 
+        S_STRING = EntityField.Builder.anEntityField()
+            .withId(getFieldId(FieldIndex.S_STRING))
+            .withFieldType(FieldType.STRING)
+            .withName("s-string").build();
+
+        F_COLLECT = EntityField.Builder.anEntityField()
+            .withId(getFieldId(FieldIndex.F_COLLECT))
+            .withFieldType(FieldType.STRINGS)
+            .withConfig(
+                FieldConfig.Builder.anFieldConfig()
+                    .withCalculation(Aggregation.Builder
+                                        .anAggregation()
+                                        .withClassId(getClassId(ClassIndex.S_CLASS))
+                                        .withFieldId(getFieldId(FieldIndex.S_STRING))
+                                        .withAggregationType(AggregationType.COLLECT)
+                                        .withRelationId(Long.MAX_VALUE - 1000)
+                                        .build()
+                    ).build()
+            )
+            .withName("f-collect-s").build();
+
         A_CLASS = EntityClass.Builder.anEntityClass()
             .withId(getClassId(ClassIndex.A_CLASS))
             .withCode("a-class")
@@ -536,6 +576,46 @@ public class AggregationCalculationLogicTest {
             ))
             .build();
 
+
+        S_CLASS = EntityClass.Builder.anEntityClass()
+            .withId(getClassId(ClassIndex.S_CLASS))
+            .withCode("s-class")
+            .withFields(Arrays.asList(S_STRING, EntityField.ID_ENTITY_FIELD))
+            .withRelations(Arrays.asList(
+                Relationship.Builder.anRelationship()
+                    .withId(Long.MAX_VALUE - 1000)
+                    .withCode("s-to-be-collected")
+                    .withLeftEntityClassId(getClassId(ClassIndex.S_CLASS))
+                    .withLeftEntityClassCode("s-class")
+                    .withRightEntityClassId(getClassId(ClassIndex.F_CLASS))
+                    .withRightEntityClassLoader((id, a) -> Optional.of(F_CLASS))
+                    .withBelongToOwner(true)
+                    .withIdentity(false)
+                    .withRelationType(Relationship.RelationType.MANY_TO_ONE)
+                    .build()
+            ))
+            .build();
+
+        F_CLASS = EntityClass.Builder.anEntityClass()
+            .withId(getClassId(ClassIndex.F_CLASS))
+            .withCode("f-class")
+            .withFields(Arrays.asList(F_COLLECT, EntityField.ID_ENTITY_FIELD))
+            .withRelations(Arrays.asList(
+                Relationship.Builder.anRelationship()
+                    .withId(Long.MAX_VALUE - 1001)
+                    .withCode("f-collect")
+                    .withLeftEntityClassId(getClassId(ClassIndex.F_CLASS))
+                    .withLeftEntityClassCode("f-class")
+                    .withRightEntityClassId(getClassId(ClassIndex.S_CLASS))
+                    .withRightEntityClassLoader((id, a) -> Optional.of(S_CLASS))
+                    .withBelongToOwner(false)
+                    .withIdentity(false)
+                    .withRelationType(Relationship.RelationType.ONE_TO_MANY)
+                    .build()
+            ))
+            .build();
+
+
         entityA = Entity.Builder.anEntity()
             .withId(Long.MAX_VALUE)
             .withEntityClassRef(A_CLASS.ref())
@@ -567,12 +647,29 @@ public class AggregationCalculationLogicTest {
                 new LongValue(C_COUNT, 100L)
             ).build();
 
+        entityS = Entity.Builder.anEntity()
+            .withId(Long.MAX_VALUE - 4)
+            .withEntityClassRef(S_CLASS.ref())
+            .withValue(
+                new StringValue(S_STRING, S_STRING.name())
+            )
+            .build();
+
+        entityF = Entity.Builder.anEntity()
+            .withId(Long.MAX_VALUE - 5)
+            .withEntityClassRef(F_CLASS.ref())
+            .withValue(
+                new StringsValue(F_COLLECT, new String[0], "")
+            )
+            .build();
+
         aggregationLogic = new AggregationCalculationLogicTest.MockLogic(CalculationType.AGGREGATION);
 
         Map<IEntityField, IValue> valueChange = new HashMap<>();
         valueChange.put(B_SUM, new LongValue(B_SUM, 200L));
         valueChange.put(D_SUM, new LongValue(D_SUM, 200L));
         valueChange.put(C_COUNT, new LongValue(C_COUNT, 200L));
+
         aggregationLogic.setValueChanage(valueChange);
         aggregationLogic.setNeedMaintenanceScenarios(
             new CalculationScenarios[] {CalculationScenarios.BUILD, CalculationScenarios.REPLACE,
@@ -603,6 +700,14 @@ public class AggregationCalculationLogicTest {
                 .withEntityClass(D_CLASS)
                 .withField(D_SUM).build()
         );
+        scope.put(
+            CalculationParticipant.Builder.anParticipant()
+                .withEntityClass(S_CLASS)
+                .withField(S_STRING).build(),
+            CalculationParticipant.Builder.anParticipant()
+                .withEntityClass(F_CLASS)
+                .withField(F_COLLECT).build()
+        );
         aggregationLogic.setScope(scope);
 
         Map<AbstractParticipant, Collection<AffectedInfo>> entityIds = new HashMap<>();
@@ -632,6 +737,15 @@ public class AggregationCalculationLogicTest {
                 new AffectedInfo(entityD, entityD.id())
             )
         );
+
+        entityIds.put(
+            CalculationParticipant.Builder.anParticipant()
+                .withEntityClass(S_CLASS)
+                .withField(S_STRING).build(),
+            Arrays.asList(
+                new AffectedInfo(entityF, entityF.id())
+            )
+        );
         aggregationLogic.setEntityIds(entityIds);
 
         metaManager = new MockMetaManager();
@@ -639,12 +753,16 @@ public class AggregationCalculationLogicTest {
         metaManager.addEntityClass(B_CLASS);
         metaManager.addEntityClass(C_CLASS);
         metaManager.addEntityClass(D_CLASS);
+        metaManager.addEntityClass(F_CLASS);
+        metaManager.addEntityClass(S_CLASS);
 
         masterStorage = new MockMasterStorage();
         masterStorage.addIEntity(entityA);
         masterStorage.addIEntity(entityB);
         masterStorage.addIEntity(entityC);
         masterStorage.addIEntity(entityD);
+        masterStorage.addIEntity(entityS);
+        masterStorage.addIEntity(entityF);
 
         conditionSelectStorage = new MockConditionSelectStorage();
         conditionSelectStorage.put(entityA);
@@ -653,6 +771,153 @@ public class AggregationCalculationLogicTest {
         conditionSelectStorage.put(entityD);
 
         aggregationCalculationLogic = new AggregationCalculationLogic();
+    }
+
+    @Test
+    public void testNoMatchCollect() {
+        IEntity aggEntity = Entity.Builder.anEntity()
+            .withId(100000L)
+            .withEntityClassRef(F_CLASS.ref())
+            .withValue(
+                new StringsValue(F_COLLECT, new String[]{"no-match"}, "1")
+            ).build();
+
+        this.masterStorage.addIEntity(aggEntity);
+        CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()
+            .withMetaManager(metaManager)
+            .withScenarios(CalculationScenarios.REPLACE)
+            .withCalculationLogicFactory(new CalculationLogicFactory())
+            .build();
+        context.getCalculationLogicFactory().get().register(aggregationLogic);
+        context.focusEntity(aggEntity, F_CLASS);
+        context.focusField(F_COLLECT);
+
+        IEntity triggerEntity = Entity.Builder.anEntity()
+            .withId(1)
+            .withEntityClassRef(S_CLASS.ref())
+            .withValue(
+                new StringValue(S_STRING, "TestReplace")
+            ).build();
+
+        context.putEntityToCache(triggerEntity);
+        context.addValueChange(
+            ValueChange.build(1, new EmptyTypedValue(S_STRING), new EmptyTypedValue(S_STRING)));
+        context.startMaintenance(triggerEntity);
+        Optional<IValue> targetValue = aggregationCalculationLogic.calculate(context);
+        Assertions.assertEquals("no-match", targetValue.get().valueToString());
+    }
+
+    @Test
+    public void testBuildCollect() {
+        IEntity aggEntity = Entity.Builder.anEntity()
+            .withId(100000L)
+            .withEntityClassRef(F_CLASS.ref())
+            .withValue(
+                new StringsValue(F_COLLECT, new String[0], "")
+            ).build();
+
+        this.masterStorage.addIEntity(aggEntity);
+        CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()
+            .withMetaManager(metaManager)
+            .withScenarios(CalculationScenarios.REPLACE)
+            .withCalculationLogicFactory(new CalculationLogicFactory())
+            .build();
+        context.getCalculationLogicFactory().get().register(aggregationLogic);
+        context.focusEntity(aggEntity, F_CLASS);
+        context.focusField(F_COLLECT);
+
+        IEntity triggerEntity = Entity.Builder.anEntity()
+            .withId(1)
+            .withEntityClassRef(S_CLASS.ref())
+            .withValue(
+                new StringValue(S_STRING, "TestReplace")
+            ).build();
+
+        context.putEntityToCache(triggerEntity);
+        context.addValueChange(
+            ValueChange.build(1, new EmptyTypedValue(S_STRING), new StringValue(S_STRING, "v1")));
+        context.startMaintenance(triggerEntity);
+        Optional<IValue> targetValue = aggregationCalculationLogic.calculate(context);
+        Assertions.assertEquals("v1", targetValue.get().valueToString());
+        Assertions.assertEquals("1", targetValue.get().getAttachment().get());
+    }
+
+    @Test
+    public void testDeleteCollect() {
+        IEntity aggEntity = Entity.Builder.anEntity()
+            .withId(100000L)
+            .withEntityClassRef(F_CLASS.ref())
+            .withValue(
+                new StringsValue(F_COLLECT, new String[0], "")
+            ).build();
+
+        this.masterStorage.addIEntity(aggEntity);
+        CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()
+            .withMetaManager(metaManager)
+            .withScenarios(CalculationScenarios.REPLACE)
+            .withCalculationLogicFactory(new CalculationLogicFactory())
+            .build();
+        context.getCalculationLogicFactory().get().register(aggregationLogic);
+        context.focusEntity(aggEntity, F_CLASS);
+        context.focusField(F_COLLECT);
+
+        IEntity triggerEntity = Entity.Builder.anEntity()
+            .withId(1)
+            .withEntityClassRef(S_CLASS.ref())
+            .withValue(
+                new StringValue(S_STRING, "TestReplace")
+            ).build();
+
+        context.putEntityToCache(triggerEntity);
+        context.addValueChange(
+            ValueChange.build(1, new EmptyTypedValue(S_STRING), new StringValue(S_STRING, "v1")));
+        context.startMaintenance(triggerEntity);
+        Optional<IValue> targetValue = aggregationCalculationLogic.calculate(context);
+        Assertions.assertEquals("v1", targetValue.get().valueToString());
+
+
+        context.putEntityToCache(triggerEntity);
+        context.addValueChange(
+            ValueChange.build(1, new StringValue(S_STRING, "v1"), new EmptyTypedValue(S_STRING)));
+        context.startMaintenance(triggerEntity);
+        targetValue = aggregationCalculationLogic.calculate(context);
+        Assertions.assertEquals("", targetValue.get().valueToString());
+        Assertions.assertEquals("", targetValue.get().getAttachment().get());
+    }
+
+    @Test
+    public void testReplaceCollect() {
+        IEntity aggEntity = Entity.Builder.anEntity()
+            .withId(100000L)
+            .withEntityClassRef(F_CLASS.ref())
+            .withValue(
+                new StringsValue(F_COLLECT, new String[0], "")
+            ).build();
+
+        this.masterStorage.addIEntity(aggEntity);
+        CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()
+            .withMetaManager(metaManager)
+            .withScenarios(CalculationScenarios.REPLACE)
+            .withCalculationLogicFactory(new CalculationLogicFactory())
+            .build();
+        context.getCalculationLogicFactory().get().register(aggregationLogic);
+        context.focusEntity(aggEntity, F_CLASS);
+        context.focusField(F_COLLECT);
+
+        IEntity triggerEntity = Entity.Builder.anEntity()
+            .withId(1)
+            .withEntityClassRef(S_CLASS.ref())
+            .withValue(
+                new StringValue(S_STRING, "TestReplace")
+            ).build();
+
+        context.putEntityToCache(triggerEntity);
+        context.addValueChange(
+            ValueChange.build(1, new StringValue(S_STRING, "v1"), new StringValue(S_STRING, "v2")));
+        context.startMaintenance(triggerEntity);
+        Optional<IValue> targetValue = aggregationCalculationLogic.calculate(context);
+        Assertions.assertEquals("v2", targetValue.get().valueToString());
+
     }
 
     /**
@@ -1468,6 +1733,9 @@ public class AggregationCalculationLogicTest {
      *  |- C(SUM(condition))   A_long > 100 由于目标是A所以应该出现.
      *  |- C(MIN(condition)    A_long > 100 由于目标是A所以应该出现.
      *  |- C(MAX(condition)    A_long > 100 由于目标是A所以应该出现.
+     *
+     *  S_String
+     *  |- F(COLLECT)          S_string
      * </pre>
      */
     @Test

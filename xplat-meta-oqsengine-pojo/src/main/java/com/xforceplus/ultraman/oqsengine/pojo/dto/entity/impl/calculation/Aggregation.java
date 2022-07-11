@@ -63,6 +63,10 @@ public class Aggregation extends AbstractCalculation {
     @JsonIgnore
     private Conditions conditions;
 
+    public boolean indexAttachment() {
+        return !aggregationType.equals(AggregationType.COLLECT);
+    }
+
     public Aggregation(CalculationType calculationType) {
         super(calculationType);
     }

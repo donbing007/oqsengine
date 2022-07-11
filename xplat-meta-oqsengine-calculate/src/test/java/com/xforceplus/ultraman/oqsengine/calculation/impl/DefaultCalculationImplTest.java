@@ -37,6 +37,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Lookup
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.EntityPackage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OqsEngineEntity;
@@ -91,6 +93,8 @@ public class DefaultCalculationImplTest {
         B_CLASS,
         C_CLASS,
         D_CLASS,
+        F_CLASS,
+        S_CLASS
     }
 
     private static enum RelationIndex {
@@ -106,6 +110,8 @@ public class DefaultCalculationImplTest {
     private static IEntityClass B_CLASS;
     private static IEntityClass C_CLASS;
     private static IEntityClass D_CLASS;
+    private static IEntityClass F_CLASS;
+    private static IEntityClass S_CLASS;
 
     private static long getFieldId(FieldIndex fieldIndex) {
         // 避免和默认ID系统字段冲突,因为默认的EntityField.ID_ENTITY_FIELD的id是 Long.MAX_VALUE.
@@ -230,6 +236,20 @@ public class DefaultCalculationImplTest {
                         ).build()
                 ).build()
         ).build();
+
+    private static IEntityField F_COLLECT = EntityField.Builder.anEntityField()
+        .withId(Long.MAX_VALUE - 500)
+        .withFieldType(FieldType.STRINGS)
+        .withConfig(
+            FieldConfig.Builder.anFieldConfig()
+                .withCalculation(Aggregation.Builder.anAggregation().build()).build()
+        )
+        .withName("f-collect-s").build();
+
+    private static IEntityField S_STRING = EntityField.Builder.anEntityField()
+        .withId(Long.MAX_VALUE - 600)
+        .withFieldType(FieldType.STRING)
+        .withName("s-string").build();
 
     static {
 
@@ -419,6 +439,17 @@ public class DefaultCalculationImplTest {
                 )
             )
             .build();
+
+        F_CLASS = EntityClass.Builder.anEntityClass()
+            .withId(Long.MAX_VALUE - 4)
+            .withCode("f-class")
+            .withField(F_COLLECT).build();
+
+
+        S_CLASS = EntityClass.Builder.anEntityClass()
+            .withId(Long.MAX_VALUE - 5)
+            .withCode("s-class")
+            .withField(S_STRING).build();
     }
 
 
@@ -446,6 +477,12 @@ public class DefaultCalculationImplTest {
         .withValue(new LongValue(C_LOOKUP, 100L))
         .build();
 
+    private IEntity entityF = Entity.Builder.anEntity()
+        .withId(Long.MAX_VALUE - 4)
+        .withEntityClassRef(F_CLASS.ref())
+        .withValue(new StringsValue(F_COLLECT, new String[0], ""))
+        .build();
+
     private MockLogic aggregationLogic;
     private MockLogic lookupLogic;
 
@@ -464,6 +501,8 @@ public class DefaultCalculationImplTest {
         Map<IEntityField, IValue> valueChange = new HashMap<>();
         valueChange.put(B_SUM, new LongValue(B_SUM, 200L));
         valueChange.put(D_SUM, new LongValue(D_SUM, 200L));
+        valueChange.put(F_COLLECT, new StringValue(F_COLLECT, F_COLLECT.name()));
+
         aggregationLogic.setValueChanage(valueChange);
         aggregationLogic.setNeedMaintenanceScenarios(new CalculationScenarios[] {
             CalculationScenarios.BUILD,
@@ -487,6 +526,14 @@ public class DefaultCalculationImplTest {
                 .withEntityClass(D_CLASS)
                 .withField(D_SUM).build()
         );
+        scope.put(
+            CalculationParticipant.Builder.anParticipant()
+                .withEntityClass(S_CLASS)
+                .withField(S_STRING).build(),
+            CalculationParticipant.Builder.anParticipant()
+                .withEntityClass(F_CLASS)
+                .withField(F_COLLECT).build()
+        );
         aggregationLogic.setScope(scope);
 
         Map<AbstractParticipant, Collection<AffectedInfo>> entityIds = new HashMap<>();
@@ -507,8 +554,16 @@ public class DefaultCalculationImplTest {
                 new AffectedInfo(entityD, entityD.id())
             )
         );
-        aggregationLogic.setEntityIds(entityIds);
 
+        entityIds.put(
+            CalculationParticipant.Builder.anParticipant()
+                .withEntityClass(S_CLASS)
+                .withField(S_STRING).build(),
+            Arrays.asList(
+                new AffectedInfo(entityF, entityF.id())
+            )
+        );
+        aggregationLogic.setEntityIds(entityIds);
 
         lookupLogic = new MockLogic(CalculationType.LOOKUP);
         valueChange = new HashMap<>();
@@ -545,13 +600,14 @@ public class DefaultCalculationImplTest {
         metaManager.addEntityClass(B_CLASS);
         metaManager.addEntityClass(C_CLASS);
         metaManager.addEntityClass(D_CLASS);
+        metaManager.addEntityClass(F_CLASS);
 
         masterStorage = new MockMasterStorage();
         masterStorage.addIEntity(entityA);
         masterStorage.addIEntity(entityB);
         masterStorage.addIEntity(entityC);
         masterStorage.addIEntity(entityD);
-
+        masterStorage.addIEntity(entityF);
     }
 
     /**
@@ -600,6 +656,18 @@ public class DefaultCalculationImplTest {
         DefaultCalculationImpl calculation = new DefaultCalculationImpl();
         IEntity newEntity = calculation.calculate(context);
         Assertions.assertEquals(200L, newEntity.entityValue().getValue(B_SUM.id()).get().valueToLong());
+
+        //  test collect
+        context = DefaultCalculationContext.Builder.anCalculationContext()
+            .withMetaManager(metaManager)
+            .withScenarios(CalculationScenarios.BUILD).withCalculationLogicFactory(new CalculationLogicFactory())
+            .build();
+        context.getCalculationLogicFactory().get().register(aggregationLogic);
+        context.focusEntity(entityF, F_CLASS);
+
+        calculation = new DefaultCalculationImpl();
+        newEntity = calculation.calculate(context);
+        Assertions.assertEquals(F_COLLECT.name(), newEntity.entityValue().getValue(F_COLLECT.id()).get().valueToString());
     }
 
     @Test

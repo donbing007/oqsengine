@@ -17,6 +17,8 @@ import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.SegmentInfo;
 import com.xforceplus.ultraman.oqsengine.idgenerator.storage.SegmentStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -28,6 +30,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LookupValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
@@ -60,6 +63,7 @@ import java.util.concurrent.locks.LockSupport;
 import java.util.stream.IntStream;
 import javax.annotation.Resource;
 import javax.sql.DataSource;
+import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -209,6 +213,131 @@ public class CalculationTest extends AbstractContainerExtends {
 
     public void initSegment(SegmentInfo info) throws SQLException {
         segmentStorage.build(info);
+    }
+
+    @Test
+    public void testAggregationCollect() throws SQLException {
+        IEntity collect = entityHelper.buildCollectEntity();
+        OqsResult<IEntity> results = entityManagementService.build(collect);
+        Assertions.assertEquals(ResultStatus.SUCCESS, results.getResultStatus(), results.getMessage());
+
+        IEntity collectedA = entityHelper.buildCollectedEntity("A", collect.id());
+        results = entityManagementService.build(collectedA);
+        Assertions.assertEquals(ResultStatus.SUCCESS, results.getResultStatus(), results.getMessage());
+
+        IEntity collectedB = entityHelper.buildCollectedEntity("B", collect.id());
+        results = entityManagementService.build(collectedB);
+        Assertions.assertEquals(ResultStatus.SUCCESS, results.getResultStatus(), results.getMessage());
+
+        Conditions conditions = Conditions.buildEmtpyConditions();
+        conditions.addAnd(new Condition(
+            MockEntityClassDefine.COLLECT_MAIN_CLASS.field("f-collect-s").get(),
+            ConditionOperator.EQUALS,
+            new StringsValue(
+                MockEntityClassDefine.COLLECT_MAIN_CLASS.field("f-collect-s").get(),
+                "s-string" + "_" + "A"
+            )));
+
+        Collection<IEntity> rsls =
+            entitySearchService.selectByConditions(conditions, collect.entityClassRef(),
+                                                                    ServiceSelectConfig.Builder
+                                                                        .anSearchConfig()
+                                                                        .withPage(Page.newSinglePage(10))
+                                                                        .build()
+            ).getValue().get();
+        Assertions.assertEquals(1, rsls.size());
+
+        IValue<String[]> sValue = ((List<IEntity>) rsls).get(0).entityValue().getValue("f-collect-s").get();
+        Assertions.assertEquals("s-string_A,s-string_B", sValue.valueToString());
+        Assertions.assertEquals("1,1", sValue.getAttachment().get());
+
+
+        // test in
+        IEntity collectIn1 = entityHelper.buildCollectEntity();
+        results = entityManagementService.build(collectIn1);
+        Assertions.assertEquals(ResultStatus.SUCCESS, results.getResultStatus(), results.getMessage());
+
+        IEntity collectIn2 = entityHelper.buildCollectEntity();
+        results = entityManagementService.build(collectIn2);
+        Assertions.assertEquals(ResultStatus.SUCCESS, results.getResultStatus(), results.getMessage());
+
+        IEntity collectIn3 = entityHelper.buildCollectEntity();
+        results = entityManagementService.build(collectIn3);
+        Assertions.assertEquals(ResultStatus.SUCCESS, results.getResultStatus(), results.getMessage());
+
+        IEntity collectedInA = entityHelper.buildCollectedEntity("AB", collectIn1.id());
+        results = entityManagementService.build(collectedInA);
+        Assertions.assertEquals(ResultStatus.SUCCESS, results.getResultStatus(), results.getMessage());
+
+        IEntity collectedInB = entityHelper.buildCollectedEntity("BA", collectIn2.id());
+        results = entityManagementService.build(collectedInB);
+        Assertions.assertEquals(ResultStatus.SUCCESS, results.getResultStatus(), results.getMessage());
+
+        IEntity collectedInC = entityHelper.buildCollectedEntity("AAB", collectIn3.id());
+        results = entityManagementService.build(collectedInC);
+        Assertions.assertEquals(ResultStatus.SUCCESS, results.getResultStatus(), results.getMessage());
+
+        Conditions conditionsIn = Conditions.buildEmtpyConditions();
+        conditionsIn.addAnd(new Condition(
+            MockEntityClassDefine.COLLECT_MAIN_CLASS.field("f-collect-s").get(),
+            ConditionOperator.MULTIPLE_EQUALS,
+            new StringsValue(
+                MockEntityClassDefine.COLLECT_MAIN_CLASS.field("f-collect-s").get(),
+                "s-string" + "_" + "AB"
+            ),
+            new StringsValue(
+            MockEntityClassDefine.COLLECT_MAIN_CLASS.field("f-collect-s").get(),
+            "s-string" + "_" + "BA"
+            )
+        ));
+
+        rsls =
+            entitySearchService.selectByConditions(conditionsIn, collect.entityClassRef(),
+                ServiceSelectConfig.Builder
+                    .anSearchConfig()
+                    .withPage(Page.newSinglePage(10))
+                    .build()
+            ).getValue().get();
+        Assertions.assertEquals(2, rsls.size());
+
+        Assertions.assertEquals(collectIn1.id(), ((List<IEntity>) rsls).get(0).id());
+        Assertions.assertEquals("s-string_AB",
+                            ((List<IEntity>) rsls).get(0).entityValue().getValue("f-collect-s").get().valueToString());
+
+        Assertions.assertEquals(collectIn2.id(), ((List<IEntity>) rsls).get(1).id());
+        Assertions.assertEquals("s-string_BA",
+            ((List<IEntity>) rsls).get(1).entityValue().getValue("f-collect-s").get().valueToString());
+
+        Conditions conditionsNotIn = Conditions.buildEmtpyConditions();
+        conditionsNotIn.addAnd(new Condition(
+            MockEntityClassDefine.COLLECT_MAIN_CLASS.field("f-collect-s").get(),
+            ConditionOperator.NOT_EQUALS,
+            new StringsValue(
+                MockEntityClassDefine.COLLECT_MAIN_CLASS.field("f-collect-s").get(),
+                "s-string" + "_" + "AB"
+            )
+        ));
+
+        rsls =
+            entitySearchService.selectByConditions(conditionsNotIn, collect.entityClassRef(),
+                ServiceSelectConfig.Builder
+                    .anSearchConfig()
+                    .withPage(Page.newSinglePage(10))
+                    .build()
+            ).getValue().get();
+        Assertions.assertEquals(3, rsls.size());
+
+        Assertions.assertEquals(collect.id(), ((List<IEntity>) rsls).get(0).id());
+        Assertions.assertEquals("s-string_A,s-string_B",
+            ((List<IEntity>) rsls).get(0).entityValue().getValue("f-collect-s").get().valueToString());
+
+        Assertions.assertEquals(collectIn2.id(), ((List<IEntity>) rsls).get(1).id());
+        Assertions.assertEquals("s-string_BA",
+            ((List<IEntity>) rsls).get(1).entityValue().getValue("f-collect-s").get().valueToString());
+
+        Assertions.assertEquals(collectIn3.id(), ((List<IEntity>) rsls).get(2).id());
+        Assertions.assertEquals("s-string_AAB",
+            ((List<IEntity>) rsls).get(2).entityValue().getValue("f-collect-s").get().valueToString());
     }
 
     /**

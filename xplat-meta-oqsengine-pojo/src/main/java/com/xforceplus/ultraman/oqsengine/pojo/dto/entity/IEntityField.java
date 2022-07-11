@@ -86,6 +86,15 @@ public interface IEntityField extends Comparable<IEntityField> {
     CalculationType calculationType();
 
     /**
+     * 是否需要在创建索引时索引附件信息.
+     *
+     * @return true/false.
+     */
+    default boolean indexAttachment() {
+        return true;
+    }
+
+    /**
      * 名称是否等于当前名称.
      *
      * @param name 被检测的名称.

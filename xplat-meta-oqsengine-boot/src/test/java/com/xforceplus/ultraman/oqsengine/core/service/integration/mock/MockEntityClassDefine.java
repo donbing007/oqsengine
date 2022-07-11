@@ -23,6 +23,7 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -58,11 +59,18 @@ public class MockEntityClassDefine {
     private static long odLookupOriginalEntityClassId = baseClassId - 8;
     private static long odLookupTargetEntityClassId = baseClassId - 9;
 
+    private static long collectMainEntityClassId = baseClassId - 10;
+    private static long collectDetailsEntityClassId = baseClassId - 11;
+
     public static IEntityClass L0_ENTITY_CLASS;
     public static IEntityClass L1_ENTITY_CLASS;
     public static IEntityClass L2_ENTITY_CLASS;
     public static IEntityClass DRIVER_ENTITY_CLASS;
     public static IEntityClass LOOKUP_ENTITY_CLASS;
+
+    public static IEntityClass COLLECT_MAIN_CLASS;
+
+    public static IEntityClass COLLECT_DETAILS_CLASS;
 
     /*
      * 用户(用户名称, 用户编号, 订单总数count, 总消费金额sum, 平均消费金额avg, 最大消费金额max, 最小消费金额min)
@@ -182,6 +190,10 @@ public class MockEntityClassDefine {
         ooLookupFieldId,
         // 静态 -> 静态 的静态被lookup字段.
         ooLookupTargetFieldId,
+
+        collectOriginFieldId,
+        collectForeignFieldId,
+        collectTargetFieldId,
     }
 
     // 用户订单关系字段.
@@ -210,6 +222,16 @@ public class MockEntityClassDefine {
         .withConfig(
             FieldConfig.Builder.anFieldConfig().withSearchable(true).build()
         ).build();
+
+    // 静态->动态 关系字段.
+    private static IEntityField collectForeignField = EntityField.Builder.anEntityField()
+        .withId(Long.MAX_VALUE - FieldId.collectForeignFieldId.ordinal())
+        .withName("collect关联")
+        .withFieldType(FieldType.LONG)
+        .withConfig(
+            FieldConfig.Builder.anFieldConfig().withSearchable(true).build()
+        ).build();
+
 
     static {
         L0_ENTITY_CLASS = EntityClass.Builder.anEntityClass()
@@ -1048,7 +1070,6 @@ public class MockEntityClassDefine {
                         .withRightEntityClassLoader((userClassId, a) -> Optional.of(USER_CLASS))
                         .withRightFamilyEntityClassLoader((id) -> Arrays.asList(USER_CLASS))
                         .withEntityField(orderUserForeignField).build()
-
                 )
             )
             .build();
@@ -1211,6 +1232,72 @@ public class MockEntityClassDefine {
                         .withEntityField(odLookupForeignField).build()
                 )
             ).build();
+
+        //  明细
+        COLLECT_DETAILS_CLASS = EntityClass.Builder.anEntityClass()
+            .withId(collectDetailsEntityClassId)
+            .withCode("s-class")
+            .withFields(
+                Collections.singletonList(EntityField.Builder.anEntityField()
+                    .withId(Long.MAX_VALUE - FieldId.collectTargetFieldId.ordinal())
+                    .withFieldType(FieldType.STRING)
+                    .withName("s-string")
+                    .build()
+                )
+            )
+            .withRelations(Collections.singletonList(
+                Relationship.Builder.anRelationship()
+                    .withId(collectForeignField.id())
+                    .withEntityField(collectForeignField)
+                    .withCode("f-collect")
+                    .withLeftEntityClassId(collectDetailsEntityClassId)
+                    .withLeftEntityClassCode("s-class")
+                    .withRightEntityClassId(collectMainEntityClassId)
+                    .withRightEntityClassLoader((id, a) -> Optional.of(COLLECT_MAIN_CLASS))
+                    .withBelongToOwner(true)
+                    .withIdentity(false)
+                    .withRelationType(Relationship.RelationType.MANY_TO_ONE)
+                    .build()
+            ))
+            .build();
+
+        //  头
+        COLLECT_MAIN_CLASS = EntityClass.Builder.anEntityClass()
+            .withId(collectMainEntityClassId)
+            .withCode("f-class")
+            .withField(
+                EntityField.Builder.anEntityField()
+                    .withId(Long.MAX_VALUE - FieldId.collectOriginFieldId.ordinal())
+                    .withFieldType(FieldType.STRINGS)
+                    .withConfig(
+                        FieldConfig.Builder
+                            .anFieldConfig()
+                            .withSearchable(true)
+                            .withCalculation(Aggregation.Builder
+                                .anAggregation()
+                                .withClassId(collectDetailsEntityClassId)
+                                .withFieldId(Long.MAX_VALUE - FieldId.collectTargetFieldId.ordinal())
+                                .withAggregationType(AggregationType.COLLECT)
+                                .withRelationId(collectForeignField.id())
+                                .build()
+                            ).build()
+                    )
+                    .withName("f-collect-s")
+                    .build()
+            ).withRelations(Collections.singletonList(
+                Relationship.Builder.anRelationship()
+                    .withId(collectForeignField.id())
+                    .withCode("f-collect")
+                    .withLeftEntityClassId(collectMainEntityClassId)
+                    .withLeftEntityClassCode("f-class")
+                    .withRightEntityClassId(collectDetailsEntityClassId)
+                    .withRightEntityClassLoader((id, a) -> Optional.of(COLLECT_DETAILS_CLASS))
+                    .withBelongToOwner(false)
+                    .withIdentity(false)
+                    .withRelationType(Relationship.RelationType.ONE_TO_MANY)
+                    .build()
+            ))
+            .build();
     }
 
     /**
@@ -1237,6 +1324,9 @@ public class MockEntityClassDefine {
             // 静态 lookup 动态
             OD_LOOKUP_ORIGINAL_ENTITY_CLASS,
             OD_LOOKUP_TARGET_ENTITY_CLASS,
+
+            COLLECT_MAIN_CLASS,
+            COLLECT_DETAILS_CLASS
         };
 
         for (IEntityClass e : es) {
