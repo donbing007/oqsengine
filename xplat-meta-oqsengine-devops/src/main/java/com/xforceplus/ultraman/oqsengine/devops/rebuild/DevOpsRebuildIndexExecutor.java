@@ -84,8 +84,8 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
 
         executor = new PollingThreadExecutor(
             "taskHandler",
-            10,
-            TimeUnit.MILLISECONDS, 5,
+            1,
+            TimeUnit.SECONDS, 5,
             (n) -> taskUpdate(),
             null);
 
@@ -295,7 +295,7 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
                             } else {
                                 try {
                                     //  任务已完成.
-                                    if (dt.getBatchSize() - dt.getFinishSize() <= 0) {
+                                    if (dt.getBatchSize() > 0 && dt.getBatchSize() - dt.getFinishSize() <= 0) {
                                         done(dt);
                                     } else {
                                         dt.resetStatus(RUNNING.getCode());
