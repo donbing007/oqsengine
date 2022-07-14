@@ -10,6 +10,7 @@ import static com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.BatchStatus
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.common.thread.PollingThreadExecutor;
+import com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.BatchStatus;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.handler.DefaultDevOpsTaskHandler;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.handler.TaskHandler;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.DefaultDevOpsTaskInfo;
@@ -169,9 +170,20 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
                 masterStorage.rebuild(devOpsTaskInfo.getEntityClass(), devOpsTaskInfo.getMaintainid(),
                     devOpsTaskInfo.getStarts(), devOpsTaskInfo.getEnds());
 
+            Optional<DevOpsTaskInfo> devOpsTaskInfoOp;
+            BatchStatus batchStatus = RUNNING;
+            try {
+                devOpsTaskInfoOp = sqlTaskStorage.selectUnique(devOpsTaskInfo.getMaintainid());
+                if (devOpsTaskInfoOp.isPresent() && devOpsTaskInfoOp.get().getFinishSize() == rebuildCount) {
+                    batchStatus = DONE;
+                }
+            } catch (SQLException ex) {
+                logger.warn("query task exception, maintainId {}.", devOpsTaskInfo.getMaintainid());
+            }
+
             if (rebuildCount > 0) {
                 devOpsTaskInfo.setBatchSize(rebuildCount);
-                devOpsTaskInfo.resetStatus(RUNNING.getCode());
+                devOpsTaskInfo.resetStatus(batchStatus.getCode());
                 devOpsTaskInfo.resetMessage("TASK PROCESSING");
             } else {
                 devOpsTaskInfo.setBatchSize(0);
@@ -179,7 +191,11 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
                 devOpsTaskInfo.resetMessage("TASK END");
             }
 
-            sqlTaskStorage.update(devOpsTaskInfo);
+            if (batchStatus == DONE && rebuildCount > 0) {
+                done(devOpsTaskInfo);
+            } else {
+                sqlTaskStorage.update(devOpsTaskInfo);
+            }
         } catch (Exception e) {
             devOpsTaskInfo.resetMessage(e.getMessage());
 
