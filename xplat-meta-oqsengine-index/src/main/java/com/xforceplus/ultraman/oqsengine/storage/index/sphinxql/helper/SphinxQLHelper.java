@@ -365,7 +365,8 @@ public class SphinxQLHelper {
      */
     public static Tuple2<String, Boolean> stringConditionFormat(String word, ShortStorageName shortStorageName,
                                                                 boolean useGroupName) {
-        String[] values = longStringWrap(word);
+        String currentWord = filterSymbols(word);
+        String[] values = longStringWrap(currentWord);
 
         StringBuilder stringBuilder = new StringBuilder();
 
@@ -386,7 +387,7 @@ public class SphinxQLHelper {
 
             stringBuilder.append(head)
                 .append(shortStorageName.getPrefix())
-                .append(filterSymbols(v))
+                .append(v)
                 .append(shortStorageName.getOriginSuffix());
 
             /*
