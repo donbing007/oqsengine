@@ -27,6 +27,7 @@ import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.Timer;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -91,7 +92,10 @@ public class DefaultCalculationImpl implements Calculation {
             } catch (CalculationException ex) {
                 processTimer(
                     logic, sample, MetricsDefine.CALCULATION_LOGIC_DELAY_LATENCY_SECONDS, "calculate", true);
-                throw ex;
+
+                throw new CalculationException(
+                    String.format("An error occurred in the calculation field (%d-%s) due to %s.",
+                        field.id(), field.name(), ex.getMessage()));
             }
 
             processTimer(
@@ -201,8 +205,8 @@ public class DefaultCalculationImpl implements Calculation {
                 Collection<AffectedInfo> affectedInfos = null;
                 try {
 
-                    affectedInfos = logic.getMaintainTarget(
-                        context, participant, parentParticipant.get().getAffectedEntities());
+                    affectedInfos = new ArrayList(logic.getMaintainTarget(
+                        context, participant, parentParticipant.get().getAffectedEntities()));
 
                 } catch (CalculationException ex) {
                     processTimer(
@@ -282,7 +286,18 @@ public class DefaultCalculationImpl implements Calculation {
                     }
 
                     context.startMaintenance(affectedInfo.getTriggerEntity());
-                    Optional<IValue> newValueOp = logic.calculate(context);
+                    Optional<IValue> newValueOp;
+                    try {
+                        newValueOp = logic.calculate(context);
+                    } catch (CalculationException ex) {
+
+                        logger.error("Maintenance error occurred, the current impact tree is: \n {}.",
+                            infuenceInner.toString());
+
+                        throw new CalculationException(
+                            String.format("An error occurred in the calculation field (%d-%s) due to %s.",
+                                participant.getField().id(), participant.getField().name(), ex.getMessage()));
+                    }
                     context.stopMaintenance();
 
                     if (newValueOp.isPresent()) {

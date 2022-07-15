@@ -375,6 +375,10 @@ public class AggregationCalculationLogic implements CalculationLogic {
 
         Collection<AffectedInfo> affectedEntityIds = new ArrayList<>(entities.size());
         for (IEntity entity : entities) {
+            /*
+            这里预期聚合信息中记录的关系ID和关系外键ID是相同的.
+            表示找到当前参与者指向当前entity的实例ID.
+             */
             Optional<IValue> aggEntityId = entity.entityValue().getValue(aggregation.getRelationId());
             if (aggEntityId.isPresent()) {
                 affectedEntityIds.add(new AffectedInfo(entity, aggEntityId.get().valueToLong()));

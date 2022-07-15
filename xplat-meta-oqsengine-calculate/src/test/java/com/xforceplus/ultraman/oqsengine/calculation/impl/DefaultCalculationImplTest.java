@@ -53,6 +53,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.Assertions;
@@ -131,12 +132,12 @@ public class DefaultCalculationImplTest {
     private static IEntityField A_LONG = EntityField.Builder.anEntityField()
         .withId(getFieldId(FieldIndex.A_LONG))
         .withFieldType(FieldType.LONG)
-        .withName("a-long").build();
+        .withName("along").build();
 
     private static IEntityField B_SUM = EntityField.Builder.anEntityField()
         .withId(getFieldId(FieldIndex.B_SUM))
         .withFieldType(FieldType.LONG)
-        .withName("b-sum-a")
+        .withName("bsuma")
         .withConfig(
             FieldConfig.Builder.anFieldConfig()
                 .withCalculation(
@@ -153,7 +154,7 @@ public class DefaultCalculationImplTest {
     private static IEntityField B_LOOKUP = EntityField.Builder.anEntityField()
         .withId(getFieldId(FieldIndex.B_LOOKUP))
         .withFieldType(FieldType.LONG)
-        .withName("b-lookup-a")
+        .withName("blookupa")
         .withConfig(
             FieldConfig.Builder.anFieldConfig()
                 .withCalculation(
@@ -172,15 +173,15 @@ public class DefaultCalculationImplTest {
     private static IEntityField B_FORMULA = EntityField.Builder.anEntityField()
         .withId(getFieldId(FieldIndex.B_FORMULA))
         .withFieldType(FieldType.LONG)
-        .withName("b-formula")
+        .withName("bformula")
         .withConfig(
             FieldConfig.Builder.anFieldConfig()
                 .withCalculation(
                     Formula.Builder.anFormula()
                         .withLevel(0)
                         .withFailedPolicy(Formula.FailedPolicy.THROW_EXCEPTION)
-                        .withExpression("return ${b-lookup-a} + ${b-sum-a};")
-                        .withArgs(Arrays.asList("b-lookup-a", "b-sum-a"))
+                        .withExpression("return ${blookupa} + ${bsuma};")
+                        .withArgs(Arrays.asList("blookupa", "bsuma"))
                         .build()
                 ).build()
         ).build();
@@ -196,7 +197,7 @@ public class DefaultCalculationImplTest {
                         .withFieldId(getFieldId(FieldIndex.A_LONG))
                         .build()
                 ).build()
-        ).withName("c-lookup-a").build();
+        ).withName("clookupa").build();
 
     private static IEntityField D_SUM = EntityField.Builder.anEntityField()
         .withId(getFieldId(FieldIndex.D_SUM))
@@ -212,12 +213,12 @@ public class DefaultCalculationImplTest {
                         .build()
                 ).build()
         )
-        .withName("d-sum-b").build();
+        .withName("dsumb").build();
 
     private static IEntityField D_SUM_CONDITION = EntityField.Builder.anEntityField()
         .withId(getFieldId(FieldIndex.D_SUM_CONDITION))
         .withFieldType(FieldType.LONG)
-        .withName("d-sum-condition-b")
+        .withName("dsumconditionb")
         .withConfig(
             FieldConfig.Builder.anFieldConfig()
                 .withCalculation(
@@ -637,15 +638,38 @@ public class DefaultCalculationImplTest {
         scopeMethod.setAccessible(true);
         Infuence[] infuences = (Infuence[]) scopeMethod.invoke(calculation, new Object[] {context});
         Assertions.assertTrue(infuences.length == 1);
-        String expectedInfuence = "(a-class,a-long)\n"
-            + "   L---(b-class,b-sum-a)\n"
-            + "      L---(b-class,b-formula)\n"
-            + "         L---(d-class,d-sum-condition-b)\n"
-            + "      L---(d-class,d-sum-b)\n"
-            + "   L---(c-class,c-lookup-a)\n"
-            + "   L---(b-class,b-lookup-a)";
-        Assertions.assertEquals(expectedInfuence, infuences[0]);
+        /*
+           两种可能都正确.
+             "(a-class,along)\n"
+            + "   L---(b-class,bsuma)\n"
+            + "      L---(b-class,bformula)\n"
+            + "         L---(d-class,dsumconditionb)\n"
+            + "      L---(d-class,dsumb)\n"
+            + "   L---(c-class,clookupa)\n"
+            + "   L---(b-class,blookupa)";
+               "(a-class,along)\n"
+            + "   L---(c-class,clookupa)\n"
+            + "   L---(b-class,blookupa)\n"
+            + "      L---(b-class,bformula)\n"
+            + "         L---(d-class,dsumconditionb)\n"
+            + "   L---(b-class,bsuma)\n"
+            + "      L---(d-class,dsumb)";
+         */
+        // (b-class,bformula) 的父参与者是(b-class,blookupa)或者(b-class,bsuma)都是正确的
+        AtomicReference<Participant> bformulaParentParticipant = new AtomicReference<>();
+        infuences[0].scan((parentParticipantOp, participant, infuenceInner) -> {
+            if (participant.getField().id() == B_FORMULA.id()) {
+                bformulaParentParticipant.set(parentParticipantOp.get());
+                return InfuenceConsumer.Action.OVER;
+            }
+            return InfuenceConsumer.Action.CONTINUE;
+        });
 
+        // 应该是(b-class,bsuma) 或者 (b-class,blookupa)
+        Participant participant = bformulaParentParticipant.get();
+        Assertions.assertEquals(B_CLASS, participant.getEntityClass());
+        Assertions.assertTrue(
+            B_SUM.id() == participant.getField().id() || B_LOOKUP.id() == participant.getField().id());
     }
 
     /**
