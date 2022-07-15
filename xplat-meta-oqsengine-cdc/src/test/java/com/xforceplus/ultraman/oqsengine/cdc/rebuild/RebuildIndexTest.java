@@ -36,7 +36,7 @@ public class RebuildIndexTest extends AbstractCdcHelper {
     final Logger logger = LoggerFactory.getLogger(RebuildIndexTest.class);
 
     private int startPost = 1;
-    private int totalSize = 1000;
+    private int totalSize = 20000;
     private int batchSize = totalSize * 1024;
 
     private int defaultSleepInterval = 3_000;
