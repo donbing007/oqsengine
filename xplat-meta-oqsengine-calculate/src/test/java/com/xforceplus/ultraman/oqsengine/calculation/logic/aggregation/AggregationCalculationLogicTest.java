@@ -68,6 +68,8 @@ import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 测试类.
@@ -88,6 +90,8 @@ import org.junit.jupiter.api.Test;
  * <em>注意: 所有的测试都基于发起聚合的实体一定早于被聚合的实体被创建.</em>
  */
 public class AggregationCalculationLogicTest {
+
+    private final Logger logger = LoggerFactory.getLogger(AggregationCalculationLogicTest.class);
 
     private AggregationCalculationLogic aggregationCalculationLogic;
 
@@ -216,13 +220,13 @@ public class AggregationCalculationLogicTest {
         B_SUM = EntityField.Builder.anEntityField()
             .withId(getFieldId(FieldIndex.B_SUM))
             .withFieldType(FieldType.LONG)
-            .withName("b-sum-a")
+            .withName("bsuma")
             .withConfig(
                 FieldConfig.Builder.anFieldConfig()
                     .withCalculation(Aggregation.Builder.anAggregation()
                         .withClassId(getClassId(ClassIndex.A_CLASS))
                         .withFieldId(getFieldId(FieldIndex.A_LONG))
-                        .withRelationId(Long.MAX_VALUE - 10)
+                        .withRelationId(getFieldId(FieldIndex.B_REF))
                         .withAggregationType(AggregationType.SUM)
                         .build()
                     ).build()
@@ -353,7 +357,7 @@ public class AggregationCalculationLogicTest {
                         .build()
                     ).build()
             )
-            .withName("c-min-conditions").build();
+            .withName("c-max-conditions").build();
 
         C_SUM_CONDITIONS_ASTRING = EntityField.Builder.anEntityField()
             .withId(getFieldId(FieldIndex.C_SUM_CONDITIONS_ASTRING))
@@ -425,12 +429,12 @@ public class AggregationCalculationLogicTest {
             .withConfig(
                 FieldConfig.Builder.anFieldConfig()
                     .withCalculation(Aggregation.Builder
-                                        .anAggregation()
-                                        .withClassId(getClassId(ClassIndex.S_CLASS))
-                                        .withFieldId(getFieldId(FieldIndex.S_STRING))
-                                        .withAggregationType(AggregationType.COLLECT)
-                                        .withRelationId(Long.MAX_VALUE - 1000)
-                                        .build()
+                        .anAggregation()
+                        .withClassId(getClassId(ClassIndex.S_CLASS))
+                        .withFieldId(getFieldId(FieldIndex.S_STRING))
+                        .withAggregationType(AggregationType.COLLECT)
+                        .withRelationId(Long.MAX_VALUE - 1000)
+                        .build()
                     ).build()
             )
             .withName("f-collect-s").build();
@@ -472,6 +476,7 @@ public class AggregationCalculationLogicTest {
                     .withRightEntityClassLoader((id, a) -> Optional.of(B_CLASS))
                     .withBelongToOwner(false)
                     .withIdentity(false)
+                    .withEntityField(B_REF)
                     .withRelationType(Relationship.RelationType.ONE_TO_MANY)
                     .build(),
                 Relationship.Builder.anRelationship()
@@ -779,7 +784,7 @@ public class AggregationCalculationLogicTest {
             .withId(100000L)
             .withEntityClassRef(F_CLASS.ref())
             .withValue(
-                new StringsValue(F_COLLECT, new String[]{"no-match"}, "1")
+                new StringsValue(F_COLLECT, new String[] {"no-match"}, "1")
             ).build();
 
         this.masterStorage.addIEntity(aggEntity);
@@ -1766,11 +1771,11 @@ public class AggregationCalculationLogicTest {
         aggregationCalculationLogic.scope(context, infuence);
 
         String expected = "(a-class,a-long)\n"
-            + "   L---(c-class,c-min-conditions)\n"
+            + "   L---(c-class,c-max-conditions)\n"
             + "   L---(c-class,c-min-conditions)\n"
             + "   L---(c-class,c-sum-conditions)\n"
             + "   L---(c-class,c-sum-a)\n"
-            + "   L---(b-class,b-sum-a)\n"
+            + "   L---(b-class,bsuma)\n"
             + "      L---(d-class,d-max-condition-b)\n"
             + "      L---(d-class,d-sum-b)";
 
@@ -1811,7 +1816,7 @@ public class AggregationCalculationLogicTest {
             return InfuenceConsumer.Action.CONTINUE;
         });
 
-        Assertions.assertEquals(7, participants.size());
+        Assertions.assertEquals(8, participants.size(), infuence.toString());
         Assertions.assertEquals(A_LONG, participants.get(0));
         Assertions.assertEquals(B_SUM, participants.get(1));
         Assertions.assertEquals(C_SUM, participants.get(2));
@@ -1868,8 +1873,10 @@ public class AggregationCalculationLogicTest {
             .withTaskCoordinator(coordinator)
             .build();
 
-        Relationship relationship = A_CLASS.relationship().stream().filter(r ->
-            r.getRightEntityClass("").equals(B_CLASS)).collect(Collectors.toList()).get(0);
+        Relationship relationship = A_CLASS.relationship().stream()
+            .filter(r -> r.getId() == Long.MAX_VALUE - 10)
+            .filter(r ->
+                r.getRightEntityClass("").equals(B_CLASS)).collect(Collectors.toList()).get(0);
 
         IEntity targetEntity = Entity.Builder.anEntity()
             .withId(Long.MAX_VALUE)
@@ -1890,6 +1897,7 @@ public class AggregationCalculationLogicTest {
                 new LongValue(A_LONG, 100L))
         );
 
+        context.focusSourceEntity(targetEntity);
         context.focusEntity(targetEntity, A_CLASS);
         context.focusField(A_LONG);
 

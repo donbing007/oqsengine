@@ -106,6 +106,11 @@ public class SphinxQLHelperTest {
         Assertions.assertEquals(
             "(P0123paaaabbbbccccddddeeeeffffgs456S P1123pgggEAAAABBBBCCCCDDDDEEEEFs456S P2123pFFFGGGGECDMAs456S)",
             format._1);
+
+        String needFilterString = "CERTIFICATE_INVOICE_PIECES";
+        format = SphinxQLHelper.stringConditionFormat(needFilterString, shortStorageName, false);
+        Assertions.assertFalse(format._2());
+        Assertions.assertEquals("123pCERTIFICATEINVOICEPIECESs456S", format._1());
     }
 
     /**
