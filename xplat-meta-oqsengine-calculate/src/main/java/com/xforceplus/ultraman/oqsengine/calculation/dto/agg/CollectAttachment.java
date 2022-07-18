@@ -71,7 +71,7 @@ public class CollectAttachment {
     public IValue toIValue(IEntityField entityField) {
 
         if (collectElements.isEmpty()) {
-            return new EmptyTypedValue(entityField);
+            return new StringsValue(entityField, new String[0], "");
         }
 
         List<Integer> attachments = new ArrayList<>();
