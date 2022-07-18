@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.boot.config;
 
 import com.xforceplus.ultraman.oqsengine.boot.config.redis.LettuceRedisConfiguration;
 import com.xforceplus.ultraman.oqsengine.boot.config.redis.RedissonRedisConfiguration;
+import com.xforceplus.ultraman.oqsengine.common.mode.CompatibilityMode;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.common.watch.RedisLuaScriptWatchDog;
 import com.xforceplus.ultraman.oqsengine.tokenizer.DefaultTokenizerFactory;
@@ -19,6 +20,8 @@ import java.util.concurrent.TimeUnit;
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -32,6 +35,8 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 public class CommonConfiguration {
+
+    private final Logger logger = LoggerFactory.getLogger(CommonConfiguration.class);
 
     /**
      * IO响应线程池.
@@ -214,6 +219,18 @@ public class CommonConfiguration {
             minCheckTimeIntervalMs + (long) (Math.random() * (maxCheckTimeIntervalMs - minCheckTimeIntervalMs + 1));
 
         return new RedisLuaScriptWatchDog(redisClient, checkTimeIntervalMs);
+    }
+
+    /**
+     * 判断当前是否处于兼容模式.
+     */
+    @Bean
+    public CompatibilityMode compatibilityMode(@Value("${compatibilityMode:false}") boolean compatibility) {
+        CompatibilityMode compatibilityMode = new CompatibilityMode(compatibility);
+        if (compatibilityMode.isCompatibility()) {
+            logger.info("Run in compatibility mode.");
+        }
+        return compatibilityMode;
     }
 
     private ExecutorService buildThreadPool(int worker, int queue, String namePrefix, boolean daemon) {

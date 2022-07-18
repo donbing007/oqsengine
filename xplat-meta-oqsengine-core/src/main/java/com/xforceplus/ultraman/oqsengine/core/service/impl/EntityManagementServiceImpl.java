@@ -9,6 +9,7 @@ import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.map.MapUtils;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
+import com.xforceplus.ultraman.oqsengine.common.mode.CompatibilityMode;
 import com.xforceplus.ultraman.oqsengine.common.mode.OqsMode;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
@@ -130,6 +131,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
     @Resource
     private CalculationLogicFactory calculationLogicFactory;
+
+    @Resource
+    private CompatibilityMode compatibilityMode;
 
     /*
     独占锁的等待时间.
@@ -1381,27 +1385,29 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
     // 校验字段.
     private Map.Entry<VerifierResult, IEntityField> verifyFields(IEntityClass entityClass, IEntity entity) {
-        VerifierResult result;
-        for (IEntityField field : entityClass.fields()) {
-            // 跳过主标识类型的检查.
-            if (field.config().isIdentifie()) {
-                continue;
-            }
-
-            ValueVerifier verifier = VerifierFactory.getVerifier(field.type());
-            Optional<IValue> valueOp = entity.entityValue().getValue(field.id());
-            IValue value = valueOp.orElse(null);
-            try {
-                result = verifier.verify(field, value);
-                if (VerifierResult.OK != result) {
-                    return new AbstractMap.SimpleEntry(result, field);
+        if (!compatibilityMode.isCompatibility()) {
+            VerifierResult result;
+            for (IEntityField field : entityClass.fields()) {
+                // 跳过主标识类型的检查.
+                if (field.config().isIdentifie()) {
+                    continue;
                 }
-            } catch (Exception e) {
-                logger.warn("verify error, fieldId : {}, code : {}, value : {}, message : {}",
-                    field.id(), field.name(), null == value ? null : value.getValue(), e.getMessage());
-                throw e;
-            }
 
+                ValueVerifier verifier = VerifierFactory.getVerifier(field.type());
+                Optional<IValue> valueOp = entity.entityValue().getValue(field.id());
+                IValue value = valueOp.orElse(null);
+                try {
+                    result = verifier.verify(field, value);
+                    if (VerifierResult.OK != result) {
+                        return new AbstractMap.SimpleEntry(result, field);
+                    }
+                } catch (Exception e) {
+                    logger.warn("verify error, fieldId : {}, code : {}, value : {}, message : {}",
+                        field.id(), field.name(), null == value ? null : value.getValue(), e.getMessage());
+                    throw e;
+                }
+
+            }
         }
 
         return new AbstractMap.SimpleEntry(VerifierResult.OK, null);

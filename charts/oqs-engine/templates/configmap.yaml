@@ -81,7 +81,7 @@ data:
             maxJoinEntityNumber: {{ .Values.query.join.maxJoinEntityNumber | default "2" }}
             maxJoinDriverLineNumber: {{ .Values.query.join.maxJoinDriverLineNumber | default "1000" }}
         load:
-          enabled: {{ .Values.load.enabled | default "false" }}
+          enabled: {{ .Values.load.enabled }}
           weight:
             heap: {{ .Values.load.weight.heap | default "0.2" }}
             cpu: {{ .Values.load.weight.cpu | default "0.5" }}
@@ -148,6 +148,8 @@ data:
               lexicon:
                 url: {{ .Values.storage.tokenizer.segmentation.lexicon.url | default "-" | quote}}
           debug:
+            remote:
+              enabled: {{ .Values.storage.debug.remote.enabled }}
             showsql: {{ .Values.storage.debug.showsql }}
           timeoutMs:
             query: {{ .Values.storage.timeoutMs.query | default "3000" }}
@@ -205,6 +207,7 @@ data:
             skipCommitId: {{ .Values.cdc.consumer.skipCommitId | default "-1" | quote }}
         metadata:
           enhanced: {{ .Values.metadata.enhanced }}
+        compatibilityMode: {{ .Values.compatibilityMode }}
         locker:
           try:
             timeoutMs: {{ .Values.locker.try.timeoutMs | default "30000" }}
