@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.calculation.dto.agg;
 
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.helper.AggregationAttachmentHelper;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import java.util.ArrayList;
@@ -70,7 +71,7 @@ public class CollectAttachment {
     public IValue toIValue(IEntityField entityField) {
 
         if (collectElements.isEmpty()) {
-            return null;
+            return new EmptyTypedValue(entityField);
         }
 
         List<Integer> attachments = new ArrayList<>();
