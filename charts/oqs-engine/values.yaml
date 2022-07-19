@@ -197,6 +197,10 @@ storage:
       page:
         size: 1000
 
+# For compatibility with earlier versions, this can be set to compatibility mode.
+# Strict field definition checks are ignored.
+compatibilityMode: false
+
 locker:
   try:
     timeoutMs: 30000
