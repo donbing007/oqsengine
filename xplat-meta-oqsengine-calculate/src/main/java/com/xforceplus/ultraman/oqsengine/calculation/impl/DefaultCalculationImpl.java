@@ -173,8 +173,7 @@ public class DefaultCalculationImpl implements Calculation {
         for (Infuence infuence : infuences) {
 
             if (logger.isDebugEnabled()) {
-                logger.debug("Maintain computed fields, whose impact tree is as follows.");
-                logger.debug(infuence.toString());
+                logger.debug("Maintain computed fields, whose impact tree is as follows.\n{}\n", infuence.toString());
             }
 
             infuence.scan((parentParticipant, participant, infuenceInner) -> {
