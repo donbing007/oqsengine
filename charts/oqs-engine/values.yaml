@@ -144,8 +144,7 @@ storage:
     remote:
       enabled: false
     showsql: false
-  # Maximum amount of visible data.
-  maxVisibleNumber: 10000
+
   threadPool:
     # Setting 0 means using CPU cores +1 threads. The queue length defaults to 500.
     io:
