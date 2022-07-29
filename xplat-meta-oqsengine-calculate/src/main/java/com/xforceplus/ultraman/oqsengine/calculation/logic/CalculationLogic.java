@@ -4,12 +4,10 @@ import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationContext;
 import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationScenarios;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.AffectedInfo;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationException;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceGraph;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import java.util.Collection;
 import java.util.Collections;
@@ -39,7 +37,7 @@ public interface CalculationLogic {
      * @param context  上下文.
      * @param infuence 影响树.
      */
-    public default void scope(CalculationContext context, Infuence infuence) {
+    public default void scope(CalculationContext context, InfuenceGraph infuence) {
         // do nothing.
     }
 
@@ -75,17 +73,5 @@ public interface CalculationLogic {
      */
     public default CalculationType supportType() {
         return CalculationType.UNKNOWN;
-    }
-
-    /**
-     * 由logic决定, 指定字段是否需要参与改变.
-     *
-     * @param context     计算上下文.
-     * @param entityClass 当前操作目标类型.
-     * @param field       当前需要判断的字段.
-     * @return true需要, false不需要.
-     */
-    public default boolean need(CalculationContext context, IEntityClass entityClass, IEntityField field) {
-        return false;
     }
 }

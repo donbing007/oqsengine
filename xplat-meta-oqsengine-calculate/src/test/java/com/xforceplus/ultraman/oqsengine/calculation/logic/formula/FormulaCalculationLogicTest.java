@@ -10,8 +10,8 @@ import com.xforceplus.ultraman.oqsengine.calculation.impl.DefaultCalculationImpl
 import com.xforceplus.ultraman.oqsengine.calculation.logic.CalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.CalculationParticipant;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceGraph;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceGraphConsumer;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
 import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MockMetaManager;
@@ -521,16 +521,11 @@ public class FormulaCalculationLogicTest {
             .withValue(
                 new LongValue(B_SUM, 100)
             ).build();
-        Infuence infuence = new Infuence(
-            targetEntity,
+        InfuenceGraph infuence = new InfuenceGraph(
             CalculationParticipant.Builder.anParticipant()
                 .withEntityClass(B_CLASS)
                 .withField(B_SUM)
-                .withAffectedEntities(Arrays.asList(targetEntity)).build(),
-            ValueChange.build(
-                targetEntity.id(),
-                new LongValue(B_SUM, 50L),
-                new LongValue(B_SUM, 100L))
+                .withAffectedEntities(Arrays.asList(targetEntity)).build()
         );
 
         context.focusEntity(targetEntity, B_CLASS);
@@ -542,7 +537,7 @@ public class FormulaCalculationLogicTest {
 
             participants.add(participant);
 
-            return InfuenceConsumer.Action.CONTINUE;
+            return InfuenceGraphConsumer.Action.CONTINUE;
         });
 
         Assertions.assertEquals(2, participants.size());
@@ -568,16 +563,11 @@ public class FormulaCalculationLogicTest {
             .withValue(new LongValue(B_SUM, 100))
             .build();
 
-        Infuence infuence = new Infuence(
-            targetEntity,
+        InfuenceGraph infuence = new InfuenceGraph(
             CalculationParticipant.Builder.anParticipant()
                 .withEntityClass(B_CLASS)
                 .withField(B_SUM)
-                .withAffectedEntities(Arrays.asList(targetEntity)).build(),
-            ValueChange.build(
-                targetEntity.id(),
-                new LongValue(B_SUM, 50L),
-                new LongValue(B_SUM, 100L))
+                .withAffectedEntities(Arrays.asList(targetEntity)).build()
         );
 
         context.focusEntity(targetEntity, B_CLASS);
@@ -585,14 +575,14 @@ public class FormulaCalculationLogicTest {
 
         formulaCalculationLogic.scope(context, infuence);
         AtomicReference<Participant> p = new AtomicReference<>();
-        infuence.scan((parentParticipant, participant, infuenceInner) -> {
-            if (parentParticipant.isPresent()) {
-                if (parentParticipant.get().getEntityClass().id() == B_CLASS.id()) {
+        infuence.scan((parentParticipants, participant, infuenceInner) -> {
+            if (!parentParticipants.isEmpty()) {
+                if (parentParticipants.stream().findFirst().get().getEntityClass().id() == B_CLASS.id()) {
                     p.set(participant);
-                    return InfuenceConsumer.Action.OVER;
+                    return InfuenceGraphConsumer.Action.OVER;
                 }
             }
-            return InfuenceConsumer.Action.CONTINUE;
+            return InfuenceGraphConsumer.Action.CONTINUE;
         });
 
         Participant participant = p.get();
@@ -718,8 +708,8 @@ public class FormulaCalculationLogicTest {
         }
 
         @Override
-        public void scope(CalculationContext context, Infuence infuence) {
-            infuence.scan((parentClassOp, participant, infuenceInner) -> {
+        public void scope(CalculationContext context, InfuenceGraph infuence) {
+            infuence.scan((parentParticipants, participant, infuenceInner) -> {
 
                 Participant child = scope.get(participant);
 
@@ -727,7 +717,7 @@ public class FormulaCalculationLogicTest {
                     infuenceInner.impact(participant, child);
                 }
 
-                return InfuenceConsumer.Action.CONTINUE;
+                return InfuenceGraphConsumer.Action.CONTINUE;
             });
         }
 

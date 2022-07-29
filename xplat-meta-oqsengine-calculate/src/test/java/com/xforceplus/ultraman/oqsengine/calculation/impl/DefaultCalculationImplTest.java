@@ -10,8 +10,8 @@ import com.xforceplus.ultraman.oqsengine.calculation.logic.CalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.AbstractParticipant;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.CalculationParticipant;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceGraph;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceGraphConsumer;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
 import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
 import com.xforceplus.ultraman.oqsengine.lock.LocalResourceLocker;
@@ -53,7 +53,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.Assertions;
@@ -636,40 +635,17 @@ public class DefaultCalculationImplTest {
         Method scopeMethod = DefaultCalculationImpl.class.getDeclaredMethod(
             "scope", new Class[] {CalculationContext.class});
         scopeMethod.setAccessible(true);
-        Infuence[] infuences = (Infuence[]) scopeMethod.invoke(calculation, new Object[] {context});
-        Assertions.assertTrue(infuences.length == 1);
-        /*
-           两种可能都正确.
-             "(a-class,along)\n"
-            + "   L---(b-class,bsuma)\n"
-            + "      L---(b-class,bformula)\n"
-            + "         L---(d-class,dsumconditionb)\n"
-            + "      L---(d-class,dsumb)\n"
-            + "   L---(c-class,clookupa)\n"
-            + "   L---(b-class,blookupa)";
-               "(a-class,along)\n"
-            + "   L---(c-class,clookupa)\n"
-            + "   L---(b-class,blookupa)\n"
-            + "      L---(b-class,bformula)\n"
-            + "         L---(d-class,dsumconditionb)\n"
-            + "   L---(b-class,bsuma)\n"
-            + "      L---(d-class,dsumb)";
-         */
-        // (b-class,bformula) 的父参与者是(b-class,blookupa)或者(b-class,bsuma)都是正确的
-        AtomicReference<Participant> bformulaParentParticipant = new AtomicReference<>();
-        infuences[0].scan((parentParticipantOp, participant, infuenceInner) -> {
-            if (participant.getField().id() == B_FORMULA.id()) {
-                bformulaParentParticipant.set(parentParticipantOp.get());
-                return InfuenceConsumer.Action.OVER;
-            }
-            return InfuenceConsumer.Action.CONTINUE;
+        InfuenceGraph graph = (InfuenceGraph) scopeMethod.invoke(calculation, new Object[] {context});
+        List<String> fieldNames = new ArrayList<>();
+        graph.scan((parent, participant, inner) -> {
+            fieldNames.add(participant.getField().name());
+            return InfuenceGraphConsumer.Action.CONTINUE;
         });
 
-        // 应该是(b-class,bsuma) 或者 (b-class,blookupa)
-        Participant participant = bformulaParentParticipant.get();
-        Assertions.assertEquals(B_CLASS, participant.getEntityClass());
-        Assertions.assertTrue(
-            B_SUM.id() == participant.getField().id() || B_LOOKUP.id() == participant.getField().id());
+        String[] expectedFieldNames = new String[] {
+            "-", "along", "id", "bsuma", "blookupa", "clookupa", "dsumb", "bformula", "dsumconditionb"
+        };
+        Assertions.assertArrayEquals(expectedFieldNames, fieldNames.stream().toArray(String[]::new));
     }
 
     /**
@@ -699,7 +675,8 @@ public class DefaultCalculationImplTest {
 
         calculation = new DefaultCalculationImpl();
         newEntity = calculation.calculate(context);
-        Assertions.assertEquals(F_COLLECT.name(), newEntity.entityValue().getValue(F_COLLECT.id()).get().valueToString());
+        Assertions.assertEquals(F_COLLECT.name(),
+            newEntity.entityValue().getValue(F_COLLECT.id()).get().valueToString());
     }
 
     @Test
@@ -961,8 +938,8 @@ public class DefaultCalculationImplTest {
         }
 
         @Override
-        public void scope(CalculationContext context, Infuence infuence) {
-            infuence.scan((parentClassOp, participant, infuenceInner) -> {
+        public void scope(CalculationContext context, InfuenceGraph infuence) {
+            infuence.scan((parentParticipants, participant, infuenceInner) -> {
 
                 AbstractParticipant child = scope.get(participant);
 
@@ -970,7 +947,7 @@ public class DefaultCalculationImplTest {
                     infuenceInner.impact(participant, child);
                 }
 
-                return InfuenceConsumer.Action.CONTINUE;
+                return InfuenceGraphConsumer.Action.CONTINUE;
             });
         }
 

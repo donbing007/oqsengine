@@ -10,8 +10,8 @@ import com.xforceplus.ultraman.oqsengine.calculation.logic.CalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.CalculationComparator;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.CalculationParticipant;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceGraph;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceGraphConsumer;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
@@ -30,8 +30,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -165,183 +163,205 @@ public class DefaultCalculationImpl implements Calculation {
               3. 结合缓存加载出所有受影响的对象实例列表.
               4. 对每一个实例都应用字段的相应计算.
          */
-        Infuence[] infuences = scope(context);
+        InfuenceGraph graph = scope(context);
 
         CalculationLogicFactory calculationLogicFactory =
             context.getResourceWithEx(() -> context.getCalculationLogicFactory());
 
-        for (Infuence infuence : infuences) {
+        if (logger.isDebugEnabled()) {
+            logger.debug("Maintain computed fields, whose impact graph is as follows.\n{}\n", graph.toString());
+        }
 
-            if (logger.isDebugEnabled()) {
-                logger.debug("Maintain computed fields, whose impact tree is as follows.\n{}\n", infuence.toString());
+        /*
+        依赖图的扫描,从0层开始层层迭代.
+         */
+        graph.scan((parentParticipants, participant, inner) -> {
+            // 根参与者不需要计算,跳过.
+            if (participant.isSource()) {
+                return InfuenceGraphConsumer.Action.CONTINUE;
             }
 
-            infuence.scan((parentParticipant, participant, infuenceInner) -> {
-                if (!parentParticipant.isPresent()) {
-                    return InfuenceConsumer.Action.CONTINUE;
-                }
+            /*
+            非计算字段的静态字段,直接跳过.其影响实例已经在构造图时被填充.
+             */
+            if (CalculationType.STATIC == participant.getField().calculationType()) {
+                return InfuenceGraphConsumer.Action.CONTINUE;
+            }
 
-                /*
-                 * 如果树中出现当前源头对象参与者,那么直接忽略.
-                 * 原因是已经在计算阶段处理完成.
-                 */
-                IEntity sourceEntity = context.getSourceEntity();
-                IEntityClass sourceEntityClass =
-                    context.getResourceWithEx(() -> context.getMetaManager()).load(sourceEntity.entityClassRef()).get();
+            /*
+             * 如果树中出现当前源头对象参与者,那么直接忽略.
+             * 原因是已经在计算阶段处理完成.
+             */
+            IEntity sourceEntity = context.getSourceEntity();
+            IEntityClass sourceEntityClass =
+                context.getResourceWithEx(() -> context.getMetaManager()).load(sourceEntity.entityClassRef()).get();
 
-                if (sourceEntityClass.field(participant.getField().id()).isPresent()) {
-                    parentParticipant.get().getAffectedEntities().forEach(e -> {
-                        participant.addAffectedEntity(e);
-                    });
-                    return InfuenceConsumer.Action.CONTINUE;
-                }
-
-                CalculationLogic logic =
-                    calculationLogicFactory.getCalculationLogic(participant.getField().calculationType());
-
-                Timer.Sample sample = Timer.start(Metrics.globalRegistry);
-
-                Collection<AffectedInfo> affectedInfos = null;
-                try {
-
-                    affectedInfos = new ArrayList(logic.getMaintainTarget(
-                        context, participant, parentParticipant.get().getAffectedEntities()));
-
-                } catch (CalculationException ex) {
-                    processTimer(
-                        logic, sample, MetricsDefine.CALCULATION_LOGIC_DELAY_LATENCY_SECONDS, "getTarget", true);
-                    throw ex;
-                }
-
-                processTimer(
-                    logic, sample, MetricsDefine.CALCULATION_LOGIC_DELAY_LATENCY_SECONDS, "getTarget", false);
-
-                // 影响实例增加独占锁.
-                if (!affectedInfos.isEmpty()) {
-                    long[] affectedEntityIds = affectedInfos.stream()
-                        .filter(a -> {
-                            /*
-                            一个优化,减少加锁.
-                            如果是创建场景同时影响的对象又和源头触发对象一致,那么跳过无需再加锁.
-                             */
-                            if (CalculationScenarios.BUILD == context.getScenariso()) {
-                                if (a.getAffectedEntityId() == context.getSourceEntity().id()) {
-                                    return false;
-                                }
-                            }
-                            return true;
-                        })
-                        .mapToLong(a -> a.getAffectedEntityId()).distinct().toArray();
-                    if (affectedEntityIds.length > 0) {
-                        if (!context.tryLocksEntity(affectedEntityIds)) {
-                            throw new CalculationException(
-                                String.format(
-                                    "Conflicts are calculated and the attempt limit is reached [%d ms]. To give up!",
-                                    context.getLockTimeoutMs()));
-                        }
-                    }
-                }
-
-                IEntity[] affectedEntities = loadEntities(context, affectedInfos);
+            if (sourceEntityClass.field(participant.getField().id()).isPresent()) {
+                // 虽然不再计算,但是需要把影响实例传播.
+                collectingImpactInstances(parentParticipants).forEach(e -> participant.addAffectedEntity(e));
 
                 if (logger.isDebugEnabled()) {
-                    if (affectedEntities.length == 0) {
-                        logger.debug("The number of instances affected by the field {} of entityclass {} is 0.",
-                            participant.getField().fieldName(),
-                            participant.getEntityClass().code()
-                        );
+                    logger.debug(
+                        "The participant field ({}) belongs to the origin object ({}) and is no longer counted but propagates the impact.",
+                        participant.getField().name(), sourceEntityClass.name()
+                    );
+                }
+
+                return InfuenceGraphConsumer.Action.CONTINUE;
+            }
+
+            CalculationLogic logic =
+                calculationLogicFactory.getCalculationLogic(participant.getField().calculationType());
+
+            Timer.Sample sample = Timer.start(Metrics.globalRegistry);
+
+            Collection<AffectedInfo> affectedInfos = null;
+            try {
+
+                Collection<IEntity> triggerEntities = collectingImpactInstances(parentParticipants);
+                affectedInfos = new ArrayList(
+                    logic.getMaintainTarget(context, participant, triggerEntities));
+
+                if (logger.isDebugEnabled()) {
+                    logger.debug("The participant {} is affected by {} instances by {} instances.",
+                        participant, triggerEntities.size(), affectedInfos.size());
+                }
+
+            } catch (CalculationException ex) {
+                processTimer(
+                    logic, sample, MetricsDefine.CALCULATION_LOGIC_DELAY_LATENCY_SECONDS, "getTarget", true);
+                throw ex;
+            }
+
+            processTimer(
+                logic, sample, MetricsDefine.CALCULATION_LOGIC_DELAY_LATENCY_SECONDS, "getTarget", false);
+
+            // 影响实例增加独占锁.
+            if (!affectedInfos.isEmpty()) {
+                long[] affectedEntityIds = affectedInfos.stream()
+                    .filter(a -> {
+                        /*
+                            一个优化,减少加锁.
+                            如果是创建场景同时影响的对象又和源头触发对象一致,那么跳过无需再加锁.
+                         */
+                        if (CalculationScenarios.BUILD == context.getScenariso()) {
+                            if (a.getAffectedEntityId() == context.getSourceEntity().id()) {
+                                return false;
+                            }
+                        }
+                        return true;
+                    })
+                    .mapToLong(a -> a.getAffectedEntityId()).distinct().toArray();
+                if (affectedEntityIds.length > 0) {
+                    if (!context.tryLocksEntity(affectedEntityIds)) {
+                        throw new CalculationException(
+                            String.format(
+                                "Conflicts are calculated and the attempt limit is reached [%d ms]. To give up!",
+                                context.getLockTimeoutMs()));
+                    }
+                }
+            }
+
+            IEntity[] affectedEntities = loadEntities(context, affectedInfos);
+
+            if (logger.isDebugEnabled()) {
+                if (affectedEntities.length == 0) {
+                    logger.debug("The number of instances affected by the field {} of entityclass {} is 0.",
+                        participant.getField().fieldName(),
+                        participant.getEntityClass().code()
+                    );
+                }
+            }
+
+            // 重新计算影响的entity.
+            for (IEntity affectedEntitiy : affectedEntities) {
+                context.focusEntity(affectedEntitiy, participant.getEntityClass());
+                context.focusField(participant.getField());
+
+                Optional<IValue> oldValueOp =
+                    affectedEntitiy.entityValue().getValue(participant.getField().id());
+
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Start using {} logic to compute instance {} fields {} of type {}.",
+                        logic.getClass().getSimpleName(),
+                        affectedEntitiy.id(),
+                        participant.getField().name(),
+                        participant.getEntityClass().code());
+                }
+
+                AffectedInfo affectedInfo = null;
+                for (AffectedInfo a : affectedInfos) {
+                    if (a.getAffectedEntityId() == affectedEntitiy.id()) {
+                        affectedInfo = a;
+                        break;
                     }
                 }
 
-                // 重新计算影响的entity.
-                for (IEntity affectedEntitiy : affectedEntities) {
-                    context.focusEntity(affectedEntitiy, participant.getEntityClass());
-                    context.focusField(participant.getField());
+                if (affectedInfo == null) {
+                    throw new CalculationException(
+                        "An unexpected error occurred and the expected instance was not found in the calculation.");
+                } else {
+                    affectedInfos.remove(affectedInfo);
+                }
 
-                    Optional<IValue> oldValueOp =
-                        affectedEntitiy.entityValue().getValue(participant.getField().id());
+                context.startMaintenance(affectedInfo.getTriggerEntity());
+                Optional<IValue> newValueOp;
+                try {
+                    newValueOp = logic.calculate(context);
+                } catch (CalculationException ex) {
+
+                    logger.error("Maintenance error occurred, the current impact tree is: \n {}.",
+                        inner.toString());
+
+                    throw new CalculationException(
+                        String.format("An error occurred in the calculation field (%d-%s) due to %s.",
+                            participant.getField().id(), participant.getField().name(), ex.getMessage()));
+                }
+                context.stopMaintenance();
+
+                if (newValueOp.isPresent()) {
+
+                    IValue oldValue =
+                        oldValueOp.isPresent() ? oldValueOp.get() : new EmptyTypedValue(participant.getField());
+                    IValue newValue = newValueOp.get();
 
                     if (logger.isDebugEnabled()) {
-                        logger.debug("Start using {} logic to compute instance {} fields {} of type {}.",
-                            logic.getClass().getSimpleName(),
-                            affectedEntitiy.id(),
-                            participant.getField().name(),
-                            participant.getEntityClass().code());
+                        logger.debug("Instance {} field {} evaluates to {}.",
+                            affectedEntitiy.id(), participant.getField().name(), newValueOp.get().getValue());
                     }
 
-                    AffectedInfo affectedInfo = null;
-                    for (AffectedInfo a : affectedInfos) {
-                        if (a.getAffectedEntityId() == affectedEntitiy.id()) {
-                            affectedInfo = a;
-                            break;
-                        }
-                    }
+                    if (!valueEquals(oldValue, newValue)) {
+                        context.addValueChange(ValueChange.build(affectedEntitiy.id(), oldValue, newValue));
 
-                    if (affectedInfo == null) {
-                        throw new CalculationException(
-                            "An unexpected error occurred and the expected instance was not found in the calculation.");
+                        affectedEntitiy.entityValue().addValue(newValueOp.get());
+
                     } else {
-                        affectedInfos.remove(affectedInfo);
-                    }
-
-                    context.startMaintenance(affectedInfo.getTriggerEntity());
-                    Optional<IValue> newValueOp;
-                    try {
-                        newValueOp = logic.calculate(context);
-                    } catch (CalculationException ex) {
-
-                        logger.error("Maintenance error occurred, the current impact tree is: \n {}.",
-                            infuenceInner.toString());
-
-                        throw new CalculationException(
-                            String.format("An error occurred in the calculation field (%d-%s) due to %s.",
-                                participant.getField().id(), participant.getField().name(), ex.getMessage()));
-                    }
-                    context.stopMaintenance();
-
-                    if (newValueOp.isPresent()) {
-
-                        IValue oldValue =
-                            oldValueOp.isPresent() ? oldValueOp.get() : new EmptyTypedValue(participant.getField());
-                        IValue newValue = newValueOp.get();
 
                         if (logger.isDebugEnabled()) {
-                            logger.debug("Instance {} field {} evaluates to {}.",
-                                affectedEntitiy.id(), participant.getField().name(), newValueOp.get().getValue());
+                            logger.debug(
+                                "Calculate field {}, the result is the same before and after calculation so do not change.",
+                                context.getFocusField().name());
                         }
 
-                        if (!valueEquals(oldValue, newValue)) {
-                            context.addValueChange(ValueChange.build(affectedEntitiy.id(), oldValue, newValue));
+                        // 没有任何改变,所有受此字段影响的后续都将被忽略.
+                        return InfuenceGraphConsumer.Action.OVER_SELF;
 
-                            affectedEntitiy.entityValue().addValue(newValueOp.get());
-
-                        } else {
-
-                            if (logger.isDebugEnabled()) {
-                                logger.debug(
-                                    "Calculate field {}, the result is the same before and after calculation so do not change.",
-                                    context.getFocusField().name());
-                            }
-
-                            // 没有任何改变,所有受此字段影响的后续都将被忽略.
-                            return InfuenceConsumer.Action.OVER_SELF;
-
-                        }
-                    } else {
-                        if (logger.isDebugEnabled()) {
-                            logger.debug("Instance {} field {} evaluates to {}.",
-                                affectedEntitiy.id(), participant.getField().name(), "NULL");
-                        }
+                    }
+                } else {
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("Instance {} field {} evaluates to {}.",
+                            affectedEntitiy.id(), participant.getField().name(), "NULL");
                     }
                 }
-                // 加入到当前参与者的影响entity记录中.
-                for (IEntity affectedEntitiy : affectedEntities) {
-                    participant.addAffectedEntity(affectedEntitiy);
-                }
+            }
+            // 加入到当前参与者的影响entity记录中.
+            for (IEntity affectedEntitiy : affectedEntities) {
+                participant.addAffectedEntity(affectedEntitiy);
+            }
 
-                return InfuenceConsumer.Action.CONTINUE;
-            });
-        }
+            return InfuenceGraphConsumer.Action.CONTINUE;
+        });
+
 
         return true;
     }
@@ -393,13 +413,22 @@ public class DefaultCalculationImpl implements Calculation {
     }
 
     // 获取影响树列表.
-    private Infuence[] scope(CalculationContext context) throws CalculationException {
+    private InfuenceGraph scope(CalculationContext context) throws CalculationException {
 
         Timer.Sample allSample = Timer.start(Metrics.globalRegistry);
 
+        Participant sourceParticipant = CalculationParticipant.Builder.anParticipant()
+            .withEntityClass(context.getFocusClass())
+            .withField(EntityField.ILLUSORY_FIELD)
+            .withAffectedEntities(Arrays.asList(context.getFocusEntity()))
+            .build();
+        // 指定为影响源参与者.
+        sourceParticipant.source();
+        InfuenceGraph graph = new InfuenceGraph(sourceParticipant);
+
         try {
             // 得到按优先级排序好的计算字段.并且过滤只处理改变的字段.
-            Collection<IEntityField> calculationFields = parseChangeFields(context, false);
+            Collection<IEntityField> fields = parseChangeFields(context, false);
 
             // 固定增加一个表示数量改变的特殊改变.
             switch (context.getScenariso()) {
@@ -411,7 +440,7 @@ public class DefaultCalculationImpl implements Calculation {
                             new LongValue(EntityField.ID_ENTITY_FIELD, context.getFocusEntity().id())
                         )
                     );
-                    calculationFields.add(EntityField.ID_ENTITY_FIELD);
+                    fields.add(EntityField.ID_ENTITY_FIELD);
                     break;
                 }
                 case DELETE: {
@@ -423,13 +452,13 @@ public class DefaultCalculationImpl implements Calculation {
                             new EmptyTypedValue(EntityField.ID_ENTITY_FIELD)
                         )
                     );
-                    calculationFields.add(EntityField.ID_ENTITY_FIELD);
+                    fields.add(EntityField.ID_ENTITY_FIELD);
                     break;
                 }
                 case REPLACE: {
                     LongValue value = new LongValue(EntityField.ID_ENTITY_FIELD, context.getFocusEntity().id());
                     context.addValueChange(ValueChange.build(context.getFocusEntity().id(), value, value));
-                    calculationFields.add(EntityField.ID_ENTITY_FIELD);
+                    fields.add(EntityField.ID_ENTITY_FIELD);
                     break;
                 }
                 default: {
@@ -446,8 +475,8 @@ public class DefaultCalculationImpl implements Calculation {
                 context.getResourceWithEx(() -> context.getCalculationLogicFactory());
 
             /*
-            所有当前场景需要维护的计算逻辑片根据改变的字段最终汇聚一份影响树列表.
-            每一个改变的字段对应着一棵树.树的结构如下.
+            所有当前场景需要维护的计算逻辑片根据改变的字段最终汇聚一份影响图.
+            图的结构如下.
                  当前被改变的实例和改变的字段信息
                     /             \
              被影响的元信息和字段   被影响的元信息和字段
@@ -459,147 +488,66 @@ public class DefaultCalculationImpl implements Calculation {
                       B(lookup)     C
                          /
                        D(sum)
-             这里 B lookup 和A,但是D又SUM了B,所以需要多个logic来共同构造这个树.
+             这里 B lookup 和A,但是D又SUM了B,所以需要多个logic来共同构造这个图.
             */
 
             // 只处理需要处理当前维护场景的logic.
             Collection<CalculationLogic> logics =
                 getNeedMaintainScenariosLogic(calculationLogicFactory, context.getScenariso());
 
-            Infuence[] infuences = calculationFields.stream().map(f -> {
-
-                Optional<ValueChange> changeOp = context.getValueChange(context.getFocusEntity(), f);
-                // 复制一份新的logic,原因是有可能每一个字段会变化.
-                Collection<CalculationLogic> currentLogic = null;
-                Infuence infuence = null;
-                // 表示数量改变的id字段.
-                if (changeOp.isPresent()) {
-                    infuence = new Infuence(
-                        context.getFocusEntity(),
+            // 将所有发生改变的静态字段加入到影响图中的第一层,并且过滤掉没有改变的.
+            Collection<IEntityField> changeFields = fields.stream()
+                .filter(f -> context.getValueChange(context.getFocusEntity(), f).isPresent())
+                .map(f -> {
+                    graph.impact(
                         CalculationParticipant.Builder.anParticipant()
                             .withEntityClass(context.getFocusClass())
                             .withField(f)
                             .withAffectedEntities(Arrays.asList(
                                 context.getFocusEntity()
                             ))
-                            .build(),
-                        changeOp.get());
+                            .build()
+                    );
+                    return f;
+                }).collect(Collectors.toList());
 
-                    currentLogic = logics;
-
-                } else {
-
-                    currentLogic =
-                        logics.stream()
-                            .filter(l -> l.need(context, context.getFocusClass(), f)).collect(Collectors.toList());
-                    if (!currentLogic.isEmpty()) {
-
-                        Optional<IValue> valueOp = context.getFocusEntity().entityValue().getValue(f);
-                        IValue value;
-                        if (!valueOp.isPresent()) {
-                            value = new EmptyTypedValue(f);
-                        } else {
-                            value = valueOp.get();
-                        }
-
-                        infuence = new Infuence(
-                            context.getFocusEntity(),
-                            CalculationParticipant.Builder.anParticipant()
-                                .withEntityClass(context.getFocusClass())
-                                .withField(f)
-                                .withAffectedEntities(Arrays.asList(
-                                    context.getFocusEntity()
-                                ))
-                                .build(),
-                            ValueChange.build(context.getFocusEntity().id(), value, value)
-                        );
-                    }
-                }
-
-                if (infuence != null) {
-                    /*
-                    不断将影响树交由所有相关的logic构建,只到影响树不再改变或者达到 MAX_BUILD_INFUENCE_NUMBER 上限.
-                    */
-                    int oldSize = infuence.getSize();
-                    for (int i = 0; i < MAX_BUILD_INFUENCE_NUMBER; i++) {
-                        for (CalculationLogic logic : currentLogic) {
-                            context.focusField(f);
-
-                            Timer.Sample sample = Timer.start(Metrics.globalRegistry);
-
-                            logic.scope(context, infuence);
-
-                            processTimer(
-                                logic, sample, MetricsDefine.CALCULATION_LOGIC_DELAY_LATENCY_SECONDS, "scope", false);
-                        }
-
-                        if (oldSize == infuence.getSize()) {
-                            break;
-                        } else {
-                            oldSize = infuence.getSize();
-                        }
-                    }
-
-                    if (infuence.empty()) {
-                        return Optional.empty();
-                    } else {
-                        return Optional.ofNullable(infuence);
-                    }
-                }
-
-                return Optional.empty();
-            }).filter(o -> o.isPresent()).map(o -> o.get()).toArray(Infuence[]::new);
-
-
-            // 参与者速查表.key为参与者,value未使用.
-            Map<Participant, Object> participantDuplicateTable = new HashMap<>();
+            if (logger.isDebugEnabled()) {
+                logger.debug(
+                    "The current processing scenario is {}, and the field changed by object {} instance {} is {}.",
+                    context.getScenariso().name(),
+                    context.getFocusClass().name(),
+                    context.getFocusEntity().id(),
+                    changeFields.stream().map(f -> f.name()).collect(Collectors.joining(",", "[", "]"))
+                );
+            }
 
             /*
-            A <- B              1
-            C <- D <- B         2
-            E <- B              3
-            应该只保留2号树.这里是防止进行重复计算.
-            这里会跳过所有静态字段,只处理根结点是计算字段树.
+            不断将影响树交由所有相关的logic构建,只到影响树不再改变或者达到 MAX_BUILD_INFUENCE_NUMBER 上限.
              */
-            for (Infuence infuence : infuences) {
-                infuence.scan((parentParticipantOp, participant, infuenceInner) -> {
-                    // 如果当前是根影响力,那么查看字段是否为非计算字段,是的话跳过.
-                    if (!parentParticipantOp.isPresent()) {
-                        if (participant.getField().calculationType() == CalculationType.STATIC) {
-                            // 终止当前影响力的所有迭代.
-                            return InfuenceConsumer.Action.OVER;
-                        }
-                    }
-                    if (participantDuplicateTable.containsKey(participant)) {
-                        // 已经参加其他树的参与者,终止迭代并且当前结点开始的所有子树.
-                        return InfuenceConsumer.Action.OVER_REMOVE_SELF;
-                    } else {
-                        participantDuplicateTable.put(participant, null);
-                        return InfuenceConsumer.Action.CONTINUE;
-                    }
-                });
+            int oldSize = graph.size();
+            for (int i = 0; i < MAX_BUILD_INFUENCE_NUMBER; i++) {
+                for (CalculationLogic logic : logics) {
+                    Timer.Sample sample = Timer.start(Metrics.globalRegistry);
+
+                    logic.scope(context, graph);
+
+                    processTimer(
+                        logic, sample, MetricsDefine.CALCULATION_LOGIC_DELAY_LATENCY_SECONDS, "scope", false);
+                }
+
+                if (logger.isDebugEnabled()) {
+                    logger.debug("The {} round affects the graph construction, resulting in \n {}.", i + 1, graph);
+                }
+
+
+                if (oldSize != graph.size()) {
+                    oldSize = graph.size();
+                } else {
+                    break;
+                }
             }
 
-            for (Infuence infuence : infuences) {
-                infuence.scan((parentParticipantOp, participant, infuenceInner) -> {
-                    // 只判根影响力是静态字段.
-                    if (!parentParticipantOp.isPresent()) {
-                        if (participant.getField().calculationType() != CalculationType.STATIC) {
-                            // 终止当前影响力的所有迭代.
-                            return InfuenceConsumer.Action.OVER;
-                        }
-                    }
-                    if (participantDuplicateTable.containsKey(participant)) {
-                        // 已经参加其他树的参与者,终止迭代并且当前结点开始的所有子树.
-                        return InfuenceConsumer.Action.OVER_REMOVE_SELF;
-                    } else {
-                        participantDuplicateTable.put(participant, null);
-                        return InfuenceConsumer.Action.CONTINUE;
-                    }
-                });
-            }
-
-            return Arrays.stream(infuences).filter(i -> !i.empty()).toArray(Infuence[]::new);
+            return graph;
 
         } finally {
 
@@ -704,6 +652,15 @@ public class DefaultCalculationImpl implements Calculation {
         }
 
         return logics;
+    }
+
+    // 收集多个参与者的影响实例, 去掉合并为一个列表.
+    private Collection<IEntity> collectingImpactInstances(Collection<Participant> participants) {
+        return participants.stream()
+            .map(p -> p.getAffectedEntities())
+            .flatMap(Collection::stream)
+            .distinct()
+            .collect(Collectors.toList());
     }
 
     // 停止计时并输出指标

@@ -10,8 +10,8 @@ import com.xforceplus.ultraman.oqsengine.calculation.logic.CalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.AbstractParticipant;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.CalculationParticipant;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceGraph;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceGraphConsumer;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
 import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MockMetaManager;
@@ -1754,32 +1754,60 @@ public class AggregationCalculationLogicTest {
             .withValue(
                 new LongValue(A_LONG, 2000L)
             ).build();
-        Infuence infuence = new Infuence(
-            sourceEntity,
+        Participant root = CalculationParticipant.Builder.anParticipant()
+            .withEntityClass(A_CLASS)
+            .withField(EntityField.ILLUSORY_FIELD)
+            .withAffectedEntities(Arrays.asList(sourceEntity)).build();
+        root.source();
+        InfuenceGraph graph = new InfuenceGraph(root);
+        graph.impact(
             CalculationParticipant.Builder.anParticipant()
                 .withEntityClass(A_CLASS)
                 .withField(A_LONG)
-                .withAffectedEntities(Arrays.asList(sourceEntity)).build(),
-            ValueChange.build(
-                sourceEntity.id(),
-                new LongValue(A_LONG, 1000L),
-                new LongValue(A_LONG, 2000L))
+                .withAffectedEntities(Arrays.asList(sourceEntity)).build()
         );
         context.focusEntity(sourceEntity, A_CLASS);
         context.focusField(A_LONG);
 
-        aggregationCalculationLogic.scope(context, infuence);
+        aggregationCalculationLogic.scope(context, graph);
 
-        String expected = "(a-class,a-long)\n"
-            + "   L---(c-class,c-max-conditions)\n"
-            + "   L---(c-class,c-min-conditions)\n"
-            + "   L---(c-class,c-sum-conditions)\n"
-            + "   L---(c-class,c-sum-a)\n"
-            + "   L---(b-class,bsuma)\n"
-            + "      L---(d-class,d-max-condition-b)\n"
-            + "      L---(d-class,d-sum-b)";
+        InfuenceGraph expectedGraph = new InfuenceGraph(root);
+        Participant alongPar = CalculationParticipant.Builder.anParticipant()
+            .withEntityClass(A_CLASS)
+            .withField(A_LONG)
+            .withAffectedEntities(Arrays.asList(sourceEntity)).build();
+        Participant cmaxconditionsPar =
+            CalculationParticipant.Builder.anParticipant()
+                .withEntityClass(C_CLASS)
+                .withField(C_MAX_CONDITIONS).build();
+        Participant cminconditionsPar = CalculationParticipant.Builder.anParticipant()
+            .withEntityClass(C_CLASS)
+            .withField(C_MIN_CONDITIONS).build();
+        Participant csumconditionsPar = CalculationParticipant.Builder.anParticipant()
+            .withEntityClass(C_CLASS)
+            .withField(C_SUM_CONDITIONS).build();
+        Participant csumaPar = CalculationParticipant.Builder.anParticipant()
+            .withEntityClass(C_CLASS)
+            .withField(C_SUM).build();
+        Participant bsumaPar = CalculationParticipant.Builder.anParticipant()
+            .withEntityClass(B_CLASS)
+            .withField(B_SUM).build();
+        Participant dmaxconditionsPar = CalculationParticipant.Builder.anParticipant()
+            .withEntityClass(D_CLASS)
+            .withField(D_MAX_CONDITIONS).build();
+        Participant dsumPar = CalculationParticipant.Builder.anParticipant()
+            .withEntityClass(D_CLASS)
+            .withField(D_SUM).build();
+        expectedGraph.impact(alongPar);
+        expectedGraph.impact(alongPar, cmaxconditionsPar);
+        expectedGraph.impact(alongPar, cminconditionsPar);
+        expectedGraph.impact(alongPar, csumconditionsPar);
+        expectedGraph.impact(alongPar, csumaPar);
+        expectedGraph.impact(alongPar, bsumaPar);
+        expectedGraph.impact(bsumaPar, dmaxconditionsPar);
+        expectedGraph.impact(bsumaPar, dsumPar);
 
-        Assertions.assertEquals(expected, infuence.toString());
+        Assertions.assertEquals(expectedGraph, graph);
     }
 
     @Test
@@ -1792,16 +1820,11 @@ public class AggregationCalculationLogicTest {
             .withValue(
                 new LongValue(A_LONG, 100)
             ).build();
-        Infuence infuence = new Infuence(
-            targetEntity,
+        InfuenceGraph infuence = new InfuenceGraph(
             CalculationParticipant.Builder.anParticipant()
                 .withEntityClass(A_CLASS)
                 .withField(A_LONG)
-                .withAffectedEntities(Arrays.asList(targetEntity)).build(),
-            ValueChange.build(
-                targetEntity.id(),
-                new LongValue(A_LONG, 50L),
-                new LongValue(A_LONG, 100L))
+                .withAffectedEntities(Arrays.asList(targetEntity)).build()
         );
 
         context.focusEntity(targetEntity, A_CLASS);
@@ -1813,7 +1836,7 @@ public class AggregationCalculationLogicTest {
 
             participants.add(participant.getField());
 
-            return InfuenceConsumer.Action.CONTINUE;
+            return InfuenceGraphConsumer.Action.CONTINUE;
         });
 
         Assertions.assertEquals(8, participants.size(), infuence.toString());
@@ -1829,17 +1852,11 @@ public class AggregationCalculationLogicTest {
         context.focusEntity(targetEntity, A_CLASS);
         context.focusField(EntityField.ID_ENTITY_FIELD);
 
-        Infuence infuenceCount = new Infuence(
-            targetEntity,
+        InfuenceGraph infuenceCount = new InfuenceGraph(
             CalculationParticipant.Builder.anParticipant()
                 .withEntityClass(A_CLASS)
                 .withField(EntityField.ID_ENTITY_FIELD)
-                .withAffectedEntities(Arrays.asList(targetEntity)).build(),
-            ValueChange.build(
-                context.getFocusEntity().id(),
-                new EmptyTypedValue(EntityField.ID_ENTITY_FIELD),
-                new LongValue(EntityField.ID_ENTITY_FIELD, context.getFocusEntity().id())
-            )
+                .withAffectedEntities(Arrays.asList(targetEntity)).build()
         );
 
         context.addValueChange(
@@ -1856,7 +1873,7 @@ public class AggregationCalculationLogicTest {
 
             participantsCount.add(participant);
 
-            return InfuenceConsumer.Action.CONTINUE;
+            return InfuenceGraphConsumer.Action.CONTINUE;
         });
 
 
@@ -1885,16 +1902,11 @@ public class AggregationCalculationLogicTest {
             .withValue(new LongValue(relationship.getEntityField(), 1000))
             .build();
 
-        Infuence infuence = new Infuence(
-            targetEntity,
+        InfuenceGraph infuence = new InfuenceGraph(
             CalculationParticipant.Builder.anParticipant()
                 .withEntityClass(A_CLASS)
                 .withField(A_LONG)
-                .withAffectedEntities(Arrays.asList(targetEntity)).build(),
-            ValueChange.build(
-                targetEntity.id(),
-                new LongValue(A_LONG, 50L),
-                new LongValue(A_LONG, 100L))
+                .withAffectedEntities(Arrays.asList(targetEntity)).build()
         );
 
         context.focusSourceEntity(targetEntity);
@@ -1903,14 +1915,14 @@ public class AggregationCalculationLogicTest {
 
         aggregationCalculationLogic.scope(context, infuence);
         AtomicReference<Participant> p = new AtomicReference<>();
-        infuence.scan((parentParticipant, participant, infuenceInner) -> {
-            if (parentParticipant.isPresent()) {
-                if (parentParticipant.get().getEntityClass().id() == A_CLASS.id()) {
+        infuence.scan((parentParticipants, participant, infuenceInner) -> {
+            if (!parentParticipants.isEmpty()) {
+                if (parentParticipants.stream().findFirst().get().getEntityClass().id() == A_CLASS.id()) {
                     p.set(participant);
-                    return InfuenceConsumer.Action.OVER;
+                    return InfuenceGraphConsumer.Action.OVER;
                 }
             }
-            return InfuenceConsumer.Action.CONTINUE;
+            return InfuenceGraphConsumer.Action.CONTINUE;
         });
 
         Participant participant = p.get();
@@ -2040,7 +2052,7 @@ public class AggregationCalculationLogicTest {
         }
 
         @Override
-        public void scope(CalculationContext context, Infuence infuence) {
+        public void scope(CalculationContext context, InfuenceGraph infuence) {
             infuence.scan((parentClassOp, participant, infuenceInner) -> {
 
                 AbstractParticipant child = scope.get(participant);
@@ -2049,7 +2061,7 @@ public class AggregationCalculationLogicTest {
                     infuenceInner.impact(participant, child);
                 }
 
-                return InfuenceConsumer.Action.CONTINUE;
+                return InfuenceGraphConsumer.Action.CONTINUE;
             });
         }
 

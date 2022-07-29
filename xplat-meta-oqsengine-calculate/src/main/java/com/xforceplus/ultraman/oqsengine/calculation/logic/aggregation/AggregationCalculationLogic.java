@@ -13,8 +13,8 @@ import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.strategy.
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.strategy.impl.SumFunctionStrategy;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.CalculationParticipant;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceGraph;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceGraphConsumer;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.AggregationType;
@@ -280,8 +280,12 @@ public class AggregationCalculationLogic implements CalculationLogic {
     }
 
     @Override
-    public void scope(CalculationContext context, Infuence infuence) {
-        infuence.scan((parentParticipant, participant, infuenceInner) -> {
+    public void scope(CalculationContext context, InfuenceGraph infuence) {
+        infuence.scan((parentParticipants, participant, infuenceInner) -> {
+
+            if (participant.isSource()) {
+                return InfuenceGraphConsumer.Action.CONTINUE;
+            }
 
             IEntityClass participantClass = participant.getEntityClass();
             IEntityField participantField = participant.getField();
@@ -296,7 +300,7 @@ public class AggregationCalculationLogic implements CalculationLogic {
             for (Relationship r : relationships) {
                 IEntityClass relationshipClass = r.getRightEntityClass(participantClass.ref().getProfile());
                 /*
-                以下字段会被加入到影响树中.
+                以下字段会被加入到影响中.
                 1. 是聚合字段.
                 2. 聚合目标字段是当前参与者相关字段.
                 3. 聚合条件中出现了参与者相关字段.
@@ -314,6 +318,7 @@ public class AggregationCalculationLogic implements CalculationLogic {
                             // 符合条件3.
                             return true;
                         } else if (aggregation.getAggregationType() == AggregationType.COUNT
+                            // 符合条件4.
                             && participantField.config().isIdentifie()) {
                             return true;
                         } else {
@@ -359,7 +364,7 @@ public class AggregationCalculationLogic implements CalculationLogic {
                 }
             }
 
-            return InfuenceConsumer.Action.CONTINUE;
+            return InfuenceGraphConsumer.Action.CONTINUE;
         });
     }
 
@@ -396,8 +401,7 @@ public class AggregationCalculationLogic implements CalculationLogic {
      * @param field       当前需要判断的字段.
      * @return true 需要, false不需要.
      */
-    @Override
-    public boolean need(CalculationContext context, IEntityClass entityClass, IEntityField field) {
+    private boolean needCauseCondition(CalculationContext context, IEntityClass entityClass, IEntityField field) {
         Collection<IEntityClass> relationshipClass = entityClass.relationship().stream()
             .filter(r -> r.getRelationType() == Relationship.RelationType.MANY_TO_ONE)
             .map(r -> r.getRightEntityClass(entityClass.profile()))
