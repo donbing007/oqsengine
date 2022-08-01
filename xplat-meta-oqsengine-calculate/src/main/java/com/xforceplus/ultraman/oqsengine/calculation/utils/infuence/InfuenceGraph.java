@@ -263,30 +263,37 @@ public class InfuenceGraph {
         final List<Node> currentNodes = new LinkedList<>();
         AtomicInteger currentLevel = new AtomicInteger(0);
         this.iterator(this.root, false, true, node -> {
-            if (node.getLevel() == currentLevel.get()) {
-                currentNodes.add(node);
-            } else {
+            if (node.getLevel() != currentLevel.get()) {
                 thisLevelNodes.add(new ArrayList<>(currentNodes));
                 currentNodes.clear();
                 currentLevel.set(node.getLevel());
             }
+
+            currentNodes.add(node);
             return InfuenceGraphConsumer.Action.CONTINUE;
         });
+        if (!currentNodes.isEmpty()) {
+            thisLevelNodes.add(new ArrayList<>(currentNodes));
+        }
 
         InfuenceGraph other = (InfuenceGraph) o;
         final List<List<Node>> otherLevelNodes = new ArrayList<>(level);
         currentLevel.set(0);
         currentNodes.clear();
         other.iterator(other.root, false, true, node -> {
-            if (node.getLevel() == currentLevel.get()) {
-                currentNodes.add(node);
-            } else {
+            if (node.getLevel() != currentLevel.get()) {
                 otherLevelNodes.add(new ArrayList<>(currentNodes));
                 currentNodes.clear();
                 currentLevel.set(node.getLevel());
+
             }
+
+            currentNodes.add(node);
             return InfuenceGraphConsumer.Action.CONTINUE;
         });
+        if (!currentNodes.isEmpty()) {
+            otherLevelNodes.add(new ArrayList<>(currentNodes));
+        }
 
         List<Node> thisNodes;
         List<Node> otherNodes;
