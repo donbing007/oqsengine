@@ -281,11 +281,7 @@ public class AggregationCalculationLogic implements CalculationLogic {
 
     @Override
     public void scope(CalculationContext context, InfuenceGraph infuence) {
-        infuence.scan((parentParticipants, participant, infuenceInner) -> {
-
-            if (participant.isSource()) {
-                return InfuenceGraphConsumer.Action.CONTINUE;
-            }
+        infuence.scanNoSource((parentParticipants, participant, infuenceInner) -> {
 
             IEntityClass participantClass = participant.getEntityClass();
             IEntityField participantField = participant.getField();

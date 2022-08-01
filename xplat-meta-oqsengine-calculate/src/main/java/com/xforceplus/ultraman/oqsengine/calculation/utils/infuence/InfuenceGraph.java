@@ -33,11 +33,16 @@ public class InfuenceGraph {
     /**
      * 构造一个影响图. <br />
      * 需要提供一个根参与者,即影响传播源.
+     * 这个参与者会被标记为 source.
      *
      * @param participant 根参与者.
      */
     public InfuenceGraph(Participant participant) {
         root = new Node(participant);
+
+        if (!participant.isSource()) {
+            participant.source();
+        }
 
         addQuickLink(participant, root);
     }
@@ -138,6 +143,22 @@ public class InfuenceGraph {
         }
 
         return false;
+    }
+
+    /**
+     * 跳过source参与者扫描.
+     *
+     * @param consumer 每个参与者的处理逻辑.
+     */
+    public void scanNoSource(InfuenceGraphConsumer consumer) {
+        scan((parent, participant, inner) -> {
+            if (participant.isSource()) {
+                return InfuenceGraphConsumer.Action.CONTINUE;
+            }
+
+            return consumer.accept(parent, participant, inner);
+
+        });
     }
 
     /**

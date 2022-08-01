@@ -101,6 +101,52 @@ public class InfuenceGraphTest {
         Assertions.assertEquals(epar, participantList.get(4));
     }
 
+    @Test
+    public void testScanNoSource() throws Exception {
+        Participant root = CalculationParticipant.Builder.anParticipant()
+            .withEntityClass(A_CLASS)
+            .withField(EntityField.ID_ENTITY_FIELD)
+            .build();
+        InfuenceGraph graph = new InfuenceGraph(root);
+
+        Participant bpar = CalculationParticipant.Builder.anParticipant()
+            .withEntityClass(B_CLASS)
+            .withField(EntityField.ID_ENTITY_FIELD)
+            .build();
+        Assertions.assertTrue(graph.impact(root, bpar));
+
+        Participant cpar = CalculationParticipant.Builder.anParticipant()
+            .withEntityClass(C_CLASS)
+            .withField(EntityField.ID_ENTITY_FIELD)
+            .build();
+        Assertions.assertTrue(graph.impact(root, cpar));
+
+        Participant dpar = CalculationParticipant.Builder.anParticipant()
+            .withEntityClass(D_CLASS)
+            .withField(EntityField.ID_ENTITY_FIELD)
+            .build();
+        Assertions.assertTrue(graph.impact(bpar, dpar));
+
+        Participant epar = CalculationParticipant.Builder.anParticipant()
+            .withEntityClass(E_CLASS)
+            .withField(EntityField.ID_ENTITY_FIELD)
+            .build();
+        Assertions.assertTrue(graph.impact(cpar, epar));
+        Assertions.assertTrue(graph.impact(dpar, epar));
+
+        List<Participant> participantList = new ArrayList<>();
+        graph.scanNoSource((parent, participant, inner) -> {
+            participantList.add(participant);
+            return InfuenceGraphConsumer.Action.CONTINUE;
+        });
+
+
+        Assertions.assertEquals(bpar, participantList.get(0));
+        Assertions.assertEquals(cpar, participantList.get(1));
+        Assertions.assertEquals(dpar, participantList.get(2));
+        Assertions.assertEquals(epar, participantList.get(3));
+    }
+
     /**
      * 测试不允许出现环.
      */

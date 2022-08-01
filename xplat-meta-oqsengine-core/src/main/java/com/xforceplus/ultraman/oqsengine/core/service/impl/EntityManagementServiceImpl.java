@@ -567,8 +567,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
                 eventBus.notify(new ActualEvent(EventType.ENTITY_BUILD, new BuildPayload(tx.id(), currentEntity)));
 
-                // 单个操作需要等待同步.
-                tx.getHint().setCanWaitCommitSync(true);
+                // 创建不需要等待CDC.
+                tx.getHint().setCanWaitCommitSync(false);
 
                 return OqsResult.success(currentEntity);
             });

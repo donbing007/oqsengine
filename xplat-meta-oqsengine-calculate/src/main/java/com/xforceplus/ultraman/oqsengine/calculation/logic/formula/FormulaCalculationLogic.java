@@ -74,11 +74,7 @@ public class FormulaCalculationLogic implements CalculationLogic {
 
     @Override
     public void scope(CalculationContext context, InfuenceGraph infuence) {
-        infuence.scan((parentParticipant, participant, infuenceInner) -> {
-
-            if (participant.isSource()) {
-                return InfuenceGraphConsumer.Action.CONTINUE;
-            }
+        infuence.scanNoSource((parentParticipant, participant, infuenceInner) -> {
 
             IEntityClass participantClass = participant.getEntityClass();
             IEntityField participantField = participant.getField();

@@ -142,7 +142,7 @@ public class LookupCalculationLogic implements CalculationLogic {
     @Override
     public void scope(CalculationContext context, InfuenceGraph infuence) {
 
-        infuence.scan(this.infuenceConsumer);
+        infuence.scanNoSource(this.infuenceConsumer);
     }
 
     /**

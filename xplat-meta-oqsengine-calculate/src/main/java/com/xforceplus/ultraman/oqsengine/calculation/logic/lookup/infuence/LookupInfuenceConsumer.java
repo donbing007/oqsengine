@@ -22,10 +22,6 @@ public class LookupInfuenceConsumer implements InfuenceGraphConsumer {
     @Override
     public Action accept(Collection<Participant> parent, Participant participant, InfuenceGraph inner) {
 
-        if (participant.isSource()) {
-            return InfuenceGraphConsumer.Action.CONTINUE;
-        }
-
         IEntityClass participantClass = participant.getEntityClass();
         IEntityField participantField = participant.getField();
 
