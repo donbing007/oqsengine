@@ -34,7 +34,7 @@ public class MeqMatchConditionBuilder extends AbstractSphinxQLConditionBuilder {
             StorageStrategy storageStrategy = getStorageStrategyFactory().getStrategy(v.getField().type());
             StorageValue storageValue = storageStrategy.toStorageValue(v);
 
-            res = SphinxQLHelper.buildPreciseQuery(storageValue, isUseStorageGroupName());
+            res = SphinxQLHelper.buildPreciseQuery(storageValue, condition.getField().type(), isUseStorageGroupName());
 
             if (buff.length() > emptyLen) {
                 buff.append(" | ");

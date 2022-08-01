@@ -708,6 +708,96 @@ public class UserCaseTest {
         Assertions.assertArrayEquals(expectedThridValues, thridValues);
     }
 
+    @Test
+    public void testLongStringValue() throws SQLException {
+        IEntity e0 = Entity.Builder.anEntity()
+            .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
+            .withValues(Arrays.asList(
+                new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "multiple_companyname_config"),
+                new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-enum").get(), "CERTIFICATE_INVOICE_PIECES")
+            )).build();
+
+        OqsResult<IEntity> e0Result = entityManagementService.build(e0);
+        Assertions.assertEquals(ResultStatus.SUCCESS, e0Result.getResultStatus());
+
+        IEntity e1 = Entity.Builder.anEntity()
+            .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
+            .withValues(Arrays.asList(
+                new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-enum").get(), "multiple_companyname_config"),
+                new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "CERTIFICATE_INVOICE_PIECES")
+            )).build();
+
+        OqsResult<IEntity> e1Result = entityManagementService.build(e1);
+        Assertions.assertEquals(ResultStatus.SUCCESS, e1Result.getResultStatus());
+
+        OqsResult<Collection<IEntity>> entities = entitySearchService.selectByConditions(
+            Conditions.buildEmtpyConditions().addAnd(
+                new Condition(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(),
+                    ConditionOperator.EQUALS,
+                    new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(),
+                        "multiple_companyname_config"))
+            ),
+            MockEntityClassDefine.L2_ENTITY_CLASS.ref(),
+            ServiceSelectConfig.Builder.anSearchConfig()
+                .withPage(Page.newSinglePage(1000))
+                .build()
+        );
+
+        Assertions.assertEquals(1,  entities.getValue().get().size());
+        Assertions.assertEquals(e0.id(), ((List<IEntity>) entities.getValue().get()).get(0).id());
+
+
+        entities = entitySearchService.selectByConditions(
+            Conditions.buildEmtpyConditions().addAnd(
+                new Condition(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-enum").get(),
+                    ConditionOperator.EQUALS,
+                    new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-enum").get(),
+                        "multiple_companyname_config"))
+            ),
+            MockEntityClassDefine.L2_ENTITY_CLASS.ref(),
+            ServiceSelectConfig.Builder.anSearchConfig()
+                .withPage(Page.newSinglePage(1000))
+                .build()
+        );
+
+        Assertions.assertEquals(1,  entities.getValue().get().size());
+        Assertions.assertEquals(e1.id(), ((List<IEntity>) entities.getValue().get()).get(0).id());
+
+        entities = entitySearchService.selectByConditions(
+            Conditions.buildEmtpyConditions().addAnd(
+                new Condition(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-enum").get(),
+                    ConditionOperator.EQUALS,
+                    new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-enum").get(),
+                        "CERTIFICATE_INVOICE_PIECES"))
+            ),
+            MockEntityClassDefine.L2_ENTITY_CLASS.ref(),
+            ServiceSelectConfig.Builder.anSearchConfig()
+                .withPage(Page.newSinglePage(1000))
+                .build()
+        );
+
+        Assertions.assertEquals(1,  entities.getValue().get().size());
+        Assertions.assertEquals(e0.id(), ((List<IEntity>) entities.getValue().get()).get(0).id());
+
+        entities = entitySearchService.selectByConditions(
+            Conditions.buildEmtpyConditions().addAnd(
+                new Condition(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(),
+                    ConditionOperator.EQUALS,
+                    new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(),
+                        "CERTIFICATE_INVOICE_PIECES"))
+            ),
+            MockEntityClassDefine.L2_ENTITY_CLASS.ref(),
+            ServiceSelectConfig.Builder.anSearchConfig()
+                .withPage(Page.newSinglePage(1000))
+                .build()
+        );
+
+        Assertions.assertEquals(1,  entities.getValue().get().size());
+        Assertions.assertEquals(e1.id(), ((List<IEntity>) entities.getValue().get()).get(0).id());
+
+    }
+
+
     /**
      * 测试两字段降序.
      */

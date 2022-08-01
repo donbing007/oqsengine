@@ -32,15 +32,17 @@ public class SQL {
     public static final String COUNT_ACTIVES =
         "select count(1) from %s where status in (0, 1)";
 
+
+    public static final String LIST_ACTIVES_WITH_LIMITS =
+        "select maintainid, entity, starts, ends, batchsize, "
+            + "finishsize, status, createtime, updatetime, message, startid from %s where status in (0, 1) and createtime > ? order by maintainid desc limit ?, ?";
+
     public static final String COUNT_ALL =
         "select count(1) from %s";
 
     public static final String STATUS_SQL =
         "update %s set updatetime = ?, status = ?, message = ? where maintainid = ? and status not in (2, 3, 4)";
 
-    public static final String ERROR_SQL =
-        "update %s set updatetime = ?, finishsize = ?, status = ?, message = ?, startid = ? "
-            + "where maintainid = ? and status != 2";
 
     public static final String RESUME_SQL = "update %s set updatetime = ?, status = ?, message = ? "
         + "where maintainid = ? and status not in (0, 1, 2)";

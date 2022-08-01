@@ -65,7 +65,6 @@ public class DefaultBatchProcessorTest extends AbstractCdcHelper {
         final int expectedCommitIdSize = 1;
         final int expectedUnCommitIdSize = 0;
 
-        Assertions.assertEquals(expectedDevOpsSize, runnerContext.getCdcMetrics().getDevOpsMetrics().size());
         Assertions.assertEquals(expectedExecuteSize, runnerContext.getCdcMetrics().getCdcAckMetrics().getExecuteRows());
         Assertions.assertEquals(expectedCommitIdSize, runnerContext.getCdcMetrics().getCdcAckMetrics().getCommitList().size());
         Assertions.assertEquals(expectedUnCommitIdSize, runnerContext.getCdcMetrics().getCdcUnCommitMetrics().getUnCommitIds().size());
@@ -75,7 +74,6 @@ public class DefaultBatchProcessorTest extends AbstractCdcHelper {
     public void executeEmptyBatchTest() throws Exception {
         CdcInitialization.getInstance().getBatchProcessor().executeOneBatch(cdcConnector, runnerContext);
 
-        Assertions.assertEquals(0, runnerContext.getCdcMetrics().getDevOpsMetrics().size());
         Assertions.assertEquals(0, runnerContext.getCdcMetrics().getCdcAckMetrics().getExecuteRows());
         Assertions.assertEquals(0, runnerContext.getCdcMetrics().getCdcAckMetrics().getCommitList().size());
         Assertions.assertEquals(0, runnerContext.getCdcMetrics().getCdcUnCommitMetrics().getUnCommitIds().size());
@@ -91,7 +89,6 @@ public class DefaultBatchProcessorTest extends AbstractCdcHelper {
         final int expectedCommitIdSize = 1;
         final int expectedUnCommitIdSize = 0;
 
-        Assertions.assertEquals(expectedDevOpsSize, runnerContext.getCdcMetrics().getDevOpsMetrics().size());
         Assertions.assertEquals(expectedExecuteSize, runnerContext.getCdcMetrics().getCdcAckMetrics().getExecuteRows());
         Assertions.assertEquals(expectedCommitIdSize, runnerContext.getCdcMetrics().getCdcAckMetrics().getCommitList().size());
         Assertions.assertEquals(expectedUnCommitIdSize, runnerContext.getCdcMetrics().getCdcUnCommitMetrics().getUnCommitIds().size());
@@ -99,7 +96,6 @@ public class DefaultBatchProcessorTest extends AbstractCdcHelper {
         cdcConnector.setEntries(Collections.singletonList(tuple2._2()));
         CdcInitialization.getInstance().getBatchProcessor().executeOneBatch(cdcConnector, runnerContext);
 
-        Assertions.assertEquals(0, runnerContext.getCdcMetrics().getDevOpsMetrics().size());
         Assertions.assertEquals(0, runnerContext.getCdcMetrics().getCdcAckMetrics().getExecuteRows());
         Assertions.assertEquals(0, runnerContext.getCdcMetrics().getCdcAckMetrics().getCommitList().size());
         Assertions.assertEquals(0, runnerContext.getCdcMetrics().getCdcUnCommitMetrics().getUnCommitIds().size());

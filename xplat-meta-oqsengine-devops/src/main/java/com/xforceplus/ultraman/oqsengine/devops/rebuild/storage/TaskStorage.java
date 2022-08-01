@@ -55,6 +55,11 @@ public interface TaskStorage {
     Collection<DevOpsTaskInfo> listActives(Page page) throws SQLException;
 
     /**
+     *  查询限期内所有的活动任务.
+     */
+    Collection<DevOpsTaskInfo> listActivesWithLimits(Page page, long duration) throws SQLException;
+
+    /**
         查询所有的任务，包括历史任务.
      */
     Collection<DevOpsTaskInfo> listAll(Page page) throws SQLException;

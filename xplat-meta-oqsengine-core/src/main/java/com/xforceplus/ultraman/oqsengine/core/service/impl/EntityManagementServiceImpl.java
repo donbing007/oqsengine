@@ -299,6 +299,10 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         } else {
             logger.info("Ignore CDC status checks.");
         }
+
+        if (null == compatibilityMode) {
+            compatibilityMode = new CompatibilityMode(false);
+        }
     }
 
     @PreDestroy

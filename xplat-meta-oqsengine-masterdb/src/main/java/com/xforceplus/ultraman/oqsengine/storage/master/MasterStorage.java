@@ -26,10 +26,11 @@ public interface MasterStorage extends Storage, PreciseSelectStorage, Conditions
      * @param startTime   开始时间
      * @param endTime     结束时间.
      * @param lastId      上次迭代的最后id.
+     * @param useSelfEntityClass  假如传入entityClass为父类时, 是否使用真实的entityClass
      * @return 迭代器.
      * @throws SQLException 发生异常.
      */
-    DataIterator<OqsEngineEntity> iterator(IEntityClass entityClass, long startTime, long endTime, long lastId)
+    DataIterator<OqsEngineEntity> iterator(IEntityClass entityClass, long startTime, long endTime, long lastId, boolean useSelfEntityClass)
         throws SQLException;
 
     /**
@@ -40,23 +41,10 @@ public interface MasterStorage extends Storage, PreciseSelectStorage, Conditions
      * @param endTime     结束时间.
      * @param lastId      上次迭代的最后id.
      * @param size        迭代数量.
+     * @param useSelfEntityClass  假如传入entityClass为父类时, 是否使用真实的entityClass
      * @return 影响的记录条数.
      * @throws SQLException 发生异常.
      */
-    DataIterator<OqsEngineEntity> iterator(IEntityClass entityClass, long startTime, long endTime, long lastId, int size)
+    DataIterator<OqsEngineEntity> iterator(IEntityClass entityClass, long startTime, long endTime, long lastId, int size, boolean useSelfEntityClass)
         throws SQLException;
-
-    /**
-     * 进行索引重建.
-     *
-     * @param entityClass 对象元信息.
-     * @param maintainId 维护id.
-     * @param startTime 开始时间.
-     * @param endTime 结束时间.
-     *
-     * @return 影响的记录条数.
-     */
-    default int rebuild(IEntityClass entityClass, long maintainId, long startTime, long endTime) throws Exception {
-        return 0;
-    }
 }

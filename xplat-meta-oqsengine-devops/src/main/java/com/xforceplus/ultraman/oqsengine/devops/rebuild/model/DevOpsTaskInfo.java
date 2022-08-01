@@ -165,18 +165,18 @@ public interface DevOpsTaskInfo {
     void addFinishSize(int addSize);
 
     /**
+     * 增量任务数量.
+     *
+     * @param addBatchSize 增量任务数量.
+     */
+    void addBatchSize(int addBatchSize);
+
+    /**
      * 设置任务失败数量.
      *
      * @param size 任务失败数量.
      */
-    void setErrorSize(long size);
-
-    /**
-     * 增量任务失败数量.
-     *
-     * @param errorSize 增量任务失败数量.
-     */
-    void addErrorSize(int errorSize);
+    void setErrorSize(int size);
 
     /**
      * 获取更新时间.
@@ -193,12 +193,16 @@ public interface DevOpsTaskInfo {
     void resetUpdateTime(long updateTime);
 
     /**
-     * 获取当前incrementSize.
+     * 获取起始id.
+     *
+     * @return 起始id.
      */
-    int incrementSize();
+    long getStartId();
 
     /**
-     * 重置incrementSize.
+     * 设置起始id.
+     *
+     * @param startId 起始id.
      */
-    void resetIncrementSize(int incrementSize);
+    void setStartId(long startId);
 }

@@ -7,6 +7,7 @@ import com.xforceplus.ultraman.oqsengine.common.mock.BeanInitialization;
 import com.xforceplus.ultraman.oqsengine.common.mock.CommonInitialization;
 import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.common.mock.ReflectionUtils;
+import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.DevOpsRebuildIndexExecutor;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.storage.SQLTaskStorage;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.mock.IndexInitialization;
@@ -15,6 +16,10 @@ import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.Statement;
 import java.util.Collection;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import javax.sql.DataSource;
 
 /**
@@ -30,6 +35,8 @@ public class RebuildInitialization implements BeanInitialization {
     private DataSource devOpsDataSource;
     private LongIdGenerator idGenerator;
     private static final String DEVOPS_TABLE_NAME = "devopstasks";
+
+    private ExecutorService asyncThreadPool;
 
     private RebuildInitialization() {
     }
@@ -60,7 +67,7 @@ public class RebuildInitialization implements BeanInitialization {
         ReflectionUtils.reflectionFieldValue(fields, "devOpsDataSource", sqlTaskStorage, devOpsDataSource);
         sqlTaskStorage.setTable(DEVOPS_TABLE_NAME);
 
-        taskExecutor = new DevOpsRebuildIndexExecutor(10, 1024);
+        taskExecutor = new DevOpsRebuildIndexExecutor(10, 2048);
         Collection<Field> taskFields = ReflectionUtils.printAllMembers(taskExecutor);
         ReflectionUtils.reflectionFieldValue(taskFields, "indexStorage", taskExecutor,
             IndexInitialization.getInstance().getIndexStorage());
@@ -68,16 +75,21 @@ public class RebuildInitialization implements BeanInitialization {
         ReflectionUtils.reflectionFieldValue(taskFields, "masterStorage", taskExecutor,
             MasterDBInitialization.getInstance().getMasterStorage());
         ReflectionUtils.reflectionFieldValue(taskFields, "idGenerator", taskExecutor, idGenerator);
+
+        asyncThreadPool = new ThreadPoolExecutor(10, 10,
+            0L,TimeUnit.MILLISECONDS,
+            new ArrayBlockingQueue<>(1024 * 1000),
+            ExecutorHelper.buildNameThreadFactory("task-threads", false));
+
+        ReflectionUtils.reflectionFieldValue(taskFields, "asyncThreadPool", taskExecutor, asyncThreadPool);
     }
 
 
     @Override
     public void clear() throws Exception {
-        try {
-            try (Connection conn = devOpsDataSource.getConnection()) {
-                try (Statement st = conn.createStatement()) {
-                    st.executeUpdate("truncate table " + DEVOPS_TABLE_NAME);
-                }
+        try (Connection conn = devOpsDataSource.getConnection()) {
+            try (Statement st = conn.createStatement()) {
+                st.executeUpdate("truncate table " + DEVOPS_TABLE_NAME);
             }
         } catch (Exception e) {
             //  ignore
@@ -89,7 +101,9 @@ public class RebuildInitialization implements BeanInitialization {
         taskExecutor.destroy();
         devOpsDataSource = null;
         idGenerator = null;
-
+        if (null != asyncThreadPool) {
+            ExecutorHelper.shutdownAndAwaitTermination(asyncThreadPool, 3600);
+        }
         instance = null;
     }
 

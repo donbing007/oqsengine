@@ -77,7 +77,7 @@ public class MatchConditionBuilder extends AbstractSphinxQLConditionBuilder impl
                     2. 是否进行了分拆.
                      */
                     Tuple2<String, Boolean> res =
-                        SphinxQLHelper.buildPreciseQuery(storageValue, isUseStorageGroupName());
+                        SphinxQLHelper.buildPreciseQuery(storageValue, condition.getField().type(), isUseStorageGroupName());
                     //  第一个值为转换的结果
                     query = res._1;
 

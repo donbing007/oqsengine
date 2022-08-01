@@ -33,9 +33,5 @@ public class ParseResultCheckHelper {
         Assertions.assertEquals(expected.getCommitId(), actual.getCommitid());
         Assertions.assertEquals(expected.getEntityId(), actual.getEntityClass().id());
         Assertions.assertEquals(expected.getAttr(), JacksonDefaultMapper.OBJECT_MAPPER.writeValueAsString(actual.getAttributes()));
-
-        if (DevOpsUtils.isMaintainRecord(expected.getCommitId())) {
-            Assertions.assertEquals(expected.getTx(), actual.getMaintainid());
-        }
     }
 }

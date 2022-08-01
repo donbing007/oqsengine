@@ -75,20 +75,17 @@ public class DynamicBinLogParserTest extends AbstractCdcHelper {
 
         //  check commitId size.
         Assertions.assertEquals(
-            Arrays.stream(expected).map(DynamicCanalEntryCase::getCommitId).filter(e -> {
-                return !DevOpsUtils.isMaintainRecord(e);
-            }).collect(Collectors.toSet()).size(), parserContext.getCdcMetrics().getCdcUnCommitMetrics().getUnCommitIds().size());
+            Arrays.stream(expected).map(DynamicCanalEntryCase::getCommitId)
+                .collect(Collectors.toSet()).size(), parserContext.getCdcMetrics().getCdcUnCommitMetrics().getUnCommitIds().size());
 
         for (int i = 0; i < expected.length; i++) {
-            if (!DevOpsUtils.isMaintainRecord(expected[i].getCommitId())) {
-                Assertions.assertTrue(parserContext.getCdcMetrics().getCdcUnCommitMetrics().getUnCommitIds()
-                    .contains(expected[i].getCommitId()));
+            Assertions.assertTrue(parserContext.getCdcMetrics().getCdcUnCommitMetrics().getUnCommitIds()
+                .contains(expected[i].getCommitId()));
 
-                OqsEngineEntity oqsEngineEntity =
-                    parseResult.getFinishEntries().get(expected[i].getId());
-                Assertions.assertNotNull(oqsEngineEntity);
-                ParseResultCheckHelper.dynamicCheck(expected[i], oqsEngineEntity);
-            }
+            OqsEngineEntity oqsEngineEntity =
+                parseResult.getFinishEntries().get(expected[i].getId());
+            Assertions.assertNotNull(oqsEngineEntity);
+            ParseResultCheckHelper.dynamicCheck(expected[i], oqsEngineEntity);
         }
     }
 

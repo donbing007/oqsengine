@@ -654,13 +654,13 @@ public class FormulaCalculationLogicTest {
 
         @Override
         public DataIterator<OqsEngineEntity> iterator(IEntityClass entityClass, long startTime, long endTime,
-                                                      long lastId) throws SQLException {
+                                                      long lastId, boolean useSelfClass) throws SQLException {
             return null;
         }
 
         @Override
         public DataIterator<OqsEngineEntity> iterator(IEntityClass entityClass, long startTime, long endTime,
-                                                      long lastId, int size) throws SQLException {
+                                                      long lastId, int size, boolean useSelfClass) throws SQLException {
             return null;
         }
     }

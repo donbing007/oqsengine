@@ -51,7 +51,6 @@ public class DefaultConsumerServiceTest extends AbstractCdcHelper {
     @Test
     public void consumeTest() throws Exception {
         final long expectedBatchId = 2001;
-        final int expectedDevOpsSize = 1;
         final int expectedExecuteSize = 2;
         final int expectedCommitIdSize = 1;     //  维护ID不在计入统计.
         final int expectedUnCommitIdSize = 0;   //
@@ -61,7 +60,6 @@ public class DefaultConsumerServiceTest extends AbstractCdcHelper {
 
         Assertions.assertNotNull(cdcMetrics);
         Assertions.assertEquals(expectedBatchId, cdcMetrics.getBatchId());
-        Assertions.assertEquals(expectedDevOpsSize, cdcMetrics.getDevOpsMetrics().size());
         Assertions.assertEquals(expectedExecuteSize, cdcMetrics.getCdcAckMetrics().getExecuteRows());
         Assertions.assertEquals(expectedCommitIdSize, cdcMetrics.getCdcAckMetrics().getCommitList().size());
         Assertions.assertEquals(expectedUnCommitIdSize, cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().size());
@@ -82,7 +80,6 @@ public class DefaultConsumerServiceTest extends AbstractCdcHelper {
 
         Assertions.assertNotNull(cdcMetrics);
         Assertions.assertEquals(expectedBatchId, cdcMetrics.getBatchId());
-        Assertions.assertEquals(expectedDevOpsSize, cdcMetrics.getDevOpsMetrics().size());
         Assertions.assertEquals(expectedExecuteSize, cdcMetrics.getCdcAckMetrics().getExecuteRows());
         Assertions.assertEquals(expectedCommitIdSize, cdcMetrics.getCdcAckMetrics().getCommitList().size());
         Assertions.assertEquals(expectedUnCommitIdSize, cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().size());
@@ -94,7 +91,6 @@ public class DefaultConsumerServiceTest extends AbstractCdcHelper {
 
         Assertions.assertNotNull(cdcMetricsOver);
         Assertions.assertEquals(expectedBatchId, cdcMetricsOver.getBatchId());
-        Assertions.assertEquals(0, cdcMetricsOver.getDevOpsMetrics().size());
         Assertions.assertEquals(0, cdcMetricsOver.getCdcAckMetrics().getExecuteRows());
         Assertions.assertEquals(0, cdcMetricsOver.getCdcAckMetrics().getCommitList().size());
         Assertions.assertEquals(0, cdcMetricsOver.getCdcUnCommitMetrics().getUnCommitIds().size());

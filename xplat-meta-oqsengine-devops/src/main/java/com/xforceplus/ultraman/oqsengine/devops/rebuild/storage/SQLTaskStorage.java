@@ -94,6 +94,13 @@ public class SQLTaskStorage implements TaskStorage {
 
     @Override
     @SuppressWarnings("unchecked")
+    public Collection<DevOpsTaskInfo> listActivesWithLimits(Page page, long duration) throws SQLException {
+        return new TaskStorageCommand(table).listActivesWithLimit(devOpsDataSource, page, duration);
+    }
+
+
+    @Override
+    @SuppressWarnings("unchecked")
     public Collection<DevOpsTaskInfo> listAll(Page page) throws SQLException {
         return new TaskStorageCommand(table).listAll(devOpsDataSource, page);
     }

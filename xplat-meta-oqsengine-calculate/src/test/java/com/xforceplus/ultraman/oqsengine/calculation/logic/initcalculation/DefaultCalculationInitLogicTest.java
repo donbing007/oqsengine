@@ -139,7 +139,7 @@ public class DefaultCalculationInitLogicTest {
         oqsEngineEntity.setId(10000);
 
         Mockito.when(masterStorage.iterator(Mockito.any(IEntityClass.class), Mockito.anyLong(), Mockito.anyLong(),
-            Mockito.anyLong(), Mockito.anyInt())).thenReturn(iterator);
+            Mockito.anyLong(), Mockito.anyInt(), false)).thenReturn(iterator);
 
         Mockito.when(iterator.hasNext()).thenReturn(true, false);
 
