@@ -524,6 +524,13 @@ public class FormulaCalculationLogicTest {
         InfuenceGraph infuence = new InfuenceGraph(
             CalculationParticipant.Builder.anParticipant()
                 .withEntityClass(B_CLASS)
+                .withField(EntityField.ILLUSORY_FIELD)
+                .withAffectedEntities(Arrays.asList(targetEntity)).build()
+        );
+
+        infuence.impact(
+            CalculationParticipant.Builder.anParticipant()
+                .withEntityClass(B_CLASS)
                 .withField(B_SUM)
                 .withAffectedEntities(Arrays.asList(targetEntity)).build()
         );
@@ -533,7 +540,7 @@ public class FormulaCalculationLogicTest {
 
         formulaCalculationLogic.scope(context, infuence);
         List<Participant> participants = new ArrayList<>();
-        infuence.scan((parentParticipant, participant, infuenceInner) -> {
+        infuence.scanNoSource((parentParticipant, participant, infuenceInner) -> {
 
             participants.add(participant);
 

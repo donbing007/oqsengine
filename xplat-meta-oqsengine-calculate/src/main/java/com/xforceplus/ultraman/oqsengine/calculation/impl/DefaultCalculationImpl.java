@@ -169,7 +169,7 @@ public class DefaultCalculationImpl implements Calculation {
             context.getResourceWithEx(() -> context.getCalculationLogicFactory());
 
         if (logger.isDebugEnabled()) {
-            logger.debug("Maintain computed fields, whose impact graph is as follows.\n{}\n", graph.toString());
+            logger.debug("Maintain computed fields, whose impact graph is as follows.\n{}\n", graph);
         }
 
         /*

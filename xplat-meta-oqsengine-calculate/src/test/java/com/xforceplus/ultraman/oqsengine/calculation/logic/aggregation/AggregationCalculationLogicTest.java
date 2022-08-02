@@ -1820,7 +1820,14 @@ public class AggregationCalculationLogicTest {
             .withValue(
                 new LongValue(A_LONG, 100)
             ).build();
-        InfuenceGraph infuence = new InfuenceGraph(
+        InfuenceGraph graph = new InfuenceGraph(
+            CalculationParticipant.Builder.anParticipant()
+                .withEntityClass(A_CLASS)
+                .withField(EntityField.ILLUSORY_FIELD)
+                .withAffectedEntities(Arrays.asList(targetEntity)).build()
+        );
+
+        graph.impact(
             CalculationParticipant.Builder.anParticipant()
                 .withEntityClass(A_CLASS)
                 .withField(A_LONG)
@@ -1830,16 +1837,16 @@ public class AggregationCalculationLogicTest {
         context.focusEntity(targetEntity, A_CLASS);
         context.focusField(A_LONG);
 
-        aggregationCalculationLogic.scope(context, infuence);
+        aggregationCalculationLogic.scope(context, graph);
         List<IEntityField> participants = new ArrayList<>();
-        infuence.scan((parentParticipant, participant, infuenceInner) -> {
+        graph.scanNoSource((parentParticipant, participant, infuenceInner) -> {
 
             participants.add(participant.getField());
 
             return InfuenceGraphConsumer.Action.CONTINUE;
         });
 
-        Assertions.assertEquals(8, participants.size(), infuence.toString());
+        Assertions.assertEquals(8, participants.size(), graph.toString());
         Assertions.assertEquals(A_LONG, participants.get(0));
         Assertions.assertEquals(B_SUM, participants.get(1));
         Assertions.assertEquals(C_SUM, participants.get(2));
@@ -1902,7 +1909,14 @@ public class AggregationCalculationLogicTest {
             .withValue(new LongValue(relationship.getEntityField(), 1000))
             .build();
 
-        InfuenceGraph infuence = new InfuenceGraph(
+        InfuenceGraph graph = new InfuenceGraph(
+            CalculationParticipant.Builder.anParticipant()
+                .withEntityClass(A_CLASS)
+                .withField(EntityField.ILLUSORY_FIELD)
+                .withAffectedEntities(Arrays.asList(targetEntity)).build()
+        );
+
+        graph.impact(
             CalculationParticipant.Builder.anParticipant()
                 .withEntityClass(A_CLASS)
                 .withField(A_LONG)
@@ -1913,10 +1927,10 @@ public class AggregationCalculationLogicTest {
         context.focusEntity(targetEntity, A_CLASS);
         context.focusField(A_LONG);
 
-        aggregationCalculationLogic.scope(context, infuence);
+        aggregationCalculationLogic.scope(context, graph);
         AtomicReference<Participant> p = new AtomicReference<>();
-        infuence.scan((parentParticipants, participant, infuenceInner) -> {
-            if (!parentParticipants.isEmpty()) {
+        graph.scanNoSource((parentParticipants, participant, infuenceInner) -> {
+            if (participant.getField().calculationType() == CalculationType.AGGREGATION) {
                 if (parentParticipants.stream().findFirst().get().getEntityClass().id() == A_CLASS.id()) {
                     p.set(participant);
                     return InfuenceGraphConsumer.Action.OVER;

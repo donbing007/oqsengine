@@ -154,6 +154,11 @@ public class LookupCalculationLogic implements CalculationLogic {
         CalculationContext context, Participant participant, Collection<IEntity> triggerEntities)
         throws CalculationException {
 
+        if (participant.getField().calculationType() != CalculationType.LOOKUP) {
+            throw new CalculationException(
+                "Wrong field type, only computed fields of the type of the Lookup can be handled.");
+        }
+
         Optional attachmentOp = participant.getAttachment();
         if (!attachmentOp.isPresent()) {
 
