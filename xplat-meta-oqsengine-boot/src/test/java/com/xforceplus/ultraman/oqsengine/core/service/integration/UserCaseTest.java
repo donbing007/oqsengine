@@ -580,8 +580,7 @@ public class UserCaseTest {
                     )
                 ).build());
         }
-        OqsResult results = entityManagementService.build(expectedEntities.stream().toArray(
-            com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[]::new));
+        OqsResult results = entityManagementService.build(expectedEntities.stream().toArray(IEntity[]::new));
         Assertions.assertEquals(ResultStatus.SUCCESS, results.getResultStatus());
 
         OqsResult<Collection<IEntity>> entities = entitySearchService.selectByConditions(
@@ -602,10 +601,8 @@ public class UserCaseTest {
         Assertions.assertArrayEquals(expectedFirstValues, firstValues);
 
         // 两个数值一致的对象id应该从小到大.
-        com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity
-            firstEntity = entities.getValue().get().stream().findFirst().get();
-        com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity
-            secondEntity = entities.getValue().get().stream().skip(1).findFirst().get();
+        IEntity firstEntity = entities.getValue().get().stream().findFirst().get();
+        IEntity secondEntity = entities.getValue().get().stream().skip(1).findFirst().get();
 
         Assertions.assertTrue(firstEntity.id() < secondEntity.id(),
             String.format("The first ID (%d) is expected to be less than the second (%d), but it is not.",
@@ -1349,24 +1346,6 @@ public class UserCaseTest {
         Assertions.assertEquals(ResultStatus.SUCCESS, entityManagementService.build(targetEntity).getResultStatus());
 
         OqsResult<Collection<IEntity>> entities = entitySearchService.selectByConditions(
-            Conditions.buildEmtpyConditions()
-                .addAnd(
-                    new Condition(
-                        MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-string").get(),
-                        ConditionOperator.LIKE,
-                        new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-string").get(), "有限公司")
-                    )
-                ),
-            MockEntityClassDefine.L2_ENTITY_CLASS.ref(),
-            ServiceSelectConfig.Builder.anSearchConfig().withPage(Page.newSinglePage(100)).build()
-        );
-        Assertions.assertEquals(1, entities.getValue().get().size());
-        Assertions.assertEquals("上海云砺有限公司",
-            entities.getValue().get().stream().findFirst().get().entityValue().getValue("l0-string").get()
-                .valueToString());
-
-        entityManagementService.replace(targetEntity);
-        entities = entitySearchService.selectByConditions(
             Conditions.buildEmtpyConditions()
                 .addAnd(
                     new Condition(
