@@ -63,7 +63,6 @@ import java.util.concurrent.locks.LockSupport;
 import java.util.stream.IntStream;
 import javax.annotation.Resource;
 import javax.sql.DataSource;
-import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -509,16 +508,12 @@ public class CalculationTest extends AbstractContainerExtends {
         entityManagementService.build(user);
 
         int orderSize = transactionLimitNumber + outTransactionNumber;
-        Transaction tx = transactionManager.create(TimeUnit.SECONDS.toMillis(300));
-        for (int i = 0; i < orderSize; i++) {
-            transactionManager.bind(tx.id());
-            entityManagementService.build(entityHelper.buildOrderEntity(user));
-            logger.info("Successfully created order.[{}/{}]", i + 1, orderSize);
-        }
-        transactionManager.bind(tx.id());
-        tx.commit();
-        transactionManager.bind(tx.id());
-        transactionManager.finish();
+        IEntity finalUser = user;
+        IEntity[] orderEntities =
+            IntStream.range(0, orderSize).mapToObj(i -> entityHelper.buildOrderEntity(finalUser))
+                .toArray(IEntity[]::new);
+        entityManagementService.build(orderEntities);
+        logger.info("Successfully created {} order.", orderSize);
 
 
         logger.info("Query {} orders.", orderSize);
@@ -547,7 +542,7 @@ public class CalculationTest extends AbstractContainerExtends {
         );
 
         // 在事务内更新.
-        tx = transactionManager.create(Integer.MAX_VALUE);
+        Transaction tx = transactionManager.create(Integer.MAX_VALUE);
         transactionManager.bind(tx.id());
         entityManagementService.replace(user);
 
