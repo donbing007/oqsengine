@@ -642,10 +642,62 @@ public class DefaultCalculationImplTest {
             return InfuenceGraphConsumer.Action.CONTINUE;
         });
 
-        String[] expectedFieldNames = new String[] {
-            "-", "along", "id", "bsuma", "blookupa", "clookupa", "dsumb", "bformula", "dsumconditionb"
-        };
-        Assertions.assertArrayEquals(expectedFieldNames, fieldNames.stream().toArray(String[]::new));
+        InfuenceGraph expectedGraph = new InfuenceGraph(
+            CalculationParticipant.Builder.anParticipant()
+                .withEntityClass(A_CLASS)
+                .withField(EntityField.ILLUSORY_FIELD)
+                .build()
+        );
+
+        Participant alongPar = CalculationParticipant.Builder.anParticipant()
+            .withEntityClass(A_CLASS)
+            .withField(A_LONG).build();
+        expectedGraph.impact(alongPar);
+
+        Participant idPar = CalculationParticipant.Builder.anParticipant()
+            .withEntityClass(A_CLASS)
+            .withField(EntityField.ID_ENTITY_FIELD)
+            .build();
+        expectedGraph.impact(idPar);
+
+        Participant bsumaPar = CalculationParticipant.Builder.anParticipant()
+            .withEntityClass(B_CLASS)
+            .withField(B_SUM)
+            .build();
+        expectedGraph.impact(alongPar, bsumaPar);
+
+        Participant blookupaPar = CalculationParticipant.Builder.anParticipant()
+            .withEntityClass(B_CLASS)
+            .withField(B_LOOKUP)
+            .build();
+        expectedGraph.impact(alongPar, blookupaPar);
+
+        Participant clookupaPar = CalculationParticipant.Builder.anParticipant()
+            .withEntityClass(C_CLASS)
+            .withField(C_LOOKUP)
+            .build();
+        expectedGraph.impact(alongPar, clookupaPar);
+
+        Participant dsumbPar = CalculationParticipant.Builder.anParticipant()
+            .withEntityClass(D_CLASS)
+            .withField(D_SUM)
+            .build();
+        expectedGraph.impact(bsumaPar, dsumbPar);
+
+        Participant bformulaPar = CalculationParticipant.Builder.anParticipant()
+            .withEntityClass(B_CLASS)
+            .withField(B_FORMULA)
+            .build();
+        expectedGraph.impact(blookupaPar, bformulaPar);
+        expectedGraph.impact(bsumaPar, bformulaPar);
+
+        Participant dsumconditionbPar = CalculationParticipant.Builder.anParticipant()
+            .withEntityClass(D_CLASS)
+            .withField(D_SUM_CONDITION)
+            .build();
+        expectedGraph.impact(bformulaPar, dsumconditionbPar);
+
+        Assertions.assertEquals(expectedGraph, graph);
     }
 
     /**
