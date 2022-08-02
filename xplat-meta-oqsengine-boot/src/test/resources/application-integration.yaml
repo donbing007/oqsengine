@@ -47,7 +47,7 @@ storage:
   debug:
     showsql: false
   timeoutMs:
-    query: 10000
+    query: 20000
   kv:
     name: "kv"
   master:
