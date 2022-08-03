@@ -190,6 +190,57 @@ public class InfuenceGraphTest {
         Assertions.assertEquals(5, graph.size());
     }
 
+    @Test
+    public void testUpdateChildLevel() throws Exception {
+        Participant root = CalculationParticipant.Builder.anParticipant()
+            .withEntityClass(A_CLASS)
+            .withField(EntityField.ID_ENTITY_FIELD)
+            .build();
+        InfuenceGraph graph = new InfuenceGraph(root);
+
+        Participant bpar = CalculationParticipant.Builder.anParticipant()
+            .withEntityClass(B_CLASS)
+            .withField(EntityField.ID_ENTITY_FIELD)
+            .build();
+        Assertions.assertTrue(graph.impact(root, bpar));
+
+        Participant cpar = CalculationParticipant.Builder.anParticipant()
+            .withEntityClass(C_CLASS)
+            .withField(EntityField.ID_ENTITY_FIELD)
+            .build();
+        Assertions.assertTrue(graph.impact(root, cpar));
+
+        Participant dpar = CalculationParticipant.Builder.anParticipant()
+            .withEntityClass(D_CLASS)
+            .withField(EntityField.ID_ENTITY_FIELD)
+            .build();
+        Assertions.assertTrue(graph.impact(bpar, dpar));
+
+        Participant epar = CalculationParticipant.Builder.anParticipant()
+            .withEntityClass(E_CLASS)
+            .withField(EntityField.ID_ENTITY_FIELD)
+            .build();
+        Assertions.assertTrue(graph.impact(cpar, epar));
+        Assertions.assertTrue(graph.impact(dpar, epar));
+        // 移动 (c, id, 1) 结点至 (d, id, 2)结点后, 应该所有子结点的层次都被更新.
+        Assertions.assertTrue(graph.impact(dpar, cpar));
+
+        // 记录迭代顺序.
+        List<String> participants = new ArrayList<>();
+        graph.scanNoSource((parent, participant, inner) -> {
+            participants.add(participant.getEntityClass().code());
+            return InfuenceGraphConsumer.Action.CONTINUE;
+        });
+
+        List<String> expected = new ArrayList<>();
+        expected.add(B_CLASS.code());
+        expected.add(D_CLASS.code());
+        expected.add(C_CLASS.code());
+        expected.add(E_CLASS.code());
+
+        Assertions.assertEquals(expected, participants);
+    }
+
     /**
      * 两个图的比较.
      */

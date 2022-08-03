@@ -329,7 +329,7 @@ public class InfuenceGraph {
      * @param breadthFirst true 广度优先, false 深度优先.
      * @param consumer     结点消费器.
      */
-    private void iterator(Node startNode, boolean inversion, boolean breadthFirst, NodeConsumer consumer) {
+    private static void iterator(Node startNode, boolean inversion, boolean breadthFirst, NodeConsumer consumer) {
         Deque<Node> stack = new ArrayDeque<>();
         stack.add(startNode);
         InfuenceGraphConsumer.Action action;
@@ -464,6 +464,8 @@ public class InfuenceGraph {
                 if (parent.getLevel() >= this.level) {
                     // 让当前结点处于父结点的下层.
                     this.level = parent.getLevel() + 1;
+
+                    updateChildLevel();
                 }
             }
         }
@@ -528,6 +530,39 @@ public class InfuenceGraph {
                 .append(")");
 
             return sb.toString();
+        }
+
+        // 更新所有子结点层次.
+        private void updateChildLevel() {
+            // 不能使用广度优先遍历,因为广度优先遍历依赖level.现在正要更新leve.
+            iterator(this, false, false, node -> {
+                // 跳过本身.
+                if (node == this) {
+                    return InfuenceGraphConsumer.Action.CONTINUE;
+                } else {
+                    int parentMaxLevel = node.getParents().stream().max(Node::compareLevel).get().getLevel();
+                    // 如果子结点的层级小于等于当前结点
+                    if (node.getLevel() <= parentMaxLevel) {
+                        node.level = parentMaxLevel + 1;
+                        return InfuenceGraphConsumer.Action.CONTINUE;
+                    } else {
+                        // 当前结点不需要更新level,所有子结点也不需要.
+                        return InfuenceGraphConsumer.Action.OVER_SELF;
+                    }
+
+                }
+            });
+        }
+
+        // 结点的层次比较.
+        public static int compareLevel(Node n0, Node n1) {
+            if (n0.getLevel() < n1.getLevel()) {
+                return -1;
+            } else if (n0.getLevel() > n1.getLevel()) {
+                return 1;
+            } else {
+                return 0;
+            }
         }
     }
 }
