@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.storage;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 
+import com.xforceplus.ultraman.oqsengine.common.map.MapUtils;
 import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
@@ -20,6 +21,8 @@ import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.IntStream;
@@ -246,9 +249,9 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
         }).filter(s -> !s.isOutOfOrder()).toArray(Sort[]::new);
     }
 
-    // 不处理重复记录,只合并多个结果列表并按规则排序.
-    private Stream<EntityRef> mergeToStream(Collection<EntityRef> unsynRefs, Collection<EntityRef> synedRefs,
-                                            Sort[] sorts) {
+    // 合并多个结果列表并按规则排序并去重.
+    private Stream<EntityRef> mergeToStream(
+        Collection<EntityRef> unsynRefs, Collection<EntityRef> synedRefs, Sort[] sorts) {
         if (unsynRefs.isEmpty()) {
             return synedRefs.stream();
         }
@@ -315,10 +318,22 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
                         ? new SortValueComparator(sorts[firstSortIndex])
                         : new SortValueComparator(sorts[firstSortIndex]).reversed()
                 ));
-        } else {
-            // 不排序.
-            return refStream;
         }
+
+        /*
+        去除可能的重复,由于使用二次获取提交号,所以有可能在查询已经同步队列前数据已经同步造成主库存在,索引库也存在.
+        如果对象是新创建的,那么将造成重复.这里根据对象ID去重.
+        */
+        Map<Long, String> duplicateHelpTables =
+            new HashMap<>(MapUtils.calculateInitSize(unsynRefs.size() + synedRefs.size()));
+        return refStream.filter(e -> {
+            if (duplicateHelpTables.containsKey(e.getId())) {
+                return false;
+            } else {
+                duplicateHelpTables.put(e.getId(), "");
+                return true;
+            }
+        });
     }
 
     // 比较器.
