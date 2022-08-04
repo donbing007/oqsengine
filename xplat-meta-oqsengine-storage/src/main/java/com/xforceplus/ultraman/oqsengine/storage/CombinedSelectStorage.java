@@ -95,16 +95,19 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
 
         if (commitId > 0) {
             //trigger master search
-            masterRefs = unSyncStorage.select(
-                conditions,
-                entityClass,
-                SelectConfig.Builder.anSelectConfig()
-                    .withSort(sort)
-                    .withSecondarySort(secondSort)
-                    .withThirdSort(thirdSort)
-                    .withCommitId(commitId)
-                    .withDataAccessFitlerCondtitons(filterCondition)
-                    .build());
+            SelectConfig masterSelectConfig = SelectConfig.Builder.anSelectConfig()
+                .withSort(sort)
+                .withSecondarySort(secondSort)
+                .withThirdSort(thirdSort)
+                .withCommitId(commitId)
+                .withDataAccessFitlerCondtitons(filterCondition)
+                .build();
+            masterRefs = unSyncStorage.select(conditions, entityClass, masterSelectConfig);
+
+            if (logger.isDebugEnabled()) {
+                logger.debug("Combind query master condition {}, configure {}, entityclass {}. The result is: \n {}.",
+                    conditions.toString(), masterSelectConfig, entityClass.code(), masterRefs);
+            }
         }
 
         for (EntityRef ref : masterRefs) {
@@ -177,18 +180,21 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
           --------------
           查询索引将使用 < 5,来保证查询到300这个数据.
          */
-        Collection<EntityRef> indexRefs = syncedStorage.select(
-            conditions,
-            entityClass,
-            SelectConfig.Builder.anSelectConfig()
-                .withSort(sort)
-                .withSecondarySort(secondSort)
-                .withThirdSort(thirdSort)
-                .withPage(indexPage)
-                .withExcludedIds(filterIdsFromMaster)
-                .withDataAccessFitlerCondtitons(filterCondition)
-                .withCommitId(buildQueryCommitId()).build()
-        );
+        SelectConfig indexSelectConfig = SelectConfig.Builder.anSelectConfig()
+            .withSort(sort)
+            .withSecondarySort(secondSort)
+            .withThirdSort(thirdSort)
+            .withPage(indexPage)
+            .withExcludedIds(filterIdsFromMaster)
+            .withDataAccessFitlerCondtitons(filterCondition)
+            .withCommitId(Math.max(buildQueryCommitId(), commitId)).build();
+        Collection<EntityRef> indexRefs = syncedStorage.select(conditions, entityClass, indexSelectConfig);
+
+        if (logger.isDebugEnabled()) {
+            logger.debug("Combind query index condition {}, configure {}, entityclass {}. The result is: \n {}.",
+                conditions.toString(), indexSelectConfig, entityClass.code(), indexRefs);
+        }
+
         indexRefs = fixNullSortValue(indexRefs, sorts);
 
         Collection<EntityRef> masterRefsWithoutDeleted = masterRefs.stream()
