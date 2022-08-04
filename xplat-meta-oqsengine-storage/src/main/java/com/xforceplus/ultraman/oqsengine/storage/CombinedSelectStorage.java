@@ -187,7 +187,7 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
                 .withPage(indexPage)
                 .withExcludedIds(filterIdsFromMaster)
                 .withDataAccessFitlerCondtitons(filterCondition)
-                .withCommitId(buildQueryCommitId()).build()
+                .withCommitId(commitId).build()
         );
         indexRefs = fixNullSortValue(indexRefs, sorts);
 
