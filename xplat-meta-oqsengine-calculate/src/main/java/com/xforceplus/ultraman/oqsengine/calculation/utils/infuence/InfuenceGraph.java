@@ -541,7 +541,7 @@ public class InfuenceGraph {
                     return InfuenceGraphConsumer.Action.CONTINUE;
                 } else {
                     int parentMaxLevel = node.getParents().stream().max(Node::compareLevel).get().getLevel();
-                    // 如果子结点的层级小于等于当前结点
+                    // 当前结点的层次小于等于所有父结点中层次最大的那个,那么新的层次为最大的父结点层级+1.
                     if (node.getLevel() <= parentMaxLevel) {
                         node.level = parentMaxLevel + 1;
                         return InfuenceGraphConsumer.Action.CONTINUE;

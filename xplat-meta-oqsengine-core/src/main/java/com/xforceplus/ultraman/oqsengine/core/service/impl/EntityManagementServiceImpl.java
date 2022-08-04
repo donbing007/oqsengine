@@ -1036,10 +1036,11 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     public OqsResult<IEntity[]> delete(IEntity[] entities) throws SQLException {
         checkReady();
 
-        IEntityClass[] entityClasses = new IEntityClass[entities.length];
+        IEntity[] notDeletedEntities = Arrays.stream(entities).filter(e -> !e.isDeleted()).toArray(IEntity[]::new);
+        IEntityClass[] entityClasses = new IEntityClass[notDeletedEntities.length];
         Optional<IEntityClass> entityClassOp;
         EntityClassRef ref;
-        for (int i = 0; i < entities.length; i++) {
+        for (int i = 0; i < notDeletedEntities.length; i++) {
             ref = entities[i].entityClassRef();
             entityClassOp = metaManager.load(ref);
 
@@ -1057,15 +1058,14 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             }
         }
 
-        for (IEntity entity : entities) {
+        for (IEntity entity : notDeletedEntities) {
             markTime(entity);
         }
 
-        Map<Long, IEntityClass> entityClassTable = Arrays.stream(entityClasses).collect(Collectors.toMap(
-            ec -> ec.id(),
-            ec -> ec,
-            (ec0, ec1) -> ec0
-        ));
+        Map<Long, IEntityClass> entityClassTable = new HashMap<>(MapUtils.calculateInitSize(notDeletedEntities.length));
+        for (int i = 0; i < notDeletedEntities.length; i++) {
+            entityClassTable.put(notDeletedEntities[i].id(), entityClasses[i]);
+        }
         // help gc
         entityClasses = null;
 
@@ -1078,7 +1078,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 calculationContext.focusTx(tx);
 
                 // 过滤已经被标示删除实例.
-                long[] targetIds = Arrays.stream(entities).filter(e -> !e.isDeleted()).mapToLong(e -> e.id()).toArray();
+                long[] targetIds = Arrays.stream(notDeletedEntities)
+                    .filter(e -> !e.isDeleted()).mapToLong(e -> e.id()).toArray();
 
                 List<IEntity> targetEntities = new ArrayList(masterStorage.selectMultiple(targetIds));
 
@@ -1112,7 +1113,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     for (int i = 0; i < targetEntities.size(); i++) {
                         targetEntity = targetEntities.get(i);
                         setValueChange(calculationContext, null, targetEntity);
-                        entityClass = entityClassTable.get(targetEntity.entityClassRef().getId());
+                        entityClass = entityClassTable.get(targetEntity.id());
                         entityPackage.put(targetEntity, entityClass, false);
                     }
                     // 主操作

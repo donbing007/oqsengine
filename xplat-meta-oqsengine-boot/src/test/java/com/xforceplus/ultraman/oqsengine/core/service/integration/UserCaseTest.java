@@ -1476,6 +1476,52 @@ public class UserCaseTest {
         Assertions.assertEquals("a,c", entity.entityValue().getValue("l2-strings").get().valueToString());
     }
 
+    @Test
+    public void testDeleteFather() throws Exception {
+        IEntity entity0 = Entity.Builder.anEntity()
+            .withId(10000000L)
+            .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
+            .withValue(
+                new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 100L)
+            )
+            .withValue(
+                new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "v1")
+            ).build();
+        entityManagementService.build(entity0);
+
+        IEntity entity1 = Entity.Builder.anEntity()
+            .withId(10000001L)
+            .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
+            .withValue(
+                new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 102L)
+            )
+            .withValue(
+                new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "v2")
+            ).build();
+        entityManagementService.build(entity1);
+
+        IEntity deleteEntity0 = Entity.Builder.anEntity()
+            .withId(10000000L)
+            .withEntityClassRef(MockEntityClassDefine.L0_ENTITY_CLASS.ref())
+            .build();
+        IEntity deleteEntity1 = Entity.Builder.anEntity()
+            .withId(10000001L)
+            .withEntityClassRef(MockEntityClassDefine.L1_ENTITY_CLASS.ref())
+            .build();
+        OqsResult result = entityManagementService.delete(new IEntity[] {deleteEntity0, deleteEntity1});
+        Assertions.assertTrue(result.isSuccess());
+
+        OqsResult<IEntity> selectResult =
+            entitySearchService.selectOne(entity0.id(), MockEntityClassDefine.L0_ENTITY_CLASS.ref());
+        Assertions.assertFalse(selectResult.getValue().isPresent());
+
+
+        selectResult =
+            entitySearchService.selectOne(entity1.id(), MockEntityClassDefine.L0_ENTITY_CLASS.ref());
+        Assertions.assertFalse(selectResult.getValue().isPresent());
+
+    }
+
     /**
      * 测试批量更新使用父类更新子类.
      */
