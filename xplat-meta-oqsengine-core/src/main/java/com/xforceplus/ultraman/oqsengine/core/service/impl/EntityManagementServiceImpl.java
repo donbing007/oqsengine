@@ -571,7 +571,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
                 eventBus.notify(new ActualEvent(EventType.ENTITY_BUILD, new BuildPayload(tx.id(), currentEntity)));
 
-                // 创建不需要等待CDC.
                 tx.getHint().setCanWaitCommitSync(true);
 
                 return OqsResult.success(currentEntity);
