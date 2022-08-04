@@ -143,6 +143,16 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
         }
 
         /*
+        TODO: 以下是描述有可能的问题,但是这个问题只在同一线程下成立.
+
+        写入
+        查询
+
+        两个动作连续发生.
+        现在写入事务中将build也进行waitCommit了,所以不会产生此问题.
+        但是为了提供写事务性能,这里仍是需要考虑的场景.
+        下述操作方法现在并没有使用.
+
         这里使用了二次提交号查询.为了是解决如下场景.
         假设有 100, 200, 300 三个旧有对象数据, 其提交号分别是1, 2, 3.
         当前最小提交号为4.
@@ -180,6 +190,7 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
           --------------
           查询索引将使用 < 5,来保证查询到300这个数据.
          */
+        // 注意现在没有使用二次查询,原因是让前端写入等待了.
         SelectConfig indexSelectConfig = SelectConfig.Builder.anSelectConfig()
             .withSort(sort)
             .withSecondarySort(secondSort)
@@ -187,7 +198,7 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
             .withPage(indexPage)
             .withExcludedIds(filterIdsFromMaster)
             .withDataAccessFitlerCondtitons(filterCondition)
-            .withCommitId(buildQueryCommitId()).build();
+            .withCommitId(commitId).build();
         Collection<EntityRef> indexRefs = syncedStorage.select(conditions, entityClass, indexSelectConfig);
 
         if (logger.isDebugEnabled()) {
