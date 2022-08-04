@@ -187,7 +187,7 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
             .withPage(indexPage)
             .withExcludedIds(filterIdsFromMaster)
             .withDataAccessFitlerCondtitons(filterCondition)
-            .withCommitId(Math.max(buildQueryCommitId(), commitId)).build();
+            .withCommitId(buildQueryCommitId()).build();
         Collection<EntityRef> indexRefs = syncedStorage.select(conditions, entityClass, indexSelectConfig);
 
         if (logger.isDebugEnabled()) {
