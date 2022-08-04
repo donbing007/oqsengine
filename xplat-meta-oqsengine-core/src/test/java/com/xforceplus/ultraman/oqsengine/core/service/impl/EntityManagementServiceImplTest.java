@@ -165,7 +165,7 @@ public class EntityManagementServiceImplTest {
 
         OqsResult<IEntity> result = impl.build(targetEntity);
 
-        Assertions.assertFalse(executor.currentTx.get().getHint().isCanWaitCommitSync());
+        Assertions.assertTrue(executor.currentTx.get().getHint().isCanWaitCommitSync());
         Assertions.assertEquals(ResultStatus.SUCCESS, result.getResultStatus());
         Assertions.assertEquals(targetEntity.id(), result.getValue().get().id());
     }
