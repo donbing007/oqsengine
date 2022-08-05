@@ -34,7 +34,7 @@ public interface RebuildIndexExecutor extends Lifecycle {
      * @return 任务表示.
      * @throws DevopsTaskExistException 表示任务已经存在不可能再增加.
      */
-    DevOpsTaskInfo rebuildIndex(IEntityClass entityClass, LocalDateTime start, LocalDateTime end) throws Exception;
+    DevOpsTaskInfo rebuildIndex(IEntityClass entityClass, LocalDateTime start, LocalDateTime end) throws SQLException;
 
     /**
      * 重新创建索引.
@@ -49,7 +49,7 @@ public interface RebuildIndexExecutor extends Lifecycle {
      * @throws DevopsTaskExistException 表示任务已经存在不可能再增加.
      */
     Collection<DevOpsTaskInfo> rebuildIndexes(Collection<IEntityClass> entityClasses,
-                               LocalDateTime start, LocalDateTime end) throws Exception;
+                               LocalDateTime start, LocalDateTime end);
 
     /**
      * 终止一个任务.
@@ -91,12 +91,4 @@ public interface RebuildIndexExecutor extends Lifecycle {
      * @return 任务列表.
      */
     Collection<TaskHandler> listAllTasks(Page page) throws SQLException;
-
-    /**
-     * 同步任务状态.
-     *
-     * @param devOpsCdcMetrics 维护指标.
-     */
-    void sync(Map<Long, DevOpsCdcMetrics> devOpsCdcMetrics) throws SQLException;
-
 }

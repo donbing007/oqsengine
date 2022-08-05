@@ -66,14 +66,12 @@ public class DynamicBatchQueryExecutor extends AbstractMasterTaskExecutor<Long, 
     public Collection<MasterStorageEntity> execute(Long startId) throws Exception {
         String sql = buildSQL();
         try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
-            st.setBoolean(1, false);
-            st.setLong(2, startTime);
-            st.setLong(3, endTime);
-            st.setLong(4, startId);
-            st.setLong(5, pageSize);
 
+            int pos = 1;
 
-            checkTimeout(st);
+            st.setLong(pos++, startId);
+            st.setBoolean(pos++, false);
+            st.setLong(pos, pageSize);
 
             List<MasterStorageEntity> entities = new ArrayList<>();
             MasterStorageEntity entity;
@@ -137,19 +135,13 @@ public class DynamicBatchQueryExecutor extends AbstractMasterTaskExecutor<Long, 
         sql.append(" FROM ")
             .append(getTableName())
             .append(" WHERE ")
-            .append(FieldDefine.COMMITID).append(" >= ").append(0)
-            .append(" AND ")
-            .append(EntityClassHelper.buildEntityClassQuerySql(getEntityClass()))
-            .append(" AND ")
-            .append(FieldDefine.DELETED).append(" = ").append("?")
-            .append(" AND ")
-            .append(FieldDefine.UPDATE_TIME).append(" >= ").append("?")
-            .append(" AND ")
-            .append(FieldDefine.UPDATE_TIME).append(" <= ").append("?")
-            .append(" AND ")
             .append(FieldDefine.ID).append(" > ").append("?")
-            .append(" ORDER BY id ")
-            .append("LIMIT ").append("?");
+            .append(" AND ")
+            .append(EntityClassHelper.buildEntityClassQuerySql(entityClass))
+            .append(" AND ")
+            .append(FieldDefine.DELETED).append(" = ").append("?");
+
+        sql.append(" ORDER BY id asc ").append("LIMIT ").append("?");
         return sql.toString();
     }
 }

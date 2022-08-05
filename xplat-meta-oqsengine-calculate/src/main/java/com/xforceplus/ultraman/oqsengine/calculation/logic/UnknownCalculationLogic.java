@@ -5,7 +5,7 @@ import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationContext;
 import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationScenarios;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.AffectedInfo;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationException;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceGraph;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
@@ -36,7 +36,7 @@ public class UnknownCalculationLogic implements CalculationLogic {
     }
 
     @Override
-    public void scope(CalculationContext context, Infuence infuence) {
+    public void scope(CalculationContext context, InfuenceGraph infuence) {
 
     }
 

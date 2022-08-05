@@ -1,6 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper;
 
 import com.xforceplus.ultraman.oqsengine.common.StringUtils;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.constant.SQLConstant;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
@@ -176,8 +178,13 @@ public class SphinxQLHelper {
      * @param useGroupName 是否userGroupName.
      * @return 结果.
      */
-    public static Tuple2<String, Boolean> buildPreciseQuery(StorageValue value, boolean useGroupName) {
-        return stringConditionFormat(value.value().toString(), value.shortStorageName(), useGroupName);
+    public static Tuple2<String, Boolean> buildPreciseQuery(StorageValue value, FieldType fieldType, boolean useGroupName) {
+        boolean needFormat = false;
+        if (fieldType.equals(FieldType.STRING) || fieldType.equals(FieldType.STRINGS)) {
+            needFormat = true;
+        }
+
+        return stringConditionFormat(value.value().toString(), value.shortStorageName(), needFormat, useGroupName);
     }
 
     /**
@@ -364,8 +371,15 @@ public class SphinxQLHelper {
      * @return 格式化结果.
      */
     public static Tuple2<String, Boolean> stringConditionFormat(String word, ShortStorageName shortStorageName,
-                                                                boolean useGroupName) {
-        String[] values = longStringWrap(word);
+                                                                boolean needFormat, boolean useGroupName) {
+
+        String[] values;
+
+        if (needFormat) {
+            values = longStringWrap(word);
+        } else {
+            values = new String[] {word};
+        }
 
         StringBuilder stringBuilder = new StringBuilder();
 

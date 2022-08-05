@@ -112,8 +112,6 @@ public class AbstractCdcHelper extends AbstractContainerExtends {
         ErrorBatchProcessor batchProcessor = new ErrorBatchProcessor();
         Collection<Field> fields = ReflectionUtils.printAllMembers(batchProcessor);
 
-        ReflectionUtils.reflectionFieldValue(fields, "rebuildIndexExecutor",
-            batchProcessor, RebuildInitialization.getInstance().getTaskExecutor());
         ReflectionUtils.reflectionFieldValue(fields, "consumerService", batchProcessor, CdcInitialization.getInstance().getConsumerService());
 
         return batchProcessor;

@@ -23,11 +23,20 @@ import java.util.StringJoiner;
 public class EntityField implements IEntityField, Serializable {
 
     /**
+     * 一个虚假的字段,一般只用作占位之用.不能用以计算.
+     */
+    public static final IEntityField ILLUSORY_FIELD = EntityField.Builder.anEntityField()
+        .withFieldType(FieldType.LONG)
+        .withId(0)
+        .withName("-")
+        .build();
+
+    /**
      * 表示主键字段.
      */
     public static final IEntityField ID_ENTITY_FIELD =
         new EntityField(Long.MAX_VALUE, "id", FieldType.LONG,
-                FieldConfig.Builder.anFieldConfig().withIdentifie(true).build());
+            FieldConfig.Builder.anFieldConfig().withIdentifie(true).build());
 
     /**
      * 表示创建时间字段.
@@ -200,6 +209,10 @@ public class EntityField implements IEntityField, Serializable {
     @Override
     public CalculationType calculationType() {
         return this.calculationType;
+    }
+
+    public boolean indexAttachment() {
+        return config.indexAttachment();
     }
 
     public String getDictId() {

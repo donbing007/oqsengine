@@ -479,10 +479,11 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
                 buff.append(wrapperAttributeF(field, storageValue, false)).append(' ');
 
             } else if (AnyStorageValue.isAttachemntStorageName(attr.getKey())) {
+
                 // 附件
                 StorageValue storageValue = storageStrategyFactory.getStrategy(FieldType.STRING)
                     .convertIndexStorageValue(
-                        AnyStorageValue.compatibleStorageName(attr.getKey()), attr.getValue(), true, true);
+                        AnyStorageValue.compatibleStorageName(attr.getKey()), attr.getValue(), field.indexAttachment(), true);
 
                 buff.append(wrapperAttributeF(field, storageValue, true)).append(' ');
             }

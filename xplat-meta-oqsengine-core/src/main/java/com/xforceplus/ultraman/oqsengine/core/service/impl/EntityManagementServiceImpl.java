@@ -9,6 +9,7 @@ import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.map.MapUtils;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
+import com.xforceplus.ultraman.oqsengine.common.mode.CompatibilityMode;
 import com.xforceplus.ultraman.oqsengine.common.mode.OqsMode;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
@@ -130,6 +131,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
     @Resource
     private CalculationLogicFactory calculationLogicFactory;
+
+    @Resource
+    private CompatibilityMode compatibilityMode;
 
     /*
     独占锁的等待时间.
@@ -294,6 +298,10 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             }, 12, 12, TimeUnit.SECONDS);
         } else {
             logger.info("Ignore CDC status checks.");
+        }
+
+        if (null == compatibilityMode) {
+            compatibilityMode = new CompatibilityMode(false);
         }
     }
 
@@ -512,8 +520,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 }
 
                 /*
-                    只在时不需要空值,必须在校验之后否则无法给出必填字段设置为null的错误.
-                     */
+                    创建时不需要空值,必须在校验之后否则无法给出必填字段设置为null的错误.
+                */
                 currentEntity.squeezeEmpty();
 
                 // 非脏,不需要继续.
@@ -563,7 +571,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
                 eventBus.notify(new ActualEvent(EventType.ENTITY_BUILD, new BuildPayload(tx.id(), currentEntity)));
 
-                // 单个操作需要等待同步.
                 tx.getHint().setCanWaitCommitSync(true);
 
                 return OqsResult.success(currentEntity);
@@ -1028,10 +1035,11 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     public OqsResult<IEntity[]> delete(IEntity[] entities) throws SQLException {
         checkReady();
 
-        IEntityClass[] entityClasses = new IEntityClass[entities.length];
+        IEntity[] notDeletedEntities = Arrays.stream(entities).filter(e -> !e.isDeleted()).toArray(IEntity[]::new);
+        IEntityClass[] entityClasses = new IEntityClass[notDeletedEntities.length];
         Optional<IEntityClass> entityClassOp;
         EntityClassRef ref;
-        for (int i = 0; i < entities.length; i++) {
+        for (int i = 0; i < notDeletedEntities.length; i++) {
             ref = entities[i].entityClassRef();
             entityClassOp = metaManager.load(ref);
 
@@ -1049,15 +1057,14 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             }
         }
 
-        for (IEntity entity : entities) {
+        for (IEntity entity : notDeletedEntities) {
             markTime(entity);
         }
 
-        Map<Long, IEntityClass> entityClassTable = Arrays.stream(entityClasses).collect(Collectors.toMap(
-            ec -> ec.id(),
-            ec -> ec,
-            (ec0, ec1) -> ec0
-        ));
+        Map<Long, IEntityClass> entityClassTable = new HashMap<>(MapUtils.calculateInitSize(notDeletedEntities.length));
+        for (int i = 0; i < notDeletedEntities.length; i++) {
+            entityClassTable.put(notDeletedEntities[i].id(), entityClasses[i]);
+        }
         // help gc
         entityClasses = null;
 
@@ -1070,7 +1077,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 calculationContext.focusTx(tx);
 
                 // 过滤已经被标示删除实例.
-                long[] targetIds = Arrays.stream(entities).filter(e -> !e.isDeleted()).mapToLong(e -> e.id()).toArray();
+                long[] targetIds = Arrays.stream(notDeletedEntities)
+                    .filter(e -> !e.isDeleted()).mapToLong(e -> e.id()).toArray();
 
                 List<IEntity> targetEntities = new ArrayList(masterStorage.selectMultiple(targetIds));
 
@@ -1104,7 +1112,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     for (int i = 0; i < targetEntities.size(); i++) {
                         targetEntity = targetEntities.get(i);
                         setValueChange(calculationContext, null, targetEntity);
-                        entityClass = entityClassTable.get(targetEntity.entityClassRef().getId());
+                        entityClass = entityClassTable.get(targetEntity.id());
                         entityPackage.put(targetEntity, entityClass, false);
                     }
                     // 主操作
@@ -1381,27 +1389,29 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
     // 校验字段.
     private Map.Entry<VerifierResult, IEntityField> verifyFields(IEntityClass entityClass, IEntity entity) {
-        VerifierResult result;
-        for (IEntityField field : entityClass.fields()) {
-            // 跳过主标识类型的检查.
-            if (field.config().isIdentifie()) {
-                continue;
-            }
-
-            ValueVerifier verifier = VerifierFactory.getVerifier(field.type());
-            Optional<IValue> valueOp = entity.entityValue().getValue(field.id());
-            IValue value = valueOp.orElse(null);
-            try {
-                result = verifier.verify(field, value);
-                if (VerifierResult.OK != result) {
-                    return new AbstractMap.SimpleEntry(result, field);
+        if (!compatibilityMode.isCompatibility()) {
+            VerifierResult result;
+            for (IEntityField field : entityClass.fields()) {
+                // 跳过主标识类型的检查.
+                if (field.config().isIdentifie()) {
+                    continue;
                 }
-            } catch (Exception e) {
-                logger.warn("verify error, fieldId : {}, code : {}, value : {}, message : {}",
-                    field.id(), field.name(), null == value ? null : value.getValue(), e.getMessage());
-                throw e;
-            }
 
+                ValueVerifier verifier = VerifierFactory.getVerifier(field.type());
+                Optional<IValue> valueOp = entity.entityValue().getValue(field.id());
+                IValue value = valueOp.orElse(null);
+                try {
+                    result = verifier.verify(field, value);
+                    if (VerifierResult.OK != result) {
+                        return new AbstractMap.SimpleEntry(result, field);
+                    }
+                } catch (Exception e) {
+                    logger.warn("verify error, fieldId : {}, code : {}, value : {}, message : {}",
+                        field.id(), field.name(), null == value ? null : value.getValue(), e.getMessage());
+                    throw e;
+                }
+
+            }
         }
 
         return new AbstractMap.SimpleEntry(VerifierResult.OK, null);

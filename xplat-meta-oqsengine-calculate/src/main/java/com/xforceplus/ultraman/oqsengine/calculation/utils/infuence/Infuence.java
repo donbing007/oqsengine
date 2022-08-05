@@ -130,6 +130,60 @@ public class Infuence {
         return false;
     }
 
+    /**
+     * 移动一个已经存在的影响,至新结点下.<br />
+     * 不允许修改root结点.<br />
+     * 如果在不同分支有相同的参与者,那么以最先加入的为目标.<br />
+     * 以下情况不允许移动.<br />
+     * <ul>
+     *     <li>目标参与者为根参与者.</li>
+     *     <li>目标参与者和新的父参与者相同.</li>
+     *     <li>无法找到目标参与者.</li>
+     *     <li>不存在的新父参与者.</li>
+     * </ul>
+     *
+     * @param targetParticipant    需要移动的参与者.
+     * @param newParentParticipant 目标参与者的新父参与者.
+     * @return true 成功, false失败.
+     */
+    public boolean move(Participant targetParticipant, Participant newParentParticipant) {
+        if (rootNode.getParticipant().equals(targetParticipant)) {
+            return false;
+        }
+
+        if (targetParticipant.equals(newParentParticipant)) {
+            return false;
+        }
+
+        Optional<Node> nodeOp = searchChild(targetParticipant);
+        if (!nodeOp.isPresent()) {
+            return false;
+        }
+
+        Optional<Node> firstParentNodeOp = searchChild(newParentParticipant);
+        if (!firstParentNodeOp.isPresent()) {
+            return false;
+        }
+
+        Node targetNode = nodeOp.get();
+        Node parentNode = firstParentNodeOp.get();
+        // 原有父结点中断开.
+        targetNode.getParent().get().removeChild(targetNode);
+        parentNode.addChild(targetNode);
+        updateLevel(targetNode, parentNode.getLevel() + 1);
+
+
+        return true;
+    }
+
+    private void updateLevel(Node node, int level) {
+        if (node != null) {
+            node.setLevel(level);
+            for (Node child : node.getChildren()) {
+                updateLevel(child, level + 1);
+            }
+        }
+    }
 
     /**
      * 获取前一个参与者.
@@ -213,13 +267,18 @@ public class Infuence {
 
     /**
      * 判断是否为空影响树. 空影响表示发起源影响力没有任何作用.
+     * 两种情况会认为是空,只有一个根结点或者没有任何结点.
      *
      * @return true 空, false 非空.
      */
     public boolean empty() {
-        // 只有一个根结点.
-        final int onlyRoot = 1;
-        return getSize() == onlyRoot;
+        if (rootNode == null) {
+            return true;
+        } else {
+            // 只有一个根结点.
+            final int onlyRoot = 1;
+            return getSize() == onlyRoot;
+        }
     }
 
     /**
@@ -228,6 +287,9 @@ public class Infuence {
      * @param consumer 对于每一个结点调用的消费实现.
      */
     public void scan(InfuenceConsumer consumer) {
+        if (this.rootNode == null) {
+            return;
+        }
         scan(consumer, rootNode.getParticipant());
     }
 
@@ -376,6 +438,36 @@ public class Infuence {
                     case OVER_SELF: {
                         break;
                     }
+                    case OVER_REMOVE_SELF: {
+                        // 终结并且删除子树.
+                        Optional<Node> parentNode = node.getParent();
+                        if (parentNode.isPresent()) {
+                            Node parent = parentNode.get();
+                            parent.removeChild(node);
+
+                            // 需要从快捷方式中移除.
+                            bfsIter((n, l) -> {
+                                Participant p = n.getParticipant();
+                                List<Node> nodes = participantNodeSearchHelper.get(p);
+                                if (nodes != null) {
+                                    nodes.remove(n);
+                                    size--;
+                                    if (nodes.isEmpty()) {
+                                        participantNodeSearchHelper.remove(p);
+                                    }
+                                }
+
+                                return InfuenceConsumer.Action.CONTINUE;
+                            }, node);
+
+                        } else {
+                            // 当前就是根结点.
+                            this.rootNode = null;
+                            this.size = 0;
+                            this.participantNodeSearchHelper.clear();
+                        }
+                        break;
+                    }
                     default: {
                         throw new IllegalArgumentException("Error action.");
                     }
@@ -442,6 +534,12 @@ public class Infuence {
 
             child.setParent(this);
             this.children.add(child);
+        }
+
+        public void removeChild(Node child) {
+            if (this.children != null) {
+                this.children.remove(child);
+            }
         }
 
         public int getLevel() {

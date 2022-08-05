@@ -5,16 +5,16 @@ import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationScenario
 import com.xforceplus.ultraman.oqsengine.calculation.dto.AffectedInfo;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationException;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.CalculationLogic;
-import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.strategy.FunctionStrategy;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.strategy.impl.AvgFunctionStrategy;
+import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.strategy.impl.CollectFunctionStrategy;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.strategy.impl.CountFunctionStrategy;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.strategy.impl.MaxFunctionStrategy;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.strategy.impl.MinFunctionStrategy;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.aggregation.strategy.impl.SumFunctionStrategy;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.CalculationParticipant;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceGraph;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceGraphConsumer;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.AggregationType;
@@ -31,6 +31,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -88,6 +89,8 @@ public class AggregationCalculationLogic implements CalculationLogic {
                         return Optional.of(new LongValue(aggregationField, 0, "0|0"));
                     case DECIMAL:
                         return Optional.of(new DecimalValue(aggregationField, BigDecimal.ZERO, "0|0.0"));
+                    case STRINGS:
+                        return Optional.of(new StringsValue(aggregationField, new String[0], ""));
                     default:
                         return Optional.of(new DateTimeValue(aggregationField, DateTimeValue.MIN_DATE_TIME, "0|0"));
                 }
@@ -231,30 +234,39 @@ public class AggregationCalculationLogic implements CalculationLogic {
 
                 }
             }
-        } else {
-            if (!valueChange.isPresent()) {
-                return Optional.empty();
-            }
         }
 
+        if (!valueChange.isPresent()) {
+            return Optional.empty();
+        }
+
+        ValueChange vc = valueChange.get();
         try {
             //拿到数据后开始运算
             AggregationType aggregationType = aggregation.getAggregationType();
-            if (aggregationType.equals(AggregationType.AVG)) {
-                FunctionStrategy functionStrategy = new AvgFunctionStrategy();
-                return functionStrategy.excute(aggregationValue, valueChange.get(), context);
-            } else if (aggregationType.equals(AggregationType.MAX)) {
-                FunctionStrategy functionStrategy = new MaxFunctionStrategy();
-                return functionStrategy.excute(aggregationValue, valueChange.get(), context);
-            } else if (aggregationType.equals(AggregationType.MIN)) {
-                FunctionStrategy functionStrategy = new MinFunctionStrategy();
-                return functionStrategy.excute(aggregationValue, valueChange.get(), context);
-            } else if (aggregationType.equals(AggregationType.SUM)) {
-                FunctionStrategy functionStrategy = new SumFunctionStrategy();
-                return functionStrategy.excute(aggregationValue, valueChange.get(), context);
-            } else if (aggregationType.equals(AggregationType.COUNT)) {
-                FunctionStrategy functionStrategy = new CountFunctionStrategy();
-                return functionStrategy.excute(aggregationValue, valueChange.get(), context);
+
+            switch (aggregationType) {
+                case AVG: {
+                    return new AvgFunctionStrategy().excute(aggregationValue, vc, context);
+                }
+                case MAX: {
+                    return new MaxFunctionStrategy().excute(aggregationValue, vc, context);
+                }
+                case MIN: {
+                    return new MinFunctionStrategy().excute(aggregationValue, vc, context);
+                }
+                case SUM: {
+                    return new SumFunctionStrategy().excute(aggregationValue, vc, context);
+                }
+                case COUNT: {
+                    return new CountFunctionStrategy().excute(aggregationValue, vc, context);
+                }
+                case COLLECT: {
+                    return new CollectFunctionStrategy().excute(aggregationValue, vc, context);
+                }
+                default: {
+                    break;
+                }
             }
         } catch (Exception ex) {
             throw new CalculationException(
@@ -265,6 +277,220 @@ public class AggregationCalculationLogic implements CalculationLogic {
         }
 
         return Optional.empty();
+    }
+
+    @Override
+    public void scope(CalculationContext context, InfuenceGraph infuence) {
+        infuence.scanNoSource((parentParticipants, participant, infuenceInner) -> {
+
+            IEntityClass participantClass = participant.getEntityClass();
+            IEntityField participantField = participant.getField();
+
+            /*
+            迭代所有关系中的字段,判断是否有可能会对当前参与者发起聚合 - MANY_TO_ONE的关系.
+             */
+            List<Relationship> relationships = participantClass.relationship().stream()
+                .filter(r -> r.getRelationType() == Relationship.RelationType.MANY_TO_ONE)
+                .collect(Collectors.toList());
+
+            for (Relationship r : relationships) {
+                IEntityClass relationshipClass = r.getRightEntityClass(participantClass.ref().getProfile());
+                /*
+                以下字段会被加入到影响中.
+                1. 是聚合字段.
+                2. 聚合目标字段是当前参与者相关字段.
+                3. 聚合条件中出现了参与者相关字段.
+                4. 是count类型聚合,并且当前参与者相关字段是标识字段.
+                 */
+                List<IEntityField> fields = relationshipClass.fields().stream()
+                    .filter(f -> f.calculationType() == CalculationType.AGGREGATION)
+                    .filter(f -> {
+                        Aggregation aggregation = (Aggregation) f.config().getCalculation();
+
+                        if (aggregation.getFieldId() == participantField.id()) {
+                            //符合条件2.
+                            return true;
+                        } else if (this.isNeedConditionField(context, participantField, f)) {
+                            // 符合条件3.
+                            return true;
+                        } else if (aggregation.getAggregationType() == AggregationType.COUNT
+                            // 符合条件4.
+                            && participantField.config().isIdentifie()) {
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    })
+                    .collect(Collectors.toList());
+                if (fields != null && fields.size() > 0) {
+                    fields.forEach(f -> {
+                        Aggregation aggregation = (Aggregation) f.config().getCalculation();
+                        EntityField countId = (EntityField) participantField;
+                        EntityField fieldId = (EntityField) f;
+                        if (countId.name().equals(EntityField.ID_ENTITY_FIELD.name())) {
+                            if (aggregation.getAggregationType().equals(AggregationType.COUNT)) {
+                                infuenceInner.impact(
+                                    participant,
+                                    CalculationParticipant.Builder.anParticipant()
+                                        .withEntityClass(relationshipClass)
+                                        .withField(f)
+                                        .build()
+                                );
+                            } else {
+                                infuenceInner.impact(
+                                    participant,
+                                    CalculationParticipant.Builder.anParticipant()
+                                        .withEntityClass(relationshipClass)
+                                        .withField(fieldId.ID_ENTITY_FIELD)
+                                        .build()
+                                );
+                            }
+                        } else {
+                            if (!aggregation.getAggregationType().equals(AggregationType.COUNT)) {
+                                infuenceInner.impact(
+                                    participant,
+                                    CalculationParticipant.Builder.anParticipant()
+                                        .withEntityClass(relationshipClass)
+                                        .withField(f)
+                                        .build()
+                                );
+                            }
+                        }
+                    });
+                }
+            }
+
+            return InfuenceGraphConsumer.Action.CONTINUE;
+        });
+    }
+
+    @Override
+    public Collection<AffectedInfo> getMaintainTarget(CalculationContext context, Participant participant,
+                                                      Collection<IEntity> entities)
+        throws CalculationException {
+        IEntityField entityField = participant.getField();
+        Aggregation aggregation = (Aggregation) entityField.config().getCalculation();
+        if (entities.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        Collection<AffectedInfo> affectedEntityIds = new ArrayList<>(entities.size());
+        for (IEntity entity : entities) {
+            /*
+            这里预期聚合信息中记录的关系ID和关系外键ID是相同的.
+            表示找到当前参与者指向当前entity的实例ID.
+             */
+            Optional<IValue> aggEntityId = entity.entityValue().getValue(aggregation.getRelationId());
+            if (aggEntityId.isPresent()) {
+                affectedEntityIds.add(new AffectedInfo(entity, aggEntityId.get().valueToLong()));
+            }
+        }
+
+        return affectedEntityIds;
+    }
+
+    /**
+     * 由于聚合字段含有条件,这里会判断目标字段是否出现在了关系对象中其他聚合字段的条件中.
+     *
+     * @param context     计算上下文.
+     * @param entityClass 当前操作目标类型.
+     * @param field       当前需要判断的字段.
+     * @return true 需要, false不需要.
+     */
+    private boolean needCauseCondition(CalculationContext context, IEntityClass entityClass, IEntityField field) {
+        Collection<IEntityClass> relationshipClass = entityClass.relationship().stream()
+            .filter(r -> r.getRelationType() == Relationship.RelationType.MANY_TO_ONE)
+            .map(r -> r.getRightEntityClass(entityClass.profile()))
+            .collect(Collectors.toList());
+
+        /*
+          关系中含有条件,并且条中出现目标字段的将返回true.
+         */
+        for (IEntityClass rec : relationshipClass) {
+            for (IEntityField relationField : rec.fields()) {
+                if (isNeedRootField(context, relationField)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public CalculationType supportType() {
+        return CalculationType.AGGREGATION;
+    }
+
+    /**
+     * 需要维护的场景.
+     *
+     * @return 需要维护的场景列表.
+     */
+    @Override
+    public CalculationScenarios[] needMaintenanceScenarios() {
+        return new CalculationScenarios[] {
+            CalculationScenarios.BUILD,
+            CalculationScenarios.REPLACE,
+            CalculationScenarios.DELETE
+        };
+    }
+
+    /*
+    判断指定指定是否应该追随加入某个影响链中.
+       A
+       |
+       B
+    这里的字段是B.
+    这里处于判定条件改变造成的改变.
+    currentField 当前字段.
+    targetField        需要判断的字段.
+     */
+    private boolean isNeedConditionField(CalculationContext context, IEntityField currentField,
+                                         IEntityField targetField) {
+        if (targetField.calculationType() == CalculationType.AGGREGATION
+            && Aggregation.class.isInstance(targetField.config().getCalculation())
+            && ((Aggregation) targetField.config().getCalculation()).getConditions().isPresent()) {
+
+            Conditions conditions =
+                ((Aggregation) targetField.config().getCalculation()).getConditions().get();
+            // 判断当前的条件中出现的字段是否指向上层.
+            return conditions.collectField().stream().anyMatch(cf -> cf.id() == currentField.id());
+        }
+
+        return false;
+    }
+
+    /*
+    判断指定的字段是否应该为一个影响树的根结点.
+    字段本身可能并未改变,但是可能由于条件改变造成当前字段影响的聚合字段需要重新计算.
+         A
+         |
+         B
+      这里判定A是否应该作为一个树的根结点.
+     */
+    private boolean isNeedRootField(CalculationContext context, IEntityField field) {
+        // 聚合指向当前字段且含有条件.判断条件中是否出现的字段有改变.
+        if (field.calculationType() == CalculationType.AGGREGATION
+            && Aggregation.class.isInstance(field.config().getCalculation())
+            && ((Aggregation) field.config().getCalculation()).getConditions().isPresent()
+            && field.id() == ((Aggregation) field.config().getCalculation()).getFieldId()) {
+            Conditions conditions =
+                ((Aggregation) field.config().getCalculation()).getConditions().get();
+
+            /*
+              判断关系类型中的聚合字段条件中出现的字段有没有出现在valueChange中.
+              如果出现表示需要重新判断是否需要聚合,所以当前字段不论有无改变都需要重新计算.
+             */
+            Collection<IEntityField> conditionFields = conditions.collectField();
+
+            for (IEntityField conditionField : conditionFields) {
+                if (context.getValueChanges().stream().anyMatch(v -> v.getField().id() == conditionField.id())) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     private Optional<IValue> findTriggerValue(
@@ -316,149 +542,6 @@ public class AggregationCalculationLogic implements CalculationLogic {
         }
 
         return context.getValueChange(entity, triggerFieldOp.get());
-    }
-
-    @Override
-    public void scope(CalculationContext context, Infuence infuence) {
-        infuence.scan((parentParticipant, participant, infuenceInner) -> {
-
-            IEntityClass participantClass = participant.getEntityClass();
-            IEntityField participantField = participant.getField();
-
-            /*
-            迭代所有关系中的字段,判断是否有可能会对当前参与者发起聚合 - MANY_TO_ONE的关系.
-             */
-            List<Relationship> relationships = participantClass.relationship().stream()
-                .filter(relationship ->
-                    relationship.getRelationType().equals(Relationship.RelationType.MANY_TO_ONE))
-                .collect(Collectors.toList());
-
-            for (Relationship r : relationships) {
-                IEntityClass relationshipClass = r.getRightEntityClass(participantClass.ref().getProfile());
-                List<IEntityField> fields = relationshipClass.fields().stream()
-                    .filter(f -> f.calculationType() == CalculationType.AGGREGATION)
-                    .filter(f -> ((((Aggregation) f.config().getCalculation()).getFieldId() == participantField.id())
-                        || (((Aggregation) f.config().getCalculation()).getAggregationType()
-                        .equals(AggregationType.COUNT))
-                        || (participantField.name().equals(EntityField.ID_ENTITY_FIELD.name()))
-                    )).collect(Collectors.toList());
-                if (fields != null && fields.size() > 0) {
-                    fields.forEach(f -> {
-                        Aggregation aggregation = (Aggregation) f.config().getCalculation();
-                        EntityField countId = (EntityField) participantField;
-                        EntityField fieldId = (EntityField) f;
-                        if (countId.name().equals(EntityField.ID_ENTITY_FIELD.name())) {
-                            if (aggregation.getAggregationType().equals(AggregationType.COUNT)) {
-                                infuenceInner.impact(
-                                    participant,
-                                    CalculationParticipant.Builder.anParticipant()
-                                        .withEntityClass(relationshipClass)
-                                        .withField(f)
-                                        .build()
-                                );
-                            } else {
-                                infuenceInner.impact(
-                                    participant,
-                                    CalculationParticipant.Builder.anParticipant()
-                                        .withEntityClass(relationshipClass)
-                                        .withField(fieldId.ID_ENTITY_FIELD)
-                                        .build()
-                                );
-                            }
-                        } else {
-                            if (!aggregation.getAggregationType().equals(AggregationType.COUNT)) {
-                                infuenceInner.impact(
-                                    participant,
-                                    CalculationParticipant.Builder.anParticipant()
-                                        .withEntityClass(relationshipClass)
-                                        .withField(f)
-                                        .build()
-                                );
-                            }
-                        }
-                    });
-                }
-            }
-
-            return InfuenceConsumer.Action.CONTINUE;
-        });
-    }
-
-    @Override
-    public Collection<AffectedInfo> getMaintainTarget(CalculationContext context, Participant participant,
-                                                      Collection<IEntity> entities)
-        throws CalculationException {
-        IEntityField entityField = participant.getField();
-        Aggregation aggregation = (Aggregation) entityField.config().getCalculation();
-        if (entities.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        Collection<AffectedInfo> affectedEntityIds = new ArrayList<>(entities.size());
-        for (IEntity entity : entities) {
-            Optional<IValue> aggEntityId = entity.entityValue().getValue(aggregation.getRelationId());
-            if (aggEntityId.isPresent()) {
-                affectedEntityIds.add(new AffectedInfo(entity, aggEntityId.get().valueToLong()));
-            }
-        }
-
-        return affectedEntityIds;
-    }
-
-    @Override
-    public boolean need(CalculationContext context, IEntityClass entityClass, IEntityField field) {
-        Collection<IEntityClass> relationshipClass = entityClass.relationship().stream()
-            .filter(r -> r.getRelationType() == Relationship.RelationType.MANY_TO_ONE)
-            .map(r -> r.getRightEntityClass(entityClass.profile()))
-            .collect(Collectors.toList());
-
-        /*
-          关系中含有条件,并且条中出现目标字段的将返回true.
-         */
-        for (IEntityClass rec : relationshipClass) {
-            for (IEntityField relationField : rec.fields()) {
-                // 聚合指向当前字段且含有条件.判断条件中是否出现的字段有改变.
-                if (relationField.calculationType() == CalculationType.AGGREGATION
-                    && ((Aggregation) relationField.config().getCalculation()).getConditions().isPresent()
-                    && field.id() == ((Aggregation) relationField.config().getCalculation()).getFieldId()) {
-                    Conditions conditions =
-                        ((Aggregation) relationField.config().getCalculation()).getConditions().get();
-
-                    /*
-                    判断关系类型中的聚合字段条件中出现的字段有没有出现在valueChange中.
-                    如果出现表示需要重新判断是否需要聚合,所以当前字段不论有无改变都需要重新计算.
-                     */
-                    Collection<IEntityField> conditionFields = conditions.collectField();
-                    for (IEntityField conditionField : conditionFields) {
-                        if (context.getValueChanges().stream()
-                            .anyMatch(v -> v.getField().id() == conditionField.id())) {
-                            return true;
-                        }
-                    }
-                }
-
-            }
-        }
-        return false;
-    }
-
-    @Override
-    public CalculationType supportType() {
-        return CalculationType.AGGREGATION;
-    }
-
-    /**
-     * 需要维护的场景.
-     *
-     * @return 需要维护的场景列表.
-     */
-    @Override
-    public CalculationScenarios[] needMaintenanceScenarios() {
-        return new CalculationScenarios[] {
-            CalculationScenarios.BUILD,
-            CalculationScenarios.REPLACE,
-            CalculationScenarios.DELETE
-        };
     }
 
 }

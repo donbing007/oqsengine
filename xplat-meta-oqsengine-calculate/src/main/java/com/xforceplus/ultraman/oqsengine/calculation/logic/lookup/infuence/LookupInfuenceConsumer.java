@@ -1,8 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.infuence;
 
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.CalculationParticipant;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceGraph;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceGraphConsumer;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -10,7 +10,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Lookup;
 import java.util.Collection;
-import java.util.Optional;
 
 /**
  * lookup 迭代消费器.
@@ -19,9 +18,10 @@ import java.util.Optional;
  * @version 0.1 2022/3/2 20:36
  * @since 1.8
  */
-public class LookupInfuenceConsumer implements InfuenceConsumer {
+public class LookupInfuenceConsumer implements InfuenceGraphConsumer {
     @Override
-    public Action accept(Optional<Participant> parentParticipantOp, Participant participant, Infuence infuenceInner) {
+    public Action accept(Collection<Participant> parent, Participant participant, InfuenceGraph inner) {
+
         IEntityClass participantClass = participant.getEntityClass();
         IEntityField participantField = participant.getField();
 
@@ -34,7 +34,7 @@ public class LookupInfuenceConsumer implements InfuenceConsumer {
                     .filter(f -> f.calculationType() == CalculationType.LOOKUP)
                     .filter(f -> ((Lookup) f.config().getCalculation()).getFieldId() == participantField.id())
                     .forEach(f -> {
-                        infuenceInner.impact(
+                        inner.impact(
                             participant,
                             CalculationParticipant.Builder.anParticipant()
                                 .withEntityClass(relationshipClass)
@@ -46,6 +46,6 @@ public class LookupInfuenceConsumer implements InfuenceConsumer {
             }
         }
 
-        return InfuenceConsumer.Action.CONTINUE;
+        return InfuenceGraphConsumer.Action.CONTINUE;
     }
 }

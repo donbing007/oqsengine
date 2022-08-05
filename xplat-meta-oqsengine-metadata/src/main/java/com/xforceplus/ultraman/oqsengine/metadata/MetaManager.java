@@ -153,4 +153,14 @@ public interface MetaManager {
     default Collection<UpGradeLog> showUpgradeLogs(String appId, String env) throws JsonProcessingException {
         return new ArrayList<>();
     }
+
+
+    /**
+     * 获取当前app的entityClassId列表.
+     *
+     * @return entityClassId列表.
+     */
+    default List<String> appEntityClassIds(String appId) {
+        return new ArrayList<>();
+    }
 }

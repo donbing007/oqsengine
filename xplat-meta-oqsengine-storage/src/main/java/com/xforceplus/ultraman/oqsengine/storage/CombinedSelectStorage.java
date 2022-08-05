@@ -95,16 +95,19 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
 
         if (commitId > 0) {
             //trigger master search
-            masterRefs = unSyncStorage.select(
-                conditions,
-                entityClass,
-                SelectConfig.Builder.anSelectConfig()
-                    .withSort(sort)
-                    .withSecondarySort(secondSort)
-                    .withThirdSort(thirdSort)
-                    .withCommitId(commitId)
-                    .withDataAccessFitlerCondtitons(filterCondition)
-                    .build());
+            SelectConfig masterSelectConfig = SelectConfig.Builder.anSelectConfig()
+                .withSort(sort)
+                .withSecondarySort(secondSort)
+                .withThirdSort(thirdSort)
+                .withCommitId(commitId)
+                .withDataAccessFitlerCondtitons(filterCondition)
+                .build();
+            masterRefs = unSyncStorage.select(conditions, entityClass, masterSelectConfig);
+
+            if (logger.isDebugEnabled()) {
+                logger.debug("Combind query master condition {}, configure {}, entityclass {}. The result is: \n {}.",
+                    conditions.toString(), masterSelectConfig, entityClass.code(), masterRefs);
+            }
         }
 
         for (EntityRef ref : masterRefs) {
@@ -116,11 +119,9 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
         masterRefs = fixNullSortValue(masterRefs, sorts);
 
         /*
-         * filter ids
+         * 从主库中查询的将在已同步中过滤.
          */
         Set<Long> filterIdsFromMaster = masterRefs.stream()
-            .filter(
-                x -> x.getOp() == OperationType.DELETE.getValue() || x.getOp() == OperationType.UPDATE.getValue())
             .map(EntityRef::getId)
             .collect(toSet());
 
@@ -142,6 +143,16 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
         }
 
         /*
+        TODO: 以下是描述有可能的问题,但是这个问题只在同一线程下成立.
+
+        写入
+        查询
+
+        两个动作连续发生.
+        现在写入事务中将build也进行waitCommit了,所以不会产生此问题.
+        但是为了提供写事务性能,这里仍是需要考虑的场景.
+        下述操作方法现在并没有使用.
+
         这里使用了二次提交号查询.为了是解决如下场景.
         假设有 100, 200, 300 三个旧有对象数据, 其提交号分别是1, 2, 3.
         当前最小提交号为4.
@@ -179,18 +190,22 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
           --------------
           查询索引将使用 < 5,来保证查询到300这个数据.
          */
-        Collection<EntityRef> indexRefs = syncedStorage.select(
-            conditions,
-            entityClass,
-            SelectConfig.Builder.anSelectConfig()
-                .withSort(sort)
-                .withSecondarySort(secondSort)
-                .withThirdSort(thirdSort)
-                .withPage(indexPage)
-                .withExcludedIds(filterIdsFromMaster)
-                .withDataAccessFitlerCondtitons(filterCondition)
-                .withCommitId(buildQueryCommitId()).build()
-        );
+        // 注意现在没有使用二次查询,原因是让前端写入等待了.
+        SelectConfig indexSelectConfig = SelectConfig.Builder.anSelectConfig()
+            .withSort(sort)
+            .withSecondarySort(secondSort)
+            .withThirdSort(thirdSort)
+            .withPage(indexPage)
+            .withExcludedIds(filterIdsFromMaster)
+            .withDataAccessFitlerCondtitons(filterCondition)
+            .withCommitId(commitId).build();
+        Collection<EntityRef> indexRefs = syncedStorage.select(conditions, entityClass, indexSelectConfig);
+
+        if (logger.isDebugEnabled()) {
+            logger.debug("Combind query index condition {}, configure {}, entityclass {}. The result is: \n {}.",
+                conditions.toString(), indexSelectConfig, entityClass.code(), indexRefs);
+        }
+
         indexRefs = fixNullSortValue(indexRefs, sorts);
 
         Collection<EntityRef> masterRefsWithoutDeleted = masterRefs.stream()
@@ -210,7 +225,9 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
 
         long skips = scope == null ? 0 : scope.getStartLine();
         return mergeToStream(masterRefsWithoutDeleted, indexRefs, sorts)
-            .skip(skips < 0 ? 0 : skips).limit(pageSize).collect(toList());
+            .skip(skips < 0 ? 0 : skips)
+            .limit(pageSize)
+            .collect(toList());
     }
 
     // 根据排序设定情况,返回一个数组包含了所有的排序字段,大小有可能是0到3不定.
@@ -246,9 +263,9 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
         }).filter(s -> !s.isOutOfOrder()).toArray(Sort[]::new);
     }
 
-    // 不处理重复记录,只合并多个结果列表并按规则排序.
-    private Stream<EntityRef> mergeToStream(Collection<EntityRef> unsynRefs, Collection<EntityRef> synedRefs,
-                                            Sort[] sorts) {
+    // 合并多个结果列表并按规则排序,要注意这里不会去重.
+    private Stream<EntityRef> mergeToStream(
+        Collection<EntityRef> unsynRefs, Collection<EntityRef> synedRefs, Sort[] sorts) {
         if (unsynRefs.isEmpty()) {
             return synedRefs.stream();
         }
@@ -315,10 +332,9 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
                         ? new SortValueComparator(sorts[firstSortIndex])
                         : new SortValueComparator(sorts[firstSortIndex]).reversed()
                 ));
-        } else {
-            // 不排序.
-            return refStream;
         }
+
+        return refStream;
     }
 
     // 比较器.

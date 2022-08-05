@@ -35,7 +35,9 @@ public class StringsStorageStrategy implements StorageStrategy {
         StorageValue point = storageValue;
         List<String> vs = new ArrayList();
         while (point != null) {
-            vs.add(((String) point.value()).trim());
+            if (point.value() != null) {
+                vs.add(((String) point.value()).trim());
+            }
 
             point = point.next();
         }

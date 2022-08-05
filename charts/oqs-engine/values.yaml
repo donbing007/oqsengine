@@ -144,8 +144,7 @@ storage:
     remote:
       enabled: false
     showsql: false
-  # Maximum amount of visible data.
-  maxVisibleNumber: 10000
+
   threadPool:
     # Setting 0 means using CPU cores +1 threads. The queue length defaults to 500.
     io:
@@ -196,6 +195,10 @@ storage:
         maxsize: 500
       page:
         size: 1000
+
+# For compatibility with earlier versions, this can be set to compatibility mode.
+# Strict field definition checks are ignored.
+compatibilityMode: false
 
 locker:
   try:

@@ -40,7 +40,6 @@ import com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.dynamic.D
 import com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.original.OriginalBuildExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.original.OriginalDeleteExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.original.OriginalUpdateExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.rebuild.DevOpsRebuildExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.mysql.pojo.BaseMasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.mysql.pojo.JsonAttributeMasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.mysql.pojo.MapAttributeMasterStorageEntity;
@@ -134,15 +133,15 @@ public class SQLMasterStorage implements MasterStorage {
 
     @Override
     public DataIterator<OqsEngineEntity> iterator(IEntityClass entityClass, long startTime, long endTime,
-                                                  long lastStart)
+                                                  long lastStart, boolean useSelfClass)
         throws SQLException {
-        return new EntityIterator(entityClass, lastStart, startTime, endTime);
+        return new EntityIterator(entityClass, lastStart, startTime, endTime, useSelfClass);
     }
 
     @Override
     public DataIterator<OqsEngineEntity> iterator(IEntityClass entityClass, long startTime, long endTime, long lastId,
-                                                  int size) throws SQLException {
-        return new EntityIterator(entityClass, lastId, startTime, endTime, size);
+                                                  int size, boolean useSelfClass) throws SQLException {
+        return new EntityIterator(entityClass, lastId, startTime, endTime, size, useSelfClass);
     }
 
     @Timed(
@@ -415,14 +414,6 @@ public class SQLMasterStorage implements MasterStorage {
         });
     }
 
-    @Override
-    public int rebuild(IEntityClass entityClass, long maintainId, long startTime, long endTime) throws Exception {
-
-        return DevOpsRebuildExecutor
-            .build(dynamicTableName, masterDataSource, maintainId, startTime, endTime)
-            .execute(entityClass);
-    }
-
     /**
      * 批量更新或者删除.
      *
@@ -581,18 +572,20 @@ public class SQLMasterStorage implements MasterStorage {
         private final long endTime;
         private final int pageSize;
         private final List<OqsEngineEntity> buffer;
+        private final boolean useSelfClass;
 
-        public EntityIterator(IEntityClass entityClass, long startId, long startTime, long endTime) {
-            this(entityClass, startId, startTime, endTime, DEFAULT_PAGE_SIZE);
+        public EntityIterator(IEntityClass entityClass, long startId, long startTime, long endTime, boolean useSelfClass) {
+            this(entityClass, startId, startTime, endTime, DEFAULT_PAGE_SIZE, useSelfClass);
         }
 
-        public EntityIterator(IEntityClass entityClass, long startId, long startTime, long endTime, int pageSize) {
+        public EntityIterator(IEntityClass entityClass, long startId, long startTime, long endTime, int pageSize, boolean useSelfClass) {
             this.entityClass = entityClass;
             this.startId = startId;
             this.startTime = startTime;
             this.endTime = endTime;
             this.pageSize = pageSize;
             buffer = new ArrayList<>(pageSize);
+            this.useSelfClass = useSelfClass;
         }
 
         @Override
@@ -629,22 +622,31 @@ public class SQLMasterStorage implements MasterStorage {
                 Collection<OqsEngineEntity> originalEntities = new ArrayList<>();
                 for (MasterStorageEntity entity : storageEntities) {
                     try {
-                        IEntityClass realEntityClass = entityClass;
-
-                        //  这里获取一次带有JOJO的真实entityClass
+                        //  获取profile
+                        String profile = "";
                         if (null != entity.getAttribute() && !entity.getProfile()
                             .equals(OqsProfile.UN_DEFINE_PROFILE)) {
-                            Optional<IEntityClass> entityClassOp =
-                                metaManager.load(entityClass.id(), entity.getProfile());
-                            if (!entityClassOp.isPresent()) {
-                                throw new SQLException(
-                                    String.format("entityClass could not be null in meta.[%d]", entityClass.id()));
-                            }
-                            realEntityClass = entityClassOp.get();
+                            profile = entity.getProfile();
+                        }
+
+                        //  当useSelfEntityClass为true时，将使用entity本身的class，否则使用父类class
+                        //  这里修改为使用entity本身的classId进行EntityClass加载，如果使用父类的entityClass加载会导致attribute丢失
+                        Optional<IEntityClass> entityClassOp = Optional.of(entityClass);
+                        if (useSelfClass) {
+                            entityClassOp =
+                                metaManager.load(entity.getSelfEntityClassId(), profile);
+                        } else if (null != profile && !profile.isEmpty()) {
+                            entityClassOp =
+                                metaManager.load(entityClass.id(), profile);
+                        }
+
+                        if (!entityClassOp.isPresent()) {
+                            throw new SQLException(
+                                String.format("entityClass could not be null in meta.[%d]", entity.getSelfEntityClassId()));
                         }
 
                         OqsEngineEntity oqsEngineEntity = OqsEngineEntity.Builder.anOriginalEntity()
-                            .withEntityClass(realEntityClass)
+                            .withEntityClass(entityClassOp.get())
                             .withId(entity.getId())
                             .withCreateTime(entity.getCreateTime())
                             .withUpdateTime(entity.getUpdateTime())

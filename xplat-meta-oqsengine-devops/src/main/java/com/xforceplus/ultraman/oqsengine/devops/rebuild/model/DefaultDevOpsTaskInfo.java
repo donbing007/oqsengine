@@ -11,6 +11,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
  * @since 1.8
  */
 public class DefaultDevOpsTaskInfo implements DevOpsTaskInfo {
+    public static final int UN_DONE_BATCH_SIZE = 0;
+
     private long maintainid;
     private long entity;
     private long starts;
@@ -22,13 +24,15 @@ public class DefaultDevOpsTaskInfo implements DevOpsTaskInfo {
     private long createTime;
     private long updateTime;
     private String message = "";
-
-    private int incrementSize;
+    private long startId;
 
     private IEntityClass entityClass;
 
     public DefaultDevOpsTaskInfo() {
-        incrementSize = 0;
+    }
+
+    public DefaultDevOpsTaskInfo(long maintainid) {
+        this.maintainid = maintainid;
     }
 
     /**
@@ -40,11 +44,10 @@ public class DefaultDevOpsTaskInfo implements DevOpsTaskInfo {
      * @param ends          结束时间.
      */
     public DefaultDevOpsTaskInfo(long maintainId, IEntityClass entityClass, long starts, long ends) {
-        this(maintainId, entityClass.id(), starts, ends, 0, 0,
-            BatchStatus.PENDING.getCode(), System.currentTimeMillis(), 0);
+        this(maintainId, entityClass.id(), starts, ends, UN_DONE_BATCH_SIZE, 0,
+            BatchStatus.RUNNING.getCode(), System.currentTimeMillis(), 0);
         this.entityClass = entityClass;
-        this.message = "TASK INIT";
-        this.incrementSize = 0;
+        this.message = "TASK RUNNING";
     }
 
     /**
@@ -71,8 +74,6 @@ public class DefaultDevOpsTaskInfo implements DevOpsTaskInfo {
         this.status = status;
         this.createTime = createTime;
         this.updateTime = updateTime;
-
-        this.incrementSize = 0;
     }
 
     public long updateTime() {
@@ -155,17 +156,17 @@ public class DefaultDevOpsTaskInfo implements DevOpsTaskInfo {
 
     @Override
     public void addFinishSize(int addSize) {
-        finishSize += addSize;
+        this.finishSize += addSize;
     }
 
     @Override
-    public void setErrorSize(long size) {
+    public void addBatchSize(int addBatchSize) {
+        this.batchSize += addBatchSize;
+    }
+
+    @Override
+    public void setErrorSize(int size) {
         this.errorSize = Long.valueOf(size).intValue();
-    }
-
-    @Override
-    public void addErrorSize(int errorSize) {
-        this.errorSize += errorSize;
     }
 
     @Override
@@ -180,7 +181,7 @@ public class DefaultDevOpsTaskInfo implements DevOpsTaskInfo {
 
     @Override
     public boolean isDone() {
-        return status == BatchStatus.DONE.getCode() || (batchSize == finishSize && batchSize > 0);
+        return status == BatchStatus.DONE.getCode();
     }
 
     @Override
@@ -213,11 +214,13 @@ public class DefaultDevOpsTaskInfo implements DevOpsTaskInfo {
         this.batchSize = size;
     }
 
-    public int incrementSize() {
-        return incrementSize;
+    @Override
+    public long getStartId() {
+        return startId;
     }
 
-    public void resetIncrementSize(int incrementSize) {
-        this.incrementSize = incrementSize;
+    @Override
+    public void setStartId(long startId) {
+        this.startId = startId;
     }
 }

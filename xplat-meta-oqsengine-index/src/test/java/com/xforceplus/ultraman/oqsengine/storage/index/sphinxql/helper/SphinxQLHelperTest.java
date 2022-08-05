@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.storage.value.LongStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.ShortStorageName;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
@@ -62,12 +63,12 @@ public class SphinxQLHelperTest {
     @Test
     public void testBuildPreciseQuery() throws Exception {
         StorageValue storageValue = new StringStorageValue("9223372036854775807", "test", true);
-        Assertions.assertEquals("1y2p0itestj32e8e7S", SphinxQLHelper.buildPreciseQuery(storageValue, false)._1);
-        Assertions.assertEquals("1y2p0itestj32e8e7S", SphinxQLHelper.buildPreciseQuery(storageValue, true)._1);
+        Assertions.assertEquals("1y2p0itestj32e8e7S", SphinxQLHelper.buildPreciseQuery(storageValue, FieldType.STRING, false)._1);
+        Assertions.assertEquals("1y2p0itestj32e8e7S", SphinxQLHelper.buildPreciseQuery(storageValue, FieldType.STRING, true)._1);
 
         storageValue = new LongStorageValue("9223372036854775807", 100, true);
-        Assertions.assertEquals("1y2p0i100j32e8e7L", SphinxQLHelper.buildPreciseQuery(storageValue, false)._1);
-        Assertions.assertEquals("1y2p0i100j32e8e7L", SphinxQLHelper.buildPreciseQuery(storageValue, true)._1);
+        Assertions.assertEquals("1y2p0i100j32e8e7L", SphinxQLHelper.buildPreciseQuery(storageValue, FieldType.STRING, false)._1);
+        Assertions.assertEquals("1y2p0i100j32e8e7L", SphinxQLHelper.buildPreciseQuery(storageValue, FieldType.STRING, true)._1);
     }
 
     @Test
@@ -101,11 +102,20 @@ public class SphinxQLHelperTest {
 
         //  测试ConditionOperator.EQUALS
         Tuple2<String, Boolean> format =
-            SphinxQLHelper.stringConditionFormat(longOverString, shortStorageName, false);
+            SphinxQLHelper.stringConditionFormat(longOverString, shortStorageName, true, false);
 
         Assertions.assertEquals(
             "(P0123paaaabbbbccccddddeeeeffffgs456S P1123pgggEAAAABBBBCCCCDDDDEEEEFs456S P2123pFFFGGGGECDMAs456S)",
             format._1);
+
+        String needFilterString = "CERTIFICATE_INVOICE_PIECES";
+        format = SphinxQLHelper.stringConditionFormat(needFilterString, shortStorageName, false, false);
+        Assertions.assertFalse(format._2());
+        Assertions.assertEquals("123pCERTIFICATEINVOICEPIECESs456S", format._1());
+
+        format = SphinxQLHelper.stringConditionFormat(needFilterString, shortStorageName, true, false);
+        Assertions.assertTrue(format._2());
+        Assertions.assertEquals("(P0123pCERTIFICATEINVOICEPIECEs456S P1123pSs456S)", format._1());
     }
 
     /**

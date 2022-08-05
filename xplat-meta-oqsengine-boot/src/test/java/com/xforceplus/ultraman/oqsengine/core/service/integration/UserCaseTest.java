@@ -580,8 +580,7 @@ public class UserCaseTest {
                     )
                 ).build());
         }
-        OqsResult results = entityManagementService.build(expectedEntities.stream().toArray(
-            com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[]::new));
+        OqsResult results = entityManagementService.build(expectedEntities.stream().toArray(IEntity[]::new));
         Assertions.assertEquals(ResultStatus.SUCCESS, results.getResultStatus());
 
         OqsResult<Collection<IEntity>> entities = entitySearchService.selectByConditions(
@@ -602,10 +601,8 @@ public class UserCaseTest {
         Assertions.assertArrayEquals(expectedFirstValues, firstValues);
 
         // 两个数值一致的对象id应该从小到大.
-        com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity
-            firstEntity = entities.getValue().get().stream().findFirst().get();
-        com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity
-            secondEntity = entities.getValue().get().stream().skip(1).findFirst().get();
+        IEntity firstEntity = entities.getValue().get().stream().findFirst().get();
+        IEntity secondEntity = entities.getValue().get().stream().skip(1).findFirst().get();
 
         Assertions.assertTrue(firstEntity.id() < secondEntity.id(),
             String.format("The first ID (%d) is expected to be less than the second (%d), but it is not.",
@@ -707,6 +704,96 @@ public class UserCaseTest {
         Assertions.assertArrayEquals(expectedSecondValues, secondValues);
         Assertions.assertArrayEquals(expectedThridValues, thridValues);
     }
+
+    @Test
+    public void testLongStringValue() throws SQLException {
+        IEntity e0 = Entity.Builder.anEntity()
+            .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
+            .withValues(Arrays.asList(
+                new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "multiple_companyname_config"),
+                new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-enum").get(), "CERTIFICATE_INVOICE_PIECES")
+            )).build();
+
+        OqsResult<IEntity> e0Result = entityManagementService.build(e0);
+        Assertions.assertEquals(ResultStatus.SUCCESS, e0Result.getResultStatus());
+
+        IEntity e1 = Entity.Builder.anEntity()
+            .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
+            .withValues(Arrays.asList(
+                new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-enum").get(), "multiple_companyname_config"),
+                new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "CERTIFICATE_INVOICE_PIECES")
+            )).build();
+
+        OqsResult<IEntity> e1Result = entityManagementService.build(e1);
+        Assertions.assertEquals(ResultStatus.SUCCESS, e1Result.getResultStatus());
+
+        OqsResult<Collection<IEntity>> entities = entitySearchService.selectByConditions(
+            Conditions.buildEmtpyConditions().addAnd(
+                new Condition(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(),
+                    ConditionOperator.EQUALS,
+                    new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(),
+                        "multiple_companyname_config"))
+            ),
+            MockEntityClassDefine.L2_ENTITY_CLASS.ref(),
+            ServiceSelectConfig.Builder.anSearchConfig()
+                .withPage(Page.newSinglePage(1000))
+                .build()
+        );
+
+        Assertions.assertEquals(1,  entities.getValue().get().size());
+        Assertions.assertEquals(e0.id(), ((List<IEntity>) entities.getValue().get()).get(0).id());
+
+
+        entities = entitySearchService.selectByConditions(
+            Conditions.buildEmtpyConditions().addAnd(
+                new Condition(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-enum").get(),
+                    ConditionOperator.EQUALS,
+                    new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-enum").get(),
+                        "multiple_companyname_config"))
+            ),
+            MockEntityClassDefine.L2_ENTITY_CLASS.ref(),
+            ServiceSelectConfig.Builder.anSearchConfig()
+                .withPage(Page.newSinglePage(1000))
+                .build()
+        );
+
+        Assertions.assertEquals(1,  entities.getValue().get().size());
+        Assertions.assertEquals(e1.id(), ((List<IEntity>) entities.getValue().get()).get(0).id());
+
+        entities = entitySearchService.selectByConditions(
+            Conditions.buildEmtpyConditions().addAnd(
+                new Condition(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-enum").get(),
+                    ConditionOperator.EQUALS,
+                    new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-enum").get(),
+                        "CERTIFICATE_INVOICE_PIECES"))
+            ),
+            MockEntityClassDefine.L2_ENTITY_CLASS.ref(),
+            ServiceSelectConfig.Builder.anSearchConfig()
+                .withPage(Page.newSinglePage(1000))
+                .build()
+        );
+
+        Assertions.assertEquals(1,  entities.getValue().get().size());
+        Assertions.assertEquals(e0.id(), ((List<IEntity>) entities.getValue().get()).get(0).id());
+
+        entities = entitySearchService.selectByConditions(
+            Conditions.buildEmtpyConditions().addAnd(
+                new Condition(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(),
+                    ConditionOperator.EQUALS,
+                    new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(),
+                        "CERTIFICATE_INVOICE_PIECES"))
+            ),
+            MockEntityClassDefine.L2_ENTITY_CLASS.ref(),
+            ServiceSelectConfig.Builder.anSearchConfig()
+                .withPage(Page.newSinglePage(1000))
+                .build()
+        );
+
+        Assertions.assertEquals(1,  entities.getValue().get().size());
+        Assertions.assertEquals(e1.id(), ((List<IEntity>) entities.getValue().get()).get(0).id());
+
+    }
+
 
     /**
      * 测试两字段降序.
@@ -1274,24 +1361,6 @@ public class UserCaseTest {
         Assertions.assertEquals("上海云砺有限公司",
             entities.getValue().get().stream().findFirst().get().entityValue().getValue("l0-string").get()
                 .valueToString());
-
-        entityManagementService.replace(targetEntity);
-        entities = entitySearchService.selectByConditions(
-            Conditions.buildEmtpyConditions()
-                .addAnd(
-                    new Condition(
-                        MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-string").get(),
-                        ConditionOperator.LIKE,
-                        new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-string").get(), "有限公司")
-                    )
-                ),
-            MockEntityClassDefine.L2_ENTITY_CLASS.ref(),
-            ServiceSelectConfig.Builder.anSearchConfig().withPage(Page.newSinglePage(100)).build()
-        );
-        Assertions.assertEquals(1, entities.getValue().get().size());
-        Assertions.assertEquals("上海云砺有限公司",
-            entities.getValue().get().stream().findFirst().get().entityValue().getValue("l0-string").get()
-                .valueToString());
     }
 
     /**
@@ -1405,6 +1474,52 @@ public class UserCaseTest {
             entity.id(), MockEntityClassDefine.L2_ENTITY_CLASS.ref()).getValue().get();
 
         Assertions.assertEquals("a,c", entity.entityValue().getValue("l2-strings").get().valueToString());
+    }
+
+    @Test
+    public void testDeleteFather() throws Exception {
+        IEntity entity0 = Entity.Builder.anEntity()
+            .withId(10000000L)
+            .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
+            .withValue(
+                new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 100L)
+            )
+            .withValue(
+                new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "v1")
+            ).build();
+        entityManagementService.build(entity0);
+
+        IEntity entity1 = Entity.Builder.anEntity()
+            .withId(10000001L)
+            .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
+            .withValue(
+                new LongValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l0-long").get(), 102L)
+            )
+            .withValue(
+                new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "v2")
+            ).build();
+        entityManagementService.build(entity1);
+
+        IEntity deleteEntity0 = Entity.Builder.anEntity()
+            .withId(10000000L)
+            .withEntityClassRef(MockEntityClassDefine.L0_ENTITY_CLASS.ref())
+            .build();
+        IEntity deleteEntity1 = Entity.Builder.anEntity()
+            .withId(10000001L)
+            .withEntityClassRef(MockEntityClassDefine.L1_ENTITY_CLASS.ref())
+            .build();
+        OqsResult result = entityManagementService.delete(new IEntity[] {deleteEntity0, deleteEntity1});
+        Assertions.assertTrue(result.isSuccess());
+
+        OqsResult<IEntity> selectResult =
+            entitySearchService.selectOne(entity0.id(), MockEntityClassDefine.L0_ENTITY_CLASS.ref());
+        Assertions.assertFalse(selectResult.getValue().isPresent());
+
+
+        selectResult =
+            entitySearchService.selectOne(entity1.id(), MockEntityClassDefine.L0_ENTITY_CLASS.ref());
+        Assertions.assertFalse(selectResult.getValue().isPresent());
+
     }
 
     /**

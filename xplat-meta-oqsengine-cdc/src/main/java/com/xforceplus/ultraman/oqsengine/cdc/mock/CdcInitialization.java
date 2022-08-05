@@ -126,8 +126,6 @@ public class CdcInitialization implements BeanInitialization {
         batchProcessor = new DefaultBatchProcessor();
         Collection<Field> fields = ReflectionUtils.printAllMembers(batchProcessor);
 
-        ReflectionUtils.reflectionFieldValue(fields, "rebuildIndexExecutor",
-            batchProcessor, RebuildInitialization.getInstance().getTaskExecutor());
         ReflectionUtils.reflectionFieldValue(fields, "consumerService", batchProcessor, consumerService);
     }
 

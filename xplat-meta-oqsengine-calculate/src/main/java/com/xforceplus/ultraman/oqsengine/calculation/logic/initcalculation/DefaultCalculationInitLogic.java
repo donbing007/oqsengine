@@ -136,7 +136,7 @@ public class DefaultCalculationInitLogic implements CalculationInitLogic {
     public Tuple2<Boolean, List<InitCalculationParticipant>> initLogic(
         IEntityClass entityClass, Collection<InitCalculationParticipant> participants) {
         try {
-            DataIterator<OqsEngineEntity> iterator = masterStorage.iterator(entityClass, 0, Long.MAX_VALUE, 0, 1);
+            DataIterator<OqsEngineEntity> iterator = masterStorage.iterator(entityClass, 0, Long.MAX_VALUE, 0, 1, false);
             List<IEntity> failedList = new ArrayList<>();
             while (iterator.hasNext() || !failedList.isEmpty()) {
                 // 先处理上次遍历失败的entity

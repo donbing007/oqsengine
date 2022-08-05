@@ -205,16 +205,8 @@ public class Relationship {
         return companion;
     }
 
-    public void setCompanion(boolean companion) {
-        this.companion = companion;
-    }
-
     public long getCompanionRelation() {
         return companionRelation;
-    }
-
-    public void setCompanionRelation(long companionRelation) {
-        this.companionRelation = companionRelation;
     }
 
     @Override

@@ -10,8 +10,8 @@ import com.xforceplus.ultraman.oqsengine.calculation.impl.DefaultCalculationImpl
 import com.xforceplus.ultraman.oqsengine.calculation.logic.CalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.CalculationParticipant;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceGraph;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceGraphConsumer;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
 import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MockMetaManager;
@@ -138,7 +138,7 @@ public class FormulaCalculationLogicTest {
         B_SUM = EntityField.Builder.anEntityField()
             .withId(Long.MAX_VALUE - 1)
             .withFieldType(FieldType.LONG)
-            .withName("b-sum-a")
+            .withName("bsuma")
             .withConfig(
                 FieldConfig.Builder.anFieldConfig()
                     .withCalculation(Aggregation.Builder.anAggregation()
@@ -159,10 +159,10 @@ public class FormulaCalculationLogicTest {
                 FieldConfig.Builder.anFieldConfig()
                     .withCalculation(Formula.Builder.anFormula()
                         .withLevel(1)
-                        .withExpression("${b-sum-a} * 2")
+                        .withExpression("${bsuma} * 2")
                         .withFailedDefaultValue(0)
                         .withFailedPolicy(Formula.FailedPolicy.USE_FAILED_DEFAULT_VALUE)
-                        .withArgs(Collections.singletonList("b-sum-a"))
+                        .withArgs(Collections.singletonList("bsuma"))
                         .build()
                     ).build()
             )
@@ -521,16 +521,18 @@ public class FormulaCalculationLogicTest {
             .withValue(
                 new LongValue(B_SUM, 100)
             ).build();
-        Infuence infuence = new Infuence(
-            targetEntity,
+        InfuenceGraph infuence = new InfuenceGraph(
+            CalculationParticipant.Builder.anParticipant()
+                .withEntityClass(B_CLASS)
+                .withField(EntityField.ILLUSORY_FIELD)
+                .withAffectedEntities(Arrays.asList(targetEntity)).build()
+        );
+
+        infuence.impact(
             CalculationParticipant.Builder.anParticipant()
                 .withEntityClass(B_CLASS)
                 .withField(B_SUM)
-                .withAffectedEntities(Arrays.asList(targetEntity)).build(),
-            ValueChange.build(
-                targetEntity.id(),
-                new LongValue(B_SUM, 50L),
-                new LongValue(B_SUM, 100L))
+                .withAffectedEntities(Arrays.asList(targetEntity)).build()
         );
 
         context.focusEntity(targetEntity, B_CLASS);
@@ -538,11 +540,11 @@ public class FormulaCalculationLogicTest {
 
         formulaCalculationLogic.scope(context, infuence);
         List<Participant> participants = new ArrayList<>();
-        infuence.scan((parentParticipant, participant, infuenceInner) -> {
+        infuence.scanNoSource((parentParticipant, participant, infuenceInner) -> {
 
             participants.add(participant);
 
-            return InfuenceConsumer.Action.CONTINUE;
+            return InfuenceGraphConsumer.Action.CONTINUE;
         });
 
         Assertions.assertEquals(2, participants.size());
@@ -568,16 +570,11 @@ public class FormulaCalculationLogicTest {
             .withValue(new LongValue(B_SUM, 100))
             .build();
 
-        Infuence infuence = new Infuence(
-            targetEntity,
+        InfuenceGraph infuence = new InfuenceGraph(
             CalculationParticipant.Builder.anParticipant()
                 .withEntityClass(B_CLASS)
                 .withField(B_SUM)
-                .withAffectedEntities(Arrays.asList(targetEntity)).build(),
-            ValueChange.build(
-                targetEntity.id(),
-                new LongValue(B_SUM, 50L),
-                new LongValue(B_SUM, 100L))
+                .withAffectedEntities(Arrays.asList(targetEntity)).build()
         );
 
         context.focusEntity(targetEntity, B_CLASS);
@@ -585,14 +582,14 @@ public class FormulaCalculationLogicTest {
 
         formulaCalculationLogic.scope(context, infuence);
         AtomicReference<Participant> p = new AtomicReference<>();
-        infuence.scan((parentParticipant, participant, infuenceInner) -> {
-            if (parentParticipant.isPresent()) {
-                if (parentParticipant.get().getEntityClass().id() == B_CLASS.id()) {
+        infuence.scan((parentParticipants, participant, infuenceInner) -> {
+            if (!parentParticipants.isEmpty()) {
+                if (parentParticipants.stream().findFirst().get().getEntityClass().id() == B_CLASS.id()) {
                     p.set(participant);
-                    return InfuenceConsumer.Action.OVER;
+                    return InfuenceGraphConsumer.Action.OVER;
                 }
             }
-            return InfuenceConsumer.Action.CONTINUE;
+            return InfuenceGraphConsumer.Action.CONTINUE;
         });
 
         Participant participant = p.get();
@@ -664,13 +661,13 @@ public class FormulaCalculationLogicTest {
 
         @Override
         public DataIterator<OqsEngineEntity> iterator(IEntityClass entityClass, long startTime, long endTime,
-                                                      long lastId) throws SQLException {
+                                                      long lastId, boolean useSelfClass) throws SQLException {
             return null;
         }
 
         @Override
         public DataIterator<OqsEngineEntity> iterator(IEntityClass entityClass, long startTime, long endTime,
-                                                      long lastId, int size) throws SQLException {
+                                                      long lastId, int size, boolean useSelfClass) throws SQLException {
             return null;
         }
     }
@@ -718,8 +715,8 @@ public class FormulaCalculationLogicTest {
         }
 
         @Override
-        public void scope(CalculationContext context, Infuence infuence) {
-            infuence.scan((parentClassOp, participant, infuenceInner) -> {
+        public void scope(CalculationContext context, InfuenceGraph infuence) {
+            infuence.scan((parentParticipants, participant, infuenceInner) -> {
 
                 Participant child = scope.get(participant);
 
@@ -727,7 +724,7 @@ public class FormulaCalculationLogicTest {
                     infuenceInner.impact(participant, child);
                 }
 
-                return InfuenceConsumer.Action.CONTINUE;
+                return InfuenceGraphConsumer.Action.CONTINUE;
             });
         }
 

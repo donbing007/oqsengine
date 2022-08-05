@@ -36,6 +36,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.junit.jupiter.api.AfterEach;
@@ -112,13 +113,16 @@ public class EntitySearchServiceImplTest {
             ));
 
         Page indexPage = Page.emptyPage();
+        Set<Long> excludeIds = new HashSet<>();
+        excludeIds.add(1L);
+        excludeIds.add(2L);
         when(indexStorage.select(
             Conditions.buildEmtpyConditions(),
             EntityClassDefine.l1EntityClass,
             SelectConfig.Builder.anSelectConfig()
                 .withCommitId(1)
                 .withPage(indexPage)
-                .withExcludedIds(new HashSet())
+                .withExcludedIds(excludeIds)
                 .withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD))
                 .build()
         )).thenAnswer((invocation) -> {
@@ -190,6 +194,9 @@ public class EntitySearchServiceImplTest {
                 .withCommitId(1)
                 .withPage(indexPage)
                 .withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD))
+                .withExcludeId(1)
+                .withExcludeId(2)
+                .withExcludeId(3)
                 .withExcludeId(4)
                 .build()
         )).thenReturn(Collections.emptyList());
@@ -289,11 +296,16 @@ public class EntitySearchServiceImplTest {
                 .withMajor(OqsVersion.MAJOR).build()
         ));
 
+        // 索引需要排除的.
+        Set<Long> excludeIds = new HashSet<>();
+        excludeIds.add(1L);
+        excludeIds.add(2L);
         when(indexStorage.select(
             conditions,
             EntityClassDefine.l2EntityClass,
             SelectConfig.Builder.anSelectConfig()
                 .withCommitId(1)
+                .withExcludedIds(excludeIds)
                 .withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD))
                 .withPage(page)
                 .build()

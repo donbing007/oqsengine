@@ -898,6 +898,25 @@ public class DefaultCacheExecutor implements CacheExecutor {
         return upGradeLogs;
     }
 
+
+    @Override
+    public List<String> appEntityClassIds(String appId) {
+        List<String> entityClassIds = new ArrayList<>();
+
+        Map<String, String> entityApps = syncCommands.hgetall(appEntityMappingKey);
+        if (null != entityApps) {
+            entityApps.forEach(
+                (entityClassId, app) -> {
+                    if (null == appId || appId.equals(app)) {
+                        entityClassIds.add(entityClassId);
+                    }
+                }
+            );
+        }
+
+        return entityClassIds;
+    }
+
     private UpGradeLog getUpgradeLog(String fieldKey) throws JsonProcessingException {
         String v = syncCommands.hget(upGradeLogKey, fieldKey);
         if (null != v) {
@@ -1200,11 +1219,13 @@ public class DefaultCacheExecutor implements CacheExecutor {
                         List<Long> ids = OBJECT_MAPPER.readValue(value,
                             OBJECT_MAPPER.getTypeFactory().constructParametricType(List.class, Long.class));
 
-                        ids.forEach(
-                            id -> {
-                                cacheContext.versionCache().put(id, version);
-                            }
-                        );
+                        if (null != ids) {
+                            ids.forEach(
+                                id -> {
+                                    cacheContext.versionCache().put(id, version);
+                                }
+                            );
+                        }
 
                     } catch (JsonProcessingException e) {
                         logger.warn("cache version json error, message : {}", e.getMessage());

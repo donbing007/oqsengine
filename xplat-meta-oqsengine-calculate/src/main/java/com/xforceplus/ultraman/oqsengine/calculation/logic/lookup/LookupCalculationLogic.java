@@ -8,7 +8,7 @@ import com.xforceplus.ultraman.oqsengine.calculation.logic.CalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.infuence.LookupInfuenceConsumer;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.task.LookupMaintainingTask;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.utils.LookupEntityRefIterator;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceGraph;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
 import com.xforceplus.ultraman.oqsengine.common.profile.OqsProfile;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
@@ -140,9 +140,9 @@ public class LookupCalculationLogic implements CalculationLogic {
     }
 
     @Override
-    public void scope(CalculationContext context, Infuence infuence) {
+    public void scope(CalculationContext context, InfuenceGraph infuence) {
 
-        infuence.scan(this.infuenceConsumer);
+        infuence.scanNoSource(this.infuenceConsumer);
     }
 
     /**
@@ -153,6 +153,11 @@ public class LookupCalculationLogic implements CalculationLogic {
     public Collection<AffectedInfo> getMaintainTarget(
         CalculationContext context, Participant participant, Collection<IEntity> triggerEntities)
         throws CalculationException {
+
+        if (participant.getField().calculationType() != CalculationType.LOOKUP) {
+            throw new CalculationException(
+                "Wrong field type, only computed fields of the type of the Lookup can be handled.");
+        }
 
         Optional attachmentOp = participant.getAttachment();
         if (!attachmentOp.isPresent()) {

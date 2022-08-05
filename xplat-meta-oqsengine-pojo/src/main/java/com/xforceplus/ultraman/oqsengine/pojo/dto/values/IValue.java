@@ -152,6 +152,7 @@ public interface IValue<T> extends Comparable<IValue> {
      *
      * @param o 需要检查的值.
      * @return 结果, true包含, false不包含.
+     * @see #equals(Object)
      */
     public default boolean include(IValue o) {
         return this.equals(o);

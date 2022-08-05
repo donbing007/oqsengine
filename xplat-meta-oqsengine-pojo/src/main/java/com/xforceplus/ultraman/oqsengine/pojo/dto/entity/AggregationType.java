@@ -14,7 +14,8 @@ public enum AggregationType {
     SUM(2),
     AVG(3),
     MIN(4),
-    MAX(5);
+    MAX(5),
+    COLLECT(6);
 
     private int type;
     public int getType() {

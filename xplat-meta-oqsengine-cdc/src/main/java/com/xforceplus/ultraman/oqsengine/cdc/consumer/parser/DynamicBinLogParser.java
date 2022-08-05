@@ -5,6 +5,7 @@ import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUt
 import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.getLongFromColumn;
 import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.getStringFromColumn;
 import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.getStringWithoutNullCheck;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.INIT_ID;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.NO_TRANSACTION_COMMIT_ID;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.UN_KNOW_ID;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.ZERO;
@@ -169,16 +170,7 @@ public class DynamicBinLogParser implements BinLogParser {
         builder.withTx(txId);
 
         //  如果是维护的commitId，需要设置devOps指标逻辑.
-        if (DevOpsUtils.isMaintainRecord(commitId)) {
-            parserContext.getCdcMetrics().getDevOpsMetrics()
-                .computeIfAbsent(txId, f -> new DevOpsCdcMetrics()).incrementByStatus(true);
-            //  运维时提交号为0
-            builder.withCommitid(NO_TRANSACTION_COMMIT_ID);
-            builder.withMaintainid(txId);
-        } else {
-            //  提交号
-            builder.withCommitid(commitId);
-        }
+        builder.withCommitid(commitId);
 
         //  other info
         builder.withVersion(getIntegerFromColumn(columns, VERSION))
@@ -265,7 +257,7 @@ public class DynamicBinLogParser implements BinLogParser {
              */
 
             //  维护id不需要等待isReady 或者 没有transaction的commitId & 跳过的commitId
-            if (DevOpsUtils.isMaintainRecord(commitId) || commitId == NO_TRANSACTION_COMMIT_ID) {
+            if (commitId == NO_TRANSACTION_COMMIT_ID) {
                 return;
             }
 

@@ -195,6 +195,79 @@ public class InfuenceTest {
         Assertions.assertEquals("a, b, d, c, e, b, a, ", buff.toString());
     }
 
+    @Test
+    public void testMove() throws Exception {
+        IEntity rootEntity = Entity.Builder.anEntity()
+            .withId(Long.MAX_VALUE)
+            .withEntityClassRef(A_CLASS.ref()).build();
+        Infuence infuence = new Infuence(rootEntity,
+            CalculationParticipant.Builder.anParticipant()
+                .withEntityClass(A_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build(),
+            new ValueChange(
+                rootEntity.id(),
+                new DateTimeValue(EntityField.CREATE_TIME_FILED, LocalDateTime.MAX),
+                new DateTimeValue(EntityField.CREATE_TIME_FILED, LocalDateTime.MAX)
+            ), false);
+
+        infuence.impact(
+            CalculationParticipant.Builder.anParticipant()
+                .withEntityClass(A_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build(),
+            CalculationParticipant.Builder.anParticipant()
+                .withEntityClass(B_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build()
+        );
+        infuence.impact(CalculationParticipant.Builder.anParticipant()
+                .withEntityClass(B_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build(),
+            CalculationParticipant.Builder.anParticipant()
+                .withEntityClass(C_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build()
+        );
+
+        infuence.impact(CalculationParticipant.Builder.anParticipant()
+                .withEntityClass(A_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build(),
+            CalculationParticipant.Builder.anParticipant()
+                .withEntityClass(D_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build());
+        infuence.impact(CalculationParticipant.Builder.anParticipant()
+                .withEntityClass(D_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build(),
+            CalculationParticipant.Builder.anParticipant()
+                .withEntityClass(E_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build());
+
+        // 移动D子树至C,成为C的子树.
+        boolean result = infuence.move(
+            CalculationParticipant.Builder.anParticipant()
+                .withEntityClass(D_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build(),
+            CalculationParticipant.Builder.anParticipant()
+                .withEntityClass(C_CLASS)
+                .withField(EntityField.CREATE_TIME_FILED)
+                .build()
+        );
+        Assertions.assertTrue(result);
+        String expecte = "(a,createTime)\n"
+            + "   L---(b,createTime)\n"
+            + "      L---(c,createTime)\n"
+            + "         L---(d,createTime)\n"
+            + "            L---(e,createTime)";
+        Assertions.assertEquals(expecte, infuence.toString());
+    }
+
     /**
      * 测试在如下多分支情况下,允许多分支之间重复,但是不允许同一分支下出现重复.
      * .....A
@@ -884,7 +957,6 @@ public class InfuenceTest {
             infuence.toString());
     }
 
-
     /**
      * 测试nextParticipant是否符合预期.
      * ...........A
@@ -941,5 +1013,135 @@ public class InfuenceTest {
 
         Collection<Participant> nextParticipants2 = infuence.getNextParticipants(d).get();
         Assertions.assertTrue(nextParticipants2.contains(e));
+    }
+
+    /**
+     * ...........A
+     * ...........|
+     * ........|-----|
+     * ........B     D
+     * ........|     |
+     * ........C     E
+     * 删除根结点.
+     */
+    @Test
+    public void removeOverRemoveSelfRoot() {
+        IEntity rootEntity = Entity.Builder.anEntity()
+            .withId(Long.MAX_VALUE)
+            .withEntityClassRef(A_CLASS.ref()).build();
+        CalculationParticipant a = CalculationParticipant.Builder.anParticipant()
+            .withEntityClass(A_CLASS)
+            .withField(EntityField.CREATE_TIME_FILED)
+            .build();
+        Infuence infuence = new Infuence(rootEntity, a,
+            new ValueChange(
+                rootEntity.id(),
+                new DateTimeValue(EntityField.CREATE_TIME_FILED, LocalDateTime.MAX),
+                new DateTimeValue(EntityField.CREATE_TIME_FILED, LocalDateTime.MAX)
+            ));
+        CalculationParticipant b = CalculationParticipant.Builder.anParticipant()
+            .withEntityClass(B_CLASS)
+            .withField(EntityField.CREATE_TIME_FILED)
+            .build();
+        infuence.impact(a, b);
+
+        CalculationParticipant c = CalculationParticipant.Builder.anParticipant()
+            .withEntityClass(C_CLASS)
+            .withField(EntityField.CREATE_TIME_FILED)
+            .build();
+        infuence.impact(b, c);
+
+        CalculationParticipant d = CalculationParticipant.Builder.anParticipant()
+            .withEntityClass(D_CLASS)
+            .withField(EntityField.CREATE_TIME_FILED)
+            .build();
+        infuence.impact(a, d);
+        CalculationParticipant e = CalculationParticipant.Builder.anParticipant()
+            .withEntityClass(E_CLASS)
+            .withField(EntityField.CREATE_TIME_FILED)
+            .build();
+        infuence.impact(d, e);
+
+        // 删除整个树.
+        infuence.scan((parentParticipantOp, participant, infuenceInner) -> {
+            return InfuenceConsumer.Action.OVER_REMOVE_SELF;
+        });
+
+        Assertions.assertTrue(infuence.empty());
+        Assertions.assertEquals(0, infuence.getSize());
+
+        AtomicInteger number = new AtomicInteger(0);
+        infuence.scan((parentParticipantOp, participant, infuenceInner) -> {
+            number.incrementAndGet();
+
+            return InfuenceConsumer.Action.CONTINUE;
+        });
+        Assertions.assertEquals(0, number.get());
+    }
+
+    /**
+     * ...........A
+     * ...........|
+     * ........|-----|
+     * ........B     D
+     * ........|     |
+     * ........C     E
+     * 删除结点D.
+     */
+    @Test
+    public void removeOverRemoveSelf() {
+        IEntity rootEntity = Entity.Builder.anEntity()
+            .withId(Long.MAX_VALUE)
+            .withEntityClassRef(A_CLASS.ref()).build();
+        CalculationParticipant a = CalculationParticipant.Builder.anParticipant()
+            .withEntityClass(A_CLASS)
+            .withField(EntityField.CREATE_TIME_FILED)
+            .build();
+        Infuence infuence = new Infuence(rootEntity, a,
+            new ValueChange(
+                rootEntity.id(),
+                new DateTimeValue(EntityField.CREATE_TIME_FILED, LocalDateTime.MAX),
+                new DateTimeValue(EntityField.CREATE_TIME_FILED, LocalDateTime.MAX)
+            ));
+        CalculationParticipant b = CalculationParticipant.Builder.anParticipant()
+            .withEntityClass(B_CLASS)
+            .withField(EntityField.CREATE_TIME_FILED)
+            .build();
+        infuence.impact(a, b);
+
+        CalculationParticipant c = CalculationParticipant.Builder.anParticipant()
+            .withEntityClass(C_CLASS)
+            .withField(EntityField.CREATE_TIME_FILED)
+            .build();
+        infuence.impact(b, c);
+
+        CalculationParticipant d = CalculationParticipant.Builder.anParticipant()
+            .withEntityClass(D_CLASS)
+            .withField(EntityField.CREATE_TIME_FILED)
+            .build();
+        infuence.impact(a, d);
+        CalculationParticipant e = CalculationParticipant.Builder.anParticipant()
+            .withEntityClass(E_CLASS)
+            .withField(EntityField.CREATE_TIME_FILED)
+            .build();
+        infuence.impact(d, e);
+
+        infuence.scan((parentParticipantOp, participant, infuenceInner) -> {
+            if (participant.getEntityClass().equals(D_CLASS)) {
+                return InfuenceConsumer.Action.OVER_REMOVE_SELF;
+            } else {
+                return InfuenceConsumer.Action.CONTINUE;
+            }
+        });
+
+        Assertions.assertEquals(3, infuence.getSize());
+        Assertions.assertFalse(infuence.empty());
+
+        StringBuffer buff = new StringBuffer();
+        infuence.scan((parentParticipantOp, participant, infuenceInner) -> {
+            buff.append(participant.getEntityClass().code());
+            return InfuenceConsumer.Action.CONTINUE;
+        });
+        Assertions.assertEquals("abc", buff.toString());
     }
 }

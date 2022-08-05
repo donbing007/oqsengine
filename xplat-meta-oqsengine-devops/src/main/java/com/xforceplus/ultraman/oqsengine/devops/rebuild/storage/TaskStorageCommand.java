@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.devops.rebuild.storage;
 
+import static com.xforceplus.ultraman.oqsengine.devops.rebuild.model.DefaultDevOpsTaskInfo.UN_DONE_BATCH_SIZE;
+
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.BatchStatus;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.DefaultDevOpsTaskInfo;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.DevOpsTaskInfo;
@@ -92,6 +94,16 @@ public class TaskStorageCommand {
         return lists(dataSource, selectSql, countSql, page);
     }
 
+
+    /**
+     * 列出活动任务.
+     */
+    public Collection<DevOpsTaskInfo> listActivesWithLimit(DataSource dataSource, Page page, long time) throws SQLException {
+        String selectSql = String.format(SQL.LIST_ACTIVES_WITH_LIMITS, tableName);
+        return listsWithTime(dataSource, selectSql, page, time);
+    }
+
+
     /**
      * 列出所有任务.
      */
@@ -100,6 +112,38 @@ public class TaskStorageCommand {
         String countSql = String.format(SQL.COUNT_ALL, tableName);
 
         return lists(dataSource, selectSql, countSql, page);
+    }
+
+    /**
+     * 列出任务.
+     */
+    public Collection<DevOpsTaskInfo> listsWithTime(DataSource dataSource, String selectSql, Page page, long time)
+        throws SQLException {
+        // 空页,空结果返回.
+        if (page.isEmptyPage()) {
+            return Collections.emptyList();
+        }
+
+        page.setTotalCount(Long.MAX_VALUE);
+        PageScope scope = page.getNextPage();
+
+        // 超出页数
+        if (scope == null) {
+            return Collections.emptyList();
+        }
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement st = connection.prepareStatement(selectSql)) {
+            st.setLong(1, time);                                        //  startIndex
+            st.setLong(2, scope.getStartLine());                             //  startIndex
+            st.setLong(3, page.getPageSize());                          //  pageSize
+
+            if (logger.isDebugEnabled()) {
+                logger.debug(st.toString());
+            }
+
+            return executeListResults(st);
+        }
     }
 
     /**
@@ -210,13 +254,13 @@ public class TaskStorageCommand {
             st.setInt(pos++, taskInfo.getStatus());
 
             //  batchSize
-            if (taskInfo.getBatchSize() > 0) {
+            if (taskInfo.getBatchSize() > UN_DONE_BATCH_SIZE) {
                 st.setInt(pos++, (int) taskInfo.getBatchSize());
             }
 
             //  finishSize increment
-            if (taskInfo.incrementSize() > 0) {
-                st.setInt(pos++, taskInfo.incrementSize());
+            if (taskInfo.getFinishSize() > 0) {
+                st.setInt(pos++, taskInfo.getFinishSize());
             }
 
             //  message
@@ -225,8 +269,8 @@ public class TaskStorageCommand {
             }
 
             //  errorSize
-            if (taskInfo.getErrorSize() > 0) {
-                st.setLong(pos++, taskInfo.getErrorSize());
+            if (taskInfo.getStatus() != BatchStatus.CANCEL.getCode()) {
+                st.setLong(pos++, taskInfo.getStartId());
             }
 
             //  taskId
@@ -243,54 +287,25 @@ public class TaskStorageCommand {
     private String updateSql(DefaultDevOpsTaskInfo taskInfo) {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("update ").append(tableName).append(" set updatetime = ?, status = ?");
-        if (taskInfo.getBatchSize() > 0) {
+        if (taskInfo.getBatchSize() > UN_DONE_BATCH_SIZE) {
             stringBuilder.append(", ").append("batchsize = ?");
         }
-        if (taskInfo.incrementSize() > 0) {
-            stringBuilder.append(", ").append("finishsize = finishsize + ?");
+
+        if (taskInfo.getFinishSize() > 0) {
+            stringBuilder.append(", ").append("finishsize = ?");
         }
+
         if (null != taskInfo.message()) {
             stringBuilder.append(", ").append("message = ?");
         }
 
-        //  由于改变方式为cdc同步、所以该字段记录为错误数量.
-        if (taskInfo.getErrorSize() > 0) {
+        if (taskInfo.getStatus() != BatchStatus.CANCEL.getCode()) {
             stringBuilder.append(", ").append("startid = ?");
         }
 
         stringBuilder.append(" ").append("where maintainid = ? and status not in (2, 3, 4)");
 
         return stringBuilder.toString();
-    }
-
-
-    /**
-     * 任务错误结束.
-     */
-    public int error(DataSource dataSource, DefaultDevOpsTaskInfo taskInfo) throws SQLException {
-        String sql = String.format(SQL.ERROR_SQL, tableName);
-
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement st = connection.prepareStatement(sql)) {
-            //  batchUpdateTime
-            st.setLong(1, System.currentTimeMillis());
-            //  finishSize
-            st.setInt(2, taskInfo.getFinishSize());
-            //  status
-            st.setInt(3, taskInfo.getStatus());
-            //  message
-            st.setString(4, taskInfo.message());
-            //  startId
-            st.setLong(5, taskInfo.getErrorSize());
-            //  taskId
-            st.setLong(6, taskInfo.getMaintainid());
-
-            if (logger.isDebugEnabled()) {
-                logger.debug(st.toString());
-            }
-
-            return st.executeUpdate();
-        }
     }
 
     /**
@@ -375,7 +390,7 @@ public class TaskStorageCommand {
             rs.getLong("updatetime"));
 
         taskInfo.resetMessage(rs.getString("message"));
-        taskInfo.setErrorSize(rs.getLong("startid"));
+        taskInfo.setStartId(rs.getLong("startid"));
 
         return taskInfo;
     }

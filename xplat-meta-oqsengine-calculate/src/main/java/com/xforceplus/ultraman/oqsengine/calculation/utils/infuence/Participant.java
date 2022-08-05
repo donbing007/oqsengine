@@ -61,4 +61,16 @@ public interface Participant {
      */
     public Optional<Object> getAttachment();
 
+    /**
+     * 是否影响源.
+     *
+     * @return true 影响源, false不是.
+     */
+    public boolean isSource();
+
+    /**
+     * 设置当前参与者为影响源.
+     */
+    public void source();
+
 }

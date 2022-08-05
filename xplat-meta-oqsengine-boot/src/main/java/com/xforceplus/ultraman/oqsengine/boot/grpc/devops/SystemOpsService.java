@@ -266,27 +266,48 @@ public class SystemOpsService {
      */
     @DiscoverAction(describe = "重建索引", retClass = DevOpsTaskInfo.class)
     public Collection<DevOpsTaskInfo> rebuildIndexes(
-        @MethodParam(name = "entityClassId", klass = List.class, inner = String.class, required = true) List<String> entityClassIds,
+        @MethodParam(name = "appId", klass = String.class) String appId,
+        @MethodParam(name = "entityClassIds", klass = List.class, inner = String.class) List<String> entityClassIds,
         @MethodParam(name = "start", klass = String.class, required = true) String start,
         @MethodParam(name = "end", klass = String.class, required = true) String end) {
         try {
-            Collection<IEntityClass> entityClasses = new ArrayList<>();
-            entityClassIds.forEach(
-                entityClassId -> {
-                    Long classId = null;
-                    try {
-                        classId = Long.parseLong(entityClassId);
-                        Optional<IEntityClass> entityClassOp = metaManager.load(classId, "");
-                        if (entityClassOp.isPresent()) {
-                            entityClasses.add(entityClassOp.get());
-                        } else {
-                            logger.warn("entityClassId {} not match IEntityClass, will ignore... please check.", entityClassId);
-                        }
-                    } catch (Exception e) {
-                        logger.warn("entityClassId {} rebuild error, message {}, will ignore... please check.", entityClassId, e.getMessage());
-                    }
+
+            List<String> mergedIds = null;
+            boolean notAppRebuildPlan = false;
+            if (null == entityClassIds || entityClassIds.isEmpty()) {
+                if (null != appId && !appId.isEmpty()) {
+                    mergedIds = metaManager.appEntityClassIds(appId);
                 }
-            );
+            } else if (null == appId || appId.isEmpty()) {
+                mergedIds = entityClassIds;
+                notAppRebuildPlan = true;
+            }
+
+            if (null == mergedIds || mergedIds.isEmpty()) {
+                return new ArrayList<>();
+            }
+
+            Collection<IEntityClass> entityClasses = new ArrayList<>();
+            for (String entityClassId : mergedIds) {
+                Long classId = null;
+                try {
+                    classId = Long.parseLong(entityClassId);
+                    Optional<IEntityClass> entityClassOp = metaManager.load(classId, "");
+
+                    if (entityClassOp.isPresent()) {
+                        //  这里如果规定了按照APP进行重建索引，则需要过滤掉所有子类.
+                        if (notAppRebuildPlan
+                            || !entityClassOp.get().father().isPresent()) {
+                            entityClasses.add(entityClassOp.get());
+                        }
+                    } else {
+                        logger.warn("entityClassId {} not match IEntityClass, will ignore... please check.", entityClassId);
+                    }
+                } catch (Exception e) {
+                    logger.warn("entityClassId {} rebuild error, message {}, will ignore... please check.", entityClassId, e.getMessage());
+                }
+            }
+
 
             if (entityClasses.size() > 0) {
                 return devOpsManagementService.rebuildIndexes(entityClasses,

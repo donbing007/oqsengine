@@ -6,6 +6,7 @@ import com.xforceplus.ultraman.oqsengine.metadata.dto.log.UpGradeLog;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.AppSimpleInfo;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -213,4 +214,13 @@ public interface CacheExecutor {
     List<AppSimpleInfo> showAppInfo();
 
     Collection<UpGradeLog> showUpgradeLogs(String appId, String env) throws JsonProcessingException;
+
+    /**
+     * 获取当前app的entityClassId列表.
+     *
+     * @return entityClassId列表.
+     */
+    default List<String> appEntityClassIds(String appId) {
+        return new ArrayList<>();
+    }
 }

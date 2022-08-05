@@ -34,9 +34,6 @@ public class DefaultBatchProcessor implements BatchProcessor {
     @Resource
     private ConsumerService consumerService;
 
-    @Resource
-    private RebuildIndexExecutor rebuildIndexExecutor;
-
     @Timed(
         value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
         extraTags = {"initiator", "cdc", "action", "oneBatch"}
@@ -85,10 +82,6 @@ public class DefaultBatchProcessor implements BatchProcessor {
 
                 context.setCdcMetrics(cdcMetrics);
 
-                //  同步维护指标.
-                if (!context.getCdcMetrics().getDevOpsMetrics().isEmpty()) {
-                    rebuildIndexExecutor.sync(context.getCdcMetrics().getDevOpsMetrics());
-                }
             } else {
                 //  当前没有任务需要消费
                 cdcMetrics = new CDCMetrics(batchId, context.getCdcMetrics().getCdcAckMetrics(),

@@ -5,14 +5,14 @@ import com.xforceplus.ultraman.oqsengine.calculation.context.DefaultCalculationC
 import com.xforceplus.ultraman.oqsengine.calculation.dto.AffectedInfo;
 import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFactory;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.task.LookupMaintainingTask;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.CalculationParticipant;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
-import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceConsumer;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceGraph;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceGraphConsumer;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
@@ -271,16 +271,18 @@ public class LookupCalculationLogicTest {
             .withValue(
                 new LongValue(targetLongField, 100)
             ).build();
-        Infuence infuence = new Infuence(
-            targetEntity,
+        InfuenceGraph infuence = new InfuenceGraph(
+            CalculationParticipant.Builder.anParticipant()
+                .withEntityClass(targetEntityClass)
+                .withField(EntityField.ILLUSORY_FIELD)
+                .withAffectedEntities(Arrays.asList(targetEntity)).build()
+        );
+
+        infuence.impact(
             CalculationParticipant.Builder.anParticipant()
                 .withEntityClass(targetEntityClass)
                 .withField(targetLongField)
-                .withAffectedEntities(Arrays.asList(targetEntity)).build(),
-            ValueChange.build(
-                targetEntity.id(),
-                new LongValue(targetLongField, 50L),
-                new LongValue(targetLongField, 100L))
+                .withAffectedEntities(Arrays.asList(targetEntity)).build()
         );
 
         context.focusEntity(targetEntity, targetEntityClass);
@@ -290,11 +292,11 @@ public class LookupCalculationLogicTest {
         logic.scope(context, infuence);
 
         List<Participant> abstractParticipants = new ArrayList<>();
-        infuence.scan((parentParticipant, participant, infuenceInner) -> {
+        infuence.scanNoSource((parentParticipant, participant, infuenceInner) -> {
 
             abstractParticipants.add(participant);
 
-            return InfuenceConsumer.Action.CONTINUE;
+            return InfuenceGraphConsumer.Action.CONTINUE;
         });
 
         Assertions.assertEquals(2, abstractParticipants.size());
@@ -329,29 +331,32 @@ public class LookupCalculationLogicTest {
         context.focusEntity(targetEntity, targetEntityClass);
         context.focusField(targetLongField);
 
-        Infuence infuence = new Infuence(
-            targetEntity,
+        InfuenceGraph graph = new InfuenceGraph(
+            CalculationParticipant.Builder.anParticipant()
+                .withEntityClass(targetEntityClass)
+                .withField(EntityField.ILLUSORY_FIELD)
+                .withAffectedEntities(Arrays.asList(targetEntity)).build()
+        );
+
+        graph.impact(
             CalculationParticipant.Builder.anParticipant()
                 .withEntityClass(targetEntityClass)
                 .withField(targetLongField)
-                .withAffectedEntities(Arrays.asList(targetEntity)).build(),
-            ValueChange.build(
-                targetEntity.id(),
-                new LongValue(targetLongField, 50L),
-                new LongValue(targetLongField, 100L))
+                .withAffectedEntities(Arrays.asList(targetEntity)).build()
         );
+
         LookupCalculationLogic logic = new LookupCalculationLogic();
-        logic.scope(context, infuence);
+        logic.scope(context, graph);
 
         AtomicReference<Participant> p = new AtomicReference<>();
-        infuence.scan((parentParticipant, participant, infuenceInner) -> {
-            if (parentParticipant.isPresent()) {
-                if (parentParticipant.get().getEntityClass().id() == targetClassId) {
+        graph.scanNoSource((parentParticipants, participant, infuenceInner) -> {
+            if (participant.getField().calculationType() == CalculationType.LOOKUP) {
+                if (parentParticipants.stream().findFirst().get().getEntityClass().id() == targetClassId) {
                     p.set(participant);
-                    return InfuenceConsumer.Action.OVER;
+                    return InfuenceGraphConsumer.Action.OVER;
                 }
             }
-            return InfuenceConsumer.Action.CONTINUE;
+            return InfuenceGraphConsumer.Action.CONTINUE;
         });
 
 
@@ -412,28 +417,29 @@ public class LookupCalculationLogicTest {
 
         LookupCalculationLogic logic = new LookupCalculationLogic();
 
-        Infuence infuence = new Infuence(
-            targetEntity,
-                CalculationParticipant.Builder.anParticipant()
+        InfuenceGraph infuence = new InfuenceGraph(
+            CalculationParticipant.Builder.anParticipant()
+                .withEntityClass(targetEntityClass)
+                .withField(EntityField.ILLUSORY_FIELD)
+                .withAffectedEntities(Arrays.asList(targetEntity)).build()
+        );
+
+        infuence.impact(
+            CalculationParticipant.Builder.anParticipant()
                 .withEntityClass(targetEntityClass)
                 .withField(targetStringField)
-                .withAffectedEntities(Arrays.asList(targetEntity)).build(),
-            ValueChange.build(
-                targetEntity.id(),
-                new StringValue(targetStringField, "v0"),
-                new StringValue(targetStringField, "v1")
-            )
+                .withAffectedEntities(Arrays.asList(targetEntity)).build()
         );
 
         logic.scope(context, infuence);
 
         AtomicReference<Participant> p = new AtomicReference<>();
-        infuence.scan((parentParticipant, participant, infuenceInner) -> {
+        infuence.scanNoSource((parentParticipant, participant, infuenceInner) -> {
             if (participant.getEntityClass().id() == strongLookupClassId) {
                 p.set(participant);
-                return InfuenceConsumer.Action.OVER;
+                return InfuenceGraphConsumer.Action.OVER;
             }
-            return InfuenceConsumer.Action.CONTINUE;
+            return InfuenceGraphConsumer.Action.CONTINUE;
         });
 
 

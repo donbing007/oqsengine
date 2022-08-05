@@ -351,6 +351,11 @@ public class StorageMetaManager implements MetaManager {
         return cacheExecutor.showAppInfo();
     }
 
+    @Override
+    public List<String> appEntityClassIds(String appId) {
+        return cacheExecutor.appEntityClassIds(appId);
+    }
+
     private void offLineInit(String path) {
         if (OffLineMetaHelper.isValidPath(path)) {
 

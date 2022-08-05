@@ -35,8 +35,12 @@ public interface InfuenceConsumer {
          */
         OVER,
         /**
-         * 终止被当前影响力影响的.
+         * 终止当前及以下所有影响力的迭代,从另外的分支继续.
          */
-        OVER_SELF;
+        OVER_SELF,
+        /**
+         * 删除当前影响力参与者以及后续影响,并且终止迭代.
+         */
+        OVER_REMOVE_SELF,
     }
 }

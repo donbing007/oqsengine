@@ -24,26 +24,34 @@ public abstract class AbstractParticipant implements Participant {
     private Collection<IEntity> affectedEntities;
     private Object attachment;
 
+    private boolean source;
+
     @Override
     public String getId() {
         StringBuilder buff = new StringBuilder();
-        buff.append(getEntityClass().id())
+        buff.append(source);
+        buff.append(getEntityClass() == null ? 0 : getEntityClass().id())
             .append(".")
-            .append(getField().id());
+            .append(getField() == null ? 0 : getField().id());
         return buff.toString();
     }
 
-    public void setEntityClass(IEntityClass entityClass) {
+    protected void setEntityClass(IEntityClass entityClass) {
         this.entityClass = entityClass;
     }
 
-    public void setField(IEntityField field) {
+    protected void setField(IEntityField field) {
         this.field = field;
     }
 
-    public void setAffectedEntities(
-        Collection<IEntity> affectedEntities) {
-        this.affectedEntities = affectedEntities;
+    protected void setAffectedEntities(Collection<IEntity> affectedEntities) {
+        if (affectedEntities != null) {
+            this.affectedEntities = new LinkedList<>(affectedEntities);
+        }
+    }
+
+    public void source() {
+        this.source = true;
     }
 
     public void setAttachment(Object attachment) {
@@ -103,6 +111,11 @@ public abstract class AbstractParticipant implements Participant {
     }
 
     @Override
+    public boolean isSource() {
+        return source;
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) {
             return true;
@@ -118,4 +131,19 @@ public abstract class AbstractParticipant implements Participant {
     public int hashCode() {
         return Objects.hash(getId());
     }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder();
+        sb.append(this.getClass().getSimpleName());
+        sb.append(" (")
+            .append(this.getEntityClass().code())
+            .append(",")
+            .append(this.getField().name())
+            .append(")");
+
+        return sb.toString();
+    }
+
+
 }
