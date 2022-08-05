@@ -122,8 +122,6 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
          * 从主库中查询的将在已同步中过滤.
          */
         Set<Long> filterIdsFromMaster = masterRefs.stream()
-            .filter(r -> r.getOp() == OperationType.DELETE.getValue())
-            .filter(r -> r.getOp() == OperationType.UPDATE.getValue())
             .map(EntityRef::getId)
             .collect(toSet());
 
