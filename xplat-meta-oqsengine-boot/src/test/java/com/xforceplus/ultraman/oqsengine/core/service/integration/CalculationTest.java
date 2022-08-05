@@ -512,6 +512,7 @@ public class CalculationTest extends AbstractContainerExtends {
         IEntity[] orderEntities =
             IntStream.range(0, orderSize).mapToObj(i -> entityHelper.buildOrderEntity(finalUser))
                 .toArray(IEntity[]::new);
+        logger.info("Create {} order.", orderSize);
         entityManagementService.build(orderEntities);
         logger.info("Successfully created {} order.", orderSize);
 

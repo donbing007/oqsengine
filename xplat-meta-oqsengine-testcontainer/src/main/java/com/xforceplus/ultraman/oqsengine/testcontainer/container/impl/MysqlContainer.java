@@ -83,7 +83,13 @@ public class MysqlContainer extends AbstractContainerExtension {
         System.setProperty(
             "MYSQL_JDBC",
             String.format(
-                "jdbc:mysql://%s:%s/oqsengine?useUnicode=true&serverTimezone=GMT&useSSL=false&characterEncoding=utf8",
+                "jdbc:mysql://%s:%s/oqsengine?"
+                    + "useUnicode=true"
+                    + "&serverTimezone=GMT"
+                    + "&useSSL=false"
+                    + "&characterEncoding=utf8"
+                    + "&allowMultiQueries=true"
+                    + "&rewriteBatchedStatements=true",
                 address, port)
         );
 
@@ -102,5 +108,7 @@ public class MysqlContainer extends AbstractContainerExtension {
         );
 
         LOGGER.info("Start mysql server.({}:{})", address, port);
+        LOGGER.info("JDBC URL: {}", System.getProperty("MYSQL_JDBC", "NULL"));
+        LOGGER.info("JDBC AUTH URL: {}", System.getProperty("MYSQL_JDBC_WITH_AUTH", "NULL"));
     }
 }
