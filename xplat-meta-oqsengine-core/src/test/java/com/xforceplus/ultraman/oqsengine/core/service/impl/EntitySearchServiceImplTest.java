@@ -114,8 +114,6 @@ public class EntitySearchServiceImplTest {
 
         Page indexPage = Page.emptyPage();
         Set<Long> excludeIds = new HashSet<>();
-        excludeIds.add(1L);
-        excludeIds.add(2L);
         when(indexStorage.select(
             Conditions.buildEmtpyConditions(),
             EntityClassDefine.l1EntityClass,
@@ -194,9 +192,6 @@ public class EntitySearchServiceImplTest {
                 .withCommitId(1)
                 .withPage(indexPage)
                 .withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD))
-                .withExcludeId(1)
-                .withExcludeId(2)
-                .withExcludeId(3)
                 .withExcludeId(4)
                 .build()
         )).thenReturn(Collections.emptyList());
@@ -298,9 +293,6 @@ public class EntitySearchServiceImplTest {
 
         // 索引需要排除的.
         Set<Long> excludeIds = new HashSet<>();
-        excludeIds.add(1L);
-        excludeIds.add(2L);
-
         when(indexStorage.select(
             conditions,
             EntityClassDefine.l2EntityClass,
