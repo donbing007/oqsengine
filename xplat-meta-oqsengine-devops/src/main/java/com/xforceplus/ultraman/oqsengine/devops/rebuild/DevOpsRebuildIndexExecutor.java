@@ -137,8 +137,6 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
         return devOps;
     }
 
-
-
     private void handleTask(List<DevOpsTaskInfo> devOps) {
 
         for (DevOpsTaskInfo devOpsTaskInfo : devOps) {
@@ -161,35 +159,30 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
                 boolean isCanceled = false;
                 while (iterator.hasNext()) {
                     OqsEngineEntity originalEntity = iterator.next();
-                    //  只处理时间范围内的数据.
-                    if (originalEntity.getUpdateTime() >= devOpsTaskInfo.getStarts()
-                        && originalEntity.getUpdateTime() <= devOpsTaskInfo.getEnds()) {
 
-                        //  设置maintainId
-                        originalEntity.setMaintainid(devOpsTaskInfo.getMaintainid());
+                    //  设置maintainId
+                    originalEntity.setMaintainid(devOpsTaskInfo.getMaintainid());
 
-                        entities.add(originalEntity);
+                    entities.add(originalEntity);
 
-                        if (entities.size() == querySize) {
+                    if (entities.size() == querySize) {
 
-                            indexStorage.saveOrDeleteOriginalEntities(entities);
+                        indexStorage.saveOrDeleteOriginalEntities(entities);
 
-                            devOpsTaskInfo.addBatchSize(entities.size());
-                            devOpsTaskInfo.addFinishSize(entities.size());
-                            devOpsTaskInfo.setStartId(originalEntity.getId());
+                        devOpsTaskInfo.addBatchSize(entities.size());
+                        devOpsTaskInfo.addFinishSize(entities.size());
+                        devOpsTaskInfo.setStartId(originalEntity.getId());
 
-                            entities.clear();
+                        entities.clear();
 
-                            updateFlag++;
-                            //  每拉10次更新一次任务状态.
-                            if (updateFlag == frequency) {
-                                if (NULL_UPDATE == sqlTaskStorage.update(devOpsTaskInfo)) {
-                                    isCanceled = true;
-                                    break;
-                                }
-                                updateFlag = 0;
+                        updateFlag++;
+                        //  每拉10次更新一次任务状态.
+                        if (updateFlag == frequency) {
+                            if (NULL_UPDATE == sqlTaskStorage.update(devOpsTaskInfo)) {
+                                isCanceled = true;
+                                break;
                             }
-
+                            updateFlag = 0;
                         }
                     }
                 }

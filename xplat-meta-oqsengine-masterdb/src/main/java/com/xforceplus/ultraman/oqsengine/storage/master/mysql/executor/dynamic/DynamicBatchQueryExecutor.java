@@ -68,9 +68,10 @@ public class DynamicBatchQueryExecutor extends AbstractMasterTaskExecutor<Long, 
         try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
 
             int pos = 1;
-
-            st.setLong(pos++, startId);
             st.setBoolean(pos++, false);
+            st.setLong(pos++, startTime);
+            st.setLong(pos++, endTime);
+            st.setLong(pos++, startId);
             st.setLong(pos, pageSize);
 
             List<MasterStorageEntity> entities = new ArrayList<>();
@@ -135,13 +136,17 @@ public class DynamicBatchQueryExecutor extends AbstractMasterTaskExecutor<Long, 
         sql.append(" FROM ")
             .append(getTableName())
             .append(" WHERE ")
-            .append(FieldDefine.ID).append(" > ").append("?")
-            .append(" AND ")
             .append(EntityClassHelper.buildEntityClassQuerySql(entityClass))
             .append(" AND ")
-            .append(FieldDefine.DELETED).append(" = ").append("?");
+            .append(FieldDefine.DELETED).append(" = ").append("?")
+            .append(" AND ")
+            .append(FieldDefine.UPDATE_TIME).append(" >= ").append("?")
+            .append(" AND ")
+            .append(FieldDefine.UPDATE_TIME).append(" <= ").append("?")
+            .append(" AND ")
+            .append(FieldDefine.ID).append(" > ").append("?");
 
-        sql.append(" ORDER BY id asc ").append("LIMIT ").append("?");
+        sql.append(" ORDER BY (id+0) asc ").append("LIMIT ").append("?");
         return sql.toString();
     }
 }
