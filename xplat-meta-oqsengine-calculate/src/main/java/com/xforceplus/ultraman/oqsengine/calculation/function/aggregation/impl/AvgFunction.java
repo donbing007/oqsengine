@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.impl;
 import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.AggregationFunction;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.BigDecimalSummaryStatistics;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
@@ -69,15 +70,33 @@ public class AvgFunction implements AggregationFunction {
     @Override
     public Optional<IValue> init(Optional<IValue> agg, List<Optional<IValue>> values) {
         Optional<IValue> aggValue = Optional.of(agg.get().copy());
+        String sum = "";
         if (agg.get() instanceof DecimalValue) {
             BigDecimalSummaryStatistics temp = values.stream().map(v -> ((DecimalValue) v.get()).getValue())
                 .collect(BigDecimalSummaryStatistics.statistics());
             aggValue.get().setStringValue(temp.getAverage(MathContext.DECIMAL64).toString());
+            sum = temp.getSum().toString();
         } else if (agg.get() instanceof LongValue) {
             LongSummaryStatistics temp =
                 values.stream().map(o -> o.get()).collect(Collectors.summarizingLong(IValue::valueToLong));
             aggValue.get().setStringValue(new DecimalFormat("0").format(temp.getAverage()));
+            sum = String.valueOf(temp.getSum());
         }
-        return Optional.of(aggValue.get());
+        return initAttachment(aggValue, values.size(), sum);
     }
+
+    private Optional<IValue> initAttachment(Optional<IValue> aggValue, int count, String sum) {
+        if (aggValue.isPresent()) {
+            IValue value = aggValue.get();
+            StringBuilder attachmentBuff = new StringBuilder();
+
+            attachmentBuff.append(count)
+                    .append('|')
+                    .append(sum);
+
+            return Optional.of(value.copy(attachmentBuff.toString()));
+        }
+        return Optional.empty();
+    }
+
 }

@@ -73,4 +73,16 @@ public interface Participant {
      */
     public void source();
 
+    /**
+     * 是否需要计算.
+     *
+     * @return true 不需要 false 需要.
+     */
+    public boolean isNeedless();
+
+    /**
+     * 设置是否需要计算.
+     */
+    public void needless();
+
 }

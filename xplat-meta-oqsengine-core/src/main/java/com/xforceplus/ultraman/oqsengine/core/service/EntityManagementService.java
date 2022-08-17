@@ -1,9 +1,14 @@
 package com.xforceplus.ultraman.oqsengine.core.service;
 
+import com.xforceplus.ultraman.oqsengine.calculation.dto.ErrorCalculateInstance;
 import com.xforceplus.ultraman.oqsengine.core.service.pojo.OqsResult;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -47,6 +52,38 @@ public interface EntityManagementService {
      * @return 创建结果.
      */
     OqsResult<Map<IEntity, IValue[]>> replace(IEntity[] entities) throws SQLException;
+
+
+    /**
+     * 重新计算实例.
+     *
+     * @param entities 实例
+     * @param entityClassRef 对象
+     * @param fieldCodes 字段集合
+     * @return 重算后的结果
+     */
+    OqsResult<Map<IEntity, IValue[]>> reCalculate(IEntity[] entities, EntityClassRef entityClassRef, List<String> fieldCodes);
+
+    /**
+     * 计算字段内存试算.
+     *
+     * @param ids 实例id列表.
+     * @param entityClassRef 对象.
+     * @param fieldCodes 计算字段集合.
+     * @return dryRun的差异信息
+     */
+    List<ErrorCalculateInstance> dryRun(List<Long> ids, EntityClassRef entityClassRef, List<String> fieldCodes);
+
+
+    /**
+     * 计算字段内存试算.
+     *
+     * @param ids 实例id列表.
+     * @param entityClassRef 对象.
+     * @return dryRun的差异信息
+     */
+    List<ErrorCalculateInstance> dryRun(List<Long> ids, EntityClassRef entityClassRef);
+
 
     /**
      * 删除一个已经存在的 entity.

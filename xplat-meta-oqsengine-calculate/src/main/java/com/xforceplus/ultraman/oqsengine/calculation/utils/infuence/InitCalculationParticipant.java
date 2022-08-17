@@ -24,6 +24,8 @@ public class InitCalculationParticipant extends AbstractParticipant implements C
      */
     private IEntity process;
 
+    private boolean needInit;
+
     public InitCalculationParticipant() {
         super();
     }
@@ -34,6 +36,10 @@ public class InitCalculationParticipant extends AbstractParticipant implements C
 
     public Collection<IEntityField> getSourceFields() {
         return this.sourceFields == null ? Collections.emptyList() : this.sourceFields;
+    }
+
+    public boolean isNeedInit() {
+        return needInit;
     }
 
     public int growUp() {
@@ -95,6 +101,8 @@ public class InitCalculationParticipant extends AbstractParticipant implements C
         private int age;
         private IEntity process;
 
+        private boolean needInit;
+
         private Builder() {}
 
         public static Builder anInitCalculationParticipant() {
@@ -141,6 +149,11 @@ public class InitCalculationParticipant extends AbstractParticipant implements C
             return this;
         }
 
+        public Builder withNeedInit(boolean need) {
+            this.needInit = need;
+            return this;
+        }
+
         /**
          * 构造.
          */
@@ -154,6 +167,7 @@ public class InitCalculationParticipant extends AbstractParticipant implements C
             initCalculationParticipant.sourceEntityClass = this.sourceEntityClass;
             initCalculationParticipant.age = this.age;
             initCalculationParticipant.sourceFields = this.sourceFields;
+            initCalculationParticipant.needInit = this.needInit;
             return initCalculationParticipant;
         }
     }

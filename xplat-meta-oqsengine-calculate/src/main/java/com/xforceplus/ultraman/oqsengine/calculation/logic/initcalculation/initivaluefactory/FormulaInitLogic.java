@@ -27,7 +27,7 @@ public class FormulaInitLogic implements InitIvalueLogic {
     @Override
     public IEntity init(IEntity entity, InitCalculationParticipant participant) {
         Optional<IValue> value = entity.entityValue().getValue(participant.getField().id());
-        if (!value.isPresent() || (value.get().getValue() instanceof EmptyTypedValue)) {
+        if (!value.isPresent() || (value.get().getValue() instanceof EmptyTypedValue) || participant.isNeedInit()) {
             participant.setProcess(entity);
             // 构造计算上下文
             DefaultCalculationContext build = DefaultCalculationContext.Builder.anCalculationContext().build();

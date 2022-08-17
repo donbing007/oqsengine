@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.impl;
 import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.AggregationFunction;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.BigDecimalSummaryStatistics;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
@@ -63,6 +64,24 @@ public class SumFunction implements AggregationFunction {
                 values.stream().map(o -> o.get()).collect(Collectors.summarizingLong(IValue::valueToLong));
             aggValue.get().setStringValue(String.valueOf(temp.getSum()));
         }
-        return Optional.of(aggValue.get());
+
+        return initAttachment(aggValue);
+    }
+
+    private Optional<IValue> initAttachment(Optional<IValue> aggValue) {
+        if (aggValue.isPresent()) {
+            FieldType fieldType = aggValue.get().getField().type();
+            switch (fieldType) {
+                case LONG:
+                    return Optional.of(aggValue.get().copy("0|0"));
+                case DECIMAL:
+                    return Optional.of(aggValue.get().copy("0|0.0"));
+                case STRINGS:
+                    return Optional.of(aggValue.get().copy(""));
+                default:
+                    return Optional.of(aggValue.get().copy("0|0"));
+            }
+        }
+        return Optional.empty();
     }
 }

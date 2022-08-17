@@ -20,7 +20,9 @@ import akka.NotUsed;
 import akka.grpc.javadsl.Metadata;
 import akka.stream.javadsl.Source;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.protobuf.ProtocolStringList;
 import com.xforceplus.ultraman.oqsengine.boot.grpc.utils.EntityClassHelper;
+import com.xforceplus.ultraman.oqsengine.calculation.dto.ErrorCalculateInstance;
 import com.xforceplus.ultraman.oqsengine.changelog.ReplayService;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.ChangeVersion;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.EntityAggDomain;
@@ -60,9 +62,13 @@ import com.xforceplus.ultraman.oqsengine.sdk.ChangelogResponse;
 import com.xforceplus.ultraman.oqsengine.sdk.ChangelogResponseList;
 import com.xforceplus.ultraman.oqsengine.sdk.CompatibleRequest;
 import com.xforceplus.ultraman.oqsengine.sdk.ConditionsUp;
+import com.xforceplus.ultraman.oqsengine.sdk.DryRunFieldsInfo;
+import com.xforceplus.ultraman.oqsengine.sdk.DryRunInstanceInfo;
+import com.xforceplus.ultraman.oqsengine.sdk.DryRunResult;
 import com.xforceplus.ultraman.oqsengine.sdk.EntityMultiUp;
 import com.xforceplus.ultraman.oqsengine.sdk.EntityServicePowerApi;
 import com.xforceplus.ultraman.oqsengine.sdk.EntityUp;
+import com.xforceplus.ultraman.oqsengine.sdk.ErrorFieldUnit;
 import com.xforceplus.ultraman.oqsengine.sdk.FieldConditionUp;
 import com.xforceplus.ultraman.oqsengine.sdk.FieldSortUp;
 import com.xforceplus.ultraman.oqsengine.sdk.Filters;
@@ -70,6 +76,7 @@ import com.xforceplus.ultraman.oqsengine.sdk.LockRequest;
 import com.xforceplus.ultraman.oqsengine.sdk.LockResponse;
 import com.xforceplus.ultraman.oqsengine.sdk.OperationResult;
 import com.xforceplus.ultraman.oqsengine.sdk.QueryFieldsUp;
+import com.xforceplus.ultraman.oqsengine.sdk.ReCalculateInfo;
 import com.xforceplus.ultraman.oqsengine.sdk.ReplayRequest;
 import com.xforceplus.ultraman.oqsengine.sdk.SelectByCondition;
 import com.xforceplus.ultraman.oqsengine.sdk.SelectBySql;
@@ -100,6 +107,7 @@ import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.annotation.Resource;
+import org.checkerframework.checker.units.qual.A;
 import org.redisson.OqsLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -1006,6 +1014,213 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 extractTransaction(metadata).ifPresent(id -> {
                     transactionManager.unbind();
                 });
+            }
+
+            return result;
+        });
+    }
+
+    @Override
+    public CompletionStage<OperationResult> reCalculate(ReCalculateInfo reCalculateInfo, Metadata metadata) {
+        return asyncWrite(() -> {
+            OperationResult result = null;
+            try {
+                List<EntityUp> entityUps = reCalculateInfo.getEntityClassesList();
+
+                EntityClassRef entityClassRef = EntityClassRef.Builder.anEntityClassRef()
+                    .withEntityClassId(reCalculateInfo.getEntityClassRef().getId())
+                    .withEntityClassCode(reCalculateInfo.getEntityClassRef().getCode())
+                    .withEntityClassProfile(reCalculateInfo.getEntityClassRef().getProfile()).build();
+
+                ProtocolStringList fieldCodeList = reCalculateInfo.getFieldCodeList();
+                Optional<IEntityClass> entityClass = metaManager.load(entityClassRef);
+
+                if (!entityClass.isPresent()) {
+                    throw new RuntimeException(String.format("entityClass not found by entityClassRef: %s", entityClassRef));
+                }
+                List<IEntity> entities = new ArrayList<>();
+
+                for (EntityUp entityUp : entityUps) {
+                    IEntity entity = toEntity(entityClassRef, entityClass.get(), entityUp);
+                    entities.add(entity);
+                }
+
+                OqsResult<Map<IEntity, IValue[]>> mapOqsResult =
+                    entityManagementService.reCalculate(entities.toArray(entities.toArray(new IEntity[entities.size()])),
+                        entityClassRef, fieldCodeList);
+                ResultStatus replaceStatus = mapOqsResult.getResultStatus();
+                Optional<Map<IEntity, IValue[]>> valueOp = mapOqsResult.getValue();
+
+                switch (replaceStatus) {
+                    case SUCCESS: {
+                        OperationResult.Builder builder = OperationResult.newBuilder()
+                            .setAffectedRow(entities.size())
+                            .setCode(OperationResult.Code.OK)
+                            .setOriginStatus(SUCCESS.name());
+
+                        valueOp.ifPresent(value -> {
+                            value.forEach((k, v) -> {
+                                //add old and new
+                                builder.addQueryResult(toEntityUp(k));
+                                Entity newEntity = Entity.Builder.anEntity()
+                                    .withId(k.id())
+                                    .withEntityClassRef(k.entityClassRef())
+                                    .withValues(Arrays.asList(v))
+                                    .build();
+                                builder.addQueryResult(toEntityUp(newEntity));
+                            });
+                            builder.setAffectedRow(valueOp.get().size());
+                        });
+
+                        result = builder.buildPartial();
+                        break;
+                    }
+                    case HALF_SUCCESS: {
+                        Map<String, String> failedMap = hintsToFails(mapOqsResult.getHints());
+                        String failedValues = "";
+                        try {
+                            failedValues = mapper.writeValueAsString(failedMap);
+                        } catch (Exception ex) {
+                            logger.error("{}", ex);
+                        }
+
+                        OperationResult.Builder builder = OperationResult.newBuilder()
+                            .setAffectedRow(entities.size())
+                            .setCode(OperationResult.Code.OTHER)
+                            .setOriginStatus(HALF_SUCCESS.name())
+                            .setMessage(failedValues);
+
+                        valueOp.ifPresent(value -> {
+                            value.forEach((k, v) -> {
+                                //add old and new
+                                builder.addQueryResult(toEntityUp(k));
+                                Entity newEntity = Entity.Builder.anEntity()
+                                    .withId(k.id())
+                                    .withValues(Arrays.asList(v))
+                                    .build();
+                                builder.addQueryResult(toEntityUp(newEntity));
+                            });
+                        });
+
+                        result = builder.buildPartial();
+                        break;
+                    }
+                    case CONFLICT:
+                        //send to sdk
+                        result = OperationResult.newBuilder()
+                            .setAffectedRow(0)
+                            .setCode(OperationResult.Code.OTHER)
+                            .setOriginStatus(ResultStatus.CONFLICT.name())
+                            .setMessage(ResultStatus.CONFLICT.name())
+                            .buildPartial();
+                        break;
+                    case NOT_FOUND:
+                        //send to sdk
+                        result = OperationResult.newBuilder()
+                            .setAffectedRow(0)
+                            .setCode(OperationResult.Code.FAILED)
+                            .setMessage(notFound("No record found."))
+                            .setOriginStatus(NOT_FOUND.name())
+                            .buildPartial();
+                        break;
+                    case ELEVATEFAILED:
+                    case FIELD_MUST:
+                    case FIELD_TOO_LONG:
+                    case FIELD_HIGH_PRECISION:
+                        result = OperationResult.newBuilder()
+                            .setAffectedRow(0)
+                            .setCode(OperationResult.Code.FAILED)
+                            .setOriginStatus(replaceStatus.name())
+                            .setMessage(mapOqsResult.getMessage())
+                            .buildPartial();
+                        break;
+                    default:
+                        //unreachable code
+                        result = OperationResult.newBuilder()
+                            .setAffectedRow(0)
+                            .setCode(OperationResult.Code.FAILED)
+                            .setOriginStatus(replaceStatus.name())
+                            .setMessage(
+                                other(String.format("Unknown response status %s.", replaceStatus.name())))
+                            .buildPartial();
+                }
+            } catch (Exception e) {
+                logger.info(e.getMessage());
+                result = OperationResult.newBuilder()
+                    .setCode(OperationResult.Code.EXCEPTION)
+                    .setMessage(err(Optional.ofNullable(e.getMessage()).orElseGet(e::toString)))
+                    .buildPartial();
+            } finally {
+                extractTransaction(metadata).ifPresent(id -> {
+                    transactionManager.unbind();
+                });
+            }
+            return result;
+        });
+    }
+
+    @Override
+    public CompletionStage<DryRunResult> dryRunFields(DryRunFieldsInfo dryRunFieldsInfo, Metadata metadata) {
+        return asyncWrite(() -> {
+            DryRunResult result = null;
+            try {
+                EntityClassRef entityClassRef = EntityClassRef.Builder.anEntityClassRef()
+                    .withEntityClassId(dryRunFieldsInfo.getEntityClassRef().getId())
+                    .withEntityClassCode(dryRunFieldsInfo.getEntityClassRef().getCode())
+                    .withEntityClassProfile(dryRunFieldsInfo.getEntityClassRef().getProfile()).build();
+
+                List<ErrorCalculateInstance> errorCalculateInstances =
+                    entityManagementService.dryRun(dryRunFieldsInfo.getIdList(), entityClassRef,
+                        dryRunFieldsInfo.getFieldCodeList());
+
+                result = DryRunResult.newBuilder()
+                    .addAllErrorCalculateInstance(errorCalculateInstances.stream().map(e ->
+                        com.xforceplus.ultraman.oqsengine.sdk.ErrorCalculateInstance.newBuilder()
+                            .setId(e.getId())
+                            .addAllErrorFieldUnits(e.getErrorFieldUnits().stream().map(f -> ErrorFieldUnit.newBuilder()
+                                .setFieldCode(f.getField().name())
+                                .setExpectValue(f.getExpect().valueToString())
+                                .setNowValue(f.getNow().valueToString()).build()
+                                )
+                                .collect(Collectors.toList()))
+                            .build()).collect(Collectors.toList())
+                    )
+                    .build();
+            } catch (Exception e) {
+                logger.error(e.getMessage());
+                return DryRunResult.newBuilder().build();
+            }
+
+            return result;
+        });
+    }
+
+    @Override
+    public CompletionStage<DryRunResult> dryRunInstances(DryRunInstanceInfo dryRunInstanceInfo, Metadata metadata) {
+        return asyncWrite(() -> {
+            DryRunResult result = null;
+            try {
+                EntityClassRef entityClassRef = EntityClassRef.Builder.anEntityClassRef()
+                    .withEntityClassId(dryRunInstanceInfo.getEntityClassRef().getId())
+                    .withEntityClassCode(dryRunInstanceInfo.getEntityClassRef().getCode())
+                    .withEntityClassProfile(dryRunInstanceInfo.getEntityClassRef().getProfile()).build();
+
+                List<ErrorCalculateInstance> errorCalculateInstances =
+                    entityManagementService.dryRun(dryRunInstanceInfo.getIdList(), entityClassRef);
+
+                result = DryRunResult.newBuilder()
+                    .addAllErrorCalculateInstance(errorCalculateInstances.stream().map(e ->
+                        com.xforceplus.ultraman.oqsengine.sdk.ErrorCalculateInstance.newBuilder()
+                            .setId(e.getId())
+                            .addAllErrorFieldUnits(e.getErrorFieldUnits().stream().map(f -> ErrorFieldUnit.newBuilder()
+                                .setFieldCode(f.getField().name())
+                                .setExpectValue(f.getExpect().valueToString())
+                                .setNowValue(f.getNow().valueToString()).build()).collect(Collectors.toList()))
+                            .build()).collect(Collectors.toList()))
+                    .build();
+            } catch (Exception e) {
+                logger.error(e.getMessage());
+                return DryRunResult.newBuilder().build();
             }
 
             return result;

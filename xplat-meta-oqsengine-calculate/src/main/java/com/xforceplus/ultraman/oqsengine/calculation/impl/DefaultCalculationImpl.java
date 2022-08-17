@@ -176,8 +176,8 @@ public class DefaultCalculationImpl implements Calculation {
         依赖图的扫描,从0层开始层层迭代.
          */
         graph.scan((parentParticipants, participant, inner) -> {
-            // 根参与者不需要计算,跳过.
-            if (participant.isSource()) {
+            // 根参与者不需要计算,跳过.无需计算节点，跳过.
+            if (participant.isSource() || participant.isNeedless()) {
                 return InfuenceGraphConsumer.Action.CONTINUE;
             }
 
@@ -424,7 +424,8 @@ public class DefaultCalculationImpl implements Calculation {
             .build();
         // 指定为影响源参与者.
         sourceParticipant.source();
-        InfuenceGraph graph = new InfuenceGraph(sourceParticipant);
+        InfuenceGraph graph = context.getInfuenceGraph() != null
+            ? context.getInfuenceGraph() : new InfuenceGraph(sourceParticipant);
 
         try {
             // 得到按优先级排序好的计算字段.并且过滤只处理改变的字段.

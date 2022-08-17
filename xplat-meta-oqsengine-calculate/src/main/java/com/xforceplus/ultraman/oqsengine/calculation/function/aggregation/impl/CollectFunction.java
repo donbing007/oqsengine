@@ -98,6 +98,23 @@ public class CollectFunction implements AggregationFunction {
             }
         );
 
-        return Optional.ofNullable(collectAttachment.toIValue(aggValue.getField()));
+        return initAttachment(Optional.ofNullable(collectAttachment.toIValue(aggValue.getField())));
+    }
+
+    private Optional<IValue> initAttachment(Optional<IValue> aggValue) {
+        if (aggValue.isPresent()) {
+            FieldType fieldType = aggValue.get().getField().type();
+            switch (fieldType) {
+                case LONG:
+                    return Optional.of(aggValue.get().copy("0|0"));
+                case DECIMAL:
+                    return Optional.of(aggValue.get().copy("0|0.0"));
+                case STRINGS:
+                    return Optional.of(aggValue.get().copy(""));
+                default:
+                    return Optional.of(aggValue.get().copy("0|0"));
+            }
+        }
+        return Optional.empty();
     }
 }

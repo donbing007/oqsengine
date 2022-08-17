@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.impl;
 
 import com.xforceplus.ultraman.oqsengine.calculation.function.aggregation.AggregationFunction;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
@@ -62,12 +63,31 @@ public class CountFunction implements AggregationFunction {
     @Override
     public Optional<IValue> init(Optional<IValue> agg, List<Optional<IValue>> values) {
         Optional<IValue> aggValue = Optional.of(agg.get().copy());
-        if (agg.get() instanceof LongValue) {
+        /*if (agg.get() instanceof LongValue) {
             LongSummaryStatistics temp =
                 values.stream().map(o -> o.get()).collect(Collectors.summarizingLong(IValue::valueToLong));
             aggValue.get().setStringValue(String.valueOf(temp.getCount()));
+        }*/
+        aggValue.get().setStringValue(String.valueOf(values.size()));
+        return initAttachment(aggValue);
+    }
+
+
+    private Optional<IValue> initAttachment(Optional<IValue> aggValue) {
+        if (aggValue.isPresent()) {
+            FieldType fieldType = aggValue.get().getField().type();
+            switch (fieldType) {
+                case LONG:
+                    return Optional.of(aggValue.get().copy("0|0"));
+                case DECIMAL:
+                    return Optional.of(aggValue.get().copy("0|0.0"));
+                case STRINGS:
+                    return Optional.of(aggValue.get().copy(""));
+                default:
+                    return Optional.of(aggValue.get().copy("0|0"));
+            }
         }
-        return Optional.of(aggValue.get());
+        return Optional.empty();
     }
 
 }

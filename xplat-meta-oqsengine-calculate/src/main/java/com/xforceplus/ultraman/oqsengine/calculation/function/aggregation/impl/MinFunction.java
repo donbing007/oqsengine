@@ -87,7 +87,24 @@ public class MinFunction implements AggregationFunction {
                 .collect(Collectors.summarizingLong(Long::longValue));
             aggValue.get().setStringValue(String.valueOf(temp.getMin()));
         }
-        return Optional.of(aggValue.get());
+        return initAttachment(aggValue, values.size());
+    }
+
+
+    private Optional<IValue> initAttachment(Optional<IValue> aggValue, int count) {
+        if (aggValue.isPresent()) {
+            IValue value = aggValue.get();
+            StringBuilder attachmentBuff = new StringBuilder();
+
+            attachmentBuff.append(count)
+                    .append('|')
+                    .append(value.valueToString());
+
+            return Optional.of(value.copy(attachmentBuff.toString()));
+
+
+        }
+        return Optional.empty();
     }
 
 }

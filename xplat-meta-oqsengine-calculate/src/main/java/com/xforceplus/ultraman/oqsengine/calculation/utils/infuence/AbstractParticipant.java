@@ -26,6 +26,8 @@ public abstract class AbstractParticipant implements Participant {
 
     private boolean source;
 
+    private boolean needless;
+
     @Override
     public String getId() {
         StringBuilder buff = new StringBuilder();
@@ -52,6 +54,16 @@ public abstract class AbstractParticipant implements Participant {
 
     public void source() {
         this.source = true;
+    }
+
+    @Override
+    public boolean isNeedless() {
+        return this.needless;
+    }
+
+    @Override
+    public void needless() {
+        this.needless = true;
     }
 
     public void setAttachment(Object attachment) {

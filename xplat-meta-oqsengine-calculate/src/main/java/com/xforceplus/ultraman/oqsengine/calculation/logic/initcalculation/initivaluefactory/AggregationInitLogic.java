@@ -41,7 +41,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * 聚合初始化化.
+ * 聚合初始化.
  *
  * @version 0.1 2021/12/2 14:52
  * @Auther weikai
@@ -70,7 +70,7 @@ public class AggregationInitLogic implements InitIvalueLogic {
 
         Optional<IValue> value = entity.entityValue().getValue(participant.getField().id());
 
-        if (!value.isPresent() || (value.get().getValue() instanceof EmptyTypedValue)) {
+        if (!value.isPresent() || (value.get().getValue() instanceof EmptyTypedValue) || participant.isNeedInit()) {
             // 进入此判断说明需要更新，将当前实例标志为需要更新.
             participant.setProcess(entity);
 
@@ -151,12 +151,6 @@ public class AggregationInitLogic implements InitIvalueLogic {
                 } else {
                     entity.entityValue().addValue(IValueUtils.toIValue(participant.getField(), 0));
                 }
-                return entity;
-            }
-
-            // count类型单独处理，业务没有字段信息
-            if (aggregation.getAggregationType().equals(AggregationType.COUNT)) {
-                entity.entityValue().addValue(IValueUtils.toIValue(participant.getField(), count));
                 return entity;
             }
 
