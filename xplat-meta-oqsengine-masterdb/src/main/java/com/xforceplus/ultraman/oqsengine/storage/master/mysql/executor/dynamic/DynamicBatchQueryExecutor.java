@@ -135,6 +135,7 @@ public class DynamicBatchQueryExecutor extends AbstractMasterTaskExecutor<Long, 
 
         sql.append(" FROM ")
             .append(getTableName())
+            .append("force index(rebuild_index)")
             .append(" WHERE ")
             .append(EntityClassHelper.buildEntityClassQuerySql(entityClass))
             .append(" AND ")
