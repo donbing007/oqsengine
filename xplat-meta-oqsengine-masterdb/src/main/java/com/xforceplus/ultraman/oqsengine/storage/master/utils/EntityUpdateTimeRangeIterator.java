@@ -61,9 +61,9 @@ public class EntityUpdateTimeRangeIterator implements DataIterator<OqsEngineEnti
         ps = connection.prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
         ps.setFetchSize(Integer.MIN_VALUE);
         int pos = 1;
+        ps.setBoolean(pos++, false);
         ps.setLong(pos++, startTime);
         ps.setLong(pos++, endTime);
-        ps.setBoolean(pos++, false);
 
         rs = ps.executeQuery();
     }
@@ -187,13 +187,13 @@ public class EntityUpdateTimeRangeIterator implements DataIterator<OqsEngineEnti
         sql.append(" FROM ")
             .append(this.tableName)
             .append(" WHERE ")
-            .append(FieldDefine.UPDATE_TIME).append(" >= ").append("?")
-            .append(" AND ")
-            .append(FieldDefine.UPDATE_TIME).append(" <= ").append("?")
+            .append(EntityClassHelper.buildEntityClassQuerySql(entityClass))
             .append(" AND ")
             .append(FieldDefine.DELETED).append(" = ").append("?")
             .append(" AND ")
-            .append(EntityClassHelper.buildEntityClassQuerySql(entityClass));
+            .append(FieldDefine.UPDATE_TIME).append(" >= ").append("?")
+            .append(" AND ")
+            .append(FieldDefine.UPDATE_TIME).append(" <= ").append("?");
         return sql.toString();
     }
 
