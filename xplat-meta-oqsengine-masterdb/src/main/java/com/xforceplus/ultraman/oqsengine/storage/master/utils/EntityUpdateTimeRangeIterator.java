@@ -193,8 +193,6 @@ public class EntityUpdateTimeRangeIterator implements DataIterator<OqsEngineEnti
             .append(" AND ")
             .append(FieldDefine.DELETED).append(" = ").append("?")
             .append(" AND ")
-            .append(FieldDefine.PROFILE).append(" = ").append("?")
-            .append(" AND ")
             .append(EntityClassHelper.buildEntityClassQuerySql(entityClass));
         return sql.toString();
     }
