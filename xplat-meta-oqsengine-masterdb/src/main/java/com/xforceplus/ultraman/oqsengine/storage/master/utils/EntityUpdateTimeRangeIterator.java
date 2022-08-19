@@ -59,6 +59,7 @@ public class EntityUpdateTimeRangeIterator implements DataIterator<OqsEngineEnti
         connection = dataSource.getConnection();
         String sql = buildSQL();
         ps = connection.prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+        ps.setFetchSize(Integer.MIN_VALUE);
         int pos = 1;
         ps.setLong(pos++, startTime);
         ps.setLong(pos++, endTime);
