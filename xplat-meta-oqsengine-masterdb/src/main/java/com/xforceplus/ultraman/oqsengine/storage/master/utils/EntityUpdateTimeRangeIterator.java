@@ -63,7 +63,6 @@ public class EntityUpdateTimeRangeIterator implements DataIterator<OqsEngineEnti
         ps.setLong(pos++, startTime);
         ps.setLong(pos++, endTime);
         ps.setBoolean(pos++, false);
-        ps.setString(pos++, entityClass.profile());
 
         rs = ps.executeQuery();
     }
