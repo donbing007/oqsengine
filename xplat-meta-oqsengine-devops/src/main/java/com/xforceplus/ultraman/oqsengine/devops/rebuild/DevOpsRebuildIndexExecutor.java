@@ -14,6 +14,7 @@ import com.xforceplus.ultraman.oqsengine.devops.rebuild.handler.TaskHandler;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.DefaultDevOpsTaskInfo;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.DevOpsTaskInfo;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.storage.SQLTaskStorage;
+import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
@@ -168,6 +169,8 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
 
                     //  设置maintainId
                     originalEntity.setMaintainid(devOpsTaskInfo.getMaintainid());
+                    // 需要索引进行更新,所以这里强制设置为更新状态.
+                    originalEntity.setOp(OperationType.UPDATE.getValue());
 
                     entities.add(originalEntity);
 
