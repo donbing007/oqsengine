@@ -152,7 +152,13 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
                 int frequency = 10;
 
                 DataIterator<OqsEngineEntity> iterator =
-                    masterStorage.iterator(devOpsTaskInfo.getEntityClass(), devOpsTaskInfo.getStarts(), devOpsTaskInfo.getEnds(), devOpsTaskInfo.getStartId(), querySize, true);
+                    masterStorage.iterator(
+                        devOpsTaskInfo.getEntityClass(),
+                        devOpsTaskInfo.getStarts(),
+                        devOpsTaskInfo.getEnds(),
+                        devOpsTaskInfo.getStartId(),
+                        querySize,
+                        true);
 
                 List<OqsEngineEntity> entities = new ArrayList<>();
 

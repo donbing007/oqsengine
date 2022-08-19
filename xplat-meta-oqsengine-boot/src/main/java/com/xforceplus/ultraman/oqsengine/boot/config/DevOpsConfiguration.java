@@ -23,7 +23,7 @@ public class DevOpsConfiguration {
     @Bean
     public RebuildIndexExecutor devOpsRebuildIndexExecutor(
         @Value("${storage.devOps.task.split:30}") int taskSize,
-        @Value("${storage.devOps.task.cache.maxsize:500}") int cacheMaxSize) {
+        @Value("${storage.devOps.task.cache.maxsize:2048}") int cacheMaxSize) {
         return new DevOpsRebuildIndexExecutor(taskSize, cacheMaxSize);
     }
 

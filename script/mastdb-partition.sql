@@ -20,7 +20,7 @@ create table oqsbigentity
     primary key (id),
     KEY commitid_entity_index (commitid, entityclassl0, entityclassl1),
     KEY tx_index (tx),
-    KEY rebuild_index (entityclassl0, deleted, updatetime, id),
+    KEY rebuild_index (updatetime, deleted, entityclassl0),
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 PARTITION BY HASH(id) PARTITIONS 40;
 
 create table kv (
