@@ -141,6 +141,7 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
 
         for (DevOpsTaskInfo devOpsTaskInfo : devOps) {
 
+            DataIterator<OqsEngineEntity> iterator = null;
             try {
                 //  错误的任务将直接设置为任务失败.
                 if (devOpsTaskInfo.getStatus() == ERROR.getCode()) {
@@ -151,14 +152,13 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
                 int updateFlag = 0;
                 int frequency = 10;
 
-                DataIterator<OqsEngineEntity> iterator =
-                    masterStorage.iterator(
-                        devOpsTaskInfo.getEntityClass(),
-                        devOpsTaskInfo.getStarts(),
-                        devOpsTaskInfo.getEnds(),
-                        devOpsTaskInfo.getStartId(),
-                        querySize,
-                        true);
+                iterator = masterStorage.iterator(
+                    devOpsTaskInfo.getEntityClass(),
+                    devOpsTaskInfo.getStarts(),
+                    devOpsTaskInfo.getEnds(),
+                    devOpsTaskInfo.getStartId(),
+                    querySize,
+                    true);
 
                 List<OqsEngineEntity> entities = new ArrayList<>();
 
@@ -211,6 +211,15 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
                     sqlTaskStorage.error(devOpsTaskInfo);
                 } catch (Exception ex) {
                     //  打印错误，这个异常将被忽略.
+                    logger.error(ex.getMessage(), ex);
+                }
+            } finally {
+                if (iterator != null) {
+                    try {
+                        iterator.destroy();
+                    } catch (Exception ex) {
+                        logger.error(ex.getMessage(), ex);
+                    }
                 }
             }
 
