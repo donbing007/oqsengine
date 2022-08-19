@@ -2,7 +2,6 @@ package com.xforceplus.ultraman.oqsengine.storage.master.utils;
 
 import com.xforceplus.ultraman.oqsengine.common.StringUtils;
 import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
-import com.xforceplus.ultraman.oqsengine.common.lifecycle.Lifecycle;
 import com.xforceplus.ultraman.oqsengine.common.profile.OqsProfile;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -36,7 +35,7 @@ import javax.sql.DataSource;
  * @version 0.1 2022/8/18 16:21
  * @since 1.8
  */
-public class EntityUpdateTimeRangeIterator implements DataIterator<OqsEngineEntity>, Lifecycle, AutoCloseable {
+public class EntityUpdateTimeRangeIterator implements DataIterator<OqsEngineEntity> {
 
     private static final int DEFAULT_BUFFER_SIZE = 1000;
     private int buffSize;
@@ -98,11 +97,6 @@ public class EntityUpdateTimeRangeIterator implements DataIterator<OqsEngineEnti
         } else {
             return null;
         }
-    }
-
-    @Override
-    public void close() throws Exception {
-        destroy();
     }
 
     private void load() throws RuntimeException {
