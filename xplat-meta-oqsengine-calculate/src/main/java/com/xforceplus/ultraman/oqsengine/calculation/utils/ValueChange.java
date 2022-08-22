@@ -72,6 +72,26 @@ public class ValueChange {
         return entityId;
     }
 
+    /**
+     * 创建一个新的vc,其中旧值和当前值一致,新值修改成指定值.
+     *
+     * @param newValue 新值.
+     * @return 新的vc实例.
+     */
+    public ValueChange copyFromNewValue(IValue newValue) {
+        return ValueChange.build(entityId, oldValue, newValue);
+    }
+
+    /**
+     * 创建一个新的vc,其中旧值将被替换.
+     *
+     * @param oldValue 需要替换的旧值.
+     * @return 新的vc实例.
+     */
+    public ValueChange copyFormOldValue(IValue oldValue) {
+        return ValueChange.build(entityId, oldValue, newValue);
+    }
+
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
