@@ -21,7 +21,7 @@ create table oqsbigentity
     primary key (id),
     KEY commitid_entity_index (commitid, entityclassl0, entityclassl1),
     KEY tx_index (tx),
-    KEY update_time_index (updatetime, entityclassl0, entityclassl1),
+    KEY rebuild_index (entityclassl0, deleted, updatetime),
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
 /*

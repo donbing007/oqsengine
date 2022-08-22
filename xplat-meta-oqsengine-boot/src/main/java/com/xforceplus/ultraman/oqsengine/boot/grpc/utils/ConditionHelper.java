@@ -539,14 +539,12 @@ public class ConditionHelper {
                 Relationship relation = relationOp.get();
 
                 if (isRelationBelongsToEntityClass(relation, mainClass)) {
-                    if (relation.getLeftEntityClassId() == mainClass.id()) {
-                        Optional<IEntityClass> relatedEntityClassOp =
-                            manager.load(relation.getRightEntityClassId(), profile);
-                        if (relatedEntityClassOp.isPresent()) {
-                            fieldOp = findFieldWithInEntityClass(relatedEntityClassOp.get(), field, manager);
-                        } else {
-                            logger.error("related EntityClass {} is missing", relation.getRightEntityClassId());
-                        }
+                    Optional<IEntityClass> relatedEntityClassOp =
+                        manager.load(relation.getRightEntityClassId(), profile);
+                    if (relatedEntityClassOp.isPresent()) {
+                        fieldOp = findFieldWithInEntityClass(relatedEntityClassOp.get(), field, manager);
+                    } else {
+                        logger.error("related EntityClass {} is missing", relation.getRightEntityClassId());
                     }
                 }
             }

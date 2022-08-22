@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.common.iterator;
 
+import com.xforceplus.ultraman.oqsengine.common.lifecycle.Lifecycle;
 import java.util.Iterator;
 
 /**
@@ -10,7 +11,7 @@ import java.util.Iterator;
  * @version 0.1 2021/2/23 10:59
  * @since 1.8
  */
-public interface DataIterator<E> extends Iterator<E> {
+public interface DataIterator<E> extends Iterator<E>, Lifecycle, AutoCloseable {
 
     /**
      * 数据总量.
@@ -30,4 +31,8 @@ public interface DataIterator<E> extends Iterator<E> {
         return false;
     }
 
+    @Override
+    default void close() throws Exception {
+        destroy();
+    }
 }
