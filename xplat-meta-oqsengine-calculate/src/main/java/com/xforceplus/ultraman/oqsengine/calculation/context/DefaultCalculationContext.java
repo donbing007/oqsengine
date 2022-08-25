@@ -191,7 +191,20 @@ public class DefaultCalculationContext implements CalculationContext {
             this.valueChanges = new HashMap<>();
         }
 
-        this.valueChanges.put(buildValueChangeKey(valueChange.getEntityId(), valueChange.getField().id()), valueChange);
+        String key = buildValueChangeKey(valueChange.getEntityId(), valueChange.getField().id());
+        ValueChange oldVc = valueChanges.get(key);
+        if (oldVc == null) {
+            this.valueChanges.put(key, valueChange);
+        } else {
+
+            /*
+            已经存在vc,假设当前已经存在的VC是 0 -> 200,试图加入的VC是 200 -> 300.
+            那么旧的VC将被修改成 0 -> 300.
+            因为VC只关心初值和终值,不关心中间状态.
+             */
+            ValueChange newVc = oldVc.copyFromNewValue(valueChange.getNewValue().get());
+            this.valueChanges.put(key, newVc);
+        }
     }
 
     @Override

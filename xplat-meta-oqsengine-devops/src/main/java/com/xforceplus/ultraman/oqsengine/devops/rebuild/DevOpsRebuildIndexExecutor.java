@@ -14,6 +14,7 @@ import com.xforceplus.ultraman.oqsengine.devops.rebuild.handler.TaskHandler;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.DefaultDevOpsTaskInfo;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.DevOpsTaskInfo;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.storage.SQLTaskStorage;
+import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
@@ -137,12 +138,11 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
         return devOps;
     }
 
-
-
     private void handleTask(List<DevOpsTaskInfo> devOps) {
 
         for (DevOpsTaskInfo devOpsTaskInfo : devOps) {
 
+            DataIterator<OqsEngineEntity> iterator = null;
             try {
                 //  错误的任务将直接设置为任务失败.
                 if (devOpsTaskInfo.getStatus() == ERROR.getCode()) {
@@ -153,43 +153,45 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
                 int updateFlag = 0;
                 int frequency = 10;
 
-                DataIterator<OqsEngineEntity> iterator =
-                    masterStorage.iterator(devOpsTaskInfo.getEntityClass(), devOpsTaskInfo.getStarts(), devOpsTaskInfo.getEnds(), devOpsTaskInfo.getStartId(), querySize, true);
+                iterator = masterStorage.iterator(
+                    devOpsTaskInfo.getEntityClass(),
+                    devOpsTaskInfo.getStarts(),
+                    devOpsTaskInfo.getEnds(),
+                    devOpsTaskInfo.getStartId(),
+                    querySize,
+                    true);
 
                 List<OqsEngineEntity> entities = new ArrayList<>();
 
                 boolean isCanceled = false;
                 while (iterator.hasNext()) {
                     OqsEngineEntity originalEntity = iterator.next();
-                    //  只处理时间范围内的数据.
-                    if (originalEntity.getUpdateTime() >= devOpsTaskInfo.getStarts()
-                        && originalEntity.getUpdateTime() <= devOpsTaskInfo.getEnds()) {
 
-                        //  设置maintainId
-                        originalEntity.setMaintainid(devOpsTaskInfo.getMaintainid());
+                    //  设置maintainId
+                    originalEntity.setMaintainid(devOpsTaskInfo.getMaintainid());
+                    // 需要索引进行更新,所以这里强制设置为更新状态.
+                    originalEntity.setOp(OperationType.UPDATE.getValue());
 
-                        entities.add(originalEntity);
+                    entities.add(originalEntity);
 
-                        if (entities.size() == querySize) {
+                    if (entities.size() == querySize) {
 
-                            indexStorage.saveOrDeleteOriginalEntities(entities);
+                        indexStorage.saveOrDeleteOriginalEntities(entities);
 
-                            devOpsTaskInfo.addBatchSize(entities.size());
-                            devOpsTaskInfo.addFinishSize(entities.size());
-                            devOpsTaskInfo.setStartId(originalEntity.getId());
+                        devOpsTaskInfo.addBatchSize(entities.size());
+                        devOpsTaskInfo.addFinishSize(entities.size());
+                        devOpsTaskInfo.setStartId(originalEntity.getId());
 
-                            entities.clear();
+                        entities.clear();
 
-                            updateFlag++;
-                            //  每拉10次更新一次任务状态.
-                            if (updateFlag == frequency) {
-                                if (NULL_UPDATE == sqlTaskStorage.update(devOpsTaskInfo)) {
-                                    isCanceled = true;
-                                    break;
-                                }
-                                updateFlag = 0;
+                        updateFlag++;
+                        //  每拉10次更新一次任务状态.
+                        if (updateFlag == frequency) {
+                            if (NULL_UPDATE == sqlTaskStorage.update(devOpsTaskInfo)) {
+                                isCanceled = true;
+                                break;
                             }
-
+                            updateFlag = 0;
                         }
                     }
                 }
@@ -212,6 +214,15 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
                     sqlTaskStorage.error(devOpsTaskInfo);
                 } catch (Exception ex) {
                     //  打印错误，这个异常将被忽略.
+                    logger.error(ex.getMessage(), ex);
+                }
+            } finally {
+                if (iterator != null) {
+                    try {
+                        iterator.destroy();
+                    } catch (Exception ex) {
+                        logger.error(ex.getMessage(), ex);
+                    }
                 }
             }
 

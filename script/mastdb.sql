@@ -1,5 +1,6 @@
 use oqsengine;
-create table oqsbigentity(
+create table oqsbigentity
+(
     id             bigint                not null comment '数据主键',
     entityclassl0  bigint  default 0     not null comment '数据家族中在0层的entityclass标识',
     entityclassl1  bigint  default 0     not null comment '数据家族中在1层的entityclass标识',
@@ -20,7 +21,7 @@ create table oqsbigentity(
     primary key (id),
     KEY commitid_entity_index (commitid, entityclassl0, entityclassl1),
     KEY tx_index (tx),
-    KEY update_time_index (updatetime, entityclassl0, entityclassl1)
+    KEY rebuild_index (entityclassl0, deleted, updatetime),
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
 /*

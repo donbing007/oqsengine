@@ -1,8 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.mysql;
 
 
-import static com.xforceplus.ultraman.oqsengine.storage.master.utils.OriginalEntityUtils.attributesToMap;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
 import com.xforceplus.ultraman.oqsengine.common.map.MapUtils;
@@ -28,8 +26,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.storage.ReservedFieldNameWord;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
-import com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.dynamic.DynamicBatchQueryCountExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.dynamic.DynamicBatchQueryExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.dynamic.DynamicBuildExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.dynamic.DynamicDeleteExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.dynamic.DynamicExistExecutor;
@@ -43,9 +39,9 @@ import com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.original.
 import com.xforceplus.ultraman.oqsengine.storage.master.mysql.pojo.BaseMasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.mysql.pojo.JsonAttributeMasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.mysql.pojo.MapAttributeMasterStorageEntity;
-import com.xforceplus.ultraman.oqsengine.storage.master.mysql.pojo.MasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.mysql.strategy.conditions.SQLJsonConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.master.utils.EntityClassRefHelper;
+import com.xforceplus.ultraman.oqsengine.storage.master.utils.EntityUpdateTimeRangeIterator;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.EntityPackage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OqsEngineEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
@@ -132,16 +128,32 @@ public class SQLMasterStorage implements MasterStorage {
     }
 
     @Override
-    public DataIterator<OqsEngineEntity> iterator(IEntityClass entityClass, long startTime, long endTime,
-                                                  long lastStart, boolean useSelfClass)
+    public DataIterator<OqsEngineEntity> iterator(
+        IEntityClass entityClass, long startTime, long endTime, long lastId, boolean useSelfClass)
         throws SQLException {
-        return new EntityIterator(entityClass, lastStart, startTime, endTime, useSelfClass);
+        return EntityUpdateTimeRangeIterator.Builder.anEntityIterator()
+            .withDataSource(this.masterDataSource)
+            .withMetaManager(this.metaManager)
+            .withEntityClass(entityClass)
+            .withStartTime(startTime)
+            .withEndTime(endTime)
+            .witherTableName(dynamicTableName)
+            .build();
     }
 
     @Override
-    public DataIterator<OqsEngineEntity> iterator(IEntityClass entityClass, long startTime, long endTime, long lastId,
-                                                  int size, boolean useSelfClass) throws SQLException {
-        return new EntityIterator(entityClass, lastId, startTime, endTime, size, useSelfClass);
+    public DataIterator<OqsEngineEntity> iterator(
+        IEntityClass entityClass, long startTime, long endTime, long lastId, int size, boolean useSelfClass)
+        throws SQLException {
+        return EntityUpdateTimeRangeIterator.Builder.anEntityIterator()
+            .withDataSource(this.masterDataSource)
+            .withMetaManager(this.metaManager)
+            .withEntityClass(entityClass)
+            .withStartTime(startTime)
+            .withEndTime(endTime)
+            .witherTableName(dynamicTableName)
+            .witherBuffSize(size)
+            .build();
     }
 
     @Timed(
@@ -557,137 +569,6 @@ public class SQLMasterStorage implements MasterStorage {
     private void checkId(IEntity entity) throws SQLException {
         if (entity.id() == 0) {
             throw new SQLException("Invalid entity`s id.");
-        }
-    }
-
-    /**
-     * 数据迭代器,用以迭代出某个entity的实例列表.
-     */
-    private class EntityIterator implements DataIterator<OqsEngineEntity> {
-        private static final int DEFAULT_PAGE_SIZE = 100;
-
-        private final IEntityClass entityClass;
-        private long startId;
-        private final long startTime;
-        private final long endTime;
-        private final int pageSize;
-        private final List<OqsEngineEntity> buffer;
-        private final boolean useSelfClass;
-
-        public EntityIterator(IEntityClass entityClass, long startId, long startTime, long endTime, boolean useSelfClass) {
-            this(entityClass, startId, startTime, endTime, DEFAULT_PAGE_SIZE, useSelfClass);
-        }
-
-        public EntityIterator(IEntityClass entityClass, long startId, long startTime, long endTime, int pageSize, boolean useSelfClass) {
-            this.entityClass = entityClass;
-            this.startId = startId;
-            this.startTime = startTime;
-            this.endTime = endTime;
-            this.pageSize = pageSize;
-            buffer = new ArrayList<>(pageSize);
-            this.useSelfClass = useSelfClass;
-        }
-
-        @Override
-        public boolean hasNext() {
-            try {
-                if (buffer.isEmpty()) {
-                    load();
-                }
-            } catch (Exception ex) {
-                throw new RuntimeException(ex.getMessage(), ex);
-            }
-
-            return !buffer.isEmpty();
-        }
-
-        @Override
-        public OqsEngineEntity next() {
-            if (hasNext()) {
-                OqsEngineEntity oqsEngineEntity = buffer.remove(0);
-                startId = oqsEngineEntity.getId();
-                return oqsEngineEntity;
-            } else {
-                return null;
-            }
-        }
-
-        private void load() throws Exception {
-            transactionExecutor.execute((tx, resource) -> {
-                Collection<MasterStorageEntity> storageEntities =
-                    DynamicBatchQueryExecutor
-                        .build(dynamicTableName, resource, queryTimeout, entityClass, startTime, endTime, pageSize)
-                        .execute(startId);
-
-                Collection<OqsEngineEntity> originalEntities = new ArrayList<>();
-                for (MasterStorageEntity entity : storageEntities) {
-                    try {
-                        //  获取profile
-                        String profile = "";
-                        if (null != entity.getAttribute() && !entity.getProfile()
-                            .equals(OqsProfile.UN_DEFINE_PROFILE)) {
-                            profile = entity.getProfile();
-                        }
-
-                        //  当useSelfEntityClass为true时，将使用entity本身的class，否则使用父类class
-                        //  这里修改为使用entity本身的classId进行EntityClass加载，如果使用父类的entityClass加载会导致attribute丢失
-                        Optional<IEntityClass> entityClassOp = Optional.of(entityClass);
-                        if (useSelfClass) {
-                            entityClassOp =
-                                metaManager.load(entity.getSelfEntityClassId(), profile);
-                        } else if (null != profile && !profile.isEmpty()) {
-                            entityClassOp =
-                                metaManager.load(entityClass.id(), profile);
-                        }
-
-                        if (!entityClassOp.isPresent()) {
-                            throw new SQLException(
-                                String.format("entityClass could not be null in meta.[%d]", entity.getSelfEntityClassId()));
-                        }
-
-                        OqsEngineEntity oqsEngineEntity = OqsEngineEntity.Builder.anOriginalEntity()
-                            .withEntityClass(entityClassOp.get())
-                            .withId(entity.getId())
-                            .withCreateTime(entity.getCreateTime())
-                            .withUpdateTime(entity.getUpdateTime())
-                            .withOp(OperationType.UPDATE.getValue())
-                            .withTx(entity.getTx())
-                            .withDeleted(entity.isDeleted())
-                            .withCommitid(entity.getCommitid())
-                            .withVersion(entity.getVersion())
-                            .withOqsMajor(entity.getOqsMajor())
-                            .withAttributes(attributesToMap(entity.getAttribute()))
-                            .build();
-
-                        originalEntities.add(oqsEngineEntity);
-                    } catch (JsonProcessingException e) {
-                        throw new SQLException(
-                            String.format("to originalEntity failed. message : [%s]", e.getMessage()));
-                    }
-                }
-
-                buffer.addAll(originalEntities);
-
-                return null;
-            });
-        }
-
-        @Override
-        public long size() {
-            try {
-                return (int) transactionExecutor.execute((tx, resource) -> {
-                    return DynamicBatchQueryCountExecutor
-                        .build(dynamicTableName, resource, queryTimeout, entityClass, startTime, endTime)
-                        .execute(0L);
-                });
-            } catch (SQLException e) {
-                throw new RuntimeException(e.getMessage(), e);
-            }
-        }
-
-        @Override
-        public boolean provideSize() {
-            return true;
         }
     }
 
