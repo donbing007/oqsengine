@@ -11,7 +11,7 @@ maven-build:
   coverage: '/Total.*?([0-9]{1,3})%/'
   script:
     - update_pom_version
-    - mvn clean install -U -s ./.mvn/wrapper/settings.xml -Dmaven.test.skip=true
+    - mvn clean install -U -s ./.mvn/wrapper/settings.xml
     - cat target/site/jacoco/index.html
     - mkdir -p /cache/${CI_PROJECT_NAME}-${CI_PROJECT_ID}-${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHA}
     - cp ./target/xplat-meta-oqsengine.jar /cache/${CI_PROJECT_NAME}-${CI_PROJECT_ID}-${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHA}/app.jar
@@ -26,7 +26,7 @@ tag-mvn-deploy:
   coverage: '/Total.*?([0-9]{1,3})%/'
   script:
     - update_pom_version
-    - mvn clean deploy -U -s ./.mvn/wrapper/settings.xml -Dmaven.test.skip=true
+    - mvn clean deploy -U -s ./.mvn/wrapper/settings.xml  -Dmaven.test.skip=true
     - mkdir -p /cache/${CI_PROJECT_NAME}-${CI_PROJECT_ID}-${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHA}
     - cp ./target/xplat-meta-oqsengine.jar /cache/${CI_PROJECT_NAME}-${CI_PROJECT_ID}-${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHA}/app.jar
   only:
