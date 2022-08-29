@@ -306,8 +306,17 @@ public class FieldConfig implements Serializable {
         return this;
     }
 
+    /**
+     * 获取计算类型.
+     *
+     * @return 计算字段信息.
+     */
     public AbstractCalculation getCalculation() {
-        return calculation;
+        if (this.calculation == null) {
+            return StaticCalculation.Builder.anStaticCalculation().build();
+        } else {
+            return calculation;
+        }
     }
 
     public AbstractCalculation resetCalculation(AbstractCalculation calculation) {

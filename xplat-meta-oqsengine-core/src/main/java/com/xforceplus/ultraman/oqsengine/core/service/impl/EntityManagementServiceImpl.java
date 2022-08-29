@@ -1178,7 +1178,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         }
 
         for (IEntity entity : notDeletedEntities) {
-            markTime(entity);
+            markTimeForce(entity);
         }
 
         Map<Long, IEntityClass> entityClassTable = new HashMap<>(MapUtils.calculateInitSize(notDeletedEntities.length));
@@ -1231,6 +1231,10 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     EntityPackage entityPackage = new EntityPackage();
                     for (int i = 0; i < targetEntities.size(); i++) {
                         targetEntity = targetEntities.get(i);
+
+                        // 删除需要强制更新时间.
+                        markTimeForce(targetEntity);
+
                         setValueChange(calculationContext, null, targetEntity);
                         entityClass = entityClassTable.get(targetEntity.id());
                         entityPackage.put(targetEntity, entityClass, false);
@@ -1340,7 +1344,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             return OqsResult.success();
         }
 
-        markTime(entity);
+        markTimeForce(entity);
 
         CalculationContext calculationContext = buildCalculationContext(CalculationScenarios.DELETE);
         try {
@@ -1370,6 +1374,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     calculationContext.focusSourceEntity(targetEntity);
                     calculationContext.focusEntity(targetEntity, entityClass);
                     setValueChange(calculationContext, null, targetEntity);
+
+                    // 删除需要强制更新时间.
+                    markTimeForce(targetEntity);
 
                     // 主操作
                     masterStorage.delete(targetEntity, entityClass);
@@ -1710,7 +1717,11 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
     private void markTime(IEntity entity) {
         if (entity.time() <= 0) {
-            entity.markTime(System.currentTimeMillis());
+            markTimeForce(entity);
         }
+    }
+
+    private void markTimeForce(IEntity entity) {
+        entity.markTime(System.currentTimeMillis());
     }
 }
