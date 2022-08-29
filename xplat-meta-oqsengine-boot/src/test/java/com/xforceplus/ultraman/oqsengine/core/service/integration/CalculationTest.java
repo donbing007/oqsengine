@@ -72,6 +72,7 @@ import javax.sql.DataSource;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
@@ -388,6 +389,8 @@ public class CalculationTest extends AbstractContainerExtends {
             )
         );
         OqsResult<Map.Entry<IEntity, IValue[]>> replaceResult = entityManagementService.replace(orderItem);
+        orderItem = entitySearchService.selectOne(
+            orderItem.id(), MockEntityClassDefine.ORDER_ITEM_CLASS.ref()).getValue().get();
         Assertions.assertEquals(ResultStatus.SUCCESS, replaceResult.getResultStatus(), replaceResult.getMessage());
 
         order = entitySearchService.selectOne(order.id(), MockEntityClassDefine.ORDER_CLASS.ref()).getValue().get();

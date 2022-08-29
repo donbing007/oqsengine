@@ -78,6 +78,9 @@ public class AggregationInitLogic implements InitIvalueLogic {
 
             Conditions conditions = aggregation.getConditions().orElse(Conditions.buildEmtpyConditions());
 
+            Conditions aggCondition = Conditions.buildEmtpyConditions();
+
+
             // 获取聚合关系信息
             List<Relationship> relationships = participant.getEntityClass().relationship().stream().filter(relationship ->
                     relationship.getId() == aggregation.getRelationId()).collect(Collectors.toList());
@@ -89,8 +92,11 @@ public class AggregationInitLogic implements InitIvalueLogic {
             }
             Relationship relation = relationships.get(0);
 
+
+
             // 构造关系聚合条件
-            conditions.addAnd(new Condition(relation.getEntityField(),
+            aggCondition.addAnd(conditions, false)
+                .addAnd(new Condition(relation.getEntityField(),
                     ConditionOperator.EQUALS,
                     new LongValue(relation.getEntityField(), entity.id())));
 
@@ -99,7 +105,7 @@ public class AggregationInitLogic implements InitIvalueLogic {
 
             IEntityClass sourceEntityClass = participant.getSourceEntityClass();
 
-            Collection<EntityRef> entityRefs = masterStorage.select(conditions, sourceEntityClass, SelectConfig.Builder.anSelectConfig().withSort(
+            Collection<EntityRef> entityRefs = masterStorage.select(aggCondition, sourceEntityClass, SelectConfig.Builder.anSelectConfig().withSort(
                     Sort.buildAscSort(EntityField.ID_ENTITY_FIELD)).withCommitId(minUnSyncCommitId).build());
 
             Set<Long> ids = entityRefs.stream().map(EntityRef::getId).collect(Collectors.toSet());
@@ -113,7 +119,7 @@ public class AggregationInitLogic implements InitIvalueLogic {
             //按照一页1000条数据查询索引库
             long defaultPageSize = 1000;
             Page page = new Page(1L, defaultPageSize);
-            Collection<EntityRef> indexEntityRefs = indexStorage.select(conditions, sourceEntityClass, SelectConfig.Builder.anSelectConfig().withSort(
+            Collection<EntityRef> indexEntityRefs = indexStorage.select(aggCondition, sourceEntityClass, SelectConfig.Builder.anSelectConfig().withSort(
                     Sort.buildAscSort(EntityField.ID_ENTITY_FIELD)).withPage(page).withCommitId(minUnSyncCommitId).withExcludedIds(ids).build());
             Set<Long> indexIds = indexEntityRefs.stream().map(EntityRef::getId).collect(Collectors.toSet());
             indexIds.addAll(ids);
@@ -133,7 +139,7 @@ public class AggregationInitLogic implements InitIvalueLogic {
             if (page.getTotalCount() > defaultPageSize) {
                 while (page.hasNextPage()) {
                     page.getNextPage();
-                    Collection<EntityRef> refCollection = indexStorage.select(conditions, sourceEntityClass, SelectConfig.Builder.anSelectConfig().withSort(
+                    Collection<EntityRef> refCollection = indexStorage.select(aggCondition, sourceEntityClass, SelectConfig.Builder.anSelectConfig().withSort(
                             Sort.buildAscSort(EntityField.ID_ENTITY_FIELD)).withPage(page).withCommitId(minUnSyncCommitId).withExcludedIds(ids).build());
                     entities = masterStorage.selectMultiple(refCollection.stream().map(EntityRef::getId).collect(Collectors.toSet())
                             .stream().mapToLong(Long::longValue).toArray(), sourceEntityClass);
