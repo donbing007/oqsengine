@@ -169,8 +169,14 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
 
                     //  设置maintainId
                     originalEntity.setMaintainid(devOpsTaskInfo.getMaintainid());
-                    // 需要索引进行更新,所以这里强制设置为更新状态.
-                    originalEntity.setOp(OperationType.UPDATE.getValue());
+
+                    if (OperationType.CREATE.getValue() == originalEntity.getOp()) {
+                        /*
+                        如果最后操作是创建,那么将操作状态修改为更新.
+                        原因是索引中已经存在了相应的实例,重建需要覆盖.
+                         */
+                        originalEntity.setOp(OperationType.UPDATE.getValue());
+                    }
 
                     entities.add(originalEntity);
 
