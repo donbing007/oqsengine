@@ -24,6 +24,7 @@ import com.xforceplus.ultraman.oqsengine.storage.pojo.EntityPackage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -134,6 +135,71 @@ public class RebuildIndexTest extends DevOpsTestHelper {
     }
 
     @Test
+    public void rebuildWithDelete() throws Exception {
+
+        List<IEntity> entities =
+            EntityGenerateTooBar.prepareLongStringEntity(totalSize);
+
+        //  初始化数据
+        boolean initOk = initData(entities, EntityGenerateTooBar.LONG_STRING_ENTITY_CLASS);
+
+        LocalDateTime start = LocalDateTime.ofEpochSecond(entities.get(0).time() / 1000, 0, ZoneOffset.ofHours(8));
+        LocalDateTime end = LocalDateTime.ofEpochSecond((entities.get(entities.size() - 1).time() + 1000) / 1000, 0, ZoneOffset.ofHours(8));
+
+        Assertions.assertTrue(initOk);
+
+        DevOpsTaskInfo taskInfo = RebuildInitialization.getInstance().getTaskExecutor().rebuildIndex(
+            EntityGenerateTooBar.LONG_STRING_ENTITY_CLASS, start, end);
+
+        check(taskInfo, "rebuildIndex");
+
+        Collection<TaskHandler> taskHandlers =
+            RebuildInitialization.getInstance().getTaskExecutor().listAllTasks(new Page());
+        Assertions.assertEquals(1, taskHandlers.size());
+        for (TaskHandler taskHandler : taskHandlers) {
+            Assertions.assertEquals(totalSize, taskHandler.devOpsTaskInfo().getFinishSize());
+            Assertions.assertEquals(0, taskHandler.devOpsTaskInfo().getStartId());
+        }
+
+        Collection<EntityRef> refs = IndexInitialization.getInstance().getIndexStorage().select(
+            Conditions.buildEmtpyConditions()
+                .addAnd(
+                    new Condition(EntityGenerateTooBar.LONG_FIELD,
+                        ConditionOperator.GREATER_THAN,
+                        new LongValue(EntityGenerateTooBar.LONG_FIELD, 0))
+                ),
+            EntityGenerateTooBar.LONG_STRING_ENTITY_CLASS,
+            SelectConfig.Builder.anSelectConfig()
+                .withPage(Page.newSinglePage(totalSize))
+                .build()
+        );
+
+        Assertions.assertEquals(totalSize, refs.size());
+
+        Thread.sleep(1_000);
+
+        long latestTime = entities.get(entities.size() - 1).time();
+
+        start = end;
+
+        IEntity entity = entities.get(5);
+        entity.markTime(latestTime + 2000);
+
+        end = LocalDateTime.ofEpochSecond((latestTime + 3000) / 1000, 0, ZoneOffset.ofHours(8));
+
+        SQLMasterStorage storage = MasterDBInitialization.getInstance().getMasterStorage();
+
+        storage.delete(entity, EntityGenerateTooBar.LONG_STRING_ENTITY_CLASS);
+
+        taskInfo = RebuildInitialization.getInstance().getTaskExecutor().rebuildIndex(
+            EntityGenerateTooBar.LONG_STRING_ENTITY_CLASS, start, end);
+
+        taskInfo = check(taskInfo, "rebuildIndex");
+
+        Assertions.assertEquals(taskInfo.getBatchSize(), 1);
+    }
+
+    @Test
     public void rebuildWhenCancelIndex() throws Exception {
         int size = totalSize * 10;
 
@@ -198,7 +264,7 @@ public class RebuildIndexTest extends DevOpsTestHelper {
         System.out.println("big batch use time " + (endExecution - startExecution) / 1000 + "s");
     }
 
-    private void check(DevOpsTaskInfo devOpsTaskInfo, String errorFunction) throws Exception {
+    private DevOpsTaskInfo check(DevOpsTaskInfo devOpsTaskInfo, String errorFunction) throws Exception {
 
         int wakeUp = 0;
         Optional<TaskHandler> taskHandlerOptional =
@@ -222,6 +288,8 @@ public class RebuildIndexTest extends DevOpsTestHelper {
         Assertions.assertTrue(taskHandler.devOpsTaskInfo().getBatchSize() > 0);
         Assertions.assertTrue(taskHandler.isDone());
         Assertions.assertEquals(ONE_HUNDRED_PERCENT, taskHandler.getProgressPercentage());
+
+        return taskHandler.devOpsTaskInfo();
     }
 
     private int sleepForWaitStatusOk(int wakeUp, String errorFunction) throws InterruptedException {

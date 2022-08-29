@@ -159,7 +159,7 @@ public class EntityGenerateTooBar {
                                 LocalDateTime.of(2021, 3, 1, (int) startPos % 24, (int) startPos % 60, (int) startPos % 60))))
                 .withVersion(testVersion)
                 .withMajor(OqsVersion.MAJOR)
-                .withTime(defaultTime + startPos * MILL_SECOND)
+                .withTime(defaultTime)
                 .build();
 
             startPos++;
