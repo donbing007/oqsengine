@@ -942,6 +942,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                                         Entity newEntity = Entity.Builder.anEntity()
                                             .withId(k.id())
                                             .withValues(Arrays.asList(v))
+                                            .withEntityClassRef(k.entityClassRef())
                                             .build();
                                         builder.addQueryResult(toEntityUp(newEntity));
                                     });
