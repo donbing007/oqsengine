@@ -929,6 +929,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                                     logger.error("{}", ex);
                                 }
 
+
                                 OperationResult.Builder builder = OperationResult.newBuilder()
                                     .setAffectedRow(entities.length)
                                     .setCode(OperationResult.Code.OTHER)
