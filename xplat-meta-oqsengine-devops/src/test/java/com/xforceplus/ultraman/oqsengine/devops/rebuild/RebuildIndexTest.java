@@ -35,6 +35,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import org.junit.Ignore;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -135,6 +136,7 @@ public class RebuildIndexTest extends DevOpsTestHelper {
     }
 
     @Test
+    @Ignore
     public void rebuildWithDelete() throws Exception {
 
         List<IEntity> entities =
