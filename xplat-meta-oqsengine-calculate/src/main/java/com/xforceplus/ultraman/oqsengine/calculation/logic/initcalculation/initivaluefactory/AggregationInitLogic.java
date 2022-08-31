@@ -130,14 +130,13 @@ public class AggregationInitLogic implements InitIvalueLogic {
             entities = null;
 
             // ivalus包含完整明细数据被聚合字段value，占用较大内存,只更新decimal和long类型
-            if (ivalues.size() <= 0) {
+           /* if (ivalues.size() <= 0) {
                 if (participant.getField().type().equals(FieldType.DECIMAL)) {
                     entity.entityValue().addValue(IValueUtils.toIValue(participant.getField(), new BigDecimal("0.0")));
                 } else {
                     entity.entityValue().addValue(IValueUtils.toIValue(participant.getField(), 0));
                 }
-                return entity;
-            }
+            }*/
 
             Optional<IValue> aggMainIValue = doAgg(ivalues, aggregation.getAggregationType(), participant.getField());
 
