@@ -24,6 +24,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.pojo.utils.IValueUtils;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
+import com.xforceplus.ultraman.oqsengine.storage.CombinedSelectStorage;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
@@ -53,10 +54,7 @@ public class AggregationInitLogic implements InitIvalueLogic {
     private MasterStorage masterStorage;
 
     @Resource
-    private CommitIdStatusService commitIdStatusService;
-
-    @Resource
-    private IndexStorage indexStorage;
+    private CombinedSelectStorage combinedSelectStorage;
 
     final Logger logger = LoggerFactory.getLogger(AggregationInitLogic.class);
 
@@ -100,53 +98,34 @@ public class AggregationInitLogic implements InitIvalueLogic {
                     ConditionOperator.EQUALS,
                     new LongValue(relation.getEntityField(), entity.id())));
 
-            //获取未提交最小commitId号
-            long minUnSyncCommitId = getMinCommitId();
-
             IEntityClass sourceEntityClass = participant.getSourceEntityClass();
 
-            Collection<EntityRef> entityRefs = masterStorage.select(aggCondition, sourceEntityClass, SelectConfig.Builder.anSelectConfig().withSort(
-                    Sort.buildAscSort(EntityField.ID_ENTITY_FIELD)).withCommitId(minUnSyncCommitId).build());
 
-            Set<Long> ids = entityRefs.stream().map(EntityRef::getId).collect(Collectors.toSet());
-            if (logger.isInfoEnabled()) {
-                logger.debug(String.format("masterStorage select by conditions , entityClassId is %s, mainEntityId is %s, result id list is %s ", participant.getEntityClass().id(), entity.id(), ids));
-            }
-
-            entityRefs = null;
-
-
-            //按照一页1000条数据查询索引库
+            //按照一页1000条数据查询
             long defaultPageSize = 1000;
             Page page = new Page(1L, defaultPageSize);
-            Collection<EntityRef> indexEntityRefs = indexStorage.select(aggCondition, sourceEntityClass, SelectConfig.Builder.anSelectConfig().withSort(
-                    Sort.buildAscSort(EntityField.ID_ENTITY_FIELD)).withPage(page).withCommitId(minUnSyncCommitId).withExcludedIds(ids).build());
-            Set<Long> indexIds = indexEntityRefs.stream().map(EntityRef::getId).collect(Collectors.toSet());
-            indexIds.addAll(ids);
-            long[] combinedIds = indexIds.stream().mapToLong(Long::longValue).toArray();
 
+            Collection<EntityRef> entityRefs = combinedSelectStorage.select(aggCondition, sourceEntityClass, SelectConfig.Builder.anSelectConfig().withSort(
+                    Sort.buildAscSort(EntityField.ID_ENTITY_FIELD)).withPage(page).build());
+
+            // 分页查询全量
+            if (page.getTotalCount() > defaultPageSize) {
+                while (page.hasNextPage()) {
+                    Collection<EntityRef> refs = combinedSelectStorage.select(aggCondition, sourceEntityClass,
+                        SelectConfig.Builder.anSelectConfig().withSort(
+                            Sort.buildAscSort(EntityField.ID_ENTITY_FIELD)).withPage(page).build());
+                    entityRefs.addAll(refs);
+                }
+            }
+
+            Set<Long> ids = entityRefs.stream().map(EntityRef::getId).collect(Collectors.toSet());
 
             // 得到所有聚合明细
-            Collection<IEntity> entities = masterStorage.selectMultiple(combinedIds, sourceEntityClass);
+            Collection<IEntity> entities = masterStorage.selectMultiple(ids.stream().mapToLong(Long::longValue).toArray(), sourceEntityClass);
 
             IEntityField sourceField = participant.getSourceFields().size() > 0 ? ((ArrayList<IEntityField>) participant.getSourceFields()).get(0) : EntityField.Builder.anEntityField().build();
             //获取符合条件的所有明细值
             List<Optional<IValue>> ivalues = entities.stream().map(i -> i.entityValue().getValue(sourceField.id())).collect(Collectors.toList());
-
-            int count = combinedIds.length;
-
-            // 数据量较大，分批将ivalue加载到内存，释放entitys
-            if (page.getTotalCount() > defaultPageSize) {
-                while (page.hasNextPage()) {
-                    page.getNextPage();
-                    Collection<EntityRef> refCollection = indexStorage.select(aggCondition, sourceEntityClass, SelectConfig.Builder.anSelectConfig().withSort(
-                            Sort.buildAscSort(EntityField.ID_ENTITY_FIELD)).withPage(page).withCommitId(minUnSyncCommitId).withExcludedIds(ids).build());
-                    entities = masterStorage.selectMultiple(refCollection.stream().map(EntityRef::getId).collect(Collectors.toSet())
-                            .stream().mapToLong(Long::longValue).toArray(), sourceEntityClass);
-                    count += entities.size();
-                    ivalues.addAll(entities.stream().map(i -> i.entityValue().getValue(sourceField.id())).collect(Collectors.toList()));
-                }
-            }
 
             entities = null;
 
@@ -167,25 +146,6 @@ public class AggregationInitLogic implements InitIvalueLogic {
         }
 
         return entity;
-    }
-
-    private long getMinCommitId() {
-        long minUnSyncCommitId;
-        Optional<Long> minUnSyncCommitIdOp = commitIdStatusService.getMin();
-        if (minUnSyncCommitIdOp.isPresent()) {
-            minUnSyncCommitId = minUnSyncCommitIdOp.get();
-            if (logger.isDebugEnabled()) {
-                logger.debug(
-                        "The minimum commit number {} that is currently uncommitted was successfully obtained.",
-                        minUnSyncCommitId);
-            }
-        } else {
-            minUnSyncCommitId = 0;
-            if (logger.isDebugEnabled()) {
-                logger.debug("Unable to fetch the commit number, use the default commit number 0.");
-            }
-        }
-        return minUnSyncCommitId;
     }
 
     private Optional<IValue> doAgg(List<Optional<IValue>> ivalues, AggregationType aggregationType, IEntityField entityField) {

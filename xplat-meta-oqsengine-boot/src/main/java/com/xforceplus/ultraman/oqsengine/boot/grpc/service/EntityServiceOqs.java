@@ -1099,6 +1099,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                                 Entity newEntity = Entity.Builder.anEntity()
                                     .withId(k.id())
                                     .withValues(Arrays.asList(v))
+                                    .withEntityClassRef(k.entityClassRef())
                                     .build();
                                 builder.addQueryResult(toEntityUp(newEntity));
                             });
@@ -1187,10 +1188,11 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                                 .collect(Collectors.toList()))
                             .build()).collect(Collectors.toList())
                     )
+                    .setCode(DryRunResult.Code.OK)
                     .build();
             } catch (Exception e) {
                 logger.error(e.getMessage());
-                return DryRunResult.newBuilder().build();
+                return DryRunResult.newBuilder().setCode(DryRunResult.Code.EXCEPTION).setMessage(e.getMessage()).build();
             }
 
             return result;
@@ -1219,10 +1221,11 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                                 .setExpectValue(f.getExpect().valueToString())
                                 .setNowValue(f.getNow().valueToString()).build()).collect(Collectors.toList()))
                             .build()).collect(Collectors.toList()))
+                    .setCode(DryRunResult.Code.OK)
                     .build();
             } catch (Exception e) {
                 logger.error(e.getMessage());
-                return DryRunResult.newBuilder().build();
+                return DryRunResult.newBuilder().setCode(DryRunResult.Code.EXCEPTION).setMessage(e.getMessage()).build();
             }
 
             return result;

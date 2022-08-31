@@ -64,7 +64,7 @@ public class DefaultCalculationInitImpl implements CalculationInit {
 
         try {
             return logic.init(entity, participant);
-        } catch (SQLException e) {
+        } catch (Exception e) {
             throw new CalculationInitException(e);
         }
 

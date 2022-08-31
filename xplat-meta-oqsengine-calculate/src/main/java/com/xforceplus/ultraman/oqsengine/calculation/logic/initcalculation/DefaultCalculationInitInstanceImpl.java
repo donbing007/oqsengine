@@ -61,7 +61,7 @@ public class DefaultCalculationInitInstanceImpl implements CalculationInitInstan
             }
             List<InitInstance> initInstances = buildMultiInstance((List<IEntity>) entities, entityClass, fields);
             return calculationInit.init(initInstances);
-        } catch (SQLException e) {
+        } catch (Exception e) {
             throw new CalculationInitException(e);
         }
     }
@@ -82,7 +82,7 @@ public class DefaultCalculationInitInstanceImpl implements CalculationInitInstan
 
             return initInstance.map(instance -> calculationInit.init(instance));
 
-        } catch (SQLException e) {
+        } catch (Exception e) {
             throw new CalculationInitException(e);
         }
     }
@@ -103,7 +103,7 @@ public class DefaultCalculationInitInstanceImpl implements CalculationInitInstan
                 errorCalculateInstance.ifPresent(errorCalculateInstances::add);
             }
             return errorCalculateInstances;
-        } catch (SQLException e) {
+        } catch (Exception e) {
             throw new CalculationInitException(e);
         }
 
@@ -123,7 +123,7 @@ public class DefaultCalculationInitInstanceImpl implements CalculationInitInstan
 
             return doCheckField(entity.get(), entityClass, fields);
 
-        } catch (SQLException e) {
+        } catch (Exception e) {
             throw new CalculationInitException(e);
         }
     }
