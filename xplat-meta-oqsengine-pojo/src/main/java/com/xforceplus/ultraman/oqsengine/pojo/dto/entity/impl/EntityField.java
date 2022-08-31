@@ -208,7 +208,14 @@ public class EntityField implements IEntityField, Serializable {
 
     @Override
     public CalculationType calculationType() {
-        return this.calculationType;
+        if (this.calculationType == null) {
+            /*
+            这里是兼容处理,在版本<=1.2的版本中没有计算字段.
+             */
+            return CalculationType.STATIC;
+        } else {
+            return this.calculationType;
+        }
     }
 
     public boolean indexAttachment() {
