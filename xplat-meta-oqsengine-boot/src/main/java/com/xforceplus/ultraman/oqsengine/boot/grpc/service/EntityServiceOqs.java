@@ -10,7 +10,6 @@ import static com.xforceplus.ultraman.oqsengine.boot.grpc.utils.MessageDecorator
 import static com.xforceplus.ultraman.oqsengine.boot.grpc.utils.MessageDecorator.ok;
 import static com.xforceplus.ultraman.oqsengine.boot.grpc.utils.MessageDecorator.other;
 import static com.xforceplus.ultraman.oqsengine.core.service.TransactionManagementService.DEFAULT_TRANSACTION_TIMEOUT;
-import static com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus.CONFLICT;
 import static com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus.HALF_SUCCESS;
 import static com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus.NOT_FOUND;
 import static com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus.SUCCESS;
@@ -107,7 +106,6 @@ import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.annotation.Resource;
-import org.checkerframework.checker.units.qual.A;
 import org.redisson.OqsLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -392,7 +390,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 OperationResult.newBuilder()
                     .setAffectedRow(0)
                     .setCode(OperationResult.Code.FAILED)
-                    .setMessage(String.format("Invalid transaction, transaction may have timed out."))
+                    .setMessage("Restore transaction failure, transaction may have timed out.")
                     .buildPartial();
             }
 
@@ -524,7 +522,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 OperationResult.newBuilder()
                     .setAffectedRow(0)
                     .setCode(OperationResult.Code.FAILED)
-                    .setMessage(String.format("Invalid transaction, transaction may have timed out."))
+                    .setMessage("Restore transaction failure, transaction may have timed out.")
                     .buildPartial();
             }
 
@@ -688,7 +686,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 OperationResult.newBuilder()
                     .setAffectedRow(0)
                     .setCode(OperationResult.Code.FAILED)
-                    .setMessage(String.format("Invalid transaction, transaction may have timed out."))
+                    .setMessage("Restore transaction failure, transaction may have timed out.")
                     .buildPartial();
             }
 
@@ -870,7 +868,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 OperationResult.newBuilder()
                     .setAffectedRow(0)
                     .setCode(OperationResult.Code.FAILED)
-                    .setMessage(String.format("Invalid transaction, transaction may have timed out."))
+                    .setMessage("Restore transaction failure, transaction may have timed out.")
                     .buildPartial();
             }
 
@@ -1271,7 +1269,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 OperationResult.newBuilder()
                     .setAffectedRow(0)
                     .setCode(OperationResult.Code.FAILED)
-                    .setMessage(String.format("Invalid transaction, transaction may have timed out."))
+                    .setMessage("Restore transaction failure, transaction may have timed out.")
                     .buildPartial();
             }
 
@@ -1398,7 +1396,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 OperationResult.newBuilder()
                     .setAffectedRow(0)
                     .setCode(OperationResult.Code.FAILED)
-                    .setMessage(String.format("Invalid transaction, transaction may have timed out."))
+                    .setMessage("Restore transaction failure, transaction may have timed out.")
                     .buildPartial();
             }
 
@@ -1430,7 +1428,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                                 OperationResult.Builder builder = OperationResult.newBuilder()
                                     .setAffectedRow(1)
                                     .setCode(OperationResult.Code.OK)
-                                    .setOriginStatus(SUCCESS.name());
+                                    .setOriginStatus(deleteStatus.name());
 
                                 valueOp.ifPresent(value -> {
                                     builder.addQueryResult(toEntityUp(value));
@@ -1444,8 +1442,8 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                                 result = OperationResult.newBuilder()
                                     .setAffectedRow(0)
                                     .setCode(OperationResult.Code.OTHER)
-                                    .setMessage(ResultStatus.CONFLICT.name())
-                                    .setOriginStatus(CONFLICT.name())
+                                    .setMessage(deleteStatus.name())
+                                    .setOriginStatus(deleteStatus.name())
                                     .buildPartial();
                                 break;
                             case NOT_FOUND:
@@ -1453,7 +1451,8 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                                 result = OperationResult.newBuilder()
                                     .setAffectedRow(0)
                                     .setCode(OperationResult.Code.OK)
-                                    .setOriginStatus(NOT_FOUND.name())
+                                    .setOriginStatus(deleteStatus.name())
+                                    .setMessage(deleteStatus.name())
                                     .buildPartial();
                                 break;
                             default:
@@ -1555,7 +1554,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 OperationResult.newBuilder()
                     .setAffectedRow(0)
                     .setCode(OperationResult.Code.FAILED)
-                    .setMessage(String.format("Invalid transaction, transaction may have timed out."))
+                    .setMessage("Restore transaction failure, transaction may have timed out.")
                     .buildPartial();
             }
 
@@ -1583,7 +1582,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     case SUCCESS: {
 
                         OperationResult.Builder builder = OperationResult.newBuilder()
-                            .setAffectedRow(1)
+                            .setAffectedRow(valueOp.isPresent() ? valueOp.get().length : 0)
                             .setCode(OperationResult.Code.OK)
                             .setOriginStatus(oqsResult.getResultStatus().name());
 
@@ -1599,7 +1598,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     }
                     case CONFLICT: {
                         result = OperationResult.newBuilder()
-                            .setAffectedRow(0)
+                            .setAffectedRow(valueOp.isPresent() ? valueOp.get().length : 0)
                             .setCode(OperationResult.Code.FAILED)
                             .setOriginStatus(oqsResult.getResultStatus().name())
                             .buildPartial();
@@ -1607,7 +1606,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     }
                     case NOT_FOUND: {
                         result = OperationResult.newBuilder()
-                            .setAffectedRow(0)
+                            .setAffectedRow(valueOp.isPresent() ? valueOp.get().length : 0)
                             .setCode(OperationResult.Code.OK)
                             .setOriginStatus(oqsResult.getResultStatus().name())
                             .buildPartial();
@@ -1615,7 +1614,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     }
                     default: {
                         result = OperationResult.newBuilder()
-                            .setAffectedRow(0)
+                            .setAffectedRow(valueOp.isPresent() ? valueOp.get().length : 0)
                             .setCode(OperationResult.Code.FAILED)
                             .setOriginStatus(oqsResult.getResultStatus().name())
                             .buildPartial();
@@ -1658,7 +1657,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 OperationResult.newBuilder()
                     .setAffectedRow(0)
                     .setCode(OperationResult.Code.FAILED)
-                    .setMessage(String.format("Invalid transaction, transaction may have timed out."))
+                    .setMessage("Restore transaction failure, transaction may have timed out.")
                     .buildPartial();
             }
 
@@ -1775,7 +1774,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 OperationResult.newBuilder()
                     .setAffectedRow(0)
                     .setCode(OperationResult.Code.FAILED)
-                    .setMessage(String.format("Invalid transaction, transaction may have timed out."))
+                    .setMessage("Restore transaction failure, transaction may have timed out.")
                     .buildPartial();
             }
 
@@ -1895,7 +1894,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             if (!success) {
                 result = OperationResult.newBuilder()
                     .setCode(OperationResult.Code.FAILED)
-                    .setMessage(String.format("Invalid transaction, transaction may have timed out."))
+                    .setMessage("Restore transaction failure, transaction may have timed out.")
                     .buildPartial();
             } else {
                 transactionManagementService.commit();
@@ -1926,7 +1925,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             if (!success) {
                 result = OperationResult.newBuilder()
                     .setCode(OperationResult.Code.FAILED)
-                    .setMessage(String.format("Invalid transaction, transaction may have timed out."))
+                    .setMessage("Restore transaction failure, transaction may have timed out.")
                     .buildPartial();
             } else {
                 transactionManagementService.rollback();
@@ -1974,7 +1973,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 OperationResult.newBuilder()
                     .setAffectedRow(0)
                     .setCode(OperationResult.Code.FAILED)
-                    .setMessage(String.format("Invalid transaction, transaction may have timed out."))
+                    .setMessage("Restore transaction failure, transaction may have timed out.")
                     .buildPartial();
             }
 
