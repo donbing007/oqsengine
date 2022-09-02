@@ -106,7 +106,6 @@ import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.annotation.Resource;
-import org.redisson.OqsLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -168,37 +167,6 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
     private <T> CompletableFuture<T> asyncChangelog(Supplier<T> supplier) {
         return CompletableFuture.supplyAsync(supplier, asyncDispatcher);
-    }
-
-    /**
-     * check if the resource is locked.
-     *
-     * @param id resource id
-     */
-    private void checkLock(Long id, Metadata metadata) {
-
-        if (lockStateService == null) {
-            return;
-        }
-
-        OqsLock oqsLock = lockStateService.createLock(id.toString());
-
-        if (!oqsLock.isLocked()) {
-            return;
-        }
-
-        Optional<String> uuid = metadata.getText(LOCK_HEADER);
-        //TODO optimize token
-        Optional<String> token = metadata.getText(LOCK_TOKEN);
-
-        if (uuid.isPresent()) {
-            boolean heldByThread = oqsLock.isHeldByThread(uuid.get());
-            if (heldByThread) {
-                return;
-            }
-        }
-
-        throw new RuntimeException(RESOURCE_IS_LOCKED);
     }
 
     @Override
@@ -662,8 +630,6 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     @Override
     public CompletionStage<OperationResult> replace(EntityUp in, Metadata metadata) {
         return asyncWrite(() -> {
-
-            checkLock(in.getObjId(), metadata);
 
             String profile = extractProfile(metadata).orElse("");
 
@@ -1379,8 +1345,6 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     public CompletionStage<OperationResult> remove(EntityUp in, Metadata metadata) {
         return asyncWrite(() -> {
 
-            checkLock(in.getObjId(), metadata);
-
             String profile = extractProfile(metadata).orElse("");
 
             //check entityRef
@@ -1504,6 +1468,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                                     .setAffectedRow(0)
                                     .setCode(OperationResult.Code.OK)
                                     .setOriginStatus(NOT_FOUND.name())
+                                    .setMessage(NOT_FOUND.name())
                                     .buildPartial();
                                 break;
                             default:
