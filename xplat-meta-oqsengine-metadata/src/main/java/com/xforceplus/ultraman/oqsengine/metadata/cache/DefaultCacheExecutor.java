@@ -767,19 +767,22 @@ public class DefaultCacheExecutor implements CacheExecutor {
         if (!force) {
             int activeVersion = version(appId);
             if (version >= activeVersion) {
-                return false;
+                return true;
             }
         }
 
         Collection<Long> ids = appEntityIdList(appId, version);
+        for (Long id : ids) {
+            doClean(id, version);
+        }
+
         try {
-            for (Long id : ids) {
-                doClean(id, version);
-            }
-            //  删除 appId + version 映射的 entityIds列表
+            //  删除 appId + version 映射的 entityIds列表.
+            //  如果该redis操作抛出异常会导致重新直线清理任务.
             syncCommands.hdel(appEntityCollectionsKey, String.format("%s.%d", appId, version));
         } catch (Exception e) {
             logger.warn("{}", e.toString());
+            return false;
         }
 
         return true;
@@ -1211,22 +1214,27 @@ public class DefaultCacheExecutor implements CacheExecutor {
             Map<String, String> appEnvMaps = syncCommands.hgetall(appEntityCollectionsKey);
             appEnvMaps.forEach(
                 (key, value) -> {
-                    int version = splitAppVersion(key);
-                    if (version > NOT_EXIST_VERSION) {
-                        List<Long> ids = null;
-                        try {
-                            ids = OBJECT_MAPPER.readValue(value,
-                                OBJECT_MAPPER.getTypeFactory().constructParametricType(List.class, Long.class));
-                        } catch (JsonProcessingException e) {
-                            logger.warn("cache version json error, message : {}", e.getMessage());
-                        }
+                    String appId = splitAppIdInAppVersion(key);
+                    if (null != appId) {
+                        //  此处从redis中获取当前appId的版本而不是使用缓存
+                        final int realVersion = version(appId);
 
-                        if (null != ids) {
-                            ids.forEach(
-                                id -> {
-                                    cacheContext.versionCache().put(id, version);
-                                }
-                            );
+                        if (realVersion > NOT_EXIST_VERSION) {
+                            List<Long> ids = null;
+                            try {
+                                ids = OBJECT_MAPPER.readValue(value,
+                                    OBJECT_MAPPER.getTypeFactory().constructParametricType(List.class, Long.class));
+                            } catch (JsonProcessingException e) {
+                                logger.warn("cache version json error, message : {}", e.getMessage());
+                            }
+
+                            if (null != ids) {
+                                ids.forEach(
+                                    id -> {
+                                        cacheContext.versionCache().put(id, realVersion);
+                                    }
+                                );
+                            }
                         }
                     }
                 }
@@ -1237,16 +1245,16 @@ public class DefaultCacheExecutor implements CacheExecutor {
 
     }
 
-    private int splitAppVersion(String key) {
+    private String splitAppIdInAppVersion(String key) {
         try {
             String[] datas = key.split("\\.");
             if (datas.length == 2) {
-                return Integer.parseInt(datas[1]);
+                return datas[0];
             }
         } catch (Exception e) {
             logger.warn("key {}, split appVersion failed, message : {}", key, e.getMessage());
         }
-        return NOT_EXIST_VERSION;
+        return null;
     }
 
     private String toNowDateString(LocalDate date) {
