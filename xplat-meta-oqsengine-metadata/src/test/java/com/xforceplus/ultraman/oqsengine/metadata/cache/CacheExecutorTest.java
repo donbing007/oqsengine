@@ -55,7 +55,7 @@ public class CacheExecutorTest {
     }
 
     @Test
-    public void batchVersionsTest() {
+    public void batchVersionsTest() throws JsonProcessingException {
         Map<Long, Integer> expectedVersions = new HashMap<>();
         List<Long> testEntityClassId = new ArrayList<>();
 
@@ -226,7 +226,7 @@ public class CacheExecutorTest {
      * 测试版本.
      */
     @Test
-    public void prepare9to13Test() {
+    public void prepare9to13Test() throws JsonProcessingException {
         /*
          * 设置prepare appId = 1 version = 9，预期返回true
          */
@@ -290,7 +290,7 @@ public class CacheExecutorTest {
     }
 
     @Test
-    public void prepareTest() throws InterruptedException {
+    public void prepareTest() throws InterruptedException, JsonProcessingException {
         /*
          * 设置prepare appId = 1 version = 1，预期返回true
          */
@@ -361,7 +361,7 @@ public class CacheExecutorTest {
     }
 
     @Test
-    public void versionTest() {
+    public void versionTest() throws JsonProcessingException {
         /*
          * 当前的版本version = 2，预期返回true
          */
@@ -384,7 +384,7 @@ public class CacheExecutorTest {
     }
 
     @Test
-    public void versionsTest() {
+    public void versionsTest() throws JsonProcessingException {
         Map<Long, Integer> expects = new HashMap<>();
         List<Long> entityClassIds = new ArrayList<>();
 
@@ -405,7 +405,8 @@ public class CacheExecutorTest {
         );
 
     }
-    private List<Long> addAndRetEntityClassId(Map<Long, Integer> expects, String appId, int version, List<Long> entityClassIds) {
+    private List<Long> addAndRetEntityClassId(Map<Long, Integer> expects, String appId, int version, List<Long> entityClassIds)
+        throws JsonProcessingException {
         boolean ret = cacheExecutor.resetVersion(appId, version, entityClassIds);
         if (!ret) {
             throw new RuntimeException("reset version failed.");

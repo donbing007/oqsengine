@@ -640,7 +640,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
      * 重置appId对应的版本信息.
      */
     @Override
-    public boolean resetVersion(String appId, int version, List<Long> ids) {
+    public boolean resetVersion(String appId, int version, List<Long> ids) throws JsonProcessingException {
         if (null == appId || appId.isEmpty()) {
             return false;
         }
@@ -650,27 +650,36 @@ public class DefaultCacheExecutor implements CacheExecutor {
         }
 
         /*
-         * 这里多出2个位置分别为appId、version
+         * 这里多出4个位置分别为appId、version, appId.version format key, ids json string.
          */
         String[] values = null;
         if (null != ids && ids.size() > 0) {
-            values = new String[ids.size() + 2];
-            int j = 2;
+            values = new String[ids.size() + 4];
+            int j = 4;
             for (Long id : ids) {
                 values[j] = Long.toString(id);
                 j++;
             }
         } else {
-            values = new String[2];
+            values = new String[4];
         }
 
         String[] keys = {
             appEntityMappingKey,
-            appVersionKeys
+            appVersionKeys,
+            appEntityCollectionsKey
         };
 
         values[0] = appId;
         values[1] = Integer.toString(version);
+        values[2] = String.format("%s.%d", appId, version);
+        try {
+            values[3] = OBJECT_MAPPER.writeValueAsString(ids);
+        } catch (JsonProcessingException e) {
+            logger.warn("in reset version {}, appId {}, serialize ids failed, message : {}", version, appId, e.toString());
+            throw e;
+        }
+
         /*
          * 设置版本、entity-appId mapping关系
          */
@@ -679,18 +688,6 @@ public class DefaultCacheExecutor implements CacheExecutor {
             ScriptOutputType.BOOLEAN,
             keys, values);
 
-        /*
-         * 记录当前appId+version下的所有entityIds，用于过期清理
-         */
-        if (ret) {
-            try {
-                String fieldName = String.format("%s.%d", appId, version);
-                syncCommands.hset(appEntityCollectionsKey,
-                    fieldName, OBJECT_MAPPER.writeValueAsString(ids));
-            } catch (Exception e) {
-                //  ignore
-            }
-        }
         return ret;
     }
 
@@ -1210,14 +1207,19 @@ public class DefaultCacheExecutor implements CacheExecutor {
     }
 
     private void cachedVersion() {
-        Map<String, String> appEnvMaps = syncCommands.hgetall(appEntityCollectionsKey);
-        appEnvMaps.forEach(
-            (key, value) -> {
-                int version = splitAppVersion(key);
-                if (version > NOT_EXIST_VERSION) {
-                    try {
-                        List<Long> ids = OBJECT_MAPPER.readValue(value,
-                            OBJECT_MAPPER.getTypeFactory().constructParametricType(List.class, Long.class));
+        try {
+            Map<String, String> appEnvMaps = syncCommands.hgetall(appEntityCollectionsKey);
+            appEnvMaps.forEach(
+                (key, value) -> {
+                    int version = splitAppVersion(key);
+                    if (version > NOT_EXIST_VERSION) {
+                        List<Long> ids = null;
+                        try {
+                            ids = OBJECT_MAPPER.readValue(value,
+                                OBJECT_MAPPER.getTypeFactory().constructParametricType(List.class, Long.class));
+                        } catch (JsonProcessingException e) {
+                            logger.warn("cache version json error, message : {}", e.getMessage());
+                        }
 
                         if (null != ids) {
                             ids.forEach(
@@ -1226,13 +1228,13 @@ public class DefaultCacheExecutor implements CacheExecutor {
                                 }
                             );
                         }
-
-                    } catch (JsonProcessingException e) {
-                        logger.warn("cache version json error, message : {}", e.getMessage());
                     }
                 }
-            }
-        );
+            );
+        } catch (Exception e) {
+            logger.warn("cache version error, message : {}", e.getMessage());
+        }
+
     }
 
     private int splitAppVersion(String key) {
