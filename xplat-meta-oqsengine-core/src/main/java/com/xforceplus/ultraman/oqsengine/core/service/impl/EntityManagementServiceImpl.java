@@ -1363,7 +1363,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     if (logger.isDebugEnabled()) {
                         logger.debug("[delete] Failed to lock the instance.");
                     }
-                    return OqsResult.conflict();
+                    return OqsResult.conflict("Failed to lock the instance.");
                 }
 
                 try {

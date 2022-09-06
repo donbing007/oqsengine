@@ -309,11 +309,13 @@ public class LookupCalculationLogic implements CalculationLogic {
 
             IEntityField focusField = context.getFocusField();
             // 没有找到目标值.
-            logger.warn(
-                "The target ({}) field ({}) value of the lookup could not be found.",
-                lookupValue.valueToLong(),
-                ((Lookup) focusField.config().getCalculation()).getFieldId()
-            );
+            if (logger.isDebugEnabled()) {
+                logger.debug(
+                    "The target ({}) field ({}) value of the lookup could not be found.",
+                    lookupValue.valueToLong(),
+                    ((Lookup) focusField.config().getCalculation()).getFieldId()
+                );
+            }
 
             return Optional.empty();
 

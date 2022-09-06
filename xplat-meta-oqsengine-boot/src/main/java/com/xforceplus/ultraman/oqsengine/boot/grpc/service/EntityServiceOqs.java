@@ -426,6 +426,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                         case FIELD_MUST:
                         case FIELD_TOO_LONG:
                         case FIELD_HIGH_PRECISION:
+                        case FIELD_NON_EXISTENT:
                             result = OperationResult.newBuilder()
                                 .setAffectedRow(0)
                                 .setCode(OperationResult.Code.FAILED)
@@ -561,6 +562,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     case FIELD_MUST:
                     case FIELD_TOO_LONG:
                     case FIELD_HIGH_PRECISION:
+                    case FIELD_NON_EXISTENT:
                         result = OperationResult.newBuilder()
                             .setAffectedRow(0)
                             .setCode(OperationResult.Code.FAILED)
@@ -768,6 +770,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                         case FIELD_MUST:
                         case FIELD_TOO_LONG:
                         case FIELD_HIGH_PRECISION:
+                        case FIELD_NON_EXISTENT:
                             result = OperationResult.newBuilder()
                                 .setAffectedRow(0)
                                 .setCode(OperationResult.Code.FAILED)
@@ -938,6 +941,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                             case FIELD_MUST:
                             case FIELD_TOO_LONG:
                             case FIELD_HIGH_PRECISION:
+                            case FIELD_NON_EXISTENT:
                                 result = OperationResult.newBuilder()
                                     .setAffectedRow(0)
                                     .setCode(OperationResult.Code.FAILED)
@@ -1469,6 +1473,14 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                                     .setCode(OperationResult.Code.OK)
                                     .setOriginStatus(NOT_FOUND.name())
                                     .setMessage(NOT_FOUND.name())
+                                    .buildPartial();
+                                break;
+                            case CONFLICT:
+                                result = OperationResult.newBuilder()
+                                    .setAffectedRow(0)
+                                    .setCode(OperationResult.Code.OTHER)
+                                    .setMessage(deleteStatus.name())
+                                    .setOriginStatus(deleteStatus.name())
                                     .buildPartial();
                                 break;
                             default:
