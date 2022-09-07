@@ -35,7 +35,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.xforceplus.ultraman.oqsengine.common.thread.PollingThreadExecutor;
 import com.xforceplus.ultraman.oqsengine.common.watch.RedisLuaScriptWatchDog;
 import com.xforceplus.ultraman.oqsengine.event.payload.meta.MetaChangePayLoad;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
@@ -61,7 +60,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -70,12 +68,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * 缓存执行器.
+ * Created by justin.xu on 09/2022.
  *
- * @author : xujia 2021/2/9
- * @since : 1.8
+ * @since 1.8
  */
-public class DefaultCacheExecutor implements CacheExecutor {
+public class MockCacheExecutor implements CacheExecutor {
 
     final Logger logger = LoggerFactory.getLogger(DefaultCacheExecutor.class);
 
@@ -96,10 +93,6 @@ public class DefaultCacheExecutor implements CacheExecutor {
     private RedisCommands<String, String> syncCommands;
 
     private CacheContext cacheContext;
-
-    private int maxWait = 10;
-    private int versionCacheRefreshDuration = 10;
-    private PollingThreadExecutor<Void> lifeCycleThread;
 
     /*
      * prepare的超时时间
@@ -225,7 +218,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
     /**
      * 默认实例化.
      */
-    public DefaultCacheExecutor() {
+    public MockCacheExecutor() {
         this(NOT_INIT_INTEGER_PARAMETER, NOT_INIT_INTEGER_PARAMETER, NOT_INIT_INTEGER_PARAMETER,
             DEFAULT_METADATA_APP_ENV,
             DEFAULT_METADATA_APP_VERSIONS,
@@ -244,7 +237,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
      * @param prepareExpireSeconds 预备的等待超时秒数.
      * @param cacheExpireSeconds   缓存过期的秒数.
      */
-    public DefaultCacheExecutor(int maxCacheSize, int prepareExpireSeconds, int cacheExpireSeconds) {
+    public MockCacheExecutor(int maxCacheSize, int prepareExpireSeconds, int cacheExpireSeconds) {
         this(maxCacheSize, prepareExpireSeconds, cacheExpireSeconds,
             DEFAULT_METADATA_APP_ENV,
             DEFAULT_METADATA_APP_VERSIONS,
@@ -270,7 +263,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
      * @param appEntityCollectionsKey 应用所有元信息的列表KEY.
      * @param appCodeKeys             应用CODE的KEY.
      */
-    public DefaultCacheExecutor(int maxCacheSize, int prepareExpireSeconds, int cacheExpireSeconds,
+    public MockCacheExecutor(int maxCacheSize, int prepareExpireSeconds, int cacheExpireSeconds,
                                 String appEnvKeys, String appVersionKeys, String appPrepareKeyPrefix,
                                 String entityStorageKeys,
                                 String appEntityMappingKey, String appEntityCollectionsKey, String appCodeKeys,
@@ -358,20 +351,11 @@ public class DefaultCacheExecutor implements CacheExecutor {
             entityClassStorageListScriptSha = syncCommands.scriptLoad(ENTITY_CLASS_STORAGE_INFO_LIST);
         }
 
-        lifeCycleThread = new PollingThreadExecutor(
-            "metaVersionCached",
-            versionCacheRefreshDuration,
-            TimeUnit.SECONDS, maxWait,
-            (n) -> cachedVersion(),
-            null);
-
-        lifeCycleThread.start();
     }
 
     @PreDestroy
     public void destroy() {
         syncConnect.close();
-        lifeCycleThread.stop();
     }
 
     /**
