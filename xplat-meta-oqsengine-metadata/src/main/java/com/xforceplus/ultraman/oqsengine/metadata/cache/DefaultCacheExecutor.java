@@ -273,7 +273,8 @@ public class DefaultCacheExecutor implements CacheExecutor {
     public DefaultCacheExecutor(int maxCacheSize, int prepareExpireSeconds, int cacheExpireSeconds,
                                 String appEnvKeys, String appVersionKeys, String appPrepareKeyPrefix,
                                 String entityStorageKeys,
-                                String appEntityMappingKey, String appEntityCollectionsKey, String appCodeKeys, String upGradeLogKey) {
+                                String appEntityMappingKey, String appEntityCollectionsKey, String appCodeKeys,
+                                String upGradeLogKey) {
 
         if (maxCacheSize > NOT_INIT_INTEGER_PARAMETER) {
             this.maxCacheSize = maxCacheSize;
@@ -327,7 +328,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
             throw new IllegalArgumentException("The upGradeLogKey keys is invalid.");
         }
 
-        cacheContext = new CacheContext(this.maxCacheSize,  this.cacheExpire);
+        cacheContext = new CacheContext(this.maxCacheSize, this.cacheExpire);
     }
 
     @PostConstruct
@@ -599,7 +600,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
         String error = "";
 
         if (null != appVersionRelations && !appVersionRelations.isEmpty()
-                && null != entityAppRelations && !entityAppRelations.isEmpty()) {
+            && null != entityAppRelations && !entityAppRelations.isEmpty()) {
 
             for (Long entityClassId : notFoundIds) {
                 String appId = entityAppRelations.get(String.valueOf(entityClassId));
@@ -609,7 +610,8 @@ public class DefaultCacheExecutor implements CacheExecutor {
                     if (null != version) {
                         vs.put(entityClassId, Integer.parseInt(version));
                     } else {
-                        error = String.format("version not found, appId : %s failed, entityClassId : %s", appId, entityClassId);
+                        error = String
+                            .format("version not found, appId : %s failed, entityClassId : %s", appId, entityClassId);
                     }
                 } else {
                     error = String.format("appId not found, entityClassId : %s", entityClassId);
@@ -664,7 +666,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
             values = new String[4];
         }
 
-        String[] keys = { appEntityMappingKey, appVersionKeys, appEntityCollectionsKey };
+        String[] keys = {appEntityMappingKey, appVersionKeys, appEntityCollectionsKey};
 
         values[0] = appId;
         values[1] = Integer.toString(version);
@@ -672,7 +674,8 @@ public class DefaultCacheExecutor implements CacheExecutor {
         try {
             values[3] = OBJECT_MAPPER.writeValueAsString(ids);
         } catch (JsonProcessingException e) {
-            logger.warn("in reset version {}, appId {}, serialize ids failed, message : {}", version, appId, e.toString());
+            logger.warn("in reset version {}, appId {}, serialize ids failed, message : {}", version, appId,
+                e.toString());
             throw e;
         }
 
@@ -848,7 +851,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
     @Override
     public List<AppSimpleInfo> showAppInfo() {
         List<AppSimpleInfo> infoList = new ArrayList<>();
-        Map<String, String> envs =  syncCommands.hgetall(appEnvKeys);
+        Map<String, String> envs = syncCommands.hgetall(appEnvKeys);
         if (null != envs && !envs.isEmpty()) {
             Map<String, String> versions = syncCommands.hgetall(appVersionKeys);
             Map<String, String> codes = syncCommands.hgetall(appCodeKeys);
@@ -934,7 +937,8 @@ public class DefaultCacheExecutor implements CacheExecutor {
             String finalValue = OBJECT_MAPPER.writeValueAsString(upGradeLog);
             syncCommands.hset(upGradeLogKey, fieldKey, finalValue);
         } catch (Exception e) {
-            logger.warn("add upgrade log failed, appId : {}, env : {}, version : {}, message : {}", appId, env, currentVersion, e.getMessage());
+            logger.warn("add upgrade log failed, appId : {}, env : {}, version : {}, message : {}", appId, env,
+                currentVersion, e.getMessage());
         }
     }
 
@@ -1048,7 +1052,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
     }
 
     private MetaChangePayLoad.EntityChange saveToCache(String key, EntityClassStorage oldStorage,
-                                                          EntityClassStorage newStorage) {
+                                                       EntityClassStorage newStorage) {
 
         MetaChangePayLoad.EntityChange entityChange = null;
 
