@@ -670,10 +670,6 @@ public class DefaultCacheExecutor implements CacheExecutor {
         values[1] = Integer.toString(version);
         values[2] = String.format("%s.%d", appId, version);
 
-        String[] keys = {
-            appEntityMappingKey, appVersionKeys, appEntityCollectionsKey
-        };
-
         try {
             values[3] = OBJECT_MAPPER.writeValueAsString(ids);
         } catch (JsonProcessingException e) {
@@ -681,6 +677,10 @@ public class DefaultCacheExecutor implements CacheExecutor {
                 e.toString());
             throw e;
         }
+
+        String[] keys = {
+            appEntityMappingKey, appVersionKeys, appEntityCollectionsKey
+        };
 
         /*
          * 设置版本、entity-appId mapping关系
