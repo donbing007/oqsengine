@@ -664,9 +664,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
             values = new String[4];
         }
 
-        String[] keys = {
-            appEntityMappingKey, appVersionKeys, appEntityCollectionsKey
-        };
+        String[] keys = { appEntityMappingKey, appVersionKeys, appEntityCollectionsKey };
 
         values[0] = appId;
         values[1] = Integer.toString(version);
