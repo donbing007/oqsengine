@@ -665,9 +665,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
         }
 
         String[] keys = {
-            appEntityMappingKey,
-            appVersionKeys,
-            appEntityCollectionsKey
+            appEntityMappingKey, appVersionKeys, appEntityCollectionsKey
         };
 
         values[0] = appId;
@@ -683,12 +681,10 @@ public class DefaultCacheExecutor implements CacheExecutor {
         /*
          * 设置版本、entity-appId mapping关系
          */
-        boolean ret = syncCommands.evalsha(
+        return syncCommands.evalsha(
             versionResetScriptSha,
             ScriptOutputType.BOOLEAN,
             keys, values);
-
-        return ret;
     }
 
     /**
