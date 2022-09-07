@@ -666,11 +666,14 @@ public class DefaultCacheExecutor implements CacheExecutor {
             values = new String[4];
         }
 
-        String[] keys = {appEntityMappingKey, appVersionKeys, appEntityCollectionsKey};
-
         values[0] = appId;
         values[1] = Integer.toString(version);
         values[2] = String.format("%s.%d", appId, version);
+
+        String[] keys = {
+            appEntityMappingKey, appVersionKeys, appEntityCollectionsKey
+        };
+
         try {
             values[3] = OBJECT_MAPPER.writeValueAsString(ids);
         } catch (JsonProcessingException e) {
