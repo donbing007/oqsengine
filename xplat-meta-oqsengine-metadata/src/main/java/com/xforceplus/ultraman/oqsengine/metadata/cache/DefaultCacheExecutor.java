@@ -1251,7 +1251,7 @@ public class DefaultCacheExecutor implements CacheExecutor {
 
     private int localCachedVersion(long entityClassId) {
         Integer v = cacheContext.versionCache().get(entityClassId);
-        return  null != v ? v: NOT_EXIST_VERSION;
+        return  null != v ? v : NOT_EXIST_VERSION;
     }
 
     private int remoteVersion(long entityClassId) {
