@@ -14,6 +14,7 @@ import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,8 +76,13 @@ public class SphinxQLDecimalStorageStrategy implements StorageStrategy {
     }
 
     @Override
-    public StorageValue toEmptyStorageValue(IEntityField field) {
-        return doBuildStorageValue(Long.toString(field.id()), null);
+    public StorageValue toEmptyStorageValue(IEntityField field, Optional<StorageValue<String>> attachment) {
+        LongStorageValue storageValue = doBuildStorageValue(Long.toString(field.id()), null);
+        if (attachment.isPresent()) {
+            storageValue.setAttachment(attachment.get());
+        }
+
+        return storageValue;
     }
 
     @Override
@@ -116,9 +122,9 @@ public class SphinxQLDecimalStorageStrategy implements StorageStrategy {
         return doBuildStorageValue(logicName, (String) storageValue);
     }
 
-    private StorageValue doBuildStorageValue(String logicName, String value) {
+    private LongStorageValue doBuildStorageValue(String logicName, String value) {
         if (value.isEmpty() || value == null) {
-            StorageValue storageValue = new LongStorageValue(logicName, 0L, true);
+            LongStorageValue storageValue = new LongStorageValue(logicName, 0L, true);
             storageValue.locate(0);
             storageValue.stick(new LongStorageValue(logicName, 0L, true));
             return storageValue;
@@ -162,7 +168,7 @@ public class SphinxQLDecimalStorageStrategy implements StorageStrategy {
             second = 0 - second;
         }
 
-        StorageValue<Long> storageValue = new LongStorageValue(logicName, first, true);
+        LongStorageValue storageValue = new LongStorageValue(logicName, first, true);
         storageValue.locate(0);
         storageValue.stick(new LongStorageValue(logicName, second, true));
 

@@ -153,14 +153,27 @@ public class EntityValue implements IEntityValue, Cloneable, Serializable {
         }
     }
 
+    /**
+     * 挤压多余的空值.<br>
+     * 这里有一个例外, 如果是一个EmptyTypeValue实例但是含有附件那么也将不过滤.<br>
+     * 原因保存仍然需要处理附件.
+     */
     @Override
     public void squeezeEmpty() {
         if (this.values == null || this.values.isEmpty()) {
             return;
         }
 
+        // 需要移除的列表.
         long[] emptyValueFieldIds = this.values.entrySet().stream()
-            .filter(entry -> EmptyTypedValue.class.isInstance(entry.getValue()))
+            .filter(entry -> {
+                IValue v = entry.getValue();
+                if (EmptyTypedValue.class.isInstance(v)) {
+                    return !v.getAttachment().isPresent();
+                } else {
+                    return false;
+                }
+            })
             .mapToLong(entity -> entity.getKey()).toArray();
         for (long id : emptyValueFieldIds) {
             this.values.remove(id);

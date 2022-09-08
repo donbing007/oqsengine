@@ -25,7 +25,8 @@ public abstract class AbstractJsonStringsConditionBuilder extends AbstractCondit
      */
     private StorageStrategyFactory storageStrategyFactory;
 
-    public AbstractJsonStringsConditionBuilder(ConditionOperator operator, StorageStrategyFactory storageStrategyFactory) {
+    public AbstractJsonStringsConditionBuilder(ConditionOperator operator,
+                                               StorageStrategyFactory storageStrategyFactory) {
         super(operator);
         this.storageStrategyFactory = storageStrategyFactory;
     }

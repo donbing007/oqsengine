@@ -6,6 +6,7 @@ import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.AttachmentCondition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
@@ -24,10 +25,13 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
+import com.xforceplus.ultraman.oqsengine.storage.StorageType;
+import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.mock.IndexInitialization;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OqsEngineEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
+import com.xforceplus.ultraman.oqsengine.storage.value.AnyStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.ShortStorageName;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StringStorageValue;
@@ -167,6 +171,50 @@ public class SphinxQLManticoreIndexStorageTest {
     public void after() throws Exception {
         InitializationHelper.clearAll();
         InitializationHelper.destroy();
+    }
+
+    /**
+     * 测试主库物理储存只有附件的转换是否正确.
+     * 预期会正确储存附件.
+     */
+    @Test
+    public void testOnlyHaveAttachment() throws Exception {
+        String attachment = faker.animal().name();
+        OqsEngineEntity target = OqsEngineEntity.Builder.anOriginalEntity()
+            .withId(Long.MAX_VALUE - 300)
+            .withAttribute(AnyStorageValue.ATTACHMENT_PREFIX + l2StringField.idString() + StorageType.STRING.getType(),
+                attachment)
+            .withEntityClass(l2EntityClass)
+            .withCreateTime(System.currentTimeMillis())
+            .withVersion(0)
+            .withDeleted(false)
+            .withOp(OperationType.CREATE.getValue())
+            .withCommitid(0)
+            .withTx(0)
+            .withOqsMajor(OqsVersion.MAJOR)
+            .build();
+
+        IndexStorage indexStorage = IndexInitialization.getInstance().getIndexStorage();
+        indexStorage.saveOrDeleteOriginalEntities(Arrays.asList(target));
+
+        Collection<EntityRef> refs = indexStorage.select(
+            Conditions.buildEmtpyConditions()
+                .addAnd(
+                    new AttachmentCondition(
+                        l2StringField,
+                        true,
+                        attachment
+                    )
+                ),
+            l2EntityClass,
+            SelectConfig.Builder.anSelectConfig()
+                .withPage(Page.newSinglePage(100))
+                .withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD))
+                .build()
+        );
+
+        Assertions.assertEquals(1, refs.size());
+        Assertions.assertEquals(target.getId(), refs.stream().findFirst().get().getId());
     }
 
     /**

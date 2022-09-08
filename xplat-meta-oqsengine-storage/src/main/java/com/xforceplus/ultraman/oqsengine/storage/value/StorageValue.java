@@ -78,9 +78,16 @@ public interface StorageValue<V> {
     /**
      * 判断是否含有附件.
      *
-     * @return true有附件,false没有附件.
+     * @return true有附件, false没有附件.
      */
     boolean haveAttachment();
+
+    /**
+     * 修改附件.
+     *
+     * @param attachment 新的附件.
+     */
+    void setAttachment(StorageValue<String> attachment);
 
     /**
      * 字段逻辑名称.

@@ -32,8 +32,10 @@ public abstract class AbstractMasterTaskExecutor<R, T> extends AbstractJdbcTaskE
     }
 
     /**
-     * 将字段物理值映射转换成原始字段和储存值.
-     * 结果中key= AnyStorageValue.ATTRIBUTE_PREFIX 开头的字段标识, Value为实际的写入储存值.
+     * 将字段物理值映射转换成原始字段和储存值.<br>
+     * 结果中key= AnyStorageValue.ATTRIBUTE_PREFIX 开头的字段标识, Value为实际的写入储存值.<br>
+     * 注意: 如果StorageValue.isEmpty() 为true,那么在创建的时候表示忽略,更新时候表示删除.<br>
+     * 但是如果这个storageValue实例含有附件,那么创建的时候表示只保存附件,更新不应该设置附件.<br>
      *
      * @param storageValues 字段物理值映射.
      * @return 字段储存值.
@@ -50,10 +52,22 @@ public abstract class AbstractMasterTaskExecutor<R, T> extends AbstractJdbcTaskE
 
             if (storageValue.isEmpty()) {
 
+                /*
+                如果为空,含有附件表示只需要删除目标字段,但是保留其附件.
+                否则,字段和附件都将被表示为空表示删除.
+                 */
                 values.put(String.format("%s%s", AnyStorageValue.ATTRIBUTE_PREFIX, storageValue.storageName()),
                     ValueWithEmpty.EMPTY_VALUE);
-                values.put(String.format("%s%s", AnyStorageValue.ATTACHMENT_PREFIX, storageValue.storageName()),
-                    ValueWithEmpty.EMPTY_VALUE);
+                if (storageValue.haveAttachment()) {
+                    StorageValue attachmentStorageValue = storageValue.getAttachment();
+                    values.put(
+                        String.format("%s%s",
+                            AnyStorageValue.ATTACHMENT_PREFIX,
+                            attachmentStorageValue.storageName()), attachmentStorageValue.value());
+                } else {
+                    values.put(String.format("%s%s", AnyStorageValue.ATTACHMENT_PREFIX, storageValue.storageName()),
+                        ValueWithEmpty.EMPTY_VALUE);
+                }
 
             } else {
 
@@ -69,6 +83,7 @@ public abstract class AbstractMasterTaskExecutor<R, T> extends AbstractJdbcTaskE
                     }
                 }
 
+                // 处理附件.
                 if (storageValue.haveAttachment()) {
                     StorageValue attachmentStorageValue = storageValue.getAttachment();
                     values.put(
@@ -77,6 +92,7 @@ public abstract class AbstractMasterTaskExecutor<R, T> extends AbstractJdbcTaskE
                             attachmentStorageValue.storageName()), attachmentStorageValue.value());
                 }
             }
+
         }
         return values;
     }

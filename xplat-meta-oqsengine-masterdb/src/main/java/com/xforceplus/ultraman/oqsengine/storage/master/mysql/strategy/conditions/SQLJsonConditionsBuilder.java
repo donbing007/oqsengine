@@ -45,6 +45,7 @@ public class SQLJsonConditionsBuilder
             link -> sql.append(" ").append(link.getLink().name()).append(" "),
             value -> {
                 Condition condition = value.getCondition();
+
                 ConditionBuilder<Condition, String> cb = sqlConditionQueryBuilderFactory.getQueryBuilder(condition);
                 sql.append(cb.build(condition));
             },

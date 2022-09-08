@@ -11,6 +11,7 @@ import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.common.helper.AttachmentHelper;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * 多字符串值字段储存策略.
@@ -67,8 +68,13 @@ public class MasterStringsStorageStrategy implements StorageStrategy {
     }
 
     @Override
-    public StorageValue toEmptyStorageValue(IEntityField field) {
-        return new StringStorageValue(Long.toString(field.id()), true);
+    public StorageValue toEmptyStorageValue(IEntityField field, Optional<StorageValue<String>> attachment) {
+        StringStorageValue storageValue = new StringStorageValue(Long.toString(field.id()), true);
+        if (attachment.isPresent()) {
+            storageValue.setAttachment(attachment.get());
+        }
+
+        return storageValue;
     }
 
     @Override

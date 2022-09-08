@@ -1,7 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.value.strategy.common.helper;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
-import com.xforceplus.ultraman.oqsengine.storage.value.AbstractStorageValue;
+import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StringStorageValue;
 import java.util.Optional;
 
@@ -17,10 +17,10 @@ public final class AttachmentHelper {
     /**
      * 设置物理值附件.
      *
-     * @param value 逻辑值.
+     * @param value        逻辑值.
      * @param storageValue 物理值.
      */
-    public static void setStorageValueAttachemnt(IValue value, AbstractStorageValue storageValue) {
+    public static void setStorageValueAttachemnt(IValue value, StorageValue storageValue) {
 
         Optional<String> attachment = value.getAttachment();
         if (attachment.isPresent()) {

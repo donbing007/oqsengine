@@ -20,6 +20,7 @@ import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.SegmentInfo;
 import com.xforceplus.ultraman.oqsengine.idgenerator.storage.SegmentStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.AttachmentCondition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
@@ -28,6 +29,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
@@ -72,7 +75,6 @@ import javax.sql.DataSource;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
@@ -444,8 +446,8 @@ public class CalculationTest extends AbstractContainerExtends {
     }
 
     /**
-     * lookup目标对象字段值不存在.
-     * 预计发起lookup的对象此值也不存在.
+     * lookup目标对象字段值不存在.<br>
+     * 应该只记录关系,当目标变动时发起lookup的字段也应该和普能字段一样改变.
      */
     @Test
     public void testLookupEmptyValue() throws Exception {
@@ -457,11 +459,44 @@ public class CalculationTest extends AbstractContainerExtends {
         IEntity order = entityHelper.buildOrderEntity(user);
         oqsResult = entityManagementService.build(order);
         // 由于公式计算触发了除0异常,所以这里是半成功.
-        Assertions.assertEquals(ResultStatus.HALF_SUCCESS, oqsResult.getResultStatus(),
-            oqsResult.getMessage());
+        Assertions.assertEquals(ResultStatus.HALF_SUCCESS, oqsResult.getResultStatus(), oqsResult.getMessage());
 
         order = entitySearchService.selectOne(order.id(), MockEntityClassDefine.ORDER_CLASS.ref()).getValue().get();
         Assertions.assertFalse(order.entityValue().getValue("用户编号lookup").isPresent());
+
+        OqsResult<Collection<IEntity>> result = entitySearchService.selectByConditions(
+            Conditions.buildEmtpyConditions()
+                .addAnd(
+                    new AttachmentCondition(
+                        MockEntityClassDefine.ORDER_CLASS.field("用户编号lookup").get(),
+                        true,
+                        Long.toString(user.id())
+                    )
+                ),
+            MockEntityClassDefine.ORDER_CLASS.ref(),
+            ServiceSelectConfig.Builder.anSearchConfig()
+                .withPage(Page.newSinglePage(100))
+                .withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD))
+                .build()
+        );
+
+        Collection<IEntity> entities = result.getValue().get();
+        Assertions.assertEquals(1, entities.size());
+        Assertions.assertEquals(order.id(), entities.stream().findFirst().get().id());
+
+        /*
+        更新了lookup目标从空转为有值,相应的order对象也应该被更新.
+         */
+        String userCode = "U" + idGenerator.next();
+        user.entityValue().addValue(
+            new StringValue(MockEntityClassDefine.USER_CLASS.field("用户编号").get(), userCode)
+        );
+        entityManagementService.replace(user);
+        user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).getValue().get();
+        Assertions.assertEquals(userCode, user.entityValue().getValue("用户编号").get().getValue());
+
+        order = entitySearchService.selectOne(order.id(), MockEntityClassDefine.ORDER_CLASS.ref()).getValue().get();
+        Assertions.assertEquals(userCode, order.entityValue().getValue("用户编号lookup").get().getValue());
     }
 
     /**

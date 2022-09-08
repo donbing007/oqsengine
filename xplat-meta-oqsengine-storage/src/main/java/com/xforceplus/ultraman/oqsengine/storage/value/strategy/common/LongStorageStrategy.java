@@ -9,6 +9,7 @@ import com.xforceplus.ultraman.oqsengine.storage.value.LongStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.common.helper.AttachmentHelper;
+import java.util.Optional;
 
 /**
  * 长整形逻辑字段的储存通用策略.
@@ -45,8 +46,13 @@ public class LongStorageStrategy implements StorageStrategy {
     }
 
     @Override
-    public StorageValue toEmptyStorageValue(IEntityField field) {
-        return new LongStorageValue(Long.toString(field.id()), true);
+    public StorageValue toEmptyStorageValue(IEntityField field, Optional<StorageValue<String>> attachment) {
+        LongStorageValue storageValue = new LongStorageValue(Long.toString(field.id()), true);
+        if (attachment.isPresent()) {
+            storageValue.setAttachment(attachment.get());
+        }
+
+        return storageValue;
     }
 
     @Override

@@ -1,5 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.calculation.logic.lookup;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationContext;
 import com.xforceplus.ultraman.oqsengine.calculation.context.DefaultCalculationContext;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.AffectedInfo;
@@ -10,6 +13,7 @@ import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceGrap
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceGraphConsumer;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Participant;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
+import com.xforceplus.ultraman.oqsengine.metadata.mock.MockMetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
@@ -24,9 +28,14 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relationship;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Lookup;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.StaticCalculation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LookupValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import com.xforceplus.ultraman.oqsengine.storage.ConditionsSelectStorage;
+import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionExclusiveAction;
@@ -302,6 +311,122 @@ public class LookupCalculationLogicTest {
         Assertions.assertEquals(2, abstractParticipants.size());
         Assertions.assertEquals(targetClassId, abstractParticipants.get(0).getEntityClass().id());
         Assertions.assertEquals(weakLookupClassId, abstractParticipants.get(1).getEntityClass().id());
+    }
+
+    /**
+     * lookup目标字段值不null(不存在), 仍然会返回一个记录关系的IValue实例.<br>
+     * 在目标被更新时,应该可能被触发.
+     */
+    @Test
+    public void testNullLookup() throws Exception {
+        MockTaskCoordinator coordinator = new MockTaskCoordinator();
+        MockTransaction tx = new MockTransaction();
+        MockConditionsSelectStorage conditionsSelectStorage = new MockConditionsSelectStorage();
+        MockMetaManager metaManager = new MockMetaManager();
+        metaManager.addEntityClass(targetEntityClass);
+        metaManager.addEntityClass(weakLookupEntityClass);
+        metaManager.addEntityClass(strongLookupEntityClass);
+
+        /*
+        lookup 目标为 targetStringField,但是没有给值.
+        应该返回一个有附件的 EmptyTypeValue 实例.
+         */
+        IEntity targetEntity = Entity.Builder.anEntity()
+            .withId(Long.MAX_VALUE)
+            .withEntityClassRef(targetEntityClass.ref())
+            .withValue(
+                new LongValue(targetLongField, 100L)
+            ).build();
+
+        MasterStorage masterStorage = mock(MasterStorage.class);
+        when(masterStorage.selectOne(targetEntity.id(), targetEntityClass)).thenReturn(Optional.of(targetEntity));
+
+        IEntity lookupEntity = Entity.Builder.anEntity()
+            .withEntityClassRef(strongLookupEntityClass.ref())
+            .withValue(
+                new LongValue(strongLookLongField, 1000L)
+            )
+            .withValue(
+                new LookupValue(strongStringLookupField, targetEntity.id())
+            ).build();
+
+        CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()
+            .withTransaction(tx)
+            .withTaskCoordinator(coordinator)
+            .withTaskExecutorService(TASK_POOL)
+            .withConditionsSelectStorage(conditionsSelectStorage)
+            .withMasterStorage(masterStorage)
+            .withMetaManager(metaManager)
+            .build();
+        context.focusSourceEntity(lookupEntity);
+        context.focusEntity(lookupEntity, strongLookupEntityClass);
+        context.focusField(strongStringLookupField);
+
+        LookupCalculationLogic logic = new LookupCalculationLogic();
+        Optional<IValue> newValueOp = logic.calculate(context);
+        Assertions.assertTrue(newValueOp.isPresent());
+        Assertions.assertEquals(EmptyTypedValue.class, newValueOp.get().getClass());
+        Assertions.assertEquals(targetEntity.id(), Long.parseLong((String) newValueOp.get().getAttachment().get()));
+    }
+
+    /**
+     * lookup 一个存在值的字段.
+     */
+    @Test
+    public void testNoNullLookup() throws Exception {
+        MockTaskCoordinator coordinator = new MockTaskCoordinator();
+        MockTransaction tx = new MockTransaction();
+        MockConditionsSelectStorage conditionsSelectStorage = new MockConditionsSelectStorage();
+        MockMetaManager metaManager = new MockMetaManager();
+        metaManager.addEntityClass(targetEntityClass);
+        metaManager.addEntityClass(weakLookupEntityClass);
+        metaManager.addEntityClass(strongLookupEntityClass);
+
+        IEntity targetEntity = Entity.Builder.anEntity()
+            .withId(Long.MAX_VALUE)
+            .withEntityClassRef(targetEntityClass.ref())
+            .withValue(
+                new LongValue(targetLongField, 100L)
+            )
+            .withValue(
+                new StringsValue(targetStringField, "v1")
+            )
+            .build();
+
+        MasterStorage masterStorage = mock(MasterStorage.class);
+        when(masterStorage.selectOne(targetEntity.id(), targetEntityClass)).thenReturn(Optional.of(targetEntity));
+
+        IEntity lookupEntity = Entity.Builder.anEntity()
+            .withEntityClassRef(strongLookupEntityClass.ref())
+            .withValue(
+                new LongValue(strongLookLongField, 1000L)
+            )
+            .withValue(
+                new LookupValue(strongStringLookupField, targetEntity.id())
+            ).build();
+
+        CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()
+            .withTransaction(tx)
+            .withTaskCoordinator(coordinator)
+            .withTaskExecutorService(TASK_POOL)
+            .withConditionsSelectStorage(conditionsSelectStorage)
+            .withMasterStorage(masterStorage)
+            .withMetaManager(metaManager)
+            .build();
+        context.focusSourceEntity(lookupEntity);
+        context.focusEntity(lookupEntity, strongLookupEntityClass);
+        context.focusField(strongStringLookupField);
+
+        LookupCalculationLogic logic = new LookupCalculationLogic();
+        Optional<IValue> newValueOp = logic.calculate(context);
+        Assertions.assertTrue(newValueOp.isPresent());
+        IValue newValue = newValueOp.get();
+        Assertions.assertEquals(StringsValue.class, newValue.getClass());
+        Assertions.assertEquals(targetEntity.id(), Long.parseLong((String) newValue.getAttachment().get()));
+        Assertions.assertEquals(
+            targetEntity.entityValue().getValue("target-string").get().getValue(),
+            newValue.getValue()
+        );
     }
 
     /**

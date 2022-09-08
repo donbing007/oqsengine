@@ -18,6 +18,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Lookup;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LookupValue;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
@@ -64,19 +65,6 @@ public class LookupCalculationLogic implements CalculationLogic {
         IEntityField focusField = context.getFocusField();
         IEntity focusEntity = context.getFocusEntity();
 
-        Optional<IValue> lookupValueOp = focusEntity.entityValue().getValue(focusField.id());
-        if (!lookupValueOp.isPresent()) {
-
-            if (logger.isDebugEnabled()) {
-                logger.debug(
-                    "Unable to instantiate the field that launched the lookup.[entityClass={}, field={}]",
-                    focusEntity.entityClassRef(), focusField.fieldName()
-                );
-            }
-
-            return Optional.empty();
-        }
-
         long targetEntityClassId = ((Lookup) focusField.config().getCalculation()).getClassId();
         MetaManager metaManager = context.getResourceWithEx(() -> context.getMetaManager());
         Optional<IEntityClass> targetEntityClassOp =
@@ -89,6 +77,20 @@ public class LookupCalculationLogic implements CalculationLogic {
         IEntityClass targetEntityClass = targetEntityClassOp.get();
 
         if (!context.isMaintenance()) {
+
+            Optional<IValue> lookupValueOp = focusEntity.entityValue().getValue(focusField.id());
+            if (!lookupValueOp.isPresent()) {
+
+                if (logger.isDebugEnabled()) {
+                    logger.debug(
+                        "Unable to instantiate the field that launched the lookup.[entityClass={}, field={}]",
+                        focusEntity.entityClassRef(), focusField.fieldName()
+                    );
+                }
+
+                return Optional.empty();
+            }
+
             IValue lookupValue = lookupValueOp.get();
             /*
             非维护状态计算只会处理LookupValue类型的值.
@@ -117,24 +119,56 @@ public class LookupCalculationLogic implements CalculationLogic {
 
             /*
             判断当前的值和目标值是否一致,一致将不进行重新lookup.
+            当前lookup为空,如果目标不为空将认为是不一致.
              */
-            IValue nowLookupValue = focusEntity.entityValue().getValue(focusField.id()).get();
+
+            // 当前发起lookup对象的字段值.
+            Optional<IValue> nowLookupValueOp = focusEntity.entityValue().getValue(focusField.id());
+
+            // 当前lookup目录对象的字段值.
             long lookUpFieldId = ((Lookup) focusField.config().getCalculation()).getFieldId();
-            IValue nowTargetValue = sourceEntity.entityValue().getValue(lookUpFieldId).get();
-            if (nowTargetValue.equals(nowLookupValue)) {
-                // 保持原样.
-                if (logger.isDebugEnabled()) {
-                    logger.debug("Recalculation is not required because the values of the current instance "
-                            + "({}) field ({}) and the target instance ({}) field are the same.",
-                        focusEntity.id(), focusField.fieldName(), nowTargetValue.getField().fieldName());
+            Optional<IValue> nowTargetValueOp = sourceEntity.entityValue().getValue(lookUpFieldId);
+
+            if (!nowLookupValueOp.isPresent() && !nowTargetValueOp.isPresent()) {
+                // 发起方和目标方都不存在此字段,不需改变.
+                return nowLookupValueOp;
+
+            } else if (nowTargetValueOp.isPresent() && !nowLookupValueOp.isPresent()) {
+                // 目标存在,但是发起方不存在.表示目标从 null -> value 的转变.
+
+                LookupValue lookupValue = new LookupValue(focusField, sourceEntity.id());
+
+                return doLookup(context, lookupValue, targetEntityClass);
+
+            } else if (!nowTargetValueOp.isPresent() && nowLookupValueOp.isPresent()) {
+                // 目标不存在,但是发起方存在.表示目标从 value -> null 的转变.
+
+                LookupValue lookupValue = new LookupValue(focusField, sourceEntity.id());
+
+                return doLookup(context, lookupValue, targetEntityClass);
+
+            } else {
+                //表示目标和发起方都存在,现在判断两者是否相等.
+                IValue nowLookupValue = nowLookupValueOp.get();
+                IValue nowTargetValue = nowTargetValueOp.get();
+
+                if (nowTargetValue.equals(nowLookupValue)) {
+                    // 保持原样.
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("Recalculation is not required because the values of the current instance "
+                                + "({}) field ({}) and the target instance ({}) field are the same.",
+                            focusEntity.id(), focusField.fieldName(), nowTargetValue.getField().fieldName());
+                    }
+
+                    return Optional.ofNullable(nowLookupValue);
+                } else {
+
+                    LookupValue lookupValue = new LookupValue(focusField, sourceEntity.id());
+
+                    return doLookup(context, lookupValue, targetEntityClass);
+
                 }
-
-                return Optional.ofNullable(nowLookupValue);
             }
-
-            LookupValue lookupValue = new LookupValue(focusField, sourceEntity.id());
-
-            return doLookup(context, lookupValue, targetEntityClass);
         }
 
     }
@@ -299,7 +333,8 @@ public class LookupCalculationLogic implements CalculationLogic {
         Optional<IEntity> targetEntityOp = findTargetEntity(context, lookupValue.valueToLong(), targetEntityClass);
         if (!targetEntityOp.isPresent()) {
             logger.warn("Unable to find the target of the lookup ({}).", lookupValue.valueToLong());
-            return Optional.empty();
+            // 清理发起方,目标对象不存在,完整清理发起方.
+            return Optional.of(new EmptyTypedValue(context.getFocusField()));
         }
 
         IEntity targetEntity = targetEntityOp.get();
@@ -317,7 +352,11 @@ public class LookupCalculationLogic implements CalculationLogic {
                 );
             }
 
-            return Optional.empty();
+            /*
+            没有找到目标值,创建一个空的IValue实例,只记录附件用以在目标更新时候更新.
+            这里利用了 MasterStorage 的特性, EmptyTypeValue 如果含有附件那么会更新保留附件.
+             */
+            return Optional.of(new EmptyTypedValue(context.getFocusField(), Long.toString(targetEntity.id())));
 
         } else {
 
