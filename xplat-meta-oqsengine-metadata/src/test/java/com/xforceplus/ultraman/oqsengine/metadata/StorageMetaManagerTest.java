@@ -70,6 +70,7 @@ public class StorageMetaManagerTest extends AbstractMetaTestHelper {
     @AfterEach
     public void after() throws Exception {
         super.destroy();
+        executorService.shutdown();
     }
 
     @Test

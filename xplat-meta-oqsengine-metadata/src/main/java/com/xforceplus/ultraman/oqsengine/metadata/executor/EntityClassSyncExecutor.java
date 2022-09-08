@@ -202,6 +202,10 @@ public class EntityClassSyncExecutor implements SyncExecutor {
 
                 logger.debug("clean app : {}, version : {}， success : {}",
                     task.element().getAppId(), task.element().getVersion(), isClean);
+
+                if (!isClean) {
+                    expireExecutor.offer(task);
+                }
             } catch (Exception e) {
                 //  ignore
                 logger.warn("clean app : {}, version : {} catch exception, message : {} , but will ignore...",

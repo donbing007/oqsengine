@@ -17,6 +17,8 @@ public class RedisLuaScript {
     public static final String DEFAULT_METADATA_APP_ENTITY = "com.xforceplus.ultraman.oqsengine.metadata.entity";
     public static final String DEFAULT_METADATA_ENTITY_APP_REL =
         "com.xforceplus.ultraman.oqsengine.metadata.entity.app.rel";
+
+    //  cache-version映射关系
     public static final String DEFAULT_METADATA_APP_VERSIONS_ENTITY_IDS =
         "com.xforceplus.ultraman.oqsengine.metadata.app.version.entityIds";
 
@@ -69,14 +71,15 @@ public class RedisLuaScript {
      * KEYS[2]
      * ARGV[1]-appId
      * ARGV[2]-version
-     * ARGV[3-N]-entityId
+     * ARGV[5-N]-entityId
      * 首先设置当前的MAPPING关系，设置完毕后再更新当前版本.
      */
     public static String REST_VERSION =
-        "for i=3, #ARGV, 1 do "
+        "for i=5, #ARGV, 1 do "
             + "redis.call('hset', KEYS[1], ARGV[i], ARGV[1])"
             + "end; "
             + "redis.call('hset', KEYS[2], ARGV[1], ARGV[2]);"
+            + "redis.call('hset', KEYS[3], ARGV[3], ARGV[4]);"
             + "return 1;";
 
     /**
