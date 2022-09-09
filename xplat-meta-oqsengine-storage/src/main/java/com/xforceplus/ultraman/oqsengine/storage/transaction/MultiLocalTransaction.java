@@ -427,62 +427,67 @@ public class MultiLocalTransaction implements Transaction {
 
     // 等待提交号被同步成功或者超时.
     private void awitCommitSync(long commitId) {
-        /*
-        如果外部指定最大等待时间小于等于0,表示需要提交号CDC等待.
-        这时即使当前事务声明需要等待也不会进行等待.
-        只有全局设定为需要等待,同时当前事务也提示需要等待时才会进行等待.
-        最多等待 maxWaitCommitIdSyncMs 毫秒.
-         */
-        if (!hint.isCanWaitCommitSync() || maxWaitCommitIdSyncMs <= 0) {
-            return;
-        } else {
-            this.waitedSync = true;
-        }
-
-        int maxLoop = 1;
-        if (maxWaitCommitIdSyncMs > checkCommitIdSyncMs) {
-            maxLoop = (int) (maxWaitCommitIdSyncMs / checkCommitIdSyncMs);
-        }
 
         Timer.Sample sample = Timer.start(Metrics.globalRegistry);
 
-        for (int i = 0; i < maxLoop; i++) {
+        try {
 
-            if (commitIdStatusService.isObsolete(commitId)) {
-
-                if (logger.isDebugEnabled()) {
-                    logger.debug(
-                        "The transaction {} contains an update operation, the wait commit number {} synchronizes successfully. Wait {} milliseconds.",
-                        id, commitId, i * checkCommitIdSyncMs);
-                }
+            /*
+            如果外部指定最大等待时间小于等于0,表示需要提交号CDC等待.
+            这时即使当前事务声明需要等待也不会进行等待.
+            只有全局设定为需要等待,同时当前事务也提示需要等待时才会进行等待.
+            最多等待 maxWaitCommitIdSyncMs 毫秒.
+            */
+            if (!hint.isCanWaitCommitSync() || maxWaitCommitIdSyncMs <= 0) {
                 return;
-
             } else {
-
-                if (logger.isDebugEnabled()) {
-                    logger.debug("The commit number {} has not been phased out, wait {} milliseconds.",
-                        commitId, checkCommitIdSyncMs);
-                }
-
-                LockSupport.parkNanos(this, TimeUnit.MILLISECONDS.toNanos(checkCommitIdSyncMs));
+                this.waitedSync = true;
             }
-        }
 
-        sample.stop(Timer.builder(MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS)
-            .tags(
-                "initiator", "commit",
-                "action", "wait",
-                "exception", "none"
-            )
-            .publishPercentileHistogram(false)
-            .publishPercentiles(0.5, 0.9, 0.99)
-            .register(Metrics.globalRegistry));
+            int maxLoop = 1;
+            if (maxWaitCommitIdSyncMs > checkCommitIdSyncMs) {
+                maxLoop = (int) (maxWaitCommitIdSyncMs / checkCommitIdSyncMs);
+            }
 
+            for (int i = 0; i < maxLoop; i++) {
 
-        if (logger.isDebugEnabled()) {
-            logger.debug(
-                "The transaction {} contains an update operation, the wait commit number {} synchronizes successfully. Wait {} milliseconds.",
-                id, commitId, maxWaitCommitIdSyncMs);
+                if (commitIdStatusService.isObsolete(commitId)) {
+
+                    if (logger.isDebugEnabled()) {
+                        logger.debug(
+                            "The transaction {} contains an update operation, the wait commit number {} synchronizes successfully. Wait {} milliseconds.",
+                            id, commitId, i * checkCommitIdSyncMs);
+                    }
+                    return;
+
+                } else {
+
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("The commit number {} has not been phased out, wait {} milliseconds.",
+                            commitId, checkCommitIdSyncMs);
+                    }
+
+                    LockSupport.parkNanos(this, TimeUnit.MILLISECONDS.toNanos(checkCommitIdSyncMs));
+                }
+            }
+
+            if (logger.isDebugEnabled()) {
+                logger.debug(
+                    "The transaction {} contains an update operation, the wait commit number {} synchronizes successfully. Wait {} milliseconds.",
+                    id, commitId, maxWaitCommitIdSyncMs);
+            }
+        } finally {
+
+            sample.stop(Timer.builder(MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS)
+                .tags(
+                    "initiator", "transaction",
+                    "action", "wait",
+                    "exception", "none"
+                )
+                .publishPercentileHistogram(false)
+                .publishPercentiles(0.5, 0.9, 0.99)
+                .register(Metrics.globalRegistry));
+
         }
     }
 
