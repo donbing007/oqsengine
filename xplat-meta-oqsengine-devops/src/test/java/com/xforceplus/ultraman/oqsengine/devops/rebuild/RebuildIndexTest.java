@@ -99,7 +99,7 @@ public class RebuildIndexTest extends DevOpsTestHelper {
 
         //  初始化数据
         boolean initOk = initData(
-            EntityGenerateTooBar.prepareLongStringEntity(totalSize), EntityGenerateTooBar.LONG_STRING_ENTITY_CLASS);
+            EntityGenerateTooBar.prepareLongStringEntity(totalSize, 1), EntityGenerateTooBar.LONG_STRING_ENTITY_CLASS);
 
         LocalDateTime end = LocalDateTime.now().plusHours(1);
 
@@ -135,11 +135,10 @@ public class RebuildIndexTest extends DevOpsTestHelper {
     }
 
     @Test
-    @Disabled
     public void rebuildWithDelete() throws Exception {
 
         List<IEntity> entities =
-            EntityGenerateTooBar.prepareLongStringEntity(totalSize);
+            EntityGenerateTooBar.prepareLongStringEntity(totalSize, 10000);
 
         //  初始化数据
         boolean initOk = initData(entities, EntityGenerateTooBar.LONG_STRING_ENTITY_CLASS);
@@ -208,7 +207,7 @@ public class RebuildIndexTest extends DevOpsTestHelper {
 
         //  初始化数据
         boolean initOk = initData(
-            EntityGenerateTooBar.prepareLongStringEntity(size), EntityGenerateTooBar.LONG_STRING_ENTITY_CLASS);
+            EntityGenerateTooBar.prepareLongStringEntity(size, 20000), EntityGenerateTooBar.LONG_STRING_ENTITY_CLASS);
 
         LocalDateTime end = LocalDateTime.now().plusMinutes(1);
 
@@ -242,7 +241,7 @@ public class RebuildIndexTest extends DevOpsTestHelper {
 
         //  初始化数据
         boolean initOk = initData(
-            EntityGenerateTooBar.prepareLongStringEntity(batchSize), EntityGenerateTooBar.LONG_STRING_ENTITY_CLASS);
+            EntityGenerateTooBar.prepareLongStringEntity(batchSize, 100000), EntityGenerateTooBar.LONG_STRING_ENTITY_CLASS);
 
         LocalDateTime end = LocalDateTime.now().plusDays(1);
 

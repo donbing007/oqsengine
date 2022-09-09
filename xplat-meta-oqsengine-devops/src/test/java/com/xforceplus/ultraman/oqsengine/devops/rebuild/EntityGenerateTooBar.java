@@ -97,7 +97,7 @@ public class EntityGenerateTooBar {
      * @param size 需要的数量.
      * @return 实例列表.
      */
-    public static List<IEntity> prepareLongStringEntity(int size) {
+    public static List<IEntity> prepareLongStringEntity(int size, int startPos) {
         List<IEntity> entities = new ArrayList<>();
 
         long defaultTime = LocalDateTime.now().toInstant(OffsetDateTime.now().getOffset()).toEpochMilli();
