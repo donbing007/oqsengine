@@ -10,6 +10,10 @@ import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactory;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.SocketOptions;
+import io.lettuce.core.metrics.MicrometerCommandLatencyRecorder;
+import io.lettuce.core.metrics.MicrometerOptions;
+import io.lettuce.core.resource.ClientResources;
+import io.micrometer.core.instrument.Metrics;
 import java.io.IOException;
 import java.net.URL;
 import java.time.Duration;
@@ -75,7 +79,15 @@ public class CommonConfiguration {
             throw new UnsupportedOperationException("Cluster mode is not supported.");
 
         } else {
-            RedisClient redisClient = RedisClient.create(configuration.getUri());
+            MicrometerOptions options = MicrometerOptions.builder()
+                .histogram(false)
+                .targetPercentiles(new double[] {0.5, 0.9, 0.99})
+                .enable()
+                .build();
+            ClientResources resources = ClientResources.builder()
+                .commandLatencyRecorder(new MicrometerCommandLatencyRecorder(Metrics.globalRegistry, options))
+                .build();
+            RedisClient redisClient = RedisClient.create(resources, configuration.getUri());
             redisClient.setOptions(ClientOptions.builder()
                 .autoReconnect(true)
                 .disconnectedBehavior(configuration.getDisconnectedBehavior())
