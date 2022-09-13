@@ -135,6 +135,7 @@ public class RebuildIndexTest extends DevOpsTestHelper {
     }
 
     @Test
+    @Disabled
     public void rebuildWithDelete() throws Exception {
 
         List<IEntity> entities =
