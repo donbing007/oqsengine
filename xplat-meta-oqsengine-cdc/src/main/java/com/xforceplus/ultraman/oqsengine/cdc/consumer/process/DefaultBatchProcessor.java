@@ -12,7 +12,6 @@ import com.xforceplus.ultraman.oqsengine.cdc.connect.AbstractCDCConnector;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.service.ConsumerService;
 import com.xforceplus.ultraman.oqsengine.cdc.context.RunnerContext;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
-import com.xforceplus.ultraman.oqsengine.devops.rebuild.RebuildIndexExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import io.micrometer.core.annotation.Timed;
@@ -36,6 +35,7 @@ public class DefaultBatchProcessor implements BatchProcessor {
 
     @Timed(
         value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        percentiles = {0.5, 0.9, 0.99},
         extraTags = {"initiator", "cdc", "action", "oneBatch"}
     )
     @Override
