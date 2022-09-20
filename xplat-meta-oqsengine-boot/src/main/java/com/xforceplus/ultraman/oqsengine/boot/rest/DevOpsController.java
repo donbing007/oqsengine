@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.boot.rest;
 import com.xforceplus.ultraman.oqsengine.boot.grpc.devops.SystemOpsService;
 import com.xforceplus.ultraman.oqsengine.boot.rest.dto.RebuildIndexes;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.DevOpsTaskInfo;
+import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import java.util.Collection;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +28,9 @@ public class DevOpsController {
     @Autowired
     private SystemOpsService systemOpsService;
 
+    @Autowired
+    private MetaManager metaManager;
+
     /**
      * 重建索引.
      */
@@ -45,7 +49,7 @@ public class DevOpsController {
 
         return ResponseEntity.ok(
             systemOpsService.rebuildIndexes(rebuildIndexes.getAppId(),
-                rebuildIndexes.getEntityClassIds(), rebuildIndexes.getStart(), rebuildIndexes.getEnd())
+                rebuildIndexes.getEntityClassIds(), rebuildIndexes.getStart(), rebuildIndexes.getEnd(), rebuildIndexes.getEnv())
         );
     }
 

@@ -269,14 +269,22 @@ public class SystemOpsService {
         @MethodParam(name = "appId", klass = String.class) String appId,
         @MethodParam(name = "entityClassIds", klass = List.class, inner = String.class) List<String> entityClassIds,
         @MethodParam(name = "start", klass = String.class, required = true) String start,
-        @MethodParam(name = "end", klass = String.class, required = true) String end) {
+        @MethodParam(name = "end", klass = String.class, required = true) String end,
+        @MethodParam(name = "env", klass = String.class, required = true) String env) {
         try {
-
             List<String> mergedIds = null;
             boolean notAppRebuildPlan = false;
             if (null == entityClassIds || entityClassIds.isEmpty()) {
                 if (null != appId && !appId.isEmpty()) {
                     mergedIds = metaManager.appEntityClassIds(appId);
+
+                    if (mergedIds.isEmpty() && null != env) {
+                        int version = metaManager.need(appId, env);
+                        //  再获取一次
+                        if (version > 0) {
+                            mergedIds = metaManager.appEntityClassIds(appId);
+                        }
+                    }
                 }
             } else if (null == appId || appId.isEmpty()) {
                 mergedIds = entityClassIds;
