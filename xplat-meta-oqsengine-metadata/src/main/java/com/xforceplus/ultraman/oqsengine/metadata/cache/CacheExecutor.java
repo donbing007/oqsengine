@@ -129,7 +129,7 @@ public interface CacheExecutor {
      * @param ids     目标元信息ID列表.
      * @return true成功, false失败.
      */
-    boolean resetVersion(String appId, int version, List<Long> ids);
+    boolean resetVersion(String appId, int version, List<Long> ids) throws JsonProcessingException;
 
     /**
      * 执行版本更新前的准备动作.

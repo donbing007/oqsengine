@@ -6,6 +6,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
+import java.util.Optional;
 
 /**
  * 表示无法支持默认查询策略,唯一的作用即是上报异常.
@@ -37,7 +38,7 @@ public class UnsupportStorageStrategy implements StorageStrategy {
     }
 
     @Override
-    public StorageValue toEmptyStorageValue(IEntityField field) {
+    public StorageValue toEmptyStorageValue(IEntityField field, Optional<StorageValue<String>> attachment) {
         throw new UnsupportedOperationException("Unknown logical attribute that cannot be handled.");
     }
 

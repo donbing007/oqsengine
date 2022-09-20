@@ -12,6 +12,7 @@ import com.xforceplus.ultraman.oqsengine.storage.value.StringStorageValue;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * 逻辑类型和储存类型转换策略.
@@ -71,7 +72,11 @@ public interface StorageStrategy {
      * @param field 目标字段.
      * @return 空表示实例.
      */
-    StorageValue toEmptyStorageValue(IEntityField field);
+    default StorageValue toEmptyStorageValue(IEntityField field) {
+        return toEmptyStorageValue(field, Optional.empty());
+    }
+
+    StorageValue toEmptyStorageValue(IEntityField field, Optional<StorageValue<String>> attachment);
 
     /**
      * 通过离散的物理储存来构造本地的StorageValue.

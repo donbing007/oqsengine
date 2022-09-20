@@ -53,6 +53,7 @@ import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValueFactory;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
+import com.xforceplus.ultraman.oqsengine.storage.value.strategy.common.helper.AttachmentHelper;
 import io.micrometer.core.annotation.Timed;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -691,6 +692,8 @@ public class SQLMasterStorage implements MasterStorage {
             if (logicValue != null && logicValue instanceof EmptyTypedValue) {
 
                 storageValue = storageStrategy.toEmptyStorageValue(logicValue.getField());
+
+                AttachmentHelper.setStorageValueAttachemnt(logicValue, storageValue);
 
             } else {
 

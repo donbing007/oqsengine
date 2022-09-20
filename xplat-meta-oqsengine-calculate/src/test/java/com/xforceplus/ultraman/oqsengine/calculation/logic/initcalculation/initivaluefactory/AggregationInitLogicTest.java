@@ -17,6 +17,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.Aggreg
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.calculation.StaticCalculation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
+import com.xforceplus.ultraman.oqsengine.storage.CombinedSelectStorage;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import java.sql.SQLException;
@@ -53,6 +54,9 @@ public class AggregationInitLogicTest {
 
     @Mock
     private IndexStorage indexStorage;
+
+    @Mock
+    private CombinedSelectStorage combinedSelectStorage;
 
     private IEntity entity;
 
@@ -183,7 +187,7 @@ public class AggregationInitLogicTest {
         Mockito.when(commitIdStatusService.getMin()).thenReturn(Optional.of(0L));
 
         List<EntityRef> masterRef = masterEntitys.stream().map(entity1 -> EntityRef.Builder.anEntityRef().withId(entity1.id()).build()).collect(Collectors.toList());
-        Mockito.when(masterStorage.select(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(masterRef);
+        Mockito.when(combinedSelectStorage.select(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(masterRef);
 
         List<EntityRef> indexRef = indexEntitys.stream().map(entity1 -> EntityRef.Builder.anEntityRef().withId(entity1.id()).build()).collect(Collectors.toList());
         Mockito.when(indexStorage.select(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(indexRef);

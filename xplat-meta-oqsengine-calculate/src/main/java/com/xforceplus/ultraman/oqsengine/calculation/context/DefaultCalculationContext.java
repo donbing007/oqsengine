@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.calculation.context;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationException;
 import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFactory;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceGraph;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.event.EventBus;
 import com.xforceplus.ultraman.oqsengine.idgenerator.client.BizIDGenerator;
@@ -66,6 +67,8 @@ public class DefaultCalculationContext implements CalculationContext {
     private Map<Long, IEntity> entityCache;
     // key为 entityId-fieldId的组合.
     private Map<String, ValueChange> valueChanges;
+
+    private InfuenceGraph infuenceGraph;
     private Set<Long> lockedEnittyIds;
     private boolean maintenance;
     private long lockTimeoutMs;
@@ -123,6 +126,16 @@ public class DefaultCalculationContext implements CalculationContext {
     @Override
     public IEntityField getFocusField() {
         return this.focusField;
+    }
+
+    @Override
+    public InfuenceGraph getInfuenceGraph() {
+        return this.infuenceGraph;
+    }
+
+    @Override
+    public void addInfuenceGraph(InfuenceGraph infuenceGraph) {
+        this.infuenceGraph = infuenceGraph;
     }
 
     @Override

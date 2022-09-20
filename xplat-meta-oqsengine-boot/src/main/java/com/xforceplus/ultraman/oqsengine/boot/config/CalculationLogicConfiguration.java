@@ -3,7 +3,12 @@ package com.xforceplus.ultraman.oqsengine.boot.config;
 import com.xforceplus.ultraman.oqsengine.calculation.Calculation;
 import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFactory;
 import com.xforceplus.ultraman.oqsengine.calculation.impl.DefaultCalculationImpl;
+import com.xforceplus.ultraman.oqsengine.calculation.impl.JustMaintainCalculationImpl;
+import com.xforceplus.ultraman.oqsengine.calculation.logic.initcalculation.CalculationInit;
+import com.xforceplus.ultraman.oqsengine.calculation.logic.initcalculation.CalculationInitInstance;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.initcalculation.CalculationInitLogic;
+import com.xforceplus.ultraman.oqsengine.calculation.logic.initcalculation.DefaultCalculationInitImpl;
+import com.xforceplus.ultraman.oqsengine.calculation.logic.initcalculation.DefaultCalculationInitInstanceImpl;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.initcalculation.DefaultCalculationInitLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.initcalculation.DefaultInitCalculationManager;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.initcalculation.InitCalculationManager;
@@ -35,9 +40,15 @@ public class CalculationLogicConfiguration {
         return new CalculationLogicFactory();
     }
 
-    @Bean
+    @Bean("defaultCalculationImpl")
     public Calculation calculation() {
         return new DefaultCalculationImpl();
+    }
+
+
+    @Bean("justMaintainCalculationImpl")
+    public Calculation justMaintainCalculationImpl() {
+        return new JustMaintainCalculationImpl();
     }
 
     /**
@@ -79,6 +90,16 @@ public class CalculationLogicConfiguration {
     @Bean
     public InitCalculationManager initCalculationManager() {
         return new DefaultInitCalculationManager();
+    }
+
+    @Bean
+    public CalculationInit calculationInit() {
+        return new DefaultCalculationInitImpl();
+    }
+
+    @Bean
+    public CalculationInitInstance calculationInitInstance() {
+        return new DefaultCalculationInitInstanceImpl();
     }
 
 }

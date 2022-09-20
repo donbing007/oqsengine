@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.mysql.strategy.condition;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.AttachmentCondition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
@@ -91,7 +92,17 @@ public class SQLConditionQueryBuilderFactory implements TokenizerFactoryAble, St
      * @return 条件查询构造器.
      */
     public ConditionBuilder getQueryBuilder(Condition condition) {
-        final String key = buildKey(condition.getField().type(), condition.getOperator());
+        String key;
+        // 附件条件查询,固定为STRING类型.
+        if (AttachmentCondition.class.isInstance(condition)) {
+
+            key = buildKey(FieldType.STRING, condition.getOperator());
+
+        } else {
+
+            key = buildKey(condition.getField().type(), condition.getOperator());
+
+        }
 
         ConditionBuilder builder = builders.get(key);
         if (builder == null) {

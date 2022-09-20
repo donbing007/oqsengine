@@ -70,6 +70,7 @@ public class DefaultConsumerService implements ConsumerService {
 
     @Timed(
         value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS,
+        percentiles = {0.5, 0.9, 0.99},
         extraTags = {"initiator", "cdc", "action", "consume"}
     )
     @Override

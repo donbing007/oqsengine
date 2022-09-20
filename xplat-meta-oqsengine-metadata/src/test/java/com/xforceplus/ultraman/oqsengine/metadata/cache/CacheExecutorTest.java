@@ -3,21 +3,34 @@ package com.xforceplus.ultraman.oqsengine.metadata.cache;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.xforceplus.ultraman.oqsengine.common.mock.CommonInitialization;
 import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
+import com.xforceplus.ultraman.oqsengine.common.mock.ReflectionUtils;
+import com.xforceplus.ultraman.oqsengine.event.Event;
+import com.xforceplus.ultraman.oqsengine.event.EventBus;
+import com.xforceplus.ultraman.oqsengine.event.EventType;
 import com.xforceplus.ultraman.oqsengine.event.payload.meta.MetaChangePayLoad;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.log.UpGradeLog;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.metrics.AppSimpleInfo;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.storage.ProfileStorage;
+import com.xforceplus.ultraman.oqsengine.metadata.executor.EntityClassSyncExecutor;
+import com.xforceplus.ultraman.oqsengine.metadata.executor.ExpireExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MetaInitialization;
+import com.xforceplus.ultraman.oqsengine.metadata.mock.MockMetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.ExpectedEntityStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.generator.GeneralEntityClassStorageBuilder;
 import com.xforceplus.ultraman.oqsengine.metadata.utils.storage.CacheToStorageGenerator;
 import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.impl.RedisContainer;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -25,10 +38,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -54,8 +70,87 @@ public class CacheExecutorTest {
         InitializationHelper.destroy();
     }
 
+
+    public CacheExecutor initMockCacheExecutor() throws IllegalAccessException {
+
+        MockCacheExecutor cacheExecutor = new MockCacheExecutor();
+
+        Collection<Field> fields = ReflectionUtils.printAllMembers(cacheExecutor);
+        ReflectionUtils.reflectionFieldValue(fields, "redisClient", cacheExecutor,
+            CommonInitialization.getInstance().getRedisClient());
+        cacheExecutor.init();
+
+        return cacheExecutor;
+    }
+
     @Test
-    public void batchVersionsTest() {
+    public void testCachedVersion()
+        throws JsonProcessingException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+
+        CacheExecutor cacheExecutor = initMockCacheExecutor();
+
+        // 纯粹测试新增.
+        List<EntityClassStorage> entityClassStorageList = new ArrayList<>();
+
+        //  测试加入一个app，并更新了版本，这时全局log会拿到1条
+        EntityClassStorage one = MetaPayLoadHelper.toBasicPrepareEntity(1);
+        one.getFields().add(MetaPayLoadHelper
+            .genericEntityField(10001, FieldType.STRING, CalculationType.STATIC, OperationType.CREATE));
+        one.getFields().add(MetaPayLoadHelper
+            .genericEntityField(10002, FieldType.STRING, CalculationType.FORMULA, OperationType.CREATE));
+        one.getFields().add(MetaPayLoadHelper
+            .genericEntityField(10003, FieldType.STRING, CalculationType.AUTO_FILL, OperationType.CREATE));
+
+        entityClassStorageList.add(one);
+
+        String expectedApp = "1";
+        String expectedEnv = "test";
+        int startVersion = 1;
+        int currentVersion = 100;
+
+        cacheExecutor.save(expectedApp, expectedEnv, startVersion, entityClassStorageList);
+
+        refreshCachedVersion();
+
+        Integer v = getVersionFroLocalCache(one.getId());
+
+        Assertions.assertEquals(startVersion, v);
+
+        cacheExecutor.save(expectedApp, expectedEnv, currentVersion, entityClassStorageList);
+
+
+        v = getVersionFroLocalCache(one.getId());
+
+        Assertions.assertEquals(startVersion, v);
+
+        refreshCachedVersion();
+
+        v = getVersionFroLocalCache(one.getId());
+
+        Assertions.assertEquals(currentVersion, v);
+    }
+
+    private void refreshCachedVersion() throws InvocationTargetException, IllegalAccessException,
+        NoSuchMethodException {
+        Method declaredMethod = cacheExecutor.getClass().getDeclaredMethod("cachedVersion");
+
+        declaredMethod.setAccessible(true);
+
+        declaredMethod.invoke(cacheExecutor);
+    }
+
+    private int getVersionFroLocalCache(long entityClassId)
+        throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
+        Method declaredMethod = cacheExecutor.getClass().getDeclaredMethod("localCachedVersion", long.class);
+
+        declaredMethod.setAccessible(true);
+
+        return (int) declaredMethod.invoke(cacheExecutor, entityClassId);
+    }
+
+
+    @Test
+    public void batchVersionsTest() throws JsonProcessingException {
         Map<Long, Integer> expectedVersions = new HashMap<>();
         List<Long> testEntityClassId = new ArrayList<>();
 
@@ -98,19 +193,25 @@ public class CacheExecutorTest {
         // 纯粹测试新增.
         List<EntityClassStorage> entityClassStorageList = new ArrayList<>();
         EntityClassStorage one = MetaPayLoadHelper.toBasicPrepareEntity(1);
-        one.getFields().add(MetaPayLoadHelper.genericEntityField(10001, FieldType.STRING, CalculationType.STATIC, OperationType.CREATE));
-        one.getFields().add(MetaPayLoadHelper.genericEntityField(10002, FieldType.STRING, CalculationType.FORMULA, OperationType.CREATE));
-        one.getFields().add(MetaPayLoadHelper.genericEntityField(10003, FieldType.STRING, CalculationType.AUTO_FILL, OperationType.CREATE));
+        one.getFields().add(MetaPayLoadHelper
+            .genericEntityField(10001, FieldType.STRING, CalculationType.STATIC, OperationType.CREATE));
+        one.getFields().add(MetaPayLoadHelper
+            .genericEntityField(10002, FieldType.STRING, CalculationType.FORMULA, OperationType.CREATE));
+        one.getFields().add(MetaPayLoadHelper
+            .genericEntityField(10003, FieldType.STRING, CalculationType.AUTO_FILL, OperationType.CREATE));
 
         entityClassStorageList.add(one);
         EntityClassStorage two = MetaPayLoadHelper.toBasicPrepareEntity(2);
-        two.getFields().add(MetaPayLoadHelper.genericEntityField(20001, FieldType.STRING, CalculationType.STATIC, OperationType.CREATE));
-        two.getFields().add(MetaPayLoadHelper.genericEntityField(20002, FieldType.STRING, CalculationType.FORMULA, OperationType.CREATE));
-        two.getFields().add(MetaPayLoadHelper.genericEntityField(20003, FieldType.STRING, CalculationType.AUTO_FILL, OperationType.CREATE));
+        two.getFields().add(MetaPayLoadHelper
+            .genericEntityField(20001, FieldType.STRING, CalculationType.STATIC, OperationType.CREATE));
+        two.getFields().add(MetaPayLoadHelper
+            .genericEntityField(20002, FieldType.STRING, CalculationType.FORMULA, OperationType.CREATE));
+        two.getFields().add(MetaPayLoadHelper
+            .genericEntityField(20003, FieldType.STRING, CalculationType.AUTO_FILL, OperationType.CREATE));
         entityClassStorageList.add(two);
 
         MetaChangePayLoad metaChangePayLoad =
-            cacheExecutor.save("1", "test",1, entityClassStorageList);
+            cacheExecutor.save("1", "test", 1, entityClassStorageList);
 
         checkMetaPayLoad(metaChangePayLoad, "1", 1, entityClassStorageList);
 
@@ -118,30 +219,39 @@ public class CacheExecutorTest {
         //  这里是预期需要修改的Field
         List<EntityClassStorage> mixedUpdateDeletes = new ArrayList<>();
         EntityClassStorage oldOne = MetaPayLoadHelper.toBasicPrepareEntity(1);
-        oldOne.getFields().add(MetaPayLoadHelper.genericEntityField(10001, FieldType.STRING, CalculationType.STATIC, OperationType.DELETE));
-        oldOne.getFields().add(MetaPayLoadHelper.genericEntityField(10002, FieldType.STRING, CalculationType.FORMULA, OperationType.UPDATE));
+        oldOne.getFields().add(MetaPayLoadHelper
+            .genericEntityField(10001, FieldType.STRING, CalculationType.STATIC, OperationType.DELETE));
+        oldOne.getFields().add(MetaPayLoadHelper
+            .genericEntityField(10002, FieldType.STRING, CalculationType.FORMULA, OperationType.UPDATE));
 
         mixedUpdateDeletes.add(oldOne);
         EntityClassStorage oldTwo = MetaPayLoadHelper.toBasicPrepareEntity(2);
-        oldTwo.getFields().add(MetaPayLoadHelper.genericEntityField(20001, FieldType.STRING, CalculationType.STATIC, OperationType.DELETE));
-        oldTwo.getFields().add(MetaPayLoadHelper.genericEntityField(20002, FieldType.STRING, CalculationType.FORMULA, OperationType.UPDATE));
-        oldTwo.getFields().add(MetaPayLoadHelper.genericEntityField(20003, FieldType.STRING, CalculationType.AUTO_FILL, OperationType.UPDATE));
+        oldTwo.getFields().add(MetaPayLoadHelper
+            .genericEntityField(20001, FieldType.STRING, CalculationType.STATIC, OperationType.DELETE));
+        oldTwo.getFields().add(MetaPayLoadHelper
+            .genericEntityField(20002, FieldType.STRING, CalculationType.FORMULA, OperationType.UPDATE));
+        oldTwo.getFields().add(MetaPayLoadHelper
+            .genericEntityField(20003, FieldType.STRING, CalculationType.AUTO_FILL, OperationType.UPDATE));
         mixedUpdateDeletes.add(oldTwo);
 
         //  写入更新对象
         entityClassStorageList.clear();
         EntityClassStorage doOne = MetaPayLoadHelper.toBasicPrepareEntity(1);
-        doOne.getFields().add(MetaPayLoadHelper.genericEntityField(10002, FieldType.STRING, CalculationType.FORMULA, OperationType.UPDATE));
-        doOne.getFields().add(MetaPayLoadHelper.genericEntityField(10003, FieldType.STRING, CalculationType.AUTO_FILL, OperationType.CREATE));
+        doOne.getFields().add(MetaPayLoadHelper
+            .genericEntityField(10002, FieldType.STRING, CalculationType.FORMULA, OperationType.UPDATE));
+        doOne.getFields().add(MetaPayLoadHelper
+            .genericEntityField(10003, FieldType.STRING, CalculationType.AUTO_FILL, OperationType.CREATE));
         entityClassStorageList.add(doOne);
 
         EntityClassStorage doTwo = MetaPayLoadHelper.toBasicPrepareEntity(2);
-        doTwo.getFields().add(MetaPayLoadHelper.genericEntityField(20002, FieldType.STRING, CalculationType.FORMULA, OperationType.UPDATE));
-        doTwo.getFields().add(MetaPayLoadHelper.genericEntityField(20003, FieldType.STRING, CalculationType.AUTO_FILL, OperationType.UPDATE));
+        doTwo.getFields().add(MetaPayLoadHelper
+            .genericEntityField(20002, FieldType.STRING, CalculationType.FORMULA, OperationType.UPDATE));
+        doTwo.getFields().add(MetaPayLoadHelper
+            .genericEntityField(20003, FieldType.STRING, CalculationType.AUTO_FILL, OperationType.UPDATE));
         entityClassStorageList.add(doTwo);
 
         metaChangePayLoad =
-            cacheExecutor.save("1", "test",3, entityClassStorageList);
+            cacheExecutor.save("1", "test", 3, entityClassStorageList);
 
         checkMetaPayLoad(metaChangePayLoad, "1", 3, mixedUpdateDeletes);
     }
@@ -152,9 +262,12 @@ public class CacheExecutorTest {
 
         //  测试加入一个app，并更新了版本，这时全局log会拿到1条
         EntityClassStorage one = MetaPayLoadHelper.toBasicPrepareEntity(1);
-        one.getFields().add(MetaPayLoadHelper.genericEntityField(10001, FieldType.STRING, CalculationType.STATIC, OperationType.CREATE));
-        one.getFields().add(MetaPayLoadHelper.genericEntityField(10002, FieldType.STRING, CalculationType.FORMULA, OperationType.CREATE));
-        one.getFields().add(MetaPayLoadHelper.genericEntityField(10003, FieldType.STRING, CalculationType.AUTO_FILL, OperationType.CREATE));
+        one.getFields().add(MetaPayLoadHelper
+            .genericEntityField(10001, FieldType.STRING, CalculationType.STATIC, OperationType.CREATE));
+        one.getFields().add(MetaPayLoadHelper
+            .genericEntityField(10002, FieldType.STRING, CalculationType.FORMULA, OperationType.CREATE));
+        one.getFields().add(MetaPayLoadHelper
+            .genericEntityField(10003, FieldType.STRING, CalculationType.AUTO_FILL, OperationType.CREATE));
 
         String expectedApp = "1";
         String expectedEnv = "test";
@@ -163,7 +276,7 @@ public class CacheExecutorTest {
 
         cacheExecutor.save(expectedApp, expectedEnv, startVersion, entityClassStorageList);
 
-        cacheExecutor.save(expectedApp, expectedEnv,currentVersion, entityClassStorageList);
+        cacheExecutor.save(expectedApp, expectedEnv, currentVersion, entityClassStorageList);
 
         Collection<UpGradeLog> upGradeLogCollection = cacheExecutor.showUpgradeLogs(null, null);
         Assertions.assertEquals(1, upGradeLogCollection.size());
@@ -177,9 +290,12 @@ public class CacheExecutorTest {
 
         //  测试再次加入一个app，这时全局log会拿到2条
         EntityClassStorage two = MetaPayLoadHelper.toBasicPrepareEntity(2);
-        two.getFields().add(MetaPayLoadHelper.genericEntityField(20001, FieldType.STRING, CalculationType.STATIC, OperationType.CREATE));
-        two.getFields().add(MetaPayLoadHelper.genericEntityField(20002, FieldType.STRING, CalculationType.FORMULA, OperationType.CREATE));
-        two.getFields().add(MetaPayLoadHelper.genericEntityField(20003, FieldType.STRING, CalculationType.AUTO_FILL, OperationType.CREATE));
+        two.getFields().add(MetaPayLoadHelper
+            .genericEntityField(20001, FieldType.STRING, CalculationType.STATIC, OperationType.CREATE));
+        two.getFields().add(MetaPayLoadHelper
+            .genericEntityField(20002, FieldType.STRING, CalculationType.FORMULA, OperationType.CREATE));
+        two.getFields().add(MetaPayLoadHelper
+            .genericEntityField(20003, FieldType.STRING, CalculationType.AUTO_FILL, OperationType.CREATE));
 
         entityClassStorageList.clear();
         entityClassStorageList.add(two);
@@ -226,7 +342,7 @@ public class CacheExecutorTest {
      * 测试版本.
      */
     @Test
-    public void prepare9to13Test() {
+    public void prepare9to13Test() throws JsonProcessingException {
         /*
          * 设置prepare appId = 1 version = 9，预期返回true
          */
@@ -290,7 +406,7 @@ public class CacheExecutorTest {
     }
 
     @Test
-    public void prepareTest() throws InterruptedException {
+    public void prepareTest() throws InterruptedException, JsonProcessingException {
         /*
          * 设置prepare appId = 1 version = 1，预期返回true
          */
@@ -361,7 +477,7 @@ public class CacheExecutorTest {
     }
 
     @Test
-    public void versionTest() {
+    public void versionTest() throws JsonProcessingException {
         /*
          * 当前的版本version = 2，预期返回true
          */
@@ -384,7 +500,7 @@ public class CacheExecutorTest {
     }
 
     @Test
-    public void versionsTest() {
+    public void versionsTest() throws JsonProcessingException {
         Map<Long, Integer> expects = new HashMap<>();
         List<Long> entityClassIds = new ArrayList<>();
 
@@ -393,19 +509,22 @@ public class CacheExecutorTest {
         entityClassIds.addAll(addAndRetEntityClassId(expects, "testApp2", expectedVersion + 1, Arrays.asList(3L, 4L)));
         entityClassIds.addAll(addAndRetEntityClassId(expects, "testApp3", expectedVersion + 2, Arrays.asList(5L, 6L)));
 
-        Map<Long, Integer> res = cacheExecutor.versions(entityClassIds, false,false);
+        Map<Long, Integer> res = cacheExecutor.versions(entityClassIds, false, false);
 
         Assertions.assertEquals(expects.size(), res.size());
 
         res.forEach(
-            (k,expected) -> {
+            (k, expected) -> {
                 Integer value = expects.get(k);
                 Assertions.assertEquals(expected, value);
             }
         );
 
     }
-    private List<Long> addAndRetEntityClassId(Map<Long, Integer> expects, String appId, int version, List<Long> entityClassIds) {
+
+    private List<Long> addAndRetEntityClassId(Map<Long, Integer> expects, String appId, int version,
+                                              List<Long> entityClassIds)
+        throws JsonProcessingException {
         boolean ret = cacheExecutor.resetVersion(appId, version, entityClassIds);
         if (!ret) {
             throw new RuntimeException("reset version failed.");
@@ -494,7 +613,8 @@ public class CacheExecutorTest {
                     Assertions.assertNotNull(r);
 
                     if (null != fullCheckMaps) {
-                        checkEntity(fullCheckMaps.get(id), CacheToStorageGenerator.toEntityClassStorage(expectedVersion, r));
+                        checkEntity(fullCheckMaps.get(id),
+                            CacheToStorageGenerator.toEntityClassStorage(expectedVersion, r));
                     }
                 }
             }
@@ -589,7 +709,8 @@ public class CacheExecutorTest {
     }
 
 
-    private void checkMetaPayLoad(MetaChangePayLoad metaChangePayLoad, String appId, int version, List<EntityClassStorage> entityClassStorageList)  {
+    private void checkMetaPayLoad(MetaChangePayLoad metaChangePayLoad, String appId, int version,
+                                  List<EntityClassStorage> entityClassStorageList) {
         Assertions.assertEquals(appId, metaChangePayLoad.getAppId());
 
         Assertions.assertEquals(version, metaChangePayLoad.getVersion());

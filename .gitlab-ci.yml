@@ -6,6 +6,7 @@ stages:
   - tag-mvn-deploy
   - docker-build
 
+
 maven-build:
   stage: mvn-package
   coverage: '/Total.*?([0-9]{1,3})%/'

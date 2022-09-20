@@ -38,6 +38,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 /**
+ * EntityUpdateTimeRangeIteratorTest.
+ *
  * @author dongbin
  * @version 0.1 2022/8/18 18:13
  * @since 1.8
@@ -81,6 +83,12 @@ public class EntityUpdateTimeRangeIteratorTest {
 
     private Faker faker = new Faker(Locale.CHINA);
 
+
+    /**
+     * before.
+     *
+     * @throws Exception exception
+     */
     @BeforeEach
     public void setUp() throws Exception {
         Calendar calendar = Calendar.getInstance();

@@ -145,7 +145,7 @@ public class LookupMaintainingTaskRunner implements TaskRunner {
             return;
         }
 
-        // 如果还有可迭代的数据,只是受限于失代上限限制造成的结束.
+        // 如果还有可迭代的数据,只是受限于迭代上限限制造成的结束.
         if (lookupEntityIterator.more()) {
             coordinator.addTask(
                 LookupMaintainingTask.Builder.anLookupMaintainingTask()

@@ -2,6 +2,9 @@ package com.xforceplus.ultraman.oqsengine.core.service.integration;
 
 import com.github.javafaker.Faker;
 import com.xforceplus.ultraman.oqsengine.boot.OqsengineBootApplication;
+import com.xforceplus.ultraman.oqsengine.calculation.dto.ErrorCalculateInstance;
+import com.xforceplus.ultraman.oqsengine.calculation.dto.ErrorFieldUnit;
+import com.xforceplus.ultraman.oqsengine.calculation.logic.initcalculation.CalculationInitInstance;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.initcalculation.InitCalculationManager;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.lookup.LookupCalculationLogic;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
@@ -17,13 +20,17 @@ import com.xforceplus.ultraman.oqsengine.idgenerator.common.entity.SegmentInfo;
 import com.xforceplus.ultraman.oqsengine.idgenerator.storage.SegmentStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.AttachmentCondition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
@@ -50,10 +57,12 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
@@ -132,6 +141,9 @@ public class CalculationTest extends AbstractContainerExtends {
 
     @Resource
     private InitCalculationManager initCalculationManager;
+
+    @Resource
+    private CalculationInitInstance calculationInitInstance;
 
     private Faker faker = new Faker(Locale.CHINA);
 
@@ -246,9 +258,9 @@ public class CalculationTest extends AbstractContainerExtends {
             ).getValue().get();
         Assertions.assertEquals(1, rsls.size());
 
-        IValue<String[]> sValue = ((List<IEntity>) rsls).get(0).entityValue().getValue("f-collect-s").get();
-        Assertions.assertEquals("s-string_A,s-string_B", sValue.valueToString());
-        Assertions.assertEquals("1,1", sValue.getAttachment().get());
+        IValue<String[]> value = ((List<IEntity>) rsls).get(0).entityValue().getValue("f-collect-s").get();
+        Assertions.assertEquals("s-string_A,s-string_B", value.valueToString());
+        Assertions.assertEquals("1,1", value.getAttachment().get());
 
 
         // test in
@@ -379,6 +391,8 @@ public class CalculationTest extends AbstractContainerExtends {
             )
         );
         OqsResult<Map.Entry<IEntity, IValue[]>> replaceResult = entityManagementService.replace(orderItem);
+        orderItem = entitySearchService.selectOne(
+            orderItem.id(), MockEntityClassDefine.ORDER_ITEM_CLASS.ref()).getValue().get();
         Assertions.assertEquals(ResultStatus.SUCCESS, replaceResult.getResultStatus(), replaceResult.getMessage());
 
         order = entitySearchService.selectOne(order.id(), MockEntityClassDefine.ORDER_CLASS.ref()).getValue().get();
@@ -432,8 +446,8 @@ public class CalculationTest extends AbstractContainerExtends {
     }
 
     /**
-     * lookup目标对象字段值不存在.
-     * 预计发起lookup的对象此值也不存在.
+     * lookup目标对象字段值不存在.<br>
+     * 应该只记录关系,当目标变动时发起lookup的字段也应该和普能字段一样改变.
      */
     @Test
     public void testLookupEmptyValue() throws Exception {
@@ -445,11 +459,44 @@ public class CalculationTest extends AbstractContainerExtends {
         IEntity order = entityHelper.buildOrderEntity(user);
         oqsResult = entityManagementService.build(order);
         // 由于公式计算触发了除0异常,所以这里是半成功.
-        Assertions.assertEquals(ResultStatus.HALF_SUCCESS, oqsResult.getResultStatus(),
-            oqsResult.getMessage());
+        Assertions.assertEquals(ResultStatus.HALF_SUCCESS, oqsResult.getResultStatus(), oqsResult.getMessage());
 
         order = entitySearchService.selectOne(order.id(), MockEntityClassDefine.ORDER_CLASS.ref()).getValue().get();
         Assertions.assertFalse(order.entityValue().getValue("用户编号lookup").isPresent());
+
+        OqsResult<Collection<IEntity>> result = entitySearchService.selectByConditions(
+            Conditions.buildEmtpyConditions()
+                .addAnd(
+                    new AttachmentCondition(
+                        MockEntityClassDefine.ORDER_CLASS.field("用户编号lookup").get(),
+                        true,
+                        Long.toString(user.id())
+                    )
+                ),
+            MockEntityClassDefine.ORDER_CLASS.ref(),
+            ServiceSelectConfig.Builder.anSearchConfig()
+                .withPage(Page.newSinglePage(100))
+                .withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD))
+                .build()
+        );
+
+        Collection<IEntity> entities = result.getValue().get();
+        Assertions.assertEquals(1, entities.size());
+        Assertions.assertEquals(order.id(), entities.stream().findFirst().get().id());
+
+        /*
+        更新了lookup目标从空转为有值,相应的order对象也应该被更新.
+         */
+        String userCode = "U" + idGenerator.next();
+        user.entityValue().addValue(
+            new StringValue(MockEntityClassDefine.USER_CLASS.field("用户编号").get(), userCode)
+        );
+        entityManagementService.replace(user);
+        user = entitySearchService.selectOne(user.id(), MockEntityClassDefine.USER_CLASS.ref()).getValue().get();
+        Assertions.assertEquals(userCode, user.entityValue().getValue("用户编号").get().getValue());
+
+        order = entitySearchService.selectOne(order.id(), MockEntityClassDefine.ORDER_CLASS.ref()).getValue().get();
+        Assertions.assertEquals(userCode, order.entityValue().getValue("用户编号lookup").get().getValue());
     }
 
     /**
@@ -1155,4 +1202,376 @@ public class CalculationTest extends AbstractContainerExtends {
         Assertions.assertEquals(200,
             entity1.getValue().get().entityValue().getValue("订单项总数count").get().valueToLong());
     }
+
+    @Test
+    public void testDryRunCalculateSingle() throws Exception {
+        Entity entity = Entity.Builder.anEntity()
+                .withEntityClassRef(MockEntityClassDefine.ORDER_CLASS.ref())
+                .withId(1)
+                .withValue(new DateTimeValue(
+                        MockEntityClassDefine.ORDER_CLASS.field("下单时间").get(),
+                        faker.date().birthday().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
+                )).build();
+
+        int size = 200;
+        Collection<IEntity> entities = new ArrayList<>(size);
+        entities = buildDetails(size, entity);
+        OqsResult<IEntity[]> detailRes = entityManagementService.build(entities.toArray(new Entity[entities.size()]));
+
+        OqsResult<IEntity> mainRes = entityManagementService.build(entity);
+
+        Optional<IEntityField> orderCount = MockEntityClassDefine.ORDER_CLASS.field("订单项总数count");
+
+        Optional<IEntityField> amountSum = MockEntityClassDefine.ORDER_CLASS.field("总金额sum");
+
+        Optional<IEntityField> amountMax = MockEntityClassDefine.ORDER_CLASS.field("最大金额max");
+
+        Optional<IEntityField> amountMin = MockEntityClassDefine.ORDER_CLASS.field("最小金额min");
+
+        Optional<IEntityField> quantitySum = MockEntityClassDefine.ORDER_CLASS.field("总数量sum");
+
+        Optional<IEntityField> quantityMax = MockEntityClassDefine.ORDER_CLASS.field("最大数量max");
+
+        Optional<IEntityField> quantityMin = MockEntityClassDefine.ORDER_CLASS.field("最小数量min");
+
+        Optional<IEntityField> unitPrice = MockEntityClassDefine.ORDER_CLASS.field("订单项平均价格formula");
+
+        Optional<IEntityField> sumCondition = MockEntityClassDefine.ORDER_CLASS.field("订单项数量大于1金额sum");
+
+
+        Optional<ErrorCalculateInstance> errorCalculateInstance = calculationInitInstance
+                .initCheckField(entity.id(),
+                        MockEntityClassDefine.ORDER_CLASS,
+                        Arrays.asList(orderCount.get(),
+                                amountSum.get(),
+                                amountMax.get(),
+                                amountMin.get(),
+                                quantitySum.get(),
+                                quantityMax.get(),
+                                quantityMin.get(),
+                                unitPrice.get(),
+                                sumCondition.get()));
+
+        Assertions.assertTrue(errorCalculateInstance.isPresent());
+
+        Assertions.assertEquals(errorCalculateInstance.get().getErrorFieldUnits().size(), 9);
+
+        for (ErrorFieldUnit errorFieldUnit : errorCalculateInstance.get().getErrorFieldUnits()) {
+
+            int sum = 0;
+            for (int i = 0; i < size; i++) {
+                sum += i;
+            }
+
+            switch (errorFieldUnit.getField().name()) {
+                case "订单项总数count":
+                    Assertions.assertEquals(((LongValue) errorFieldUnit.getExpect()).getValue(), size);
+
+                    Assertions.assertEquals(((LongValue) errorFieldUnit.getNow()).getValue(), 0);
+                    break;
+                case "总金额sum":
+                    Assertions.assertEquals(((DecimalValue) errorFieldUnit.getExpect()).getValue().longValue(), sum);
+
+                    Assertions.assertEquals(((DecimalValue) errorFieldUnit.getNow()).getValue().longValue(), 0);
+
+                    break;
+                case "最大金额max":
+                    Assertions.assertEquals(((DecimalValue) errorFieldUnit.getExpect()).getValue().longValue(), size - 1);
+
+                    Assertions.assertEquals(((DecimalValue) errorFieldUnit.getNow()).getValue().longValue(), 0);
+                    break;
+                case "最小金额min":
+                    Assertions.assertEquals(((DecimalValue) errorFieldUnit.getExpect()).getValue().longValue(), 0);
+
+                    Assertions.assertEquals(((DecimalValue) errorFieldUnit.getNow()).getValue().longValue(), 0);
+                    break;
+                case "总数量sum":
+                    Assertions.assertEquals(((LongValue) errorFieldUnit.getExpect()).getValue(), sum);
+
+                    Assertions.assertEquals(((LongValue) errorFieldUnit.getNow()).getValue(), 0);
+                    break;
+                case "订单项数量大于1金额sum":
+                    Assertions.assertEquals(((DecimalValue) errorFieldUnit.getExpect()).getValue().longValue(), sum - 1);
+
+                    Assertions.assertEquals(((DecimalValue) errorFieldUnit.getNow()).getValue().longValue(), 0);
+                    break;
+                case "最大数量max":
+                    Assertions.assertEquals(((LongValue) errorFieldUnit.getExpect()).getValue(), size - 1);
+
+                    Assertions.assertEquals(((LongValue) errorFieldUnit.getNow()).getValue(), 0);
+                    break;
+                case "最小数量min":
+                    Assertions.assertEquals(((LongValue) errorFieldUnit.getExpect()).getValue(), 0);
+
+                    Assertions.assertEquals(((LongValue) errorFieldUnit.getNow()).getValue(), 0);
+                    break;
+                case "订单项平均价格formula":
+                    Assertions.assertEquals(((DecimalValue) errorFieldUnit.getExpect()).getValue(), new BigDecimal("99.500000"));
+
+                    Assertions.assertEquals(((DecimalValue) errorFieldUnit.getNow()).getValue().longValue(), 0);
+                    break;
+                default:
+                    break;
+            }
+        }
+
+    }
+
+    @Test
+    public void testDryRunCalculateMulti() throws Exception {
+        Entity entity1 = Entity.Builder.anEntity()
+                .withEntityClassRef(MockEntityClassDefine.ORDER_CLASS.ref())
+                .withId(1)
+                .withValue(new DateTimeValue(
+                        MockEntityClassDefine.ORDER_CLASS.field("下单时间").get(),
+                        faker.date().birthday().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
+                )).build();
+
+        Entity entity2 = Entity.Builder.anEntity()
+                .withEntityClassRef(MockEntityClassDefine.ORDER_CLASS.ref())
+                .withId(2)
+                .withValue(new DateTimeValue(
+                        MockEntityClassDefine.ORDER_CLASS.field("下单时间").get(),
+                        faker.date().birthday().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
+                )).build();
+
+
+        int size = 200;
+        Collection<IEntity> entities1 = buildDetails(size, entity1);
+
+        Collection<IEntity> entities2 = buildDetails(size, entity2);
+
+        Collection<IEntity> entities = new ArrayList<>();
+        entities.addAll(entities1);
+        entities.addAll(entities2);
+
+        OqsResult<IEntity[]> detailRes = entityManagementService.build(entities.toArray(new Entity[entities.size()]));
+
+        OqsResult<IEntity[]> mainRes = entityManagementService.build(new Entity[]{entity2, entity1});
+
+        Optional<IEntityField> orderCount = MockEntityClassDefine.ORDER_CLASS.field("订单项总数count");
+
+        Optional<IEntityField> amountSum = MockEntityClassDefine.ORDER_CLASS.field("总金额sum");
+
+        Optional<IEntityField> amountMax = MockEntityClassDefine.ORDER_CLASS.field("最大金额max");
+
+        Optional<IEntityField> amountMin = MockEntityClassDefine.ORDER_CLASS.field("最小金额min");
+
+        Optional<IEntityField> quantitySum = MockEntityClassDefine.ORDER_CLASS.field("总数量sum");
+
+        Optional<IEntityField> quantityMax = MockEntityClassDefine.ORDER_CLASS.field("最大数量max");
+
+        Optional<IEntityField> quantityMin = MockEntityClassDefine.ORDER_CLASS.field("最小数量min");
+
+        Optional<IEntityField> unitPrice = MockEntityClassDefine.ORDER_CLASS.field("订单项平均价格formula");
+        List<ErrorCalculateInstance> errorCalculateInstances = calculationInitInstance
+                .initCheckFields(Arrays.asList(entity1.id(), entity2.id()),
+                        MockEntityClassDefine.ORDER_CLASS,
+                        Arrays.asList(orderCount.get(),
+                                amountSum.get(),
+                                amountMax.get(),
+                                amountMin.get(),
+                                quantitySum.get(),
+                                quantityMax.get(),
+                                quantityMin.get(),
+                                unitPrice.get()),
+                        200L);
+
+
+        Assertions.assertEquals(errorCalculateInstances.size(), 2);
+
+        for (ErrorCalculateInstance errorCalculateInstance : errorCalculateInstances) {
+            for (ErrorFieldUnit errorFieldUnit : errorCalculateInstance.getErrorFieldUnits()) {
+
+                int sum = 0;
+                for (int i = 0; i < size; i++) {
+                    sum += i;
+                }
+
+                switch (errorFieldUnit.getField().name()) {
+                    case "订单项总数count":
+                        Assertions.assertEquals(((LongValue) errorFieldUnit.getExpect()).getValue(), size);
+
+                        Assertions.assertEquals(((LongValue) errorFieldUnit.getNow()).getValue(), 0);
+                        break;
+                    case "总金额sum":
+                        Assertions.assertEquals(((DecimalValue) errorFieldUnit.getExpect()).getValue().longValue(), sum);
+
+                        Assertions.assertEquals(((DecimalValue) errorFieldUnit.getNow()).getValue().longValue(), 0);
+
+                        break;
+                    case "最大金额max":
+                        Assertions.assertEquals(((DecimalValue) errorFieldUnit.getExpect()).getValue().longValue(), size - 1);
+
+                        Assertions.assertEquals(((DecimalValue) errorFieldUnit.getNow()).getValue().longValue(), 0);
+                        break;
+                    case "最小金额min":
+                        Assertions.assertEquals(((DecimalValue) errorFieldUnit.getExpect()).getValue().longValue(), 0);
+
+                        Assertions.assertEquals(((DecimalValue) errorFieldUnit.getNow()).getValue().longValue(), 0);
+                        break;
+                    case "总数量sum":
+                        Assertions.assertEquals(((LongValue) errorFieldUnit.getExpect()).getValue(), sum);
+
+                        Assertions.assertEquals(((LongValue) errorFieldUnit.getNow()).getValue(), 0);
+                        break;
+                    case "最大数量max":
+                        Assertions.assertEquals(((LongValue) errorFieldUnit.getExpect()).getValue(), size - 1);
+
+                        Assertions.assertEquals(((LongValue) errorFieldUnit.getNow()).getValue(), 0);
+                        break;
+                    case "最小数量min":
+                        Assertions.assertEquals(((LongValue) errorFieldUnit.getExpect()).getValue(), 0);
+
+                        Assertions.assertEquals(((LongValue) errorFieldUnit.getNow()).getValue(), 0);
+                        break;
+                    case "订单项平均价格formula":
+                        Assertions.assertEquals(((DecimalValue) errorFieldUnit.getExpect()).getValue(), new BigDecimal("99.500000"));
+
+                        Assertions.assertEquals(((DecimalValue) errorFieldUnit.getNow()).getValue().longValue(), 0);
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+        }
+
+    }
+
+
+    @Test
+    public void testReCalculate() throws Exception {
+        Entity userEntity = Entity.Builder.anEntity()
+                .withEntityClassRef(MockEntityClassDefine.USER_CLASS.ref())
+                .withId(3)
+                .withValue(new StringValue(
+                        MockEntityClassDefine.USER_CLASS.field("用户名称").get(),
+                        "test"
+                )).build();
+
+
+        Entity entity = Entity.Builder.anEntity()
+                .withEntityClassRef(MockEntityClassDefine.ORDER_CLASS.ref())
+                .withId(1)
+                .withValue(new DateTimeValue(
+                        MockEntityClassDefine.ORDER_CLASS.field("下单时间").get(),
+                        faker.date().birthday().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
+                )).withValue(
+                        new LongValue(
+                                MockEntityClassDefine.ORDER_CLASS.field("订单用户关联").get(),
+                                userEntity.id()
+                        )
+                ).build();
+
+        int size = 200;
+        Collection<IEntity> entities = buildDetails(size, entity);
+        OqsResult<IEntity[]> detailRes = entityManagementService.build(entities.toArray(new Entity[entities.size()]));
+
+        OqsResult<IEntity> mainRes = entityManagementService.build(entity);
+
+        OqsResult<IEntity> userRes = entityManagementService.build(userEntity);
+
+        Optional<IEntityField> orderCount = MockEntityClassDefine.ORDER_CLASS.field("订单项总数count");
+
+        Optional<IEntityField> amountSum = MockEntityClassDefine.ORDER_CLASS.field("总金额sum");
+
+        Optional<IEntityField> amountMax = MockEntityClassDefine.ORDER_CLASS.field("最大金额max");
+
+        Optional<IEntityField> amountMin = MockEntityClassDefine.ORDER_CLASS.field("最小金额min");
+
+        Optional<IEntityField> quantitySum = MockEntityClassDefine.ORDER_CLASS.field("总数量sum");
+
+        Optional<IEntityField> quantityMax = MockEntityClassDefine.ORDER_CLASS.field("最大数量max");
+
+        Optional<IEntityField> quantityMin = MockEntityClassDefine.ORDER_CLASS.field("最小数量min");
+
+        Optional<IEntityField> unitPrice = MockEntityClassDefine.ORDER_CLASS.field("订单项平均价格formula");
+
+
+
+        OqsResult<Map<IEntity, IValue[]>> mapOqsResult = entityManagementService.reCalculate(new IEntity[]{entity},
+                MockEntityClassDefine.ORDER_CLASS.ref(),
+                Arrays.asList(orderCount.get().name(),
+                amountSum.get().name(),
+                amountMax.get().name(),
+                amountMin.get().name(),
+                quantitySum.get().name(),
+                quantityMax.get().name(),
+                quantityMin.get().name(),
+                unitPrice.get().name()));
+
+
+        // 重算入库后dryRun无错误字段
+        Optional<ErrorCalculateInstance> errorCalculateInstance = calculationInitInstance
+                .initCheckField(entity.id(),
+                        MockEntityClassDefine.ORDER_CLASS,
+                        Arrays.asList(orderCount.get(),
+                                amountSum.get(),
+                                amountMax.get(),
+                                amountMin.get(),
+                                quantitySum.get(),
+                                quantityMax.get(),
+                                quantityMin.get(),
+                                unitPrice.get()));
+
+        Assertions.assertFalse(errorCalculateInstance.isPresent());
+
+        OqsResult<IEntity> entityOqsResult = entitySearchService.selectOne(userEntity.id(), userEntity.entityClassRef());
+
+
+        Collection<IValue> values = entityOqsResult.getValue().get().entityValue().values();
+
+
+        IEntityValue entityValue = entityOqsResult.getValue().get().entityValue();
+
+        Assertions.assertEquals(entityValue.getValue("总消费金额sum").get().valueToString(), "19900.0");
+        Assertions.assertEquals(entityValue.getValue("平均消费金额avg").get().valueToString(), "19900.0");
+        Assertions.assertEquals(entityValue.getValue("最大消费金额max").get().valueToString(), "19900.0");
+        Assertions.assertEquals(entityValue.getValue("最小消费金额min").get().valueToString(), "19900.0");
+
+    }
+
+    private List<IEntity> buildDetails(int size, IEntity entity) {
+        List<IEntity> entities = new ArrayList<>(size);
+        for (int i = 0; i < size; i++) {
+            IEntity e = Entity.Builder.anEntity()
+                    .withEntityClassRef(MockEntityClassDefine.ORDER_ITEM_CLASS.ref())
+                    .withValue(
+                            new StringValue(
+                                    MockEntityClassDefine.ORDER_ITEM_CLASS.field("物品名称").get(),
+                                    faker.food().fruit()
+                            )
+                    )
+                    .withValue(
+                            new DecimalValue(
+                                    MockEntityClassDefine.ORDER_ITEM_CLASS.field("金额").get(),
+                                    new BigDecimal(i)
+                            )
+                    )
+                    .withValue(
+                            new LongValue(
+                                    MockEntityClassDefine.ORDER_ITEM_CLASS.field("数量").get(),
+                                    i
+                            )
+                    )
+                    .withValue(
+                            new LongValue(
+                                    MockEntityClassDefine.ORDER_ITEM_CLASS.field("订单项订单关联").get(),
+                                    entity.id()
+                            )
+                    )
+                    .withValue(
+                            new DateTimeValue(
+                                    MockEntityClassDefine.ORDER_ITEM_CLASS.field("时间").get(),
+                                    new Date((Long.MAX_VALUE - i)).toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
+                            )
+                    )
+                    .build();
+            entities.add(e);
+        }
+        return entities;
+    }
+
+
 }

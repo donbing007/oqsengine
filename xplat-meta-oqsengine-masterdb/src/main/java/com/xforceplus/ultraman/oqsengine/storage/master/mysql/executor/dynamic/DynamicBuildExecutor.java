@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
 import com.xforceplus.ultraman.oqsengine.common.serializable.utils.JacksonDefaultMapper;
 import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.ValueWithEmpty;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.master.mysql.executor.AbstractMasterTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.mysql.pojo.MapAttributeMasterStorageEntity;
@@ -15,6 +16,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 创建数据执行器.
@@ -159,7 +161,11 @@ public class DynamicBuildExecutor
     // 构造创建实例属性JSON字符串,名称使用的是属性 F + {id}.
     private String toBuildJson(Map<IEntityField, StorageValue> storageValues) {
 
-        Map<String, Object> values = toPainValues(storageValues);
+        // 创建的时候需要去除 ValueWithEmpty实例.
+        Map<String, Object> values = toPainValues(storageValues).entrySet()
+            .stream()
+            .filter(e -> !ValueWithEmpty.class.isInstance(e.getValue()))
+            .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue(), (e0, e1) -> e0));
 
         try {
             return JacksonDefaultMapper.OBJECT_MAPPER.writeValueAsString(values);

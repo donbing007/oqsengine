@@ -7,6 +7,9 @@ import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.common.version.VersionHelp;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MockMetaManagerHolder;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.AttachmentCondition;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityFieldName;
@@ -19,6 +22,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.BooleanValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
@@ -28,11 +32,15 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
+import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
+import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.master.mock.MasterDBInitialization;
 import com.xforceplus.ultraman.oqsengine.storage.mock.StorageInitialization;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.EntityPackage;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
+import com.xforceplus.ultraman.oqsengine.storage.value.AnyStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.original.OriginalFieldAgent;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.original.jdbc.JdbcOriginalFieldAgent;
@@ -58,6 +66,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import javax.sql.DataSource;
@@ -532,6 +541,7 @@ public class SQLMasterStorageTest {
                 new StringValue(l1EntityClass.father().get().field("l0-string").get(), "l0value"),
                 new LongValue(l1EntityClass.field("l1-long").get(), 200),
                 new StringValue(l1EntityClass.field("l1-string").get(), "l1value"),
+                new EmptyTypedValue(l1EntityClass.field("l0-strings").get(), "attachment"),
                 new DateTimeValue(EntityField.UPDATE_TIME_FILED, updateTime)
             )
         );
@@ -557,6 +567,43 @@ public class SQLMasterStorageTest {
         Assertions.assertEquals(0, targetEntity.version());
         Assertions.assertEquals(updateTime.atZone(ZoneId.of("Asia/Shanghai")).toInstant().toEpochMilli(),
             entityOptional.get().time());
+
+        // 验证附件查询.
+        Collection<EntityRef> refs = storage.select(
+            Conditions.buildEmtpyConditions()
+                .addAnd(
+                    new AttachmentCondition(
+                        l0StringsField,
+                        true,
+                        "attachment"
+                    )
+                ),
+            l1EntityClass,
+            SelectConfig.Builder.anSelectConfig()
+                .withPage(Page.newSinglePage(100))
+                .withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD))
+                .build()
+        );
+        Assertions.assertEquals(1, refs.size());
+        Assertions.assertEquals(targetEntity.id(), refs.stream().findFirst().get().getId());
+
+        String attribute = "";
+        try (Connection conn = MasterDBInitialization.getInstance().getDataSource().getConnection()) {
+            try (PreparedStatement ps = conn.prepareStatement("select attribute from oqsbigentity where id=?")) {
+                ps.setLong(1, newEntity.id());
+
+                try (ResultSet rs = ps.executeQuery()) {
+                    Assertions.assertTrue(rs.next());
+
+                    attribute = rs.getString(1);
+                }
+            }
+        }
+        // 验证含有附件的EmptyTypeValue没有被储存,但是其附件被储存了.
+        Assertions.assertFalse(attribute.contains(
+            AnyStorageValue.ATTRIBUTE_PREFIX + l0StringsField.idString() + StorageType.STRING.getType()));
+        Assertions.assertTrue(attribute.contains(
+            AnyStorageValue.ATTACHMENT_PREFIX + l0StringsField.idString() + StorageType.STRING.getType()));
     }
 
     @Test
@@ -666,6 +713,40 @@ public class SQLMasterStorageTest {
         }
     }
 
+    /**
+     * 更新含有附件的 EmptyTypeValue
+     */
+    @Test
+    @Tag(DYNAMIC_TAG)
+    public void testReplaceEmptyValueWithAttachment() throws Exception {
+        IEntity targetEntity = expectedEntitys.get(0);
+
+        String attachment = UUID.randomUUID().toString();
+        targetEntity.entityValue().addValue(
+            new EmptyTypedValue(l2StringField, attachment)
+        );
+
+        boolean result = storage.replace(targetEntity, l2EntityClass);
+        Assertions.assertTrue(result);
+        Assertions.assertFalse(targetEntity.isDirty());
+
+        String attribute = "";
+        try (Connection conn = MasterDBInitialization.getInstance().getDataSource().getConnection()) {
+            try (PreparedStatement ps = conn.prepareStatement("select attribute from oqsbigentity where id=?")) {
+                ps.setLong(1, targetEntity.id());
+
+                try (ResultSet rs = ps.executeQuery()) {
+                    Assertions.assertTrue(rs.next());
+
+                    attribute = rs.getString(1);
+                }
+            }
+        }
+        // 字段和附件应该都被清理.
+        Assertions.assertFalse(attribute.contains("F3001S"));
+        Assertions.assertTrue(attribute.contains("A3001S"));
+    }
+
     @Test
     @Tag(DYNAMIC_TAG)
     public void testReplace() throws Exception {
@@ -701,6 +782,25 @@ public class SQLMasterStorageTest {
         Assertions.assertEquals("new-attachement",
             targetEntityOp.get().entityValue().getValue("l0-long").get().getAttachment().get());
         Assertions.assertFalse(targetEntityOp.get().entityValue().getValue("l2-string").isPresent());
+
+        /*
+        读取原始数据,验证字段是否被删除.
+         */
+        String attribute = "";
+        try (Connection conn = MasterDBInitialization.getInstance().getDataSource().getConnection()) {
+            try (PreparedStatement ps = conn.prepareStatement("select attribute from oqsbigentity where id=?")) {
+                ps.setLong(1, targetEntityOp.get().id());
+
+                try (ResultSet rs = ps.executeQuery()) {
+                    Assertions.assertTrue(rs.next());
+
+                    attribute = rs.getString(1);
+                }
+            }
+        }
+        // 字段和附件应该都被清理.
+        Assertions.assertFalse(attribute.contains("F3001S"));
+        Assertions.assertFalse(attribute.contains("A3001S"));
     }
 
     @Test

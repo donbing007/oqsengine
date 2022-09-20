@@ -3,6 +3,8 @@ package com.xforceplus.ultraman.oqsengine.calculation.context;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationException;
 import com.xforceplus.ultraman.oqsengine.calculation.factory.CalculationLogicFactory;
 import com.xforceplus.ultraman.oqsengine.calculation.utils.ValueChange;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.Infuence;
+import com.xforceplus.ultraman.oqsengine.calculation.utils.infuence.InfuenceGraph;
 import com.xforceplus.ultraman.oqsengine.event.EventBus;
 import com.xforceplus.ultraman.oqsengine.idgenerator.client.BizIDGenerator;
 import com.xforceplus.ultraman.oqsengine.lock.ResourceLocker;
@@ -57,6 +59,8 @@ public interface CalculationContext {
      * @return 焦点字段.
      */
     IEntityField getFocusField();
+
+    InfuenceGraph getInfuenceGraph();
 
     /**
      * 当前是否维护.
@@ -113,6 +117,13 @@ public interface CalculationContext {
      * @param tx 事务.
      */
     void focusTx(Transaction tx);
+
+    /**
+     * 设置初始影响图.
+     *
+     * @param infuenceGraph 影响图.
+     */
+    void addInfuenceGraph(InfuenceGraph infuenceGraph);
 
     /**
      * 增加一个实例的值改变.
