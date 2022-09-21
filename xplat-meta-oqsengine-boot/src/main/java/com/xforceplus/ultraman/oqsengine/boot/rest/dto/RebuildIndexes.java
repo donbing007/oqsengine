@@ -12,6 +12,7 @@ public class RebuildIndexes {
     private String appId;
     private String start;
     private String end;
+    private String env;
 
     public RebuildIndexes() {
     }
@@ -46,5 +47,13 @@ public class RebuildIndexes {
 
     public void setEnd(String end) {
         this.end = end;
+    }
+
+    public String getEnv() {
+        return env;
+    }
+
+    public void setEnv(String env) {
+        this.env = env;
     }
 }
