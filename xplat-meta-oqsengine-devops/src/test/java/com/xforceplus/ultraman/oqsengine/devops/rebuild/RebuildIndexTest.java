@@ -26,6 +26,7 @@ import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -78,7 +79,7 @@ public class RebuildIndexTest extends DevOpsTestHelper {
     @BeforeEach
     public void before() throws Exception {
         super.init(Lists.newArrayList(
-            EntityGenerateTooBar.LONG_STRING_ENTITY_CLASS, EntityGenerateTooBar.SUR_PLUS_ENTITY_CLASS, EntityGenerateTooBar.PREPARE_PAUSE_RESUME_ENTITY_CLASS));
+            EntityGenerateTooBar.LONG_STRING_ENTITY_CLASS, EntityGenerateTooBar.ENTITY_CLASS_N, EntityGenerateTooBar.SUR_PLUS_ENTITY_CLASS, EntityGenerateTooBar.PREPARE_PAUSE_RESUME_ENTITY_CLASS));
         RebuildInitialization.getInstance().getTaskExecutor().init();
     }
 
@@ -88,6 +89,55 @@ public class RebuildIndexTest extends DevOpsTestHelper {
 
         clear();
         RebuildInitialization.getInstance().getTaskExecutor().destroy();
+    }
+
+    @Test
+    public void rebuildIndexesTest() throws Exception {
+        LocalDateTime start = LocalDateTime.now().minusHours(1);
+
+        //  初始化数据
+        boolean initOk = initData(
+            EntityGenerateTooBar.prepareLongStringEntity(totalSize, 1), EntityGenerateTooBar.LONG_STRING_ENTITY_CLASS);
+
+        Assertions.assertTrue(initOk);
+
+        //  初始化数据
+        initOk = initData(
+            EntityGenerateTooBar.prepareEntityN(totalSize, totalSize + 10), EntityGenerateTooBar.ENTITY_CLASS_N);
+
+        LocalDateTime end = LocalDateTime.now().plusHours(1);
+
+        Assertions.assertTrue(initOk);
+
+        Collection<DevOpsTaskInfo> taskInfos = RebuildInitialization.getInstance().getTaskExecutor()
+            .rebuildIndexes(Arrays.asList(EntityGenerateTooBar.LONG_STRING_ENTITY_CLASS, EntityGenerateTooBar.ENTITY_CLASS_N), start, end);
+
+        for (DevOpsTaskInfo taskInfo : taskInfos) {
+            check(taskInfo, "rebuildIndex");
+        }
+
+        Collection<TaskHandler> taskHandlers =
+            RebuildInitialization.getInstance().getTaskExecutor().listAllTasks(new Page());
+        Assertions.assertEquals(2, taskHandlers.size());
+        for (TaskHandler taskHandler : taskHandlers) {
+            Assertions.assertEquals(totalSize, taskHandler.devOpsTaskInfo().getFinishSize());
+            Assertions.assertEquals(0, taskHandler.devOpsTaskInfo().getStartId());
+        }
+
+        Collection<EntityRef> refs = IndexInitialization.getInstance().getIndexStorage().select(
+            Conditions.buildEmtpyConditions()
+                .addAnd(
+                    new Condition(EntityGenerateTooBar.LONG_FIELD,
+                        ConditionOperator.GREATER_THAN,
+                        new LongValue(EntityGenerateTooBar.LONG_FIELD, 0))
+                ),
+            EntityGenerateTooBar.LONG_STRING_ENTITY_CLASS,
+            SelectConfig.Builder.anSelectConfig()
+                .withPage(Page.newSinglePage(totalSize))
+                .build()
+        );
+
+        Assertions.assertEquals(totalSize, refs.size());
     }
 
     /**
@@ -268,6 +318,7 @@ public class RebuildIndexTest extends DevOpsTestHelper {
     private DevOpsTaskInfo check(DevOpsTaskInfo devOpsTaskInfo, String errorFunction) throws Exception {
 
         int wakeUp = 0;
+
         Optional<TaskHandler> taskHandlerOptional =
             RebuildInitialization.getInstance().getTaskExecutor().taskHandler(devOpsTaskInfo.getMaintainid());
 

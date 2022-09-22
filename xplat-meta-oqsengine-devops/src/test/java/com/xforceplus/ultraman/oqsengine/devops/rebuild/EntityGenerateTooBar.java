@@ -84,6 +84,17 @@ public class EntityGenerateTooBar {
                 Arrays.asList(DECIMAL_FIELD, STRINGS_FIELD)
             ).build();
 
+
+    public static final IEntityClass ENTITY_CLASS_N =
+        EntityClass.Builder.anEntityClass()
+            .withId(Long.MAX_VALUE - 3)
+            .withVersion(1)
+            .withLevel(0)
+            .withCode("c3")
+            .withFields(
+                Arrays.asList(BOOL_FIELD, DECIMAL_FIELD, STRINGS_FIELD)
+            ).build();
+
     public static long startPos = 1;
     public static int testVersion = 0;
 
@@ -209,5 +220,41 @@ public class EntityGenerateTooBar {
         }
         pauseResumeStartTime = entities[0].time();
         return entities;
+    }
+
+    /**
+     * resume test use.
+     */
+    public static List<IEntity> prepareEntityN(int size, long start) {
+        IEntity[] entities = new IEntity[size];
+
+        long defaultTime = LocalDateTime.now().toInstant(OffsetDateTime.now().getOffset()).toEpochMilli();
+
+        for (int i = 0; i < size; i++) {
+            entities[i] = Entity.Builder.anEntity()
+                .withId(start)
+                .withEntityClassRef(EntityClassRef
+                    .Builder
+                    .anEntityClassRef()
+                    .withEntityClassId(ENTITY_CLASS_N.id())
+                    .withEntityClassCode(ENTITY_CLASS_N.code())
+                    .build()
+                )
+                .withValues(Arrays.asList(
+                    new BooleanValue(BOOL_FIELD, start % 4 == 0),
+                    new DecimalValue(DECIMAL_FIELD, new BigDecimal(i + ".0")),
+                    new StringsValue(STRINGS_FIELD, "value" + i, "value" + i + 1, "value" + i + 2)
+                ))
+                .withVersion(testVersion)
+                .withMajor(OqsVersion.MAJOR)
+                .withTime(defaultTime + start * MILL_SECOND)
+                .build();
+
+            start++;
+            pauseResumeEndTime = entities[i].time();
+        }
+        pauseResumeStartTime = entities[0].time();
+
+        return Arrays.asList(entities);
     }
 }

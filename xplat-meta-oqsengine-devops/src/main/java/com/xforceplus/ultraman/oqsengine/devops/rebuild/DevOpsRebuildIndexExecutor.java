@@ -95,7 +95,7 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
         }
 
         asyncThreadPool.submit(() -> {
-            handleTask(Collections.singletonList(devOpsTaskInfo));
+            handleTask(devOpsTaskInfo);
         });
 
         return devOpsTaskInfo;
@@ -125,113 +125,106 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
             devOps.add(devOpsTaskInfo);
         }
 
-        if (!devOps.isEmpty()) {
-            Lists.partition(devOps, taskSize).forEach(
-                p -> {
-                    asyncThreadPool.submit(() -> {
-                        handleTask(p);
-                    });
-                }
-            );
+        //  将任务提交到执行线程池.
+        for (DevOpsTaskInfo devOpsTaskInfo : devOps) {
+            asyncThreadPool.submit(() -> {
+                handleTask(devOpsTaskInfo);
+            });
         }
 
         return devOps;
     }
 
-    private void handleTask(List<DevOpsTaskInfo> devOps) {
+    private void handleTask(DevOpsTaskInfo devOpsTaskInfo) {
 
-        for (DevOpsTaskInfo devOpsTaskInfo : devOps) {
+        DataIterator<OqsEngineEntity> iterator = null;
+        try {
+            //  错误的任务将直接设置为任务失败.
+            if (devOpsTaskInfo.getStatus() == ERROR.getCode()) {
+                sqlTaskStorage.error(devOpsTaskInfo);
+                return;
+            }
 
-            DataIterator<OqsEngineEntity> iterator = null;
-            try {
-                //  错误的任务将直接设置为任务失败.
-                if (devOpsTaskInfo.getStatus() == ERROR.getCode()) {
-                    sqlTaskStorage.error(devOpsTaskInfo);
-                    continue;
-                }
+            int updateFlag = 0;
+            int frequency = 10;
 
-                int updateFlag = 0;
-                int frequency = 10;
+            iterator = masterStorage.iterator(
+                devOpsTaskInfo.getEntityClass(),
+                devOpsTaskInfo.getStarts(),
+                devOpsTaskInfo.getEnds(),
+                devOpsTaskInfo.getStartId(),
+                querySize,
+                true);
 
-                iterator = masterStorage.iterator(
-                    devOpsTaskInfo.getEntityClass(),
-                    devOpsTaskInfo.getStarts(),
-                    devOpsTaskInfo.getEnds(),
-                    devOpsTaskInfo.getStartId(),
-                    querySize,
-                    true);
+            List<OqsEngineEntity> entities = new ArrayList<>();
 
-                List<OqsEngineEntity> entities = new ArrayList<>();
+            boolean isCanceled = false;
+            while (iterator.hasNext()) {
+                OqsEngineEntity originalEntity = iterator.next();
 
-                boolean isCanceled = false;
-                while (iterator.hasNext()) {
-                    OqsEngineEntity originalEntity = iterator.next();
+                //  设置maintainId
+                originalEntity.setMaintainid(devOpsTaskInfo.getMaintainid());
 
-                    //  设置maintainId
-                    originalEntity.setMaintainid(devOpsTaskInfo.getMaintainid());
-
-                    if (OperationType.CREATE.getValue() == originalEntity.getOp()) {
+                if (OperationType.CREATE.getValue() == originalEntity.getOp()) {
                         /*
                         如果最后操作是创建,那么将操作状态修改为更新.
                         原因是索引中已经存在了相应的实例,重建需要覆盖.
                          */
-                        originalEntity.setOp(OperationType.UPDATE.getValue());
-                    }
+                    originalEntity.setOp(OperationType.UPDATE.getValue());
+                }
 
-                    entities.add(originalEntity);
+                entities.add(originalEntity);
 
-                    if (entities.size() == querySize) {
+                if (entities.size() == querySize) {
 
-                        indexStorage.saveOrDeleteOriginalEntities(entities);
+                    indexStorage.saveOrDeleteOriginalEntities(entities);
 
-                        devOpsTaskInfo.addBatchSize(entities.size());
-                        devOpsTaskInfo.addFinishSize(entities.size());
-                        devOpsTaskInfo.setStartId(originalEntity.getId());
+                    devOpsTaskInfo.addBatchSize(entities.size());
+                    devOpsTaskInfo.addFinishSize(entities.size());
+                    devOpsTaskInfo.setStartId(originalEntity.getId());
 
-                        entities.clear();
+                    entities.clear();
 
-                        updateFlag++;
-                        //  每拉10次更新一次任务状态.
-                        if (updateFlag == frequency) {
-                            if (NULL_UPDATE == sqlTaskStorage.update(devOpsTaskInfo)) {
-                                isCanceled = true;
-                                break;
-                            }
-                            updateFlag = 0;
+                    updateFlag++;
+                    //  每拉10次更新一次任务状态.
+                    if (updateFlag == frequency) {
+                        if (NULL_UPDATE == sqlTaskStorage.update(devOpsTaskInfo)) {
+                            isCanceled = true;
+                            break;
                         }
-                    }
-                }
-
-                if (!isCanceled) {
-                    if (!entities.isEmpty()) {
-                        indexStorage.saveOrDeleteOriginalEntities(entities);
-                        devOpsTaskInfo.addBatchSize(entities.size());
-                        devOpsTaskInfo.addFinishSize(entities.size());
-                    }
-
-                    devOpsTaskInfo.setStartId(0L);
-
-                    done(devOpsTaskInfo);
-                }
-            } catch (Exception e) {
-                devOpsTaskInfo.resetMessage(e.getMessage());
-                //  任务处理失败, 设置任务为失败状态.
-                try {
-                    sqlTaskStorage.error(devOpsTaskInfo);
-                } catch (Exception ex) {
-                    //  打印错误，这个异常将被忽略.
-                    logger.error(ex.getMessage(), ex);
-                }
-            } finally {
-                if (iterator != null) {
-                    try {
-                        iterator.destroy();
-                    } catch (Exception ex) {
-                        logger.error(ex.getMessage(), ex);
+                        updateFlag = 0;
                     }
                 }
             }
 
+            if (!isCanceled) {
+                if (!entities.isEmpty()) {
+                    indexStorage.saveOrDeleteOriginalEntities(entities);
+                    devOpsTaskInfo.addBatchSize(entities.size());
+                    devOpsTaskInfo.addFinishSize(entities.size());
+                }
+
+                devOpsTaskInfo.setStartId(0L);
+
+                done(devOpsTaskInfo);
+            }
+        } catch (Exception e) {
+            devOpsTaskInfo.resetMessage(e.getMessage());
+            //  任务处理失败, 设置任务为失败状态.
+            try {
+                sqlTaskStorage.error(devOpsTaskInfo);
+            } catch (Exception ex) {
+                //  打印错误，这个异常将被忽略.
+                logger.error(ex.getMessage(), ex);
+            }
+        } finally {
+            if (iterator != null) {
+                try {
+                    iterator.destroy();
+                } catch (Exception ex) {
+                    logger.error(ex.getMessage(), ex);
+                }
+            }
         }
     }
 
