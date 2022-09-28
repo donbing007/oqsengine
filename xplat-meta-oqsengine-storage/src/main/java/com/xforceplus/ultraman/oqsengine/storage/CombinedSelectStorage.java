@@ -186,13 +186,15 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
             masterRefs = Collections.emptyList();
         }
 
-        logger.info(
-            "The query condition of the union is ({}), the commitId is {} and the master result is {} and index result is {}.",
-            conditions.toString(),
-            commitId,
-            Arrays.toString(masterRefs.stream().mapToLong(r -> r.getId()).toArray()),
-            Arrays.toString(indexRefs.stream().mapToLong(r -> r.getId()).toArray())
-        );
+        if (logger.isDebugEnabled()) {
+            logger.debug(
+                "The query condition of the union is ({}), the commitId is {} and the master result is {} and index result is {}.",
+                conditions.toString(),
+                commitId,
+                Arrays.toString(masterRefs.stream().mapToLong(r -> r.getId()).toArray()),
+                Arrays.toString(indexRefs.stream().mapToLong(r -> r.getId()).toArray())
+            );
+        }
 
         // 记录索引未过滤前的数量.
         int indexOriginalSize = indexRefs.size();
@@ -262,7 +264,16 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
         long pageSize = page.getPageSize();
         long skips = scope == null ? 0 : scope.getStartLine();
         skips = skips < 0 ? 0 : skips;
-        return combinedRefStream.skip(skips).limit(pageSize).collect(toList());
+        Collection<EntityRef> resultRefs = combinedRefStream.skip(skips).limit(pageSize).collect(toList());
+
+        logger.info(
+            "The query condition of the union is ({}), the commitId is {} and the result is {}.",
+            conditions.toString(),
+            commitId,
+            Arrays.toString(resultRefs.stream().mapToLong(r -> r.getId()).toArray())
+        );
+
+        return resultRefs;
     }
 
     private Stream<EntityRef> sort(Stream<EntityRef> refStream, Sort[] sorts) {
