@@ -203,8 +203,9 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
         再去除主库中 EntityRef.getOp() == OperationType.DELETE 的值.
         最终结果是索引中只包含主库中查询不到的结果.
          */
-        // 只有这两种操作会影响最终数据总量.
+        // 操作会影响最终数据总量.
         int masterCreateSize = 0;
+        int masterUpdateSize = 0;
         int masterDeletedSize = 0;
         if (!masterRefs.isEmpty()) {
             // 分类统计数量.
@@ -213,6 +214,8 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
                     masterCreateSize++;
                 } else if (OperationType.DELETE.getValue() == ref.getOp()) {
                     masterDeletedSize++;
+                } else if (OperationType.UPDATE.getValue() == ref.getOp()) {
+                    masterUpdateSize++;
                 }
             }
 
@@ -243,16 +246,7 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
         // 实际总数为,索引查询总量 + 新创建数量 - 被删除数量.
         long totalSize = indexPage.getTotalCount() + masterCreateSize - masterDeletedSize;
         page.setTotalCount(totalSize < 0 ? 0 : totalSize);
-        if (page.isEmptyPage()) {
-            return Collections.emptyList();
-        }
-
-        PageScope scope = page.getNextPage();
-        // 需要跳过的数量.
-        long skips = scope == null ? 0 : scope.getStartLine();
-        skips = skips < 0 ? 0 : skips;
-
-        if (!page.hasNextPage()) {
+        if (page.isEmptyPage() || !page.hasNextPage()) {
             return Collections.emptyList();
         }
 
@@ -269,8 +263,11 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
         Stream<EntityRef> combinedRefStream = Stream.concat(indexRefs.stream(), masterRefs.stream());
         combinedRefStream = sort(combinedRefStream, sorts);
 
-
-        Collection<EntityRef> combinedRefs = combinedRefStream.skip(skips).limit(page.getPageSize()).collect(toList());
+        PageScope scope = page.getNextPage();
+        long pageSize = page.getPageSize();
+        long skips = scope == null ? 0 : scope.getStartLine();
+        skips = skips < 0 ? 0 : skips;
+        Collection<EntityRef> combinedRefs = combinedRefStream.skip(skips).limit(pageSize).collect(toList());
         return combinedRefs;
     }
 
