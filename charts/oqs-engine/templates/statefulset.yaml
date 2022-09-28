@@ -79,12 +79,15 @@ spec:
           protocol: TCP
           {{- end }}
         volumeMounts:
-        - mountPath: /xplat/application.yml
-          name: config
-          subPath: application.yml
-        - mountPath: /xplat/oqsengine-ds.conf
-          name: config
-          subPath: oqsengine-ds.conf
+          - mountPath: /xplat/logback.xml
+            name: config
+            subPath: logback.xml
+          - mountPath: /xplat/application.yml
+            name: config
+            subPath: application.yml
+          - mountPath: /xplat/oqsengine-ds.conf
+            name: config
+            subPath: oqsengine-ds.conf
         livenessProbe:
           httpGet:
             scheme: HTTP

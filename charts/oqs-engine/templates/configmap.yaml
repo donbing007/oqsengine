@@ -8,6 +8,26 @@ metadata:
         release: {{ .Release.Name }}
         heritage: {{ .Release.Service }}
 data:
+    logback.xml: |
+        <?xml version="1.0" encoding="ISO-8859-1"?>
+        <configuration>
+            <property name="LOG_PATTERN" value="%d{yyyy-MM-dd} %d{hhh:mm:ss},%d{SSS} %-5level [%thread] %logger{36} : %msg%n" />
+            <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+                <encoder>
+                    <pattern>${LOG_PATTERN}</pattern>
+                    <charset>UTF-8</charset>
+                </encoder>
+            </appender>
+            <logger name="io.lettuce" level="info" additivity="false">
+                <appender-ref ref="STDOUT"/>
+            </logger>
+            <root level="info" additivity="false">
+                <appender-ref ref="STDOUT"/>
+            </root>
+            <logger name="com.xforceplus.ultraman.oqsengine" level="{{ .Values.logger.level }}" additivity="false">
+                <appender-ref ref="STDOUT"/>
+            </logger>
+        </configuration>
     application.yml: |
         instance:
           type: statefulset
@@ -18,14 +38,7 @@ data:
           server:
             port: {{ .Values.service.port.grpc }}
         logging:
-          level:
-            root: info
-            com:
-              xforceplus:
-                ultraman:
-                  oqsengine: {{ .Values.logger.level }}
-          pattern:
-            console: "%d{yyyy-MM-dd} %d{hhh:mm:ss},%d{SSS} %-5level [%thread] %logger{36} : %msg%n"
+          config: file:/xplat/logback.xml
         management:
           health:
             redis:
