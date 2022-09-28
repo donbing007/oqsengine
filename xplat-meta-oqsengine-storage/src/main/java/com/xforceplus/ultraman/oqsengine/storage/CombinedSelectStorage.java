@@ -264,7 +264,8 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
         long pageSize = page.getPageSize();
         long skips = scope == null ? 0 : scope.getStartLine();
         skips = skips < 0 ? 0 : skips;
-        return combinedRefStream.skip(skips).limit(pageSize).collect(toList());
+        Collection<EntityRef> combinedRefs = combinedRefStream.skip(skips).limit(pageSize).collect(toList());
+        return combinedRefs;
     }
 
     private Stream<EntityRef> sort(Stream<EntityRef> refStream, Sort[] sorts) {
