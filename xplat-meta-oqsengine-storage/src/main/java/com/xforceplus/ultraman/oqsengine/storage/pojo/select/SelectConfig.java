@@ -1,12 +1,15 @@
 package com.xforceplus.ultraman.oqsengine.storage.pojo.select;
 
+import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.facet.Facet;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -27,6 +30,8 @@ public class SelectConfig implements Serializable {
     private Set<Long> excludedIds;
     private Conditions dataAccessFilterCondtitions;
     private Facet facet;
+
+    private OperationType[] ignoredOperations;
 
     public SelectConfig() {
     }
@@ -62,6 +67,10 @@ public class SelectConfig implements Serializable {
     public Conditions getDataAccessFilterCondtitions() {
         return this.dataAccessFilterCondtitions == null
             ? Conditions.buildEmtpyConditions() : this.dataAccessFilterCondtitions;
+    }
+
+    public OperationType[] getIgnoredOperations() {
+        return ignoredOperations;
     }
 
     @Override
@@ -114,6 +123,8 @@ public class SelectConfig implements Serializable {
         private Set<Long> excludedIds = Collections.emptySet();
         private Facet facet = Facet.build();
         private Conditions dataAccessFilterConditions = Conditions.buildEmtpyConditions();
+
+        private List<OperationType> ignoredOperations = Collections.emptyList();
 
         private Builder() {
         }
@@ -186,6 +197,17 @@ public class SelectConfig implements Serializable {
         }
 
         /**
+         * 需要排除的操作.
+         */
+        public Builder withIgnoredOperation(OperationType operation) {
+            if (Collections.emptyList().getClass().equals(this.ignoredOperations.getClass())) {
+                this.ignoredOperations = new ArrayList<>();
+            }
+            this.ignoredOperations.add(operation);
+            return this;
+        }
+
+        /**
          * 构造实例.
          */
         public SelectConfig build() {
@@ -198,6 +220,7 @@ public class SelectConfig implements Serializable {
             selectConfig.excludedIds = this.excludedIds;
             selectConfig.facet = this.facet;
             selectConfig.dataAccessFilterCondtitions = this.dataAccessFilterConditions;
+            selectConfig.ignoredOperations = this.ignoredOperations.stream().toArray(OperationType[]::new);
             return selectConfig;
         }
     }

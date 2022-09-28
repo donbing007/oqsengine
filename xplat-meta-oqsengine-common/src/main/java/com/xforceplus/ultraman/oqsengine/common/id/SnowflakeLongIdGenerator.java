@@ -28,6 +28,8 @@ public class SnowflakeLongIdGenerator implements LongIdGenerator {
 
     private int node;
 
+    private volatile long currentValue;
+
     /**
      * 实例化.
      *
@@ -39,6 +41,7 @@ public class SnowflakeLongIdGenerator implements LongIdGenerator {
             throw new IllegalArgumentException(String.format("node is between %s and %s", 0, MAX_NODE));
         }
         this.node = nodeId;
+        this.currentValue = 0;
     }
 
     @Override
@@ -77,7 +80,18 @@ public class SnowflakeLongIdGenerator implements LongIdGenerator {
             referenceTime = currentTime;
         }
 
-        return (currentTime - twepoch) << NODE_SHIFT << SEQ_SHIFT | node << SEQ_SHIFT | counter;
+        long value = (currentTime - twepoch) << NODE_SHIFT << SEQ_SHIFT | node << SEQ_SHIFT | counter;
+
+        synchronized (this) {
+            this.currentValue = value;
+        }
+
+        return value;
+    }
+
+    @Override
+    public Long current() {
+        return this.currentValue;
     }
 
     private Long timeGen() {

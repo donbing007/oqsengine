@@ -59,6 +59,18 @@ public class RedisOrderContinuousLongIdGeneratorTest {
     }
 
     @Test
+    public void testCurrent() throws Exception {
+        Assertions.assertEquals(1L, idGenerator.next().longValue());
+        Assertions.assertEquals(1L, idGenerator.current().longValue());
+
+        Assertions.assertEquals(2L, idGenerator.next().longValue());
+        Assertions.assertEquals(2L, idGenerator.current().longValue());
+
+        Assertions.assertEquals(3L, idGenerator.next().longValue());
+        Assertions.assertEquals(3L, idGenerator.current().longValue());
+    }
+
+    @Test
     public void testNext() throws Exception {
         Assertions.assertEquals(1L, idGenerator.next().longValue());
         Assertions.assertEquals(2L, idGenerator.next().longValue());

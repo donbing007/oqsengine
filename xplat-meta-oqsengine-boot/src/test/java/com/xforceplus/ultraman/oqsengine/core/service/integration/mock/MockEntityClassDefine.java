@@ -62,6 +62,8 @@ public class MockEntityClassDefine {
     private static long collectMainEntityClassId = baseClassId - 10;
     private static long collectDetailsEntityClassId = baseClassId - 11;
 
+    private static long simpleOrderId = baseClassId - 12;
+
     public static IEntityClass L0_ENTITY_CLASS;
     public static IEntityClass L1_ENTITY_CLASS;
     public static IEntityClass L2_ENTITY_CLASS;
@@ -703,9 +705,23 @@ public class MockEntityClassDefine {
             ).build();
 
         SIMPLE_ORDER_CLASS = EntityClass.Builder.anEntityClass()
-            .withId(orderClassId)
-            .withCode("order")
+            .withId(simpleOrderId)
+            .withCode("simple-order")
             .withLevel(0)
+            .withField(
+                EntityField.Builder.anEntityField()
+                    .withId(Long.MAX_VALUE - FieldId.orderCodeFieldId.ordinal())
+                    .withName("订单编号")
+                    .withFieldType(FieldType.STRING)
+                    .withConfig(
+                        FieldConfig.Builder.anFieldConfig()
+                            .withSearchable(true)
+                            .withFuzzyType(FieldConfig.FuzzyType.NOT)
+                            .withFieldSense(FieldConfig.FieldSense.NORMAL)
+                            .withRequired(true)
+                            .build()
+                    ).build()
+            )
             .withField(
                 EntityField.Builder.anEntityField()
                     .withId(Long.MAX_VALUE - FieldId.orderCreateTimeFieldId.ordinal())
@@ -1313,6 +1329,7 @@ public class MockEntityClassDefine {
             USER_CLASS,
             ORDER_CLASS,
             ORDER_ITEM_CLASS,
+            SIMPLE_ORDER_CLASS,
 
             /*
             专门为了动静之间测试准备的对象.

@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.xforceplus.ultraman.oqsengine.common.mock.InitializationHelper;
 import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.metadata.mock.MockMetaManagerHolder;
+import com.xforceplus.ultraman.oqsengine.pojo.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.AttachmentCondition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
@@ -272,6 +273,67 @@ public class SQLMasterStorageQueryTest {
         Assertions.assertEquals(2, refs.size());
         long size = refs.stream().mapToLong(e -> e.getId()).filter(id -> (id == 1004) || (id == 1000000)).count();
         Assertions.assertEquals(2, size);
+    }
+
+    @Test
+    public void testSelectWithoutUpdate() throws Exception {
+        Collection<EntityRef> refs = storage.select(
+            Conditions.buildEmtpyConditions(),
+            l2EntityClass,
+            SelectConfig.Builder.anSelectConfig().withIgnoredOperation(OperationType.UPDATE).build()
+        );
+
+        Assertions.assertEquals(refs.size(), entityes.size());
+
+        IEntity entity = entityes.get(0);
+        entity.entityValue().addValue(
+            new StringValue(l2EntityClass.field("l0-string").get(), "H5qE")
+        );
+        storage.replace(entity, l2EntityClass);
+
+        refs = storage.select(
+            Conditions.buildEmtpyConditions(),
+            l2EntityClass,
+            SelectConfig.Builder.anSelectConfig().withIgnoredOperation(OperationType.UPDATE).build()
+        );
+        Assertions.assertEquals(refs.size(), entityes.size() - 1);
+    }
+
+    @Test
+    public void testSelectWithoutDeleted() throws Exception {
+        Collection<EntityRef> refs = storage.select(
+            Conditions.buildEmtpyConditions()
+                .addAnd(
+                    new Condition(
+                        l2EntityClass.field("l0-string").get(),
+                        ConditionOperator.EQUALS,
+                        new StringValue(l2EntityClass.field("l0-string").get(), "oLS90hto8tSn")
+                    )
+                ),
+            l2EntityClass,
+            SelectConfig.Builder.anSelectConfig().build()
+        );
+
+        Assertions.assertEquals(refs.size(), 1);
+
+        long targetEntityId = refs.stream().findFirst().get().getId();
+        IEntity entity = entityes.stream().filter(e -> e.id() == targetEntityId).findFirst().get();
+        storage.delete(entity, l2EntityClass);
+
+        refs = storage.select(
+            Conditions.buildEmtpyConditions()
+                .addAnd(
+                    new Condition(
+                        l2EntityClass.field("l0-string").get(),
+                        ConditionOperator.EQUALS,
+                        new StringValue(l2EntityClass.field("l0-string").get(), "oLS90hto8tSn")
+                    )
+                ),
+            l2EntityClass,
+            SelectConfig.Builder.anSelectConfig().withIgnoredOperation(OperationType.DELETE).build()
+        );
+
+        Assertions.assertEquals(0, refs.size());
     }
 
     /**

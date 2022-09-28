@@ -17,12 +17,25 @@ public class UUIDGenerator implements IdGenerator<String> {
         return INSTANCE;
     }
 
-    private UUIDGenerator() {
+    private volatile String current;
 
+    private UUIDGenerator() {
+        current = "";
     }
 
     @Override
     public String next() {
-        return UUID.randomUUID().toString();
+        String newValue = UUID.randomUUID().toString();
+
+        synchronized (this) {
+            this.current = newValue;
+        }
+
+        return newValue;
+    }
+
+    @Override
+    public String current() {
+        return current;
     }
 }

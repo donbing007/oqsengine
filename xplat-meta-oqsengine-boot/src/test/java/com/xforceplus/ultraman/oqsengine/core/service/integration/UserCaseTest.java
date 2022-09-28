@@ -2,6 +2,8 @@ package com.xforceplus.ultraman.oqsengine.core.service.integration;
 
 import com.xforceplus.ultraman.oqsengine.boot.OqsengineBootApplication;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
+import com.xforceplus.ultraman.oqsengine.common.debug.Debug;
+import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
@@ -16,9 +18,11 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EnumValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LookupValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
@@ -35,10 +39,14 @@ import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 import javax.annotation.Resource;
@@ -94,6 +102,12 @@ public class UserCaseTest {
 
     @Resource
     private TransactionManager transactionManager;
+
+    /*
+    提交号生成器.
+     */
+    @Resource
+    private LongIdGenerator longContinuousPartialOrderIdGenerator;
 
     @MockBean(name = "metaManager")
     private MetaManager metaManager;
@@ -1576,4 +1590,93 @@ public class UserCaseTest {
         Assertions.assertEquals(201L, replaceEntity.entityValue().getValue("l0-long").get().getValue());
         Assertions.assertEquals("v2", replaceEntity.entityValue().getValue("l2-string").get().getValue());
     }
+
+    /**
+     * 通过控制联合查询主库和索引之间间隔,检查在两次查询之间的数据更新是否会造成对象不可见.
+     */
+    @Test
+    public void testMasterAndIndexSelectIntervalWithReplace() throws Exception {
+        IEntity entity = Entity.Builder.anEntity()
+            .withId(10000000L)
+            .withEntityClassRef(MockEntityClassDefine.SIMPLE_ORDER_CLASS.ref())
+            .withValue(
+                new DateTimeValue(MockEntityClassDefine.SIMPLE_ORDER_CLASS.field("下单时间").get(), LocalDateTime.now())
+            )
+            .withValue(
+                new StringValue(MockEntityClassDefine.SIMPLE_ORDER_CLASS.field("订单编号").get(), "v1")
+            )
+            .build();
+        entityManagementService.build(entity);
+
+        /*
+        这里为了构造出如下场景.
+        1. 目标数据主库中处于旧提交号中,所以查询不到.因为主库查询使用>=.
+        2. 查询索引时,索引中的数据已经被更新过,提交号已经提升.
+
+        为此,人为的将当前未同步队列的最小提交号修改为最后提交号+1,保证查询的时候主库查询不到.
+        同时将下一个提交号修改为大于未同步最小提交号,以使更新后对象提交号上升大于最小提交号.
+         */
+        String ns = "com.xforceplus.ultraman.oqsengine.common.id";
+        long lastCommitId = longContinuousPartialOrderIdGenerator.current(ns);
+        Assertions.assertEquals(lastCommitId + 1, longContinuousPartialOrderIdGenerator.next(ns).longValue());
+        Assertions.assertEquals(lastCommitId + 2, longContinuousPartialOrderIdGenerator.next(ns).longValue());
+
+        commitIdStatusService.save(lastCommitId + 1, true);
+
+        // 让master和index查询之间等待.
+        Debug.setMasterAndIndexSelectWait();
+
+        CompletableFuture<OqsResult<Collection<IEntity>>> queryFutuer = CompletableFuture.supplyAsync(() -> {
+            try {
+                return entitySearchService.selectByConditions(
+                    Conditions.buildEmtpyConditions()
+                        .addAnd(
+                            new Condition(
+                                MockEntityClassDefine.SIMPLE_ORDER_CLASS.field("订单编号").get(),
+                                ConditionOperator.EQUALS,
+                                new StringValue(MockEntityClassDefine.SIMPLE_ORDER_CLASS.field("订单编号").get(), "v1")
+                            )
+                        ),
+                    MockEntityClassDefine.SIMPLE_ORDER_CLASS.ref(),
+                    ServiceSelectConfig.Builder.anSearchConfig()
+                        .withPage(Page.newSinglePage(100)).build()
+                );
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        }).exceptionally(e -> {
+            logger.error(e.getMessage(), e);
+            return OqsResult.unknown();
+        });
+
+        // 查询被阻塞在master查询结束,准备查询索引之前,现在发起一个更新任务.
+        final CountDownLatch updateLatch = new CountDownLatch(1);
+        CompletableFuture<OqsResult<Map.Entry<IEntity, IValue[]>>> replaceFuture = CompletableFuture.supplyAsync(() -> {
+            entity.entityValue().addValue(
+                new DateTimeValue(MockEntityClassDefine.SIMPLE_ORDER_CLASS.field("下单时间").get(), LocalDateTime.now())
+            );
+            try {
+                return entityManagementService.replace(entity);
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            } finally {
+                updateLatch.countDown();
+            }
+        }).exceptionally(e -> {
+            logger.error(e.getMessage(), e);
+            return OqsResult.unknown();
+        });
+        updateLatch.await();
+
+        Debug.noticeMasterAndIndexSelectWarkup();
+
+        Assertions.assertTrue(replaceFuture.get().isSuccess());
+
+        Collection<IEntity> entities = queryFutuer.get().getValue().get();
+        Assertions.assertEquals(1, entities.size());
+        Assertions.assertEquals(entity.id(), entities.stream().findFirst().get().id());
+
+        commitIdStatusService.obsoleteAll();
+    }
+
 }

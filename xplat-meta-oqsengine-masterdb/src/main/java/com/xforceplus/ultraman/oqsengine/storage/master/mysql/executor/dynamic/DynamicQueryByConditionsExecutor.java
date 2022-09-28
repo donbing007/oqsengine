@@ -19,7 +19,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.stream.Collectors;
 
 /**
  * 条件查询.
@@ -188,6 +190,18 @@ public class DynamicQueryByConditionsExecutor
         if (where.length() > 0 && !where.isEmpty()) {
             sql.append(" AND (").append(where).append(")");
         }
+        if (config.getIgnoredOperations() != null && config.getIgnoredOperations().length > 0) {
+            sql.append(" AND (").append(FieldDefine.OP);
+            sql.append(" NOT IN (").append(
+                Arrays.stream(
+                        config.getIgnoredOperations())
+                    .map(o -> Integer.toString(o.getValue()))
+                    .collect(Collectors.joining(",")
+                    )
+            ).append(")");
+            sql.append(")");
+        }
+
         return sql.toString();
     }
 
