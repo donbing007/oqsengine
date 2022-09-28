@@ -151,8 +151,9 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
         注意: 由于是两次查询,在两次查询之间数据是可能会改变的.
           1. 两个查询之间数据被更新.从不符合条件转为符合条件或者相反,那么此实例会最终放入结果集中.
           2. 两个查询之间数据被删除.索引符合条件,主库不符合,那么结果将放入结果集中.反之不会放入.
-
          */
+        Collection<EntityRef> masterRefs;
+        Collection<EntityRef> indexRefs;
         SelectConfig indexSelectConfig = SelectConfig.Builder.anSelectConfig()
             .withSort(sort)
             .withSecondarySort(secondSort)
@@ -160,14 +161,8 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
             .withPage(indexPage)
             .withDataAccessFitlerCondtitons(filterCondition)
             .withCommitId(commitId).build();
-        Collection<EntityRef> indexRefs = syncedStorage.select(conditions, entityClass, indexSelectConfig);
+        indexRefs = syncedStorage.select(conditions, entityClass, indexSelectConfig);
 
-        if (logger.isDebugEnabled()) {
-            logger.debug(
-                "The query condition of the union index is ({}), the commitId is {}, and the result is {}.",
-                conditions.toString(), commitId,
-                Arrays.toString(indexRefs.stream().mapToLong(r -> r.getId()).toArray()));
-        }
         /*
         此为模似两次查询之间的间隔,由外部调用控制设定.
          */
@@ -178,7 +173,6 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
         }
         Debug.awaitNoticeMasterAndIndexSelect();
 
-        Collection<EntityRef> masterRefs;
         if (commitId > 0) {
             SelectConfig masterSelectConfig = SelectConfig.Builder.anSelectConfig()
                 .withSort(sort)
@@ -192,12 +186,23 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
             masterRefs = Collections.emptyList();
         }
 
-        if (logger.isDebugEnabled()) {
-            logger.debug(
-                "The query condition of the union master is ({}), the commitId is {}, and the result is {}.",
-                conditions.toString(), commitId,
-                Arrays.toString(masterRefs.stream().mapToLong(r -> r.getId()).toArray()));
-        }
+        logger.info(
+            "The query condition of the union is ({}), the commitId is {} and the master result is {} and index result is {}.",
+            conditions.toString(),
+            commitId,
+            Arrays.toString(masterRefs.stream().mapToLong(r -> r.getId()).toArray()),
+            Arrays.toString(indexRefs.stream().mapToLong(r -> r.getId()).toArray())
+        );
+
+//        if (logger.isDebugEnabled()) {
+//            logger.debug(
+//                "The query condition of the union is ({}), the commitId is {} and the master result is {} and index result is {}.",
+//                conditions.toString(),
+//                commitId,
+//                Arrays.toString(masterRefs.stream().mapToLong(r -> r.getId()).toArray()),
+//                Arrays.toString(indexRefs.stream().mapToLong(r -> r.getId()).toArray())
+//            );
+//        }
 
         // 记录索引未过滤前的数量.
         int indexOriginalSize = indexRefs.size();
