@@ -85,6 +85,8 @@ public class FormulaCalculationLogicTest {
 
     private static IEntityField B_FML;
 
+    private static IEntityField B_SELF;
+
     private static IEntityField C_COUNT;
 
     private static IEntityField D_SUM;
@@ -99,6 +101,8 @@ public class FormulaCalculationLogicTest {
 
     private static IEntityClass D_CLASS;
 
+    private static IEntityClass S_CLASS;
+
     private IEntity entityA;
 
     private IEntity entityB;
@@ -106,6 +110,8 @@ public class FormulaCalculationLogicTest {
     private IEntity entityD;
 
     private IEntity entityC;
+
+    private IEntity entityS;
 
     private FormulaCalculationLogicTest.MockLogic aggregationLogic;
     private FormulaCalculationLogicTest.MockLogic lookupLogic;
@@ -163,6 +169,22 @@ public class FormulaCalculationLogicTest {
                         .withFailedDefaultValue(0)
                         .withFailedPolicy(Formula.FailedPolicy.USE_FAILED_DEFAULT_VALUE)
                         .withArgs(Collections.singletonList("bsuma"))
+                        .build()
+                    ).build()
+            )
+            .build();
+
+        B_SELF = EntityField.Builder.anEntityField()
+            .withId(Long.MAX_VALUE - 101)
+            .withFieldType(FieldType.LONG)
+            .withName("bself")
+            .withConfig(
+                FieldConfig.Builder.anFieldConfig()
+                    .withCalculation(Formula.Builder.anFormula()
+                        .withLevel(1)
+                        .withExpression("if ${this_value} != nil { return ${this_value} * 2;} return 1;")
+                        .withFailedPolicy(Formula.FailedPolicy.THROW_EXCEPTION)
+                        .withArgs(Collections.singletonList("bself"))
                         .build()
                     ).build()
             )
@@ -345,6 +367,12 @@ public class FormulaCalculationLogicTest {
             ))
             .build();
 
+        S_CLASS = EntityClass.Builder.anEntityClass()
+            .withId(Long.MAX_VALUE-4)
+            .withCode("s-class")
+            .withFields(Arrays.asList(B_SELF, EntityField.ID_ENTITY_FIELD))
+            .build();
+
         entityA = Entity.Builder.anEntity()
             .withId(Long.MAX_VALUE)
             .withEntityClassRef(A_CLASS.ref())
@@ -367,6 +395,11 @@ public class FormulaCalculationLogicTest {
             .withId(Long.MAX_VALUE - 3)
             .withEntityClassRef(C_CLASS.ref())
             .withValue(new LongValue(C_COUNT, 100L))
+            .build();
+
+        entityS = Entity.Builder.anEntity()
+            .withId(Long.MAX_VALUE - 4)
+            .withEntityClassRef(S_CLASS.ref())
             .build();
 
         calculation = new DefaultCalculationImpl();
@@ -455,6 +488,32 @@ public class FormulaCalculationLogicTest {
     }
 
     @Test
+    public void testSelfCalculation() {
+        CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()
+            .withMetaManager(metaManager)
+            .withCalculationLogicFactory(new CalculationLogicFactory())
+            .withScenarios(CalculationScenarios.BUILD).build();
+
+        context.getCalculationLogicFactory().get().register(formulaCalculationLogic);
+        context.focusEntity(entityS, S_CLASS);
+        context.focusField(B_SELF);
+
+        Optional<IValue> targetValue = formulaCalculationLogic.calculate(context);
+
+        Assert.assertNotNull(targetValue);
+
+        Assertions.assertEquals("1", targetValue.get().valueToString());
+
+        entityS.entityValue().addValue(B_SELF.type().toTypedValue(B_SELF, "10").get());
+
+        targetValue = formulaCalculationLogic.calculate(context);
+
+        Assert.assertNotNull(targetValue);
+
+        Assertions.assertEquals("20", targetValue.get().valueToString());
+    }
+
+    @Test
     public void testBuildCalculation() {
         CalculationContext context = DefaultCalculationContext.Builder.anCalculationContext()
             .withMetaManager(metaManager)
@@ -470,7 +529,6 @@ public class FormulaCalculationLogicTest {
         Optional<IValue> targetValue = formulaCalculationLogic.calculate(context);
 
         Assert.assertNotNull(targetValue);
-
     }
 
     @Test

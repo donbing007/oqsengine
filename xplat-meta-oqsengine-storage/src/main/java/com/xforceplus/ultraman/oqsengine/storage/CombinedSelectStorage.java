@@ -118,13 +118,6 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
 
         masterRefs = fixNullSortValue(masterRefs, sorts);
 
-        /*
-         * 从主库中查询的将在已同步中过滤.
-         */
-        Set<Long> filterIdsFromMaster = masterRefs.stream()
-            .map(EntityRef::getId)
-            .collect(toSet());
-
 
         /*
          * 这里在查询索引时新创建一个page的原因是在查询索引时会调用page.getNextPage()造成当前页增加.相当于如下.
@@ -143,8 +136,13 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
         }
 
         /*
-        TODO: 以下是描述有可能的问题,但是这个问题只在同一线程下成立.
+         * 从主库中查询的将在已同步中过滤.
+         */
+        Set<Long> filterIdsFromMaster = masterRefs.stream()
+            .map(EntityRef::getId)
+            .collect(toSet());
 
+        /*
         写入
         查询
 
@@ -190,7 +188,7 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
           --------------
           查询索引将使用 < 5,来保证查询到300这个数据.
          */
-        // 注意现在没有使用二次查询,原因是让前端写入等待了.
+
         SelectConfig indexSelectConfig = SelectConfig.Builder.anSelectConfig()
             .withSort(sort)
             .withSecondarySort(secondSort)
@@ -198,7 +196,7 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
             .withPage(indexPage)
             .withExcludedIds(filterIdsFromMaster)
             .withDataAccessFitlerCondtitons(filterCondition)
-            .withCommitId(commitId).build();
+            .withCommitId(buildQueryCommitId()).build();
         Collection<EntityRef> indexRefs = syncedStorage.select(conditions, entityClass, indexSelectConfig);
 
         if (logger.isDebugEnabled()) {

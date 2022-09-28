@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.calculation.logic.formula;
 import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationContext;
 import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationScenarios;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.AffectedInfo;
+import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculateConstant;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationException;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.CalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.formula.helper.FormulaHelper;
@@ -42,8 +43,14 @@ public class FormulaCalculationLogic implements CalculationLogic {
         //  执行公式
         try {
             //  调用公式执行器执行
-            return Optional.of(IValueUtils.toIValue(context.getFocusField(),
-                FormulaHelper.calculate(formula.getExpression(), formula.getArgs(), context)));
+            Object r = FormulaHelper.calculate(formula.getExpression(), formula.getArgs(), context);
+
+            if (null == r) {
+                logger.debug("formula executed, but result is null.");
+                return Optional.empty();
+            }
+
+            return Optional.of(IValueUtils.toIValue(context.getFocusField(), r));
         } catch (Exception e) {
             //  异常时
             if (formula.getFailedPolicy().equals(Formula.FailedPolicy.USE_FAILED_DEFAULT_VALUE)) {
@@ -84,7 +91,11 @@ public class FormulaCalculationLogic implements CalculationLogic {
             if (fields != null && fields.size() > 0) {
                 fields.forEach(f -> {
                     Formula formula = (Formula) f.config().getCalculation();
-                    List<String> args = formula.getArgs();
+
+                    List<String> args = formula.getArgs().stream()
+                        .filter(s -> !s.equals(CalculateConstant.FORMULA_THIS_VALUE)).collect(
+                        Collectors.toList());
+
                     if (args.size() > 0) {
                         if (args.contains(participantField.name())) {
 

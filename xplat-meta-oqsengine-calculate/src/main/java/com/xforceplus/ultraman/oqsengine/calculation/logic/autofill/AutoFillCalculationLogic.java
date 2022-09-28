@@ -61,9 +61,13 @@ public class AutoFillCalculationLogic implements CalculationLogic {
 
     private Optional<IValue> onSenior(CalculationContext context, AutoFill autoFill) throws CalculationException {
         try {
+
+            Object o = FormulaHelper.calculate(autoFill.getExpression(), autoFill.getArgs(), context);
+            if (null == o) {
+                throw new CalculationException("autoFill executed, but result is null.");
+            }
             //  调用公式执行器执行
-            return Optional.of(IValueUtils.toIValue(context.getFocusField(),
-                FormulaHelper.calculate(autoFill.getExpression(), autoFill.getArgs(), context)));
+            return Optional.of(IValueUtils.toIValue(context.getFocusField(), o));
         } catch (Exception e) {
             logger.warn("autoFill [entityFieldId-{}] has executed failed, execution will broken, [reason-{}]",
                 context.getFocusField().id(), e.getMessage());
