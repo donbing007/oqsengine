@@ -174,7 +174,11 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
         }
         Debug.awaitNoticeMasterAndIndexSelect();
 
-        commitId = this.buildQueryCommitId(config);
+        // 如果没有提交号,再次获取提交号.
+        if (commitId <= 0) {
+            commitId = buildQueryCommitId(config);
+        }
+
         if (commitId > 0) {
             SelectConfig masterSelectConfig = SelectConfig.Builder.anSelectConfig()
                 .withSort(sort)
