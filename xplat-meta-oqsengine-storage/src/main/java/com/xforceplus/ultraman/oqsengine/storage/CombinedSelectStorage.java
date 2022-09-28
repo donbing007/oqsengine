@@ -264,16 +264,7 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
         long pageSize = page.getPageSize();
         long skips = scope == null ? 0 : scope.getStartLine();
         skips = skips < 0 ? 0 : skips;
-        Collection<EntityRef> resultRefs = combinedRefStream.skip(skips).limit(pageSize).collect(toList());
-
-        logger.info(
-            "The query condition of the union is ({}), the commitId is {} and the result is {}.",
-            conditions.toString(),
-            commitId,
-            Arrays.toString(resultRefs.stream().mapToLong(r -> r.getId()).toArray())
-        );
-
-        return resultRefs;
+        return combinedRefStream.skip(skips).limit(pageSize).collect(toList());
     }
 
     private Stream<EntityRef> sort(Stream<EntityRef> refStream, Sort[] sorts) {
