@@ -194,16 +194,6 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
             Arrays.toString(indexRefs.stream().mapToLong(r -> r.getId()).toArray())
         );
 
-//        if (logger.isDebugEnabled()) {
-//            logger.debug(
-//                "The query condition of the union is ({}), the commitId is {} and the master result is {} and index result is {}.",
-//                conditions.toString(),
-//                commitId,
-//                Arrays.toString(masterRefs.stream().mapToLong(r -> r.getId()).toArray()),
-//                Arrays.toString(indexRefs.stream().mapToLong(r -> r.getId()).toArray())
-//            );
-//        }
-
         // 记录索引未过滤前的数量.
         int indexOriginalSize = indexRefs.size();
         /*
