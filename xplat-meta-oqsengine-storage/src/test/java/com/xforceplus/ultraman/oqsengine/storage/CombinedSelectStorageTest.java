@@ -184,7 +184,7 @@ public class CombinedSelectStorageTest {
     @Test
     public void testNoOverFlow() throws Exception {
         Conditions conditions = Conditions.buildEmtpyConditions();
-        Page page = Page.newSinglePage(3);
+        Page page = new Page(1, 3);
         long minCommitId = 1000L;
 
         List<EntityRef> indexRefs = Arrays.asList(
@@ -198,7 +198,7 @@ public class CombinedSelectStorageTest {
             mockEntityClass,
             SelectConfig.Builder.anSelectConfig()
                 .withCommitId(minCommitId)
-                .withPage(Page.newSinglePage(page.getPageSize() + (long) (page.getPageSize() * 0.1F)))
+                .withPage(new Page(1, page.getPageSize() + (long) (page.getPageSize() * 0.1F)))
                 .withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD))
                 .build()
         )).thenAnswer(invocation -> {
@@ -226,7 +226,7 @@ public class CombinedSelectStorageTest {
         Collection<EntityRef> refs = combinedSelectStorage.select(
             conditions, mockEntityClass, SelectConfig.Builder.anSelectConfig()
                 .withCommitId(minCommitId)
-                .withPage(Page.newSinglePage(3))
+                .withPage(page)
                 .withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD))
                 .build()
         );
@@ -236,6 +236,7 @@ public class CombinedSelectStorageTest {
             1L, 2L, 6L
         };
         Assertions.assertArrayEquals(expectedIds, refs.stream().mapToLong(r -> r.getId()).toArray());
+        Assertions.assertEquals(3, page.getTotalCount());
     }
 
     /**
@@ -244,7 +245,7 @@ public class CombinedSelectStorageTest {
     @Test
     public void testOverflowNoMoreEntity() throws Exception {
         Conditions conditions = Conditions.buildEmtpyConditions();
-        Page page = Page.newSinglePage(3);
+        Page page = new Page(1, 3);
         long minCommitId = 1000L;
 
         AtomicInteger indexSelectTime = new AtomicInteger();
@@ -284,11 +285,12 @@ public class CombinedSelectStorageTest {
                 .build()
         )).thenReturn(masterRefs);
 
+
         CombinedSelectStorage combinedSelectStorage = new CombinedSelectStorage(unSyncedStorage, syncedStorage);
         Collection<EntityRef> refs = combinedSelectStorage.select(
             conditions, mockEntityClass, SelectConfig.Builder.anSelectConfig()
                 .withCommitId(minCommitId)
-                .withPage(new Page(1, 3))
+                .withPage(page)
                 .withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD))
                 .build()
         );
@@ -298,6 +300,7 @@ public class CombinedSelectStorageTest {
             1L
         };
         Assertions.assertArrayEquals(expectedIds, refs.stream().mapToLong(r -> r.getId()).toArray());
+        Assertions.assertEquals(1, page.getTotalCount());
     }
 
     /**
@@ -306,7 +309,7 @@ public class CombinedSelectStorageTest {
     @Test
     public void testOverflow() throws Exception {
         Conditions conditions = Conditions.buildEmtpyConditions();
-        Page page = Page.newSinglePage(3);
+        Page page = new Page(1, 3);
         long minCommitId = 1000L;
 
         AtomicInteger indexSelectTime = new AtomicInteger();
@@ -395,7 +398,7 @@ public class CombinedSelectStorageTest {
         Collection<EntityRef> refs = combinedSelectStorage.select(
             conditions, mockEntityClass, SelectConfig.Builder.anSelectConfig()
                 .withCommitId(minCommitId)
-                .withPage(new Page(1, 3))
+                .withPage(page)
                 .withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD))
                 .build()
         );
@@ -406,6 +409,7 @@ public class CombinedSelectStorageTest {
             1L, 4L, 5L
         };
         Assertions.assertArrayEquals(expectedIds, refs.stream().mapToLong(r -> r.getId()).toArray());
+        Assertions.assertEquals(3, page.getTotalCount());
     }
 
     @Test

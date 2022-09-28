@@ -227,9 +227,14 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
                 Map<Long, EntityRef> masterRefTable =
                     masterRefs.stream().collect(Collectors.toMap(r -> r.getId(), r -> r, (r0, r1) -> r0));
 
+                /*
+                op 状态只有主库查询结果中有效,索引中不含有OP操作.
+                所以此处判断EntityRef状态仍需要从主库结果中判断.
+                 */
                 indexRefs = indexRefs.stream().filter(r -> {
-                    if (masterRefTable.containsKey(r.getId())) {
-                        if (OperationType.UPDATE.getValue() == r.getOp()) {
+                    EntityRef masterRef = masterRefTable.get(r.getId());
+                    if (masterRef != null) {
+                        if (OperationType.UPDATE.getValue() == masterRef.getOp()) {
                             // 记录从索引结果中移除的在主库结果中出现的数量.
                             removeUpdateRefFormIndexSize.incrementAndGet();
                         }
