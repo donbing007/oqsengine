@@ -24,6 +24,7 @@ import java.util.Comparator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -205,15 +206,17 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
          */
         // 操作会影响最终数据总量.
         int masterCreateSize = 0;
+        int masterDeleteSize = 0;
         int masterUpdateSize = 0;
-        int masterDeletedSize = 0;
+        // 记录从索引结果中移除的更新实例数量.
+        AtomicInteger removeUpdateRefFormIndexSize = new AtomicInteger();
         if (!masterRefs.isEmpty()) {
             // 分类统计数量.
             for (EntityRef ref : masterRefs) {
                 if (OperationType.CREATE.getValue() == ref.getOp()) {
                     masterCreateSize++;
                 } else if (OperationType.DELETE.getValue() == ref.getOp()) {
-                    masterDeletedSize++;
+                    masterDeleteSize++;
                 } else if (OperationType.UPDATE.getValue() == ref.getOp()) {
                     masterUpdateSize++;
                 }
@@ -224,7 +227,17 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
                 Map<Long, EntityRef> masterRefTable =
                     masterRefs.stream().collect(Collectors.toMap(r -> r.getId(), r -> r, (r0, r1) -> r0));
 
-                indexRefs = indexRefs.stream().filter(r -> !masterRefTable.containsKey(r.getId())).collect(toList());
+                indexRefs = indexRefs.stream().filter(r -> {
+                    if (masterRefTable.containsKey(r.getId())) {
+                        if (OperationType.UPDATE.getValue() == r.getOp()) {
+                            // 记录从索引结果中移除的在主库结果中出现的数量.
+                            removeUpdateRefFormIndexSize.incrementAndGet();
+                        }
+                        return false;
+                    } else {
+                        return true;
+                    }
+                }).collect(toList());
             }
             // 主库存中去除被删除的实例.
             masterRefs =
@@ -243,8 +256,14 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
             }
         }
 
-        // 实际总数为,索引查询总量 + 新创建数量 - 被删除数量.
-        long totalSize = indexPage.getTotalCount() + masterCreateSize - masterDeletedSize;
+        /*
+        总数计算 = 索引总量 - 主库更新从索引中移除量 + 主库创建数量 + 主库更新数量 - 主库删除数量.
+        主库存更新从索引中移除量意义为,根据当前查询的主库结果中过滤出操作为更新的实例减去索引中也含有的数量.
+        此是为了保证,同样一个实例在更新时有可能出现在索引中也可能不出现.
+         */
+        long totalSize =
+            indexPage.getTotalCount()
+                - removeUpdateRefFormIndexSize.get() + masterCreateSize + masterUpdateSize - masterDeleteSize;
         page.setTotalCount(totalSize < 0 ? 0 : totalSize);
         if (page.isEmptyPage() || !page.hasNextPage()) {
             return Collections.emptyList();
