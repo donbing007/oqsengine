@@ -139,7 +139,9 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
         // 索引查询使用Page,防止修改传入的Page.
         Page indexPage = createIndexPage(page, overflowRatio);
 
-        long commitId = this.buildQueryCommitId(config);
+        // long commitId = this.buildQueryCommitId(config);
+
+        long commitId = 14399030L;
 
         /*
         分别从索引和主库中条件查询,最终合并两者的结果并载取出最终的目标结果.
