@@ -15,7 +15,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicLong;
@@ -42,9 +41,25 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService, Lifecyc
     final Logger logger = LoggerFactory.getLogger(CommitIdStatusServiceImpl.class);
 
     private static final long DEFAULT_UNKNOWN_LIMIT_NUMBER = 30;
+    /*
+    默认未同步队列KEY.类型是sortSet.
+     */
     private static final String DEFAULT_COMMITIDS_KEY = "com.xforceplus.ultraman.oqsengine.status.commitids";
+
+    /*
+    默认的记录最后被淘汰的提交号KEY.
+     */
+    private static final String DEFAULT_LAST_OBSOLETE_COMMITID_KEEP =
+        "com.xforceplus.ultraman.oqsengine.status.last.obsolete.keep";
+    /*
+    默认提交号状态, 可选值为为 CommitStatus定义枚举.
+     */
     private static final String DEFAULT_COMMITID_STATUS_KEY_PREFIX =
         "com.xforceplus.ultraman.oqsengine.status.commitid.";
+
+    /*
+    默认的提交号状态未知检查统计KEY.
+     */
     private static final String COMMITID_STATUS_UNKNOWN_NUMBER_PREFIX =
         "com.xforceplus.ultraman.oqsengine.status.commitid.unknown.number.";
 
@@ -88,22 +103,53 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService, Lifecyc
      * 1. 未同步提交号队列KEY.
      * 2. 提交号状态KEY前辍.
      * 3. 记录触发UNKNOWN状态isReady检查的次数KEY.
+     * 4. 最后淘汰提交号保持KEY.
      * ARGV: 数量不定,表示需要淘汰的提交号列表.
+     * 注意: KEYS和ARGV如果传入空列表将无法运行.
      */
     private static String OBSOLETE_LUA_SCRIPT = String.format(
-        "for i=1, #ARGV, 1 do "
-            + "local statusKey = KEYS[2]..ARGV[i];"
-            + "local unknownKey = KEYS[3]..ARGV[i];"
-            + "redis.call('del', unknownKey);"
-            + "redis.call('set', statusKey, '%s','EX', %d);"
-            + "redis.call('zrem', KEYS[1], ARGV[i]);"
-            + "end;return true", CommitStatus.ELIMINATION.getSymbol(), 60 * 60
+        "if (#ARGV == 0) then "
+            + "return false; "
+            + "end; "
+            + "for i=1, #ARGV, 1 do "
+            + "local statusKey = KEYS[2]..ARGV[i]; "
+            + "local unknownKey = KEYS[3]..ARGV[i]; "
+            + "redis.call('del', unknownKey); "
+            + "redis.call('set', statusKey, '%s','EX', %d); "
+            + "redis.call('zrem', KEYS[1], ARGV[i]); "
+            + "end; "
+            + "local keepKey = KEYS[4]; "
+            + "redis.call('set', keepKey, ARGV[#ARGV]); "
+            + "return true;", CommitStatus.ELIMINATION.getSymbol(), 60 * 60
+
     );
 
     /**
-     * 小于等于此值的判定为无效的commitid.
+     * 获取最小提交号,如果未同步队列中不存在任何一个提交号那么将返回keep中的结果.
+     * keep中保存了最后淘汰的提交号.
+     * KEYS:
+     * 1. 未同步队列KEY.
+     * 2. KEEP最后提交号的key.
      */
-    public static final long INVALID_COMMITID = 0;
+    private static String FIND_MIN_LUA_SCRIPT =
+        "local unsyncIdsKey = KEYS[1]; "
+            + "local commitdPayload = redis.call('zrange', unsyncIdsKey, 0, 0); "
+            + "local commitdPayload = redis.call('zrange', unsyncIdsKey, 0, 0);"
+            + "if (#commitdPayload == 0) "
+            + "then "
+            + "return redis.call('incrby', KEYS[2], 0);"
+            + "end;"
+            + "local minCommitid = 0; "
+            + "for i = 1, #commitdPayload, 1 do "
+            + "minCommitid = tonumber(commitdPayload[i]); "
+            + "end;"
+            + "if (minCommitid == 0) "
+            + "then "
+            + "return redis.call('incrby', KEYS[2], 0); "
+            + "else "
+            + "return minCommitid; "
+            + "end;";
+
 
     @Resource(name = "redisClientState")
     private RedisClient redisClient;
@@ -121,8 +167,12 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService, Lifecyc
 
     private String commitidStatusKeyPrefix;
 
+    private String lastEliminateCommitidKey;
+
     private String saveLuaScriptSha;
     private String obsoleteLuaScriptSha;
+
+    private String getMinScriptSha;
 
     private long limitUnknownNumber;
 
@@ -131,11 +181,11 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService, Lifecyc
     private AtomicLong unSyncCommitIdMax;
 
     public CommitIdStatusServiceImpl() {
-        this(DEFAULT_COMMITIDS_KEY, DEFAULT_COMMITID_STATUS_KEY_PREFIX);
+        this(DEFAULT_COMMITIDS_KEY, DEFAULT_COMMITID_STATUS_KEY_PREFIX, DEFAULT_LAST_OBSOLETE_COMMITID_KEEP);
     }
 
-    public CommitIdStatusServiceImpl(String commitidsKey, String commitIdStatusKeyPreifx) {
-        this(commitidsKey, commitIdStatusKeyPreifx, DEFAULT_UNKNOWN_LIMIT_NUMBER);
+    public CommitIdStatusServiceImpl(String commitidsKey, String commitIdStatusKeyPreifx, String lastCommitIdKeepKey) {
+        this(commitidsKey, commitIdStatusKeyPreifx, lastCommitIdKeepKey, DEFAULT_UNKNOWN_LIMIT_NUMBER);
     }
 
     /**
@@ -145,7 +195,8 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService, Lifecyc
      * @param commitIdStatusKeyPreifx 提交号状态key前辍.
      * @param limitUnknownNumber      最大未知状态提交号数量.
      */
-    public CommitIdStatusServiceImpl(String commitidsKey, String commitIdStatusKeyPreifx, long limitUnknownNumber) {
+    public CommitIdStatusServiceImpl(String commitidsKey, String commitIdStatusKeyPreifx, String lastCommitIdKeepKey,
+                                     long limitUnknownNumber) {
         this.commitidsKey = commitidsKey;
         if (this.commitidsKey == null || this.commitidsKey.isEmpty()) {
             throw new IllegalArgumentException("The commits key is invalid.");
@@ -154,6 +205,11 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService, Lifecyc
         this.commitidStatusKeyPrefix = commitIdStatusKeyPreifx;
         if (this.commitidStatusKeyPrefix == null || this.commitidStatusKeyPrefix.isEmpty()) {
             throw new IllegalArgumentException("The commit status key is invalid.");
+        }
+
+        this.lastEliminateCommitidKey = lastCommitIdKeepKey;
+        if (this.lastEliminateCommitidKey == null || this.lastEliminateCommitidKey.isEmpty()) {
+            throw new IllegalArgumentException("The last commit keep key is invalid.");
         }
 
         this.limitUnknownNumber = limitUnknownNumber;
@@ -177,9 +233,11 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService, Lifecyc
         if (redisLuaScriptWatchDog != null) {
             saveLuaScriptSha = redisLuaScriptWatchDog.watch(SAVE_LUA_SCRIPT);
             obsoleteLuaScriptSha = redisLuaScriptWatchDog.watch(OBSOLETE_LUA_SCRIPT);
+            getMinScriptSha = redisLuaScriptWatchDog.watch(FIND_MIN_LUA_SCRIPT);
         } else {
             saveLuaScriptSha = syncCommands.scriptLoad(SAVE_LUA_SCRIPT);
             obsoleteLuaScriptSha = syncCommands.scriptLoad(OBSOLETE_LUA_SCRIPT);
+            getMinScriptSha = syncCommands.scriptLoad(FIND_MIN_LUA_SCRIPT);
         }
 
         unSyncCommitIdSize = Metrics.gauge(
@@ -316,7 +374,21 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService, Lifecyc
     }
 
     @Override
-    public Optional<Long> getMin() {
+    public long getMinWithKeep() {
+        String[] keys = {
+            commitidsKey,
+            lastEliminateCommitidKey,
+        };
+        Object value = syncCommands.evalsha(getMinScriptSha, ScriptOutputType.INTEGER, keys);
+        if (value == null) {
+            return INVALID_COMMITID;
+        } else {
+            return (long) value;
+        }
+    }
+
+    @Override
+    public long getMin() {
         List<String> ids = syncCommands.zrange(commitidsKey, 0, 0);
         if (ids.isEmpty()) {
 
@@ -324,21 +396,15 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService, Lifecyc
                 logger.debug("The current minimum commit number not obtained.");
             }
 
-            return Optional.empty();
+            return INVALID_COMMITID;
         } else {
-            // 首个元素
-            final int first = 0;
 
-            if (logger.isDebugEnabled()) {
-                logger.debug("The minimum commit number to get to is {}.", ids.get(first));
-            }
-
-            return Optional.of(Long.parseLong(ids.get(first)));
+            return Long.parseLong(ids.get(0));
         }
     }
 
     @Override
-    public Optional<Long> getMax() {
+    public long getMax() {
         List<String> ids = syncCommands.zrevrange(commitidsKey, 0, 0);
         if (ids.isEmpty()) {
 
@@ -346,7 +412,7 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService, Lifecyc
                 logger.debug("The current maximum commit number not obtained.");
             }
 
-            return Optional.empty();
+            return INVALID_COMMITID;
         } else {
 
             // 首个元素
@@ -356,7 +422,7 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService, Lifecyc
                 logger.debug("The maximum commit number to get to is {}.", ids.get(first));
             }
 
-            return Optional.of(Long.parseLong(ids.get(first)));
+            return Long.parseLong(ids.get(first));
         }
     }
 
@@ -385,8 +451,10 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService, Lifecyc
             commitidsKey,
             commitidStatusKeyPrefix,
             COMMITID_STATUS_UNKNOWN_NUMBER_PREFIX,
+            lastEliminateCommitidKey
         };
-        String[] ids = Arrays.stream(commitIds).mapToObj(commitId -> Long.toString(commitId)).toArray(String[]::new);
+        String[] ids = Arrays.stream(commitIds)
+            .sorted().mapToObj(commitId -> Long.toString(commitId)).toArray(String[]::new);
         syncCommands.evalsha(obsoleteLuaScriptSha, ScriptOutputType.BOOLEAN, keys, ids);
 
         if (logger.isDebugEnabled()) {
@@ -500,19 +568,11 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService, Lifecyc
         public void run() {
             try {
                 unSyncCommitIdSize.set(size());
-                Optional<Long> commitId = getMin();
-                if (commitId.isPresent()) {
-                    unSyncCommitIdMin.set(commitId.get());
-                } else {
-                    unSyncCommitIdMin.set(-1);
-                }
+                long commitId = getMin();
+                unSyncCommitIdMin.set(commitId);
 
                 commitId = getMax();
-                if (commitId.isPresent()) {
-                    unSyncCommitIdMax.set(commitId.get());
-                } else {
-                    unSyncCommitIdMax.set(0);
-                }
+                unSyncCommitIdMax.set(commitId);
             } catch (Throwable ex) {
                 //do not care.
             }

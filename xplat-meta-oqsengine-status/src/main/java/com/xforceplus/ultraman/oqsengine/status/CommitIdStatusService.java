@@ -1,7 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.status;
 
-import java.util.Optional;
-
 /**
  * 提交号状态管理服务.
  *
@@ -10,6 +8,11 @@ import java.util.Optional;
  * @since 1.8
  */
 public interface CommitIdStatusService {
+
+    /**
+     * 小于等于此值的判定为无效的commitid.
+     */
+    public static final long INVALID_COMMITID = 0;
 
     /**
      * 保存一个新的提交号.
@@ -54,16 +57,23 @@ public interface CommitIdStatusService {
     /**
      * 获取当前最小的提交号.
      *
+     * @return 提交号.最小为0.
+     */
+    long getMinWithKeep();
+
+    /**
+     * 获取当前最小的提交号.
+     *
      * @return 提交号.小于0表示没有.
      */
-    Optional<Long> getMin();
+    long getMin();
 
     /**
      * 获取当前最大提交号.
      *
-     * @return 提交号.小于0表示没有.
+     * @return 提交号.最小为0.
      */
-    Optional<Long> getMax();
+    long getMax();
 
     /**
      * 获取当前所有提交号的快照.

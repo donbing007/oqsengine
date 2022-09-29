@@ -724,8 +724,10 @@ public class UserCaseTest {
         IEntity e0 = Entity.Builder.anEntity()
             .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
             .withValues(Arrays.asList(
-                new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "multiple_companyname_config"),
-                new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-enum").get(), "CERTIFICATE_INVOICE_PIECES")
+                new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(),
+                    "multiple_companyname_config"),
+                new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-enum").get(),
+                    "CERTIFICATE_INVOICE_PIECES")
             )).build();
 
         OqsResult<IEntity> e0Result = entityManagementService.build(e0);
@@ -734,8 +736,10 @@ public class UserCaseTest {
         IEntity e1 = Entity.Builder.anEntity()
             .withEntityClassRef(MockEntityClassDefine.L2_ENTITY_CLASS.ref())
             .withValues(Arrays.asList(
-                new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-enum").get(), "multiple_companyname_config"),
-                new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(), "CERTIFICATE_INVOICE_PIECES")
+                new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-enum").get(),
+                    "multiple_companyname_config"),
+                new StringValue(MockEntityClassDefine.L2_ENTITY_CLASS.field("l2-string").get(),
+                    "CERTIFICATE_INVOICE_PIECES")
             )).build();
 
         OqsResult<IEntity> e1Result = entityManagementService.build(e1);
@@ -754,7 +758,7 @@ public class UserCaseTest {
                 .build()
         );
 
-        Assertions.assertEquals(1,  entities.getValue().get().size());
+        Assertions.assertEquals(1, entities.getValue().get().size());
         Assertions.assertEquals(e0.id(), ((List<IEntity>) entities.getValue().get()).get(0).id());
 
 
@@ -771,7 +775,7 @@ public class UserCaseTest {
                 .build()
         );
 
-        Assertions.assertEquals(1,  entities.getValue().get().size());
+        Assertions.assertEquals(1, entities.getValue().get().size());
         Assertions.assertEquals(e1.id(), ((List<IEntity>) entities.getValue().get()).get(0).id());
 
         entities = entitySearchService.selectByConditions(
@@ -787,7 +791,7 @@ public class UserCaseTest {
                 .build()
         );
 
-        Assertions.assertEquals(1,  entities.getValue().get().size());
+        Assertions.assertEquals(1, entities.getValue().get().size());
         Assertions.assertEquals(e0.id(), ((List<IEntity>) entities.getValue().get()).get(0).id());
 
         entities = entitySearchService.selectByConditions(
@@ -803,7 +807,7 @@ public class UserCaseTest {
                 .build()
         );
 
-        Assertions.assertEquals(1,  entities.getValue().get().size());
+        Assertions.assertEquals(1, entities.getValue().get().size());
         Assertions.assertEquals(e1.id(), ((List<IEntity>) entities.getValue().get()).get(0).id());
 
     }
@@ -1678,5 +1682,4 @@ public class UserCaseTest {
 
         commitIdStatusService.obsoleteAll();
     }
-
 }

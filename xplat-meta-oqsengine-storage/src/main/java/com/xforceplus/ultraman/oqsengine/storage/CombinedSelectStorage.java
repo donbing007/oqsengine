@@ -139,9 +139,10 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
         // 索引查询使用Page,防止修改传入的Page.
         Page indexPage = createIndexPage(page, overflowRatio);
 
-        // long commitId = this.buildQueryCommitId(config);
-
-        long commitId = 14399030L;
+        /*
+        此处必须保证一定有一个不为0的提交号.
+         */
+        long commitId = this.buildQueryCommitId(config);
 
         /*
         分别从索引和主库中条件查询,最终合并两者的结果并载取出最终的目标结果.
@@ -175,11 +176,6 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
             }
         }
         Debug.awaitNoticeMasterAndIndexSelect();
-
-        // 如果没有提交号,再次获取提交号.
-        if (commitId <= 0) {
-            commitId = buildQueryCommitId(config);
-        }
 
         if (commitId > 0) {
             SelectConfig masterSelectConfig = SelectConfig.Builder.anSelectConfig()
@@ -491,17 +487,15 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
 
     // 构造当前查询的最小提交号.
     private long getQueryCommitId() {
-        long minUnSyncCommitId = 0;
+        long minUnSyncCommitId = CommitIdStatusService.INVALID_COMMITID;
         if (commitIdStatusService != null) {
             // 获取提交号.
-            Optional<Long> minUnSyncCommitIdOp = commitIdStatusService.getMin();
-            if (!minUnSyncCommitIdOp.isPresent()) {
-                minUnSyncCommitId = 0;
+            minUnSyncCommitId = commitIdStatusService.getMinWithKeep();
+            if (minUnSyncCommitId == CommitIdStatusService.INVALID_COMMITID) {
                 if (logger.isDebugEnabled()) {
                     logger.debug("Unable to fetch the commit number, use the default commit number 0.");
                 }
             } else {
-                minUnSyncCommitId = minUnSyncCommitIdOp.get();
                 if (logger.isDebugEnabled()) {
                     logger.debug(
                         "The minimum commit number {} that is currently uncommitted was successfully obtained.",

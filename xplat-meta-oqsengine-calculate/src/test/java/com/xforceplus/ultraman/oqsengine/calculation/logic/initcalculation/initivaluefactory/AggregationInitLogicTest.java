@@ -28,7 +28,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
@@ -184,7 +183,7 @@ public class AggregationInitLogicTest {
                     .build());
         }
 
-        Mockito.when(commitIdStatusService.getMin()).thenReturn(Optional.of(0L));
+        Mockito.when(commitIdStatusService.getMinWithKeep()).thenReturn(0L);
 
         List<EntityRef> masterRef = masterEntitys.stream().map(entity1 -> EntityRef.Builder.anEntityRef().withId(entity1.id()).build()).collect(Collectors.toList());
         Mockito.when(combinedSelectStorage.select(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(masterRef);

@@ -68,7 +68,7 @@ public class EntitySearchServiceImplTest {
     @BeforeEach
     public void before() throws Exception {
         commitIdStatusService = mock(CommitIdStatusService.class);
-        when(commitIdStatusService.getMin()).thenReturn((Optional.of(Long.valueOf("1"))));
+        when(commitIdStatusService.getMinWithKeep()).thenReturn(1L);
 
         threadPool = Executors.newFixedThreadPool(3);
         metaManager = EntityClassDefine.getMockMetaManager();

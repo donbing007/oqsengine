@@ -43,8 +43,8 @@ public class CommitIdRepairExecutorImpl implements CommitIdRepairExecutor {
     @Override
     public long[] rangeOfCommitId() {
         long[] range = new long[2];
-        range[0] = commitIdStatusService.getMin().orElse(INVALID_COMMITID);
-        range[1] = commitIdStatusService.getMax().orElse(INVALID_COMMITID);
+        range[0] = commitIdStatusService.getMinWithKeep();
+        range[1] = commitIdStatusService.getMax();
         return range;
     }
 
