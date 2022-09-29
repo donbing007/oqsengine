@@ -11,14 +11,14 @@ package com.xforceplus.ultraman.oqsengine.common.id;
 public interface IdGenerator<V> {
 
     /**
-     * 获取一个默认的 NameSpace ID 表示.
+     * 获取一个默认的 NameSpace 下一个 ID 表示.
      *
      * @return ID.
      */
     V next();
 
     /**
-     * 获取一个指定nameSpace下的ID.
+     * 获取一个指定nameSpace下的下一个ID.
      * <br>
      * 当前实现是否支持命名空间,supportNameSpace 返回true表示支持此方法,false此方法将抛出异常.
      *
@@ -28,7 +28,31 @@ public interface IdGenerator<V> {
      */
     default V next(String nameSpace) {
         throw new UnsupportedOperationException(
-            String.format("The current ID generator(%s) does not support namespaces.", this.getClass().getSimpleName()));
+            String.format("The current ID generator(%s) does not support namespaces.",
+                this.getClass().getSimpleName()));
+    }
+
+    /**
+     * 获取一个默认的 NameSpace ID的当前值.
+     *
+     * @return 当前值.
+     */
+    default V current() {
+        throw new UnsupportedOperationException(
+            String.format("The current ID generator(%s) does not support current.", this.getClass().getSimpleName()));
+    }
+
+    /**
+     * 获取一个指定NameSpace下的ID当前值.
+     *
+     * @param nameSpace 命名空间.
+     * @return ID
+     * @throws UnsupportedOperationException 如果当前实现不支持命名空间.
+     */
+    default V current(String nameSpace) {
+        throw new UnsupportedOperationException(
+            String.format("The current ID generator(%s) does not support current with namespace.",
+                this.getClass().getSimpleName()));
     }
 
     /**

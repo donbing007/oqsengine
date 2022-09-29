@@ -364,10 +364,9 @@ public class QueryConditionExecutor
             try (ResultSet rs = st.executeQuery()) {
                 while (rs.next()) {
                     EntityRef.Builder entityRefBuilder = EntityRef.Builder.anEntityRef();
-                    long id = rs.getLong(FieldDefine.ID);
-                    entityRefBuilder.withId(id);
+                    entityRefBuilder.withId(rs.getLong(FieldDefine.ID));
 
-                    processSort(id, rs, entityRefBuilder, sortInfos);
+                    processSort(rs, entityRefBuilder, sortInfos);
                     refs.add(entityRefBuilder.build());
 
                 }
@@ -385,7 +384,7 @@ public class QueryConditionExecutor
         }
     }
 
-    private void processSort(long id, ResultSet rs, EntityRef.Builder entityRefBuilder, List<SortInfo> sortInfos)
+    private void processSort(ResultSet rs, EntityRef.Builder entityRefBuilder, List<SortInfo> sortInfos)
         throws SQLException {
         StorageValue lastStorageValue = null;
         int sortIndex = 0;

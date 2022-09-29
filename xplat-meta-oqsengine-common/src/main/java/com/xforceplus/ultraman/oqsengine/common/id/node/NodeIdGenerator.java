@@ -10,4 +10,9 @@ import com.xforceplus.ultraman.oqsengine.common.id.IdGenerator;
  * @since 1.8
  */
 public interface NodeIdGenerator extends IdGenerator<Integer> {
+
+    @Override
+    default Integer current() {
+        return next();
+    }
 }

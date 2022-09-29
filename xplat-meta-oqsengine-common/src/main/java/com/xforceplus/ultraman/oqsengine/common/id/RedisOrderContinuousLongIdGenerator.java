@@ -51,6 +51,17 @@ public class RedisOrderContinuousLongIdGenerator implements LongIdGenerator {
     }
 
     @Override
+    public Long current() {
+        return current(ns);
+    }
+
+    @Override
+    public Long current(String nameSpace) {
+        RedisStringCommands<String, String> sync = connection.sync();
+        return sync.incrby(nameSpace, 0);
+    }
+
+    @Override
     public boolean supportNameSpace() {
         return true;
     }

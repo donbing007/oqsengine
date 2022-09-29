@@ -50,6 +50,21 @@ public class IncreasingOrderLongIdGenerator implements LongIdGenerator {
     }
 
     @Override
+    public Long current() {
+        return current(DEFAULT_NS);
+    }
+
+    @Override
+    public Long current(String nameSpace) {
+        AtomicLong old = pool.get(nameSpace);
+        if (old == null) {
+            return 0L;
+        } else {
+            return old.get();
+        }
+    }
+
+    @Override
     public boolean isContinuous() {
         return true;
     }

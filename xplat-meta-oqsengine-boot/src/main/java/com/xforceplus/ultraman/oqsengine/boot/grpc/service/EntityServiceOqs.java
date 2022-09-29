@@ -504,8 +504,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 // do auto fill
                 entityList.forEach(e -> autoFillLookUp(e, entityClass));
 
-                OqsResult<IEntity[]> oqsResult = entityManagementService.build(
-                    entityList.toArray(new com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[0]));
+                OqsResult<IEntity[]> oqsResult = entityManagementService.build(entityList.toArray(new IEntity[0]));
                 ResultStatus createStatus = oqsResult.getResultStatus();
                 Optional<IEntity[]> valueOp = oqsResult.getValue();
                 switch (createStatus) {
@@ -662,8 +661,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
             try {
                 Optional<String> mode = metadata.getText("mode");
-                com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity
-                    entity = toEntity(entityClassRef, entityClass, in);
+                IEntity entity = toEntity(entityClassRef, entityClass, in);
 
                 /*
                  * do auto fill
@@ -675,8 +673,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 }
 
                 //side effect
-                OqsResult<Map.Entry<IEntity, IValue[]>> oqsResult =
-                    entityManagementService.replace(entity);
+                OqsResult<Map.Entry<IEntity, IValue[]>> oqsResult = entityManagementService.replace(entity);
                 long txId = 0;
                 int version = 0;
                 ResultStatus replaceStatus = oqsResult.getResultStatus();
@@ -850,16 +847,18 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 Optional<String> mode = metadata.getText("mode");
                 if (!entityList.isEmpty()) {
 
-                    com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[] entities =
+                    IEntity[] entities =
                         entityList.stream().peek(entity -> {
                             if (mode.filter("replace"::equals).isPresent()) {
                                 //need reset version here
                                 replaceEntity(entity, entityClass);
                             }
-                        }).toArray(com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity[]::new);
+                        }).toArray(IEntity[]::new);
 
                     //side effect
                     try {
+
+                        Arrays.stream(entities).forEach(e -> autoFillLookUp(e, entityClass));
                         OqsResult<Map<IEntity, IValue[]>> oqsResult = entityManagementService.replace(entities);
                         ResultStatus replaceStatus = oqsResult.getResultStatus();
                         Optional<Map<IEntity, IValue[]>> valueOp = oqsResult.getValue();
@@ -1006,7 +1005,8 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 Optional<IEntityClass> entityClass = metaManager.load(entityClassRef);
 
                 if (!entityClass.isPresent()) {
-                    throw new RuntimeException(String.format("entityClass not found by entityClassRef: %s", entityClassRef));
+                    throw new RuntimeException(
+                        String.format("entityClass not found by entityClassRef: %s", entityClassRef));
                 }
                 List<IEntity> entities = new ArrayList<>();
 
@@ -1016,7 +1016,8 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 }
 
                 OqsResult<Map<IEntity, IValue[]>> mapOqsResult =
-                    entityManagementService.reCalculate(entities.toArray(entities.toArray(new IEntity[entities.size()])),
+                    entityManagementService.reCalculate(
+                        entities.toArray(entities.toArray(new IEntity[entities.size()])),
                         entityClassRef, fieldCodeList);
                 ResultStatus replaceStatus = mapOqsResult.getResultStatus();
                 Optional<Map<IEntity, IValue[]>> valueOp = mapOqsResult.getValue();
@@ -1149,9 +1150,9 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                         com.xforceplus.ultraman.oqsengine.sdk.ErrorCalculateInstance.newBuilder()
                             .setId(e.getId())
                             .addAllErrorFieldUnits(e.getErrorFieldUnits().stream().map(f -> ErrorFieldUnit.newBuilder()
-                                .setFieldCode(f.getField().name())
-                                .setExpectValue(f.getExpect().valueToString())
-                                .setNowValue(f.getNow().valueToString()).build()
+                                    .setFieldCode(f.getField().name())
+                                    .setExpectValue(f.getExpect().valueToString())
+                                    .setNowValue(f.getNow().valueToString()).build()
                                 )
                                 .collect(Collectors.toList()))
                             .build()).collect(Collectors.toList())
@@ -1160,7 +1161,8 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     .build();
             } catch (Exception e) {
                 logger.error(e.getMessage());
-                return DryRunResult.newBuilder().setCode(DryRunResult.Code.EXCEPTION).setMessage(e.getMessage()).build();
+                return DryRunResult.newBuilder().setCode(DryRunResult.Code.EXCEPTION).setMessage(e.getMessage())
+                    .build();
             }
 
             return result;
@@ -1193,7 +1195,8 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     .build();
             } catch (Exception e) {
                 logger.error(e.getMessage());
-                return DryRunResult.newBuilder().setCode(DryRunResult.Code.EXCEPTION).setMessage(e.getMessage()).build();
+                return DryRunResult.newBuilder().setCode(DryRunResult.Code.EXCEPTION).setMessage(e.getMessage())
+                    .build();
             }
 
             return result;
@@ -1301,8 +1304,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
                     entities.getValue().get().forEach(entityResult -> {
 
-                        com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity
-                            entity = toEntity(entityClassRef, entityClass, in.getEntity());
+                        IEntity entity = toEntity(entityClassRef, entityClass, in.getEntity());
                         if (mode.filter("replace"::equals).isPresent()) {
                             //need reset version here
                             replaceEntity(entity, entityClass);
