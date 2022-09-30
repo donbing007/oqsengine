@@ -196,6 +196,11 @@ public class MockEntityClassDefine {
         collectOriginFieldId,
         collectForeignFieldId,
         collectTargetFieldId,
+
+        // 字段更新时间
+        updateTime,
+        // 创建时间
+        createTime,
     }
 
     // 用户订单关系字段.
@@ -733,6 +738,17 @@ public class MockEntityClassDefine {
                             .withFuzzyType(FieldConfig.FuzzyType.NOT)
                             .withFieldSense(FieldConfig.FieldSense.NORMAL)
                             .withRequired(true).build()
+                    ).build()
+            )
+            .withField(
+                EntityField.Builder.anEntityField()
+                    .withId(Long.MAX_VALUE - FieldId.updateTime.ordinal())
+                    .withFieldType(FieldType.DATETIME)
+                    .withName("updateTime")
+                    .withConfig(
+                        FieldConfig.Builder.anFieldConfig()
+                            .withFieldSense(FieldConfig.FieldSense.UPDATE_TIME)
+                            .withSearchable(true).build()
                     ).build()
             ).build();
 

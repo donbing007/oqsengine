@@ -1596,6 +1596,51 @@ public class UserCaseTest {
     }
 
     /**
+     * 测试更新时间是否正确被设置.
+     * 更新时间系统字段不会使用调用者的设定,而是由OQS内部生成并且需要同步修改掉属性中的相应系统字段(如果有).
+     */
+    @Test
+    public void testUpdateTimeWithReplace() throws Exception {
+        LocalDateTime failUpdateTime = LocalDateTime.of(1997, 1, 1, 0, 0, 0);
+        IEntity entity = Entity.Builder.anEntity()
+            .withId(10000000L)
+            .withEntityClassRef(MockEntityClassDefine.SIMPLE_ORDER_CLASS.ref())
+            .withValue(
+                new DateTimeValue(MockEntityClassDefine.SIMPLE_ORDER_CLASS.field("下单时间").get(), LocalDateTime.now())
+            )
+            .withValue(
+                new StringValue(MockEntityClassDefine.SIMPLE_ORDER_CLASS.field("订单编号").get(), "v1")
+            )
+            .withValue(
+                // 系统字段.
+                new DateTimeValue(MockEntityClassDefine.SIMPLE_ORDER_CLASS.field("updateTime").get(), failUpdateTime)
+            )
+            .build();
+        entityManagementService.build(entity);
+
+        entity = entitySearchService
+            .selectOne(entity.id(), MockEntityClassDefine.SIMPLE_ORDER_CLASS.ref()).getValue().get();
+
+        Assertions.assertEquals(entity.time(),
+            entity.entityValue().getValue("updateTime").get().valueToLong());
+        Assertions.assertNotEquals(entity.time(),
+            failUpdateTime.atZone(DateTimeValue.ZONE_ID).toInstant().toEpochMilli());
+
+        // 记录下创建后的更新时间.
+        long updateTime = entity.time();
+
+        entity.entityValue().addValue(
+            new DateTimeValue(MockEntityClassDefine.SIMPLE_ORDER_CLASS.field("updateTime").get(), failUpdateTime)
+        );
+        entityManagementService.replace(entity);
+        entity = entitySearchService
+            .selectOne(entity.id(), MockEntityClassDefine.SIMPLE_ORDER_CLASS.ref()).getValue().get();
+        Assertions.assertEquals(entity.time(),
+            entity.entityValue().getValue("updateTime").get().valueToLong());
+        Assertions.assertNotEquals(entity.time(), updateTime);
+    }
+
+    /**
      * 通过控制联合查询主库和索引之间间隔,检查在两次查询之间的数据更新是否会造成对象不可见.
      */
     @Test

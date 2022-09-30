@@ -6,7 +6,6 @@ import static com.xforceplus.ultraman.oqsengine.devops.rebuild.constant.Constant
 import static com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.BatchStatus.DONE;
 import static com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.BatchStatus.ERROR;
 
-import com.google.common.collect.Lists;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.handler.DefaultDevOpsTaskHandler;
@@ -26,7 +25,6 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
@@ -166,10 +164,10 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
                 originalEntity.setMaintainid(devOpsTaskInfo.getMaintainid());
 
                 if (OperationType.CREATE.getValue() == originalEntity.getOp()) {
-                        /*
+                    /*
                         如果最后操作是创建,那么将操作状态修改为更新.
                         原因是索引中已经存在了相应的实例,重建需要覆盖.
-                         */
+                    */
                     originalEntity.setOp(OperationType.UPDATE.getValue());
                 }
 

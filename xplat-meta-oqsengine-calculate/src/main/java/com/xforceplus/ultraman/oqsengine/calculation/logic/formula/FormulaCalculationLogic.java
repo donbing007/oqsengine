@@ -3,7 +3,6 @@ package com.xforceplus.ultraman.oqsengine.calculation.logic.formula;
 import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationContext;
 import com.xforceplus.ultraman.oqsengine.calculation.context.CalculationScenarios;
 import com.xforceplus.ultraman.oqsengine.calculation.dto.AffectedInfo;
-import com.xforceplus.ultraman.oqsengine.calculation.dto.CalculateConstant;
 import com.xforceplus.ultraman.oqsengine.calculation.exception.CalculationException;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.CalculationLogic;
 import com.xforceplus.ultraman.oqsengine.calculation.logic.formula.helper.FormulaHelper;
@@ -93,8 +92,8 @@ public class FormulaCalculationLogic implements CalculationLogic {
                     Formula formula = (Formula) f.config().getCalculation();
 
                     List<String> args = formula.getArgs().stream()
-                        .filter(s -> !s.equals(CalculateConstant.FORMULA_THIS_VALUE)).collect(
-                        Collectors.toList());
+                        .filter(s -> !s.equals(FormulaHelper.FORMULA_THIS_VALUE)).collect(
+                            Collectors.toList());
 
                     if (args.size() > 0) {
                         if (args.contains(participantField.name())) {

@@ -33,10 +33,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.junit.jupiter.api.AfterEach;
@@ -108,26 +106,24 @@ public class EntitySearchServiceImplTest {
                     .withMajor(OqsVersion.MAJOR).build(),
                 EntityRef.Builder.anEntityRef()
                     .withId(2)
-                    .withOp(OperationType.CREATE.getValue())
+                    .withOp(OperationType.UPDATE.getValue())
                     .withMajor(OqsVersion.MAJOR).build()
             ));
 
         Page indexPage = Page.emptyPage();
-        Set<Long> excludeIds = new HashSet<>();
-        excludeIds.add(1L);
-        excludeIds.add(2L);
         when(indexStorage.select(
             Conditions.buildEmtpyConditions(),
             EntityClassDefine.l1EntityClass,
             SelectConfig.Builder.anSelectConfig()
                 .withCommitId(1)
                 .withPage(indexPage)
-                .withExcludedIds(excludeIds)
                 .withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD))
                 .build()
         )).thenAnswer((invocation) -> {
             SelectConfig selectConfig = invocation.getArgument(2, SelectConfig.class);
-            selectConfig.getPage().setTotalCount(0);
+            selectConfig.getPage().setTotalCount(6);
+
+            // 因为是空页要求.
             return Collections.emptyList();
         });
 
@@ -143,7 +139,8 @@ public class EntitySearchServiceImplTest {
 
         Assertions.assertTrue(entities.isSuccess());
         Assertions.assertEquals(0, entities.getValue().get().size());
-        Assertions.assertEquals(2, page.getTotalCount());
+        // 总数等于两边之和.
+        Assertions.assertEquals(8, page.getTotalCount());
     }
 
     /**
@@ -185,8 +182,9 @@ public class EntitySearchServiceImplTest {
             )
         );
 
-        Page indexPage = Page.newSinglePage(100);
-        indexPage.setTotalCount(0);
+        Page page = new Page(1, 3);
+
+        Page indexPage = new Page(1, page.getPageSize() + Math.round((float) page.getPageSize() * 0.1F));
         when(indexStorage.select(
             Conditions.buildEmtpyConditions(),
             EntityClassDefine.l2EntityClass,
@@ -194,24 +192,24 @@ public class EntitySearchServiceImplTest {
                 .withCommitId(1)
                 .withPage(indexPage)
                 .withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD))
-                .withExcludeId(1)
-                .withExcludeId(2)
-                .withExcludeId(3)
-                .withExcludeId(4)
                 .build()
-        )).thenReturn(Collections.emptyList());
+        )).thenAnswer(invocation -> {
+            SelectConfig config = invocation.getArgument(2, SelectConfig.class);
+            config.getPage().setTotalCount(0);
+            return Collections.emptyList();
+        });
 
 
-        Page page = Page.newSinglePage(100);
         OqsResult<Collection<IEntity>> entities = impl.selectByConditions(
             Conditions.buildEmtpyConditions(),
             EntityClassDefine.l2EntityClass.ref(),
-            ServiceSelectConfig.Builder.anSearchConfig().withPage(page).build()
+            ServiceSelectConfig.Builder.anSearchConfig()
+                .withPage(page).withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD)).build()
         );
 
         Assertions.assertEquals(3, entities.getValue().get().size());
         // 总量会多出100,是由于index没有真的查询数据.
-        Assertions.assertEquals(3 + 100, page.getTotalCount());
+        Assertions.assertEquals(3, page.getTotalCount());
     }
 
     @Test
@@ -277,7 +275,8 @@ public class EntitySearchServiceImplTest {
                     new StringValue(EntityClassDefine.l0EntityClass.field("l0-string").get(), "test")
                 )
             );
-        Page page = Page.newSinglePage(100);
+        Page page = new Page(1, 4);
+
         when(masterStorage.select(
             conditions,
             EntityClassDefine.l2EntityClass,
@@ -296,21 +295,20 @@ public class EntitySearchServiceImplTest {
                 .withMajor(OqsVersion.MAJOR).build()
         ));
 
-        // 索引需要排除的.
-        Set<Long> excludeIds = new HashSet<>();
-        excludeIds.add(1L);
-        excludeIds.add(2L);
+        Page indexPage = new Page(1, page.getPageSize() + Math.round((float) page.getPageSize() * 0.1F));
         when(indexStorage.select(
             conditions,
             EntityClassDefine.l2EntityClass,
             SelectConfig.Builder.anSelectConfig()
                 .withCommitId(1)
-                .withExcludedIds(excludeIds)
                 .withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD))
-                .withPage(page)
+                .withPage(indexPage)
                 .build()
-        )).thenReturn(
-            Arrays.asList(
+        )).thenAnswer(invocation -> {
+            SelectConfig config = invocation.getArgument(2, SelectConfig.class);
+            config.getPage().setTotalCount(100);
+
+            return Arrays.asList(
                 EntityRef.Builder.anEntityRef()
                     .withId(3)
                     .withOp(OperationType.CREATE.getValue())
@@ -319,8 +317,8 @@ public class EntitySearchServiceImplTest {
                     .withId(4)
                     .withOp(OperationType.CREATE.getValue())
                     .withMajor(OqsVersion.MAJOR).build()
-            )
-        );
+            );
+        });
 
         when(masterStorage.selectMultiple(new long[] {1, 2, 3, 4}, EntityClassDefine.l2EntityClass)).thenReturn(
             Arrays.asList(
@@ -334,10 +332,13 @@ public class EntitySearchServiceImplTest {
         List<IEntity> entities = new ArrayList(impl.selectByConditions(
             conditions,
             EntityClassDefine.l2EntityClass.ref(),
-            ServiceSelectConfig.Builder.anSearchConfig().withPage(page).build()
+            ServiceSelectConfig.Builder.anSearchConfig()
+                .withPage(page)
+                .withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD)).build()
         ).getValue().get());
 
         Assertions.assertEquals(4, entities.size());
+        Assertions.assertEquals(102, page.getTotalCount());
         long[] expectedIds = new long[] {
             1, 2, 3, 4
         };

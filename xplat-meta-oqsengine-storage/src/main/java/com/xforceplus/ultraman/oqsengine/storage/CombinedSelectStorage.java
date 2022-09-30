@@ -202,26 +202,22 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
 
         // 记录索引未过滤前的数量.
         int indexOriginalSize = indexRefs.size();
+        // 记录过滤之前的数据,包含创建,更新和删除.
+        int masterOriginalSize = masterRefs.size();
         /*
         以主库为标准,去除索引中所有 EntityRef.getId() 相同的实例.
         再去除主库中 EntityRef.getOp() == OperationType.DELETE 的值.
         最终结果是索引中只包含主库中查询不到的结果.
          */
         // 操作会影响最终数据总量.
-        int masterCreateSize = 0;
         int masterDeleteSize = 0;
-        int masterUpdateSize = 0;
         // 记录从索引结果中移除的更新实例数量.
         AtomicInteger removeUpdateRefFormIndexSize = new AtomicInteger();
         if (!masterRefs.isEmpty()) {
             // 分类统计数量.
             for (EntityRef ref : masterRefs) {
-                if (OperationType.CREATE.getValue() == ref.getOp()) {
-                    masterCreateSize++;
-                } else if (OperationType.DELETE.getValue() == ref.getOp()) {
+                if (OperationType.DELETE.getValue() == ref.getOp()) {
                     masterDeleteSize++;
-                } else if (OperationType.UPDATE.getValue() == ref.getOp()) {
-                    masterUpdateSize++;
                 }
             }
 
@@ -271,7 +267,7 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
          */
         long totalSize =
             indexPage.getTotalCount()
-                - removeUpdateRefFormIndexSize.get() + masterCreateSize + masterUpdateSize - masterDeleteSize;
+                - removeUpdateRefFormIndexSize.get() + masterOriginalSize - masterDeleteSize;
         page.setTotalCount(totalSize < 0 ? 0 : totalSize);
         if (page.isEmptyPage() || !page.hasNextPage()) {
             return Collections.emptyList();
@@ -480,7 +476,7 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
         // 如果是意外的字段,那么设置为一个字符串0,数字和字符串都可以正常转型.
         final String finalValue = "0";
         ref.setSortValue(sortIndex, value);
-        if (ref.getSortValue(sortIndex).isPresent()) {
+        if (!ref.getSortValue(sortIndex).isPresent()) {
             ref.setSortValue(sortIndex, finalValue);
         }
     }

@@ -34,13 +34,16 @@ import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.CalculationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntitys;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.verifier.ValueVerifier;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.verifier.VerifierFactory;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.verifier.VerifierResult;
@@ -720,7 +723,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     oldEntity = newEntity.copy();
 
                     // 操作时间
-                    newEntity.markTime();
+                    markTimeForce(newEntity);
 
                     // 新的字段值加入当前实例.
                     for (IValue newValue : entity.entityValue().values()) {
@@ -1015,7 +1018,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                                 continue;
                             }
 
-                            newEntity.markTime();
+                            markTimeForce(newEntity);
 
                             IEntityClass entityClass = entityClassTable.get(newEntity.id());
                             Map.Entry<VerifierResult, IEntityField> verify = verifyFields(entityClass, newEntity);
@@ -1724,7 +1727,33 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         }
     }
 
+    /*
+    强制设置对象时间,同时也会同步属性中出现的系统字段 UPDATE_TIME.
+    所以如果设置了 UPDATE_TIME 将被忽略.
+     */
     private void markTimeForce(IEntity entity) {
-        entity.markTime(System.currentTimeMillis());
+        long time = System.currentTimeMillis();
+        entity.markTime(time);
+
+        IValue updateTimeValue = null;
+        for (IValue v : entity.entityValue().values()) {
+            if (FieldConfig.FieldSense.UPDATE_TIME == v.getField().config().getFieldSense()) {
+                updateTimeValue = v;
+                break;
+            }
+        }
+
+        if (updateTimeValue != null) {
+            if (DateTimeValue.class.isInstance(updateTimeValue)) {
+
+                updateTimeValue = updateTimeValue.copy(DateTimeValue.toLocalDateTime(time));
+
+            } else if (LongValue.class.isInstance(updateTimeValue)) {
+
+                updateTimeValue = updateTimeValue.copy(time);
+            }
+
+            entity.entityValue().addValue(updateTimeValue);
+        }
     }
 }
