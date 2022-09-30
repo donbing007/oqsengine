@@ -33,6 +33,8 @@ public class CommitIdStatusServiceImplTest {
     private String key = "test";
     private String statusKeyPreifx = "test.status";
 
+    private String keepKey = "test.keep";
+
     /**
      * 初始化.
      */
@@ -40,7 +42,7 @@ public class CommitIdStatusServiceImplTest {
     public void before() throws Exception {
         redisClient = CommonInitialization.getInstance().getRedisClient();
 
-        impl = new CommitIdStatusServiceImpl(key, statusKeyPreifx);
+        impl = new CommitIdStatusServiceImpl(key, statusKeyPreifx, keepKey);
         ReflectionTestUtils.setField(impl, "redisClient", redisClient);
         impl.init();
 
@@ -149,7 +151,8 @@ public class CommitIdStatusServiceImplTest {
     public void testSetReady() throws Exception {
         long commitId = 100;
         impl.save(commitId, false);
-        Assertions.assertEquals(commitId, impl.getMin().get().longValue());
+        Assertions.assertEquals(commitId, impl.getMinWithKeep());
+        Assertions.assertEquals(commitId, impl.getMin());
 
         Assertions.assertFalse(impl.isReady(commitId));
 
@@ -166,7 +169,8 @@ public class CommitIdStatusServiceImplTest {
     public void testStatusClean() throws Exception {
         long commitId = 100;
         impl.save(commitId, false);
-        Assertions.assertEquals(commitId, impl.getMin().get().longValue());
+        Assertions.assertEquals(commitId, impl.getMinWithKeep());
+        Assertions.assertEquals(commitId, impl.getMin());
         impl.ready(commitId);
         impl.obsolete(commitId);
 
@@ -174,6 +178,9 @@ public class CommitIdStatusServiceImplTest {
             Assertions.assertTrue(impl.isReady(commitId));
             Assertions.assertTrue(impl.isObsolete(commitId));
         }
+
+        // keep 中仍然持有最后淘汰的提交号,如果未提交队列为空.
+        Assertions.assertEquals(commitId, impl.getMinWithKeep());
     }
 
     /**
@@ -187,8 +194,20 @@ public class CommitIdStatusServiceImplTest {
                 return i;
             }).min().getAsLong();
 
-        long actualMin = impl.getMin().get();
-        Assertions.assertEquals(expectedMin, actualMin);
+        Assertions.assertEquals(expectedMin, impl.getMinWithKeep());
+        Assertions.assertEquals(expectedMin, impl.getMin());
+    }
+
+    @Test
+    public void testGetKeepMin() throws Exception {
+        impl.save(100, true);
+        impl.save(200, true);
+
+        impl.obsolete(100, 200);
+
+        Assertions.assertEquals(200, impl.getMinWithKeep());
+        Assertions.assertEquals(0, impl.getMin());
+
     }
 
     /**
@@ -202,7 +221,7 @@ public class CommitIdStatusServiceImplTest {
                 return i;
             }).max().getAsLong();
 
-        long actualMax = impl.getMax().get();
+        long actualMax = impl.getMax();
         Assertions.assertEquals(expectedMax, actualMax);
     }
 
@@ -250,7 +269,7 @@ public class CommitIdStatusServiceImplTest {
         impl.obsolete(9);
         Assertions.assertArrayEquals(expected, impl.getAll());
 
-        Assertions.assertEquals(10L, impl.getMin().get().longValue());
+        Assertions.assertEquals(10L, impl.getMinWithKeep());
 
         try (StatefulRedisConnection<String, String> conn = redisClient.connect()) {
             Assertions.assertEquals(0, conn.sync().exists("test.status.20").longValue());
@@ -275,8 +294,8 @@ public class CommitIdStatusServiceImplTest {
         Assertions.assertEquals(expected.length, impl.size());
         Assertions.assertArrayEquals(expected, impl.getAll());
 
-        Assertions.assertEquals(10L, impl.getMin().get().longValue());
-        Assertions.assertEquals(99L, impl.getMax().get().longValue());
+        Assertions.assertEquals(10L, impl.getMinWithKeep());
+        Assertions.assertEquals(99L, impl.getMax());
     }
 
     @Test
@@ -320,7 +339,7 @@ public class CommitIdStatusServiceImplTest {
 
         Assertions.assertTrue(impl.isReady(100));
         Assertions.assertTrue(impl.isObsolete(100));
-        Assertions.assertEquals(200, impl.getMin().get().longValue());
+        Assertions.assertEquals(200, impl.getMinWithKeep());
         Assertions.assertEquals(1, impl.size());
         Assertions.assertTrue(Arrays.equals(new long[] {200L}, impl.getAll()));
     }

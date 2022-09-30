@@ -150,8 +150,8 @@ public class SystemOpsService {
         List<Long> ids = new ArrayList<>();
         try {
             //  将数量作为ids[0]输出
-            ids.add(commitIdStatusService.getMin().orElse(0L));
-            ids.add(commitIdStatusService.getMax().orElse(0L));
+            ids.add(commitIdStatusService.getMin());
+            ids.add(commitIdStatusService.getMax());
         } catch (Exception e) {
             PrintErrorHelper.exceptionHandle("get un-ready commits exception", e);
         }

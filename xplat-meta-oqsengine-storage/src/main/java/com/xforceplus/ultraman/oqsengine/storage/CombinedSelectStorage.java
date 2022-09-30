@@ -139,6 +139,9 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
         // 索引查询使用Page,防止修改传入的Page.
         Page indexPage = createIndexPage(page, overflowRatio);
 
+        /*
+        此处必须保证一定有一个不为0的提交号.
+         */
         long commitId = this.buildQueryCommitId(config);
 
         /*
@@ -484,17 +487,15 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
 
     // 构造当前查询的最小提交号.
     private long getQueryCommitId() {
-        long minUnSyncCommitId = 0;
+        long minUnSyncCommitId = CommitIdStatusService.INVALID_COMMITID;
         if (commitIdStatusService != null) {
             // 获取提交号.
-            Optional<Long> minUnSyncCommitIdOp = commitIdStatusService.getMin();
-            if (!minUnSyncCommitIdOp.isPresent()) {
-                minUnSyncCommitId = 0;
+            minUnSyncCommitId = commitIdStatusService.getMinWithKeep();
+            if (minUnSyncCommitId == CommitIdStatusService.INVALID_COMMITID) {
                 if (logger.isDebugEnabled()) {
                     logger.debug("Unable to fetch the commit number, use the default commit number 0.");
                 }
             } else {
-                minUnSyncCommitId = minUnSyncCommitIdOp.get();
                 if (logger.isDebugEnabled()) {
                     logger.debug(
                         "The minimum commit number {} that is currently uncommitted was successfully obtained.",
