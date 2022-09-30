@@ -155,6 +155,8 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
         注意: 由于是两次查询,在两次查询之间数据是可能会改变的.
           1. 两个查询之间数据被更新.从不符合条件转为符合条件或者相反,那么此实例会最终放入结果集中.
           2. 两个查询之间数据被删除.索引符合条件,主库不符合,那么结果将放入结果集中.反之不会放入.
+
+          由于提交号的划分,这里设定相同的对象要么出现在索引结果中,要么出现在主库结果中.
          */
         Collection<EntityRef> masterRefs;
         Collection<EntityRef> indexRefs;
@@ -261,7 +263,7 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
         }
 
         /*
-        总数计算 = 索引总量 - 主库更新从索引中移除量 + 主库创建数量 + 主库更新数量 - 主库删除数量.
+        总数计算 = 索引总量 - 主库更新从索引中移除量 + 主库查询原始数据(包含创建更新和删除) - 主库删除数量.
         主库存更新从索引中移除量意义为,根据当前查询的主库结果中过滤出操作为更新的实例减去索引中也含有的数量.
         此是为了保证,同样一个实例在更新时有可能出现在索引中也可能不出现.
          */

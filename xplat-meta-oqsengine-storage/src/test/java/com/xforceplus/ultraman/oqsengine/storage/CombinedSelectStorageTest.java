@@ -189,8 +189,8 @@ public class CombinedSelectStorageTest {
 
         List<EntityRef> indexRefs = Arrays.asList(
             buildCreateRef(1),
-            buildCreateRef(2),
-            buildCreateRef(3)
+            buildCreateRef(7),
+            buildCreateRef(8)
         );
         ConditionsSelectStorage syncedStorage = mock(ConditionsSelectStorage.class);
         when(syncedStorage.select(
@@ -236,7 +236,7 @@ public class CombinedSelectStorageTest {
             1L, 2L, 6L
         };
         Assertions.assertArrayEquals(expectedIds, refs.stream().mapToLong(r -> r.getId()).toArray());
-        Assertions.assertEquals(3, page.getTotalCount());
+        Assertions.assertEquals(5, page.getTotalCount());
     }
 
     /**
@@ -245,7 +245,7 @@ public class CombinedSelectStorageTest {
     @Test
     public void testOverflowNoMoreEntity() throws Exception {
         Conditions conditions = Conditions.buildEmtpyConditions();
-        Page page = new Page(1, 3);
+        Page page = new Page(1, 30);
         long minCommitId = 1000L;
 
         AtomicInteger indexSelectTime = new AtomicInteger();
@@ -267,8 +267,8 @@ public class CombinedSelectStorageTest {
 
             return Arrays.asList(
                 buildCreateRef(1),
-                buildCreateRef(2),
-                buildCreateRef(3));
+                buildCreateRef(4),
+                buildCreateRef(5));
         });
 
         List<EntityRef> masterRefs = Arrays.asList(
@@ -295,12 +295,12 @@ public class CombinedSelectStorageTest {
                 .build()
         );
 
-        Assertions.assertEquals(1, refs.size());
+        Assertions.assertEquals(3, refs.size());
         long[] expectedIds = new long[] {
-            1L
+            1L, 4L, 5L,
         };
         Assertions.assertArrayEquals(expectedIds, refs.stream().mapToLong(r -> r.getId()).toArray());
-        Assertions.assertEquals(1, page.getTotalCount());
+        Assertions.assertEquals(3, page.getTotalCount());
     }
 
     /**
@@ -357,32 +357,9 @@ public class CombinedSelectStorageTest {
                 buildCreateRef(4));
         });
 
-        // 第三次查询
-        when(syncedStorage.select(
-            conditions,
-            mockEntityClass,
-            SelectConfig.Builder.anSelectConfig()
-                .withCommitId(minCommitId)
-                .withPage(new Page(1, page.getPageSize() + (long) (page.getPageSize() * 0.5F)))
-                .withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD))
-                .build()
-        )).thenAnswer(invocation -> {
-            SelectConfig config = invocation.getArgument(2, SelectConfig.class);
-            config.getPage().setTotalCount(5);
-
-            indexSelectTime.getAndAdd(1);
-
-            return Arrays.asList(
-                buildCreateRef(1),
-                buildCreateRef(2),
-                buildCreateRef(3),
-                buildCreateRef(4),
-                buildCreateRef(5));
-        });
-
         List<EntityRef> masterRefs = Arrays.asList(
-            buildDeleteRef(2),
-            buildDeleteRef(3)
+            buildDeleteRef(6),
+            buildDeleteRef(7)
         );
         ConditionsSelectStorage unSyncedStorage = mock(ConditionsSelectStorage.class);
         when(unSyncedStorage.select(
@@ -403,13 +380,13 @@ public class CombinedSelectStorageTest {
                 .build()
         );
 
-        Assertions.assertEquals(3, indexSelectTime.get());
+        Assertions.assertEquals(2, indexSelectTime.get());
         Assertions.assertEquals(3, refs.size());
         long[] expectedIds = new long[] {
-            1L, 4L, 5L
+            1L, 2L, 3L
         };
         Assertions.assertArrayEquals(expectedIds, refs.stream().mapToLong(r -> r.getId()).toArray());
-        Assertions.assertEquals(3, page.getTotalCount());
+        Assertions.assertEquals(5, page.getTotalCount());
     }
 
     @Test
