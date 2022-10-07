@@ -150,9 +150,9 @@ public class CombinedSelectStorageTest {
                 buildDeleteRef(5)
             ),
 
-            // 第二次查询,是校验.失败.
+            // 第二次查询,是校验.失败.需要一个不出现在master和index结果集中的结果.
             Arrays.asList(
-                buildUpdateRef(9)
+                buildUpdateRef(20)
             ),
 
             Arrays.asList(

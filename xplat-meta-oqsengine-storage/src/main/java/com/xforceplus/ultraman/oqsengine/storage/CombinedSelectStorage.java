@@ -213,7 +213,7 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
           4. 索引使用 < 10 查询, 由于3的提交号已经是11了也查询不到了.
          这里就是检测可能的 3 "丢失"的情况.
          */
-        SelectConfig masterSelectConfig = SelectConfig.Builder.anSelectConfig()
+        SelectConfig checkMasterSelectConfig = SelectConfig.Builder.anSelectConfig()
             .withSort(sort)
             .withSecondarySort(secondSort)
             .withThirdSort(thirdSort)
@@ -222,7 +222,7 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
             .withIgnoredOperation(OperationType.DELETE)
             .withIgnoredOperation(OperationType.CREATE)
             .build();
-        Collection<EntityRef> checkMasterRefs = unSyncStorage.select(conditions, entityClass, masterSelectConfig);
+        Collection<EntityRef> checkMasterRefs = unSyncStorage.select(conditions, entityClass, checkMasterSelectConfig);
 
         if (!checkMasterRefs.isEmpty()) {
             // 非空,检测失败.需要重新开始.null是绝定的重新开始标记.
