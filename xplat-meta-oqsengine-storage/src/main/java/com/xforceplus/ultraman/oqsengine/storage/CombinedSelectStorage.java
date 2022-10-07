@@ -24,7 +24,6 @@ import java.util.Comparator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -61,11 +60,14 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
     private CommitIdStatusService commitIdStatusService;
 
     /*
-    查询溢出使用的比例.
+    检测失败后重试的次数.
      */
-    private static final float[] OVERFLOW_RATIO = new float[] {
-        0.1F, 0.3F, 0.5F, 0.8F, 1.0F
-    };
+    private static final int REPLAY_NUMBER = 100;
+
+    /*
+    检测失败重试前的等待毫秒.
+     */
+    private static final long REPLAY_WAIT_MS = 100;
 
     /**
      * 构造一个联合查询.
@@ -102,83 +104,50 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
     public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, SelectConfig config)
         throws SQLException {
 
-        Collection<EntityRef> refs;
-        for (int i = 0; i < OVERFLOW_RATIO.length; i++) {
-            refs = doSelect(conditions, entityClass, config, OVERFLOW_RATIO[i]);
+        Collection<EntityRef> refs = doSelect(conditions, entityClass, config);
 
-            if (refs != null) {
-                return refs;
-            } else {
-                /*
-                 查询溢出失败,等待 waitDuration 毫秒后使用更大的溢出比例重试.
-                 */
-                final long waitDuration = 500;
+        // 检测失败,进入重试流程.
+        if (refs == null) {
+
+            for (int i = 0; i < REPLAY_NUMBER; i++) {
                 if (logger.isWarnEnabled()) {
-                    logger.warn("Overflow failed during query. Wait for {} milliseconds and try again.", waitDuration);
+                    logger.warn("Query detected failure, wait {} milliseconds and try again.", REPLAY_WAIT_MS);
                 }
 
-                LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(waitDuration));
-            }
-        }
+                LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(REPLAY_WAIT_MS));
 
-        // 尝试了所有的溢出比例,仍然无法得到满足页数的结果.
-        throw new SQLException("Select overflow failed.");
+                refs = doSelect(conditions, entityClass, config);
+
+                if (refs != null) {
+                    return refs;
+                }
+            }
+
+            // 尝试了所有的次数,仍然失败.
+            throw new SQLException("Query failed and cannot be calibrated.");
+
+        } else {
+            return refs;
+        }
     }
 
     /*
     返回值如果是null,表示需要当前溢出比例不足够.
      */
     private Collection<EntityRef> doSelect(
-        Conditions conditions, IEntityClass entityClass, SelectConfig config, float overflowRatio) throws SQLException {
+        Conditions conditions, IEntityClass entityClass, SelectConfig config) throws SQLException {
         Sort sort = config.getSort();
         Sort secondSort = config.getSecondarySort();
         Sort thirdSort = config.getThirdSort();
-        Page page = config.getPage();
-        Conditions filterCondition = config.getDataAccessFilterCondtitions();
 
-        // 索引查询使用Page,防止修改传入的Page.
-        Page indexPage = createIndexPage(page, overflowRatio);
+        Conditions filterCondition = config.getDataAccessFilterCondtitions();
 
         /*
         此处必须保证一定有一个不为0的提交号.
          */
         long commitId = this.buildQueryCommitId(config);
 
-        /*
-        分别从索引和主库中条件查询,最终合并两者的结果并载取出最终的目标结果.
-        步骤如下.
-        1. 获取当前未同步提交号.
-        2. 索引中查询小于当前提交号的数据,因为索引manticore对于更新是非原子的,所以需要小于指定提交号保证查询的目标是安全的.
-        3. 使用大于等于提交号查询主库,不查询已经被删除的数据.
-        4. 合并两个查询结果,并重新按照排序要求排序并载取目标长度.
-
-        注意: 由于是两次查询,在两次查询之间数据是可能会改变的.
-          1. 两个查询之间数据被更新.从不符合条件转为符合条件或者相反,那么此实例会最终放入结果集中.
-          2. 两个查询之间数据被删除.索引符合条件,主库不符合,那么结果将放入结果集中.反之不会放入.
-
-          由于提交号的划分,这里设定相同的对象要么出现在索引结果中,要么出现在主库结果中.
-         */
         Collection<EntityRef> masterRefs;
-        Collection<EntityRef> indexRefs;
-        SelectConfig indexSelectConfig = SelectConfig.Builder.anSelectConfig()
-            .withSort(sort)
-            .withSecondarySort(secondSort)
-            .withThirdSort(thirdSort)
-            .withPage(indexPage)
-            .withDataAccessFitlerCondtitons(filterCondition)
-            .withCommitId(commitId).build();
-        indexRefs = syncedStorage.select(conditions, entityClass, indexSelectConfig);
-
-        /*
-        此为模似两次查询之间的间隔,由外部调用控制设定.
-         */
-        if (logger.isDebugEnabled()) {
-            if (Debug.needMasterAndIndexSelectWait()) {
-                logger.debug("It is found that Debug needs to block after the master query ends.");
-            }
-        }
-        Debug.awaitNoticeMasterAndIndexSelect();
-
         if (commitId > 0) {
             SelectConfig masterSelectConfig = SelectConfig.Builder.anSelectConfig()
                 .withSort(sort)
@@ -192,6 +161,37 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
             masterRefs = Collections.emptyList();
         }
 
+        // 原始分页信息.
+        Page page = config.getPage();
+
+        /*
+        此为模似两次查询之间的间隔,由外部调用控制设定.
+         */
+        if (logger.isDebugEnabled()) {
+            if (Debug.needMasterAndIndexSelectWait()) {
+                logger.debug("It is found that Debug needs to block after the master query ends.");
+            }
+        }
+        Debug.awaitNoticeMasterAndIndexSelect();
+
+        // 主库中查询到发生更新或者被删除的实例标识,需要在索引中排除.
+        long[] masterUpdateOrDeleteIds = masterRefs.stream()
+            .filter(r -> OperationType.UPDATE.getValue() == r.getOp() || OperationType.DELETE.getValue() == r.getOp())
+            .mapToLong(r -> r.getId())
+            .toArray();
+
+        // 索引查询使用Page,防止修改传入的Page.
+        Page indexPage = createIndexPage(page, 0F);
+        SelectConfig indexSelectConfig = SelectConfig.Builder.anSelectConfig()
+            .withSort(sort)
+            .withSecondarySort(secondSort)
+            .withThirdSort(thirdSort)
+            .withPage(indexPage)
+            .withDataAccessFitlerCondtitons(filterCondition)
+            .withExcludeIds(masterUpdateOrDeleteIds)
+            .withCommitId(commitId).build();
+        Collection<EntityRef> indexRefs = syncedStorage.select(conditions, entityClass, indexSelectConfig);
+
         if (logger.isDebugEnabled()) {
             logger.debug(
                 "The query condition of the union is ({}), the commitId is {} and the master result is {} and index result is {}.",
@@ -202,27 +202,38 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
             );
         }
 
-        // 记录索引未过滤前的数量.
-        int indexOriginalSize = indexRefs.size();
-        // 记录过滤之前的数据,包含创建,更新和删除.
-        int masterOriginalSize = masterRefs.size();
+        /*
+        再次查询,验证在主库和索引之间是否有对象被"更新".
+        如果有那将重新查询,如果没有那表示查询成功.
+        因为更新有可能被"卡"在两次提交之间,造成被更新对象主库和索引根据提交号规则都查询不到.
+        例如: 当前有数据 1, 2, 3 提交号分别为10.
+          1. 查询开始, 当前最小提交号为10.
+          2. 主库使用 >= 10 无法查询到 1, 2, 3.
+          3. 另外的事务更新并提交了 3, 3 这个数据的提交号变为了 11.
+          4. 索引使用 < 10 查询, 由于3的提交号已经是11了也查询不到了.
+         这里就是检测可能的 3 "丢失"的情况.
+         */
+        SelectConfig masterSelectConfig = SelectConfig.Builder.anSelectConfig()
+            .withSort(sort)
+            .withSecondarySort(secondSort)
+            .withThirdSort(thirdSort)
+            .withCommitId(commitId)
+            .withDataAccessFitlerCondtitons(filterCondition)
+            .withIgnoredOperation(OperationType.DELETE)
+            .withIgnoredOperation(OperationType.CREATE)
+            .build();
+        Collection<EntityRef> checkMasterRefs = unSyncStorage.select(conditions, entityClass, masterSelectConfig);
+
+        if (!checkMasterRefs.isEmpty()) {
+            // 非空,检测失败.需要重新开始.null是绝定的重新开始标记.
+            return null;
+        }
+
         /*
         以主库为标准,去除索引中所有 EntityRef.getId() 相同的实例.
-        再去除主库中 EntityRef.getOp() == OperationType.DELETE 的值.
         最终结果是索引中只包含主库中查询不到的结果.
-         */
-        // 操作会影响最终数据总量.
-        int masterDeleteSize = 0;
-        // 记录从索引结果中移除的更新实例数量.
-        AtomicInteger removeUpdateRefFormIndexSize = new AtomicInteger();
+        */
         if (!masterRefs.isEmpty()) {
-            // 分类统计数量.
-            for (EntityRef ref : masterRefs) {
-                if (OperationType.DELETE.getValue() == ref.getOp()) {
-                    masterDeleteSize++;
-                }
-            }
-
             if (!indexRefs.isEmpty()) {
                 // 主库ref速查表.
                 Map<Long, EntityRef> masterRefTable =
@@ -235,10 +246,6 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
                 indexRefs = indexRefs.stream().filter(r -> {
                     EntityRef masterRef = masterRefTable.get(r.getId());
                     if (masterRef != null) {
-                        if (OperationType.UPDATE.getValue() == masterRef.getOp()) {
-                            // 记录从索引结果中移除的在主库结果中出现的数量.
-                            removeUpdateRefFormIndexSize.incrementAndGet();
-                        }
                         return false;
                     } else {
                         return true;
@@ -251,25 +258,9 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
         }
 
         /*
-        如果过滤后数据量不够当前页,检查是否有更多数据.
-        查看索引是否还有更多页数据,如果有即进行下次查询.
-        否则表示数据只有这么多,正常返回.
+        总数计算 = 索引总量(不包含主库更新和删除数量) + 主库创建更新数量(不包含删除实例数量).
          */
-        int currentSize = masterRefs.size() + indexRefs.size();
-        if (currentSize < page.getPageSize()) {
-            if (indexPage.getTotalCount() > indexOriginalSize) {
-                return null;
-            }
-        }
-
-        /*
-        总数计算 = 索引总量 - 主库更新从索引中移除量 + 主库查询原始数据(包含创建更新和删除) - 主库删除数量.
-        主库存更新从索引中移除量意义为,根据当前查询的主库结果中过滤出操作为更新的实例减去索引中也含有的数量.
-        此是为了保证,同样一个实例在更新时有可能出现在索引中也可能不出现.
-         */
-        long totalSize =
-            indexPage.getTotalCount()
-                - removeUpdateRefFormIndexSize.get() + masterOriginalSize - masterDeleteSize;
+        long totalSize = indexPage.getTotalCount() + masterRefs.size();
         page.setTotalCount(totalSize < 0 ? 0 : totalSize);
         if (page.isEmptyPage() || !page.hasNextPage()) {
             return Collections.emptyList();

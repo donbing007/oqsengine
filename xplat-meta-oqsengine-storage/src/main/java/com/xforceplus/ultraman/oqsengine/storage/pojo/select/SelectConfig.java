@@ -188,6 +188,17 @@ public class SelectConfig implements Serializable {
         /**
          * 排除id.
          */
+        public Builder withExcludeIds(long[] excludeIds) {
+            for (long id : excludeIds) {
+                withExcludeId(id);
+            }
+
+            return this;
+        }
+
+        /**
+         * 排除id.
+         */
         public Builder withExcludeId(long excludeId) {
             if (Collections.emptySet().getClass().equals(this.excludedIds.getClass())) {
                 this.excludedIds = new HashSet<>();
