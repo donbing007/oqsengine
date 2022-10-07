@@ -62,7 +62,7 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
     /*
     检测失败后重试的次数.
      */
-    private static final int REPLAY_NUMBER = 100;
+    private static final int REPLAY_NUMBER = 200;
 
     /*
     检测失败重试前的等待毫秒.
