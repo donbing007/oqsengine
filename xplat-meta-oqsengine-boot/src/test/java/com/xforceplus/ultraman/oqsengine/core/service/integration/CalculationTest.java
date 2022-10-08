@@ -25,7 +25,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
@@ -1121,86 +1120,6 @@ public class CalculationTest extends AbstractContainerExtends {
             order.entityValue().getValue("用户编号lookup").get().getValue(),
             u1.entityValue().getValue("用户编号").get().getValue()
         );
-    }
-
-    @Test
-    public void testInitCalculation() throws Exception {
-        IEntityClass orderClass = MockEntityClassDefine.ORDER_CLASS;
-        IEntityClass orderItemClass = MockEntityClassDefine.ORDER_ITEM_CLASS;
-        MockEntityClassDefine.changeOrder(metaManager);
-        IEntity entity = Entity.Builder.anEntity()
-            .withEntityClassRef(MockEntityClassDefine.SIMPLE_ORDER_CLASS.ref())
-            .withId(1)
-            .withValue(
-                new DateTimeValue(
-                    MockEntityClassDefine.ORDER_CLASS.field("下单时间").get(),
-                    faker.date().birthday().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
-                )
-            )
-            .build();
-
-        int size = 200;
-        Collection<IEntity> entities = new ArrayList<>(size);
-        for (int i = 0; i < size; i++) {
-            IEntity e = Entity.Builder.anEntity()
-                .withEntityClassRef(MockEntityClassDefine.ORDER_ITEM_CLASS.ref())
-                .withValue(
-                    new StringValue(
-                        MockEntityClassDefine.ORDER_ITEM_CLASS.field("物品名称").get(),
-                        faker.food().fruit()
-                    )
-                )
-                .withValue(
-                    new DecimalValue(
-                        MockEntityClassDefine.ORDER_ITEM_CLASS.field("金额").get(),
-                        new BigDecimal(faker.number().randomDouble(3, 1, 1000))
-                            .setScale(6, BigDecimal.ROUND_HALF_UP)
-                    )
-                )
-                .withValue(
-                    new LongValue(
-                        MockEntityClassDefine.ORDER_ITEM_CLASS.field("数量").get(),
-                        faker.number().randomNumber()
-                    )
-                )
-                .withValue(
-                    new LongValue(
-                        MockEntityClassDefine.ORDER_ITEM_CLASS.field("订单项订单关联").get(),
-                        entity.id()
-                    )
-                )
-                .withValue(
-                    new DateTimeValue(
-                        MockEntityClassDefine.ORDER_ITEM_CLASS.field("时间").get(),
-                        faker.date().birthday().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
-                    )
-                )
-                .build();
-            entities.add(e);
-
-            OqsResult result = entityManagementService.build(e);
-            Assertions.assertEquals(ResultStatus.SUCCESS, result.getResultStatus());
-        }
-
-
-        CountDownLatch latch = new CountDownLatch(1);
-
-        OqsResult build = entityManagementService.build(entity);
-
-        MockEntityClassDefine.initMetaManager(metaManager);
-
-        List<IEntityField> test = initCalculationManager.initAppCalculations("test");
-        OqsResult<IEntity> entity1;
-        while (true) {
-            entity1 = entitySearchService.selectOne(entity.id(), entity.entityClassRef());
-            if (entity1.getValue().get().entityValue().size() >= 11) {
-                latch.countDown();
-                break;
-            }
-        }
-        latch.await();
-        Assertions.assertEquals(200,
-            entity1.getValue().get().entityValue().getValue("订单项总数count").get().valueToLong());
     }
 
     @Test
