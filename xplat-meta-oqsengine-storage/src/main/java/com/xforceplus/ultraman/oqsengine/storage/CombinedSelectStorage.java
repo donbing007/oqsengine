@@ -67,7 +67,7 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
     /*
     检测失败重试前的等待毫秒.
      */
-    private static final long REPLAY_WAIT_MS = 100;
+    private static final long REPLAY_WAIT_MS = 500;
 
     /**
      * 构造一个联合查询.
@@ -213,19 +213,20 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
           4. 索引使用 < 10 查询, 由于3的提交号已经是11了也查询不到了.
          这里就是检测可能的 3 "丢失"的情况.
          */
-        SelectConfig checkMasterSelectConfig = SelectConfig.Builder.anSelectConfig()
-            .withSort(sort)
-            .withSecondarySort(secondSort)
-            .withThirdSort(thirdSort)
-            .withCommitId(commitId)
-            .withDataAccessFitlerCondtitons(filterCondition)
-            .withIgnoredOperation(OperationType.DELETE)
-            .withIgnoredOperation(OperationType.CREATE)
-            .build();
-        Collection<EntityRef> checkMasterRefs = unSyncStorage.select(conditions, entityClass, checkMasterSelectConfig);
-
-        if (!checkMasterRefs.isEmpty()) {
-            // 非空,检测失败.需要重新开始.null是绝定的重新开始标记.
+        CheckPackage checkPackage = new CheckPackage(
+            conditions,
+            entityClass,
+            SelectConfig.Builder.anSelectConfig()
+                .withSort(sort)
+                .withSecondarySort(secondSort)
+                .withThirdSort(thirdSort)
+                .withCommitId(commitId)
+                .withDataAccessFitlerCondtitons(filterCondition)
+                .withIgnoredOperation(OperationType.DELETE)
+                .withIgnoredOperation(OperationType.CREATE)
+                .build(),
+            masterRefs, indexRefs);
+        if (checkOmission(checkPackage)) {
             return null;
         }
 
@@ -285,6 +286,50 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
         skips = skips < 0 ? 0 : skips;
         Collection<EntityRef> combinedRefs = combinedRefStream.skip(skips).limit(pageSize).collect(toList());
         return combinedRefs;
+    }
+
+    /*
+    false 表示没有遗漏.
+    true 表示有遗漏.
+     */
+    private boolean checkOmission(CheckPackage checkPackage) throws SQLException {
+        Collection<EntityRef> refs =
+            unSyncStorage.select(checkPackage.getConditions(), checkPackage.getEntityClass(), checkPackage.getConfig());
+
+        if (refs.isEmpty()) {
+            return false;
+        }
+
+        // KEY=实体ID, Value=在master或者index结果集中被检测到的次数.
+        Map<Long, Integer> refTable =
+            refs.stream().collect(Collectors.toMap(r -> r.getId(), r -> 0));
+
+        checkPackage.getMasterRefs().stream().forEach(r -> {
+            Integer number = refTable.get(r.getId());
+            if (number != null) {
+                refTable.put(r.getId(), ++number);
+            }
+        });
+
+        checkPackage.getIndexRefs().stream().forEach(r -> {
+            Integer number = refTable.get(r.getId());
+            if (number != null) {
+                refTable.put(r.getId(), ++number);
+            }
+        });
+
+        // 统计所有检测到次数为0的数量.
+        for (int number : refTable.values()) {
+            if (number == 0) {
+                /*
+                某个实例的被检测到的次数为0,表示两次查询之间有新的实例被更新.
+                且查询可能遗漏了这个实例.
+                 */
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private Stream<EntityRef> sort(Stream<EntityRef> refStream, Sort[] sorts) {
@@ -526,5 +571,43 @@ public class CombinedSelectStorage implements ConditionsSelectStorage {
         }
 
         return minUnSyncCommitId;
+    }
+
+    // 校验包
+    private static class CheckPackage {
+        private Conditions conditions;
+        private IEntityClass entityClass;
+        private SelectConfig config;
+        private Collection<EntityRef> masterRefs;
+        private Collection<EntityRef> indexRefs;
+
+        public CheckPackage(Conditions conditions, IEntityClass entityClass, SelectConfig config,
+                            Collection<EntityRef> masterRefs, Collection<EntityRef> indexRefs) {
+            this.conditions = conditions;
+            this.entityClass = entityClass;
+            this.config = config;
+            this.masterRefs = masterRefs;
+            this.indexRefs = indexRefs;
+        }
+
+        public Conditions getConditions() {
+            return conditions;
+        }
+
+        public IEntityClass getEntityClass() {
+            return entityClass;
+        }
+
+        public SelectConfig getConfig() {
+            return config;
+        }
+
+        public Collection<EntityRef> getMasterRefs() {
+            return masterRefs;
+        }
+
+        public Collection<EntityRef> getIndexRefs() {
+            return indexRefs;
+        }
     }
 }

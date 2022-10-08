@@ -99,16 +99,19 @@ public class EntitySearchServiceImplTest {
             EntityClassDefine.l1EntityClass,
             SelectConfig.Builder.anSelectConfig().withCommitId(1).withSort(
                 Sort.buildAscSort(EntityField.ID_ENTITY_FIELD)).build()))
-            .thenReturn(Arrays.asList(
-                EntityRef.Builder.anEntityRef()
-                    .withId(1)
-                    .withOp(OperationType.CREATE.getValue())
-                    .withMajor(OqsVersion.MAJOR).build(),
-                EntityRef.Builder.anEntityRef()
-                    .withId(2)
-                    .withOp(OperationType.UPDATE.getValue())
-                    .withMajor(OqsVersion.MAJOR).build()
-            ));
+            .thenReturn(
+                Arrays.asList(
+                    EntityRef.Builder.anEntityRef()
+                        .withId(1)
+                        .withOp(OperationType.CREATE.getValue())
+                        .withMajor(OqsVersion.MAJOR).build(),
+                    EntityRef.Builder.anEntityRef()
+                        .withId(2)
+                        .withOp(OperationType.UPDATE.getValue())
+                        .withMajor(OqsVersion.MAJOR).build()),
+
+                Arrays.asList()
+            );
 
         Page indexPage = Page.emptyPage();
         when(indexStorage.select(
@@ -117,6 +120,7 @@ public class EntitySearchServiceImplTest {
             SelectConfig.Builder.anSelectConfig()
                 .withCommitId(1)
                 .withPage(indexPage)
+                .withExcludeId(2)
                 .withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD))
                 .build()
         )).thenAnswer((invocation) -> {
@@ -156,24 +160,28 @@ public class EntitySearchServiceImplTest {
                     .withCommitId(1)
                     .build()
             )
-        ).thenReturn(Arrays.asList(
-            EntityRef.Builder.anEntityRef()
-                .withId(1)
-                .withOp(OperationType.CREATE.getValue())
-                .withMajor(OqsVersion.MAJOR).build(),
-            EntityRef.Builder.anEntityRef()
-                .withId(2)
-                .withOp(OperationType.CREATE.getValue())
-                .withMajor(OqsVersion.MAJOR).build(),
-            EntityRef.Builder.anEntityRef()
-                .withId(3)
-                .withOp(OperationType.CREATE.getValue())
-                .withMajor(OqsVersion.MAJOR).build(),
-            EntityRef.Builder.anEntityRef()
-                .withId(4)
-                .withOp(OperationType.DELETE.getValue())
-                .withMajor(OqsVersion.MAJOR).build()
-        ));
+        ).thenReturn(
+            Arrays.asList(
+                EntityRef.Builder.anEntityRef()
+                    .withId(1)
+                    .withOp(OperationType.CREATE.getValue())
+                    .withMajor(OqsVersion.MAJOR).build(),
+                EntityRef.Builder.anEntityRef()
+                    .withId(2)
+                    .withOp(OperationType.CREATE.getValue())
+                    .withMajor(OqsVersion.MAJOR).build(),
+                EntityRef.Builder.anEntityRef()
+                    .withId(3)
+                    .withOp(OperationType.CREATE.getValue())
+                    .withMajor(OqsVersion.MAJOR).build(),
+                EntityRef.Builder.anEntityRef()
+                    .withId(4)
+                    .withOp(OperationType.DELETE.getValue())
+                    .withMajor(OqsVersion.MAJOR).build()
+            ),
+            Arrays.asList()
+        );
+
         when(masterStorage.selectMultiple(new long[] {1, 2, 3}, EntityClassDefine.l2EntityClass)).thenReturn(
             Arrays.asList(
                 Entity.Builder.anEntity().withId(1).build(),
@@ -190,6 +198,7 @@ public class EntitySearchServiceImplTest {
             EntityClassDefine.l2EntityClass,
             SelectConfig.Builder.anSelectConfig()
                 .withCommitId(1)
+                .withExcludeId(4)
                 .withPage(indexPage)
                 .withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD))
                 .build()
