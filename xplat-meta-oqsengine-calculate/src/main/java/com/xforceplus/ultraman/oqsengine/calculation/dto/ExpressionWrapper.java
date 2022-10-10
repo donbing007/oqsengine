@@ -24,7 +24,7 @@ public class ExpressionWrapper {
     /**
      * 是否需要在规则引擎中缓存该规则.
      */
-    private boolean cached;
+    private boolean cached = true;
 
 
     /**
@@ -91,7 +91,7 @@ public class ExpressionWrapper {
             ExpressionWrapper expressionWrapper = new ExpressionWrapper();
 
             expressionWrapper.expression = this.expression;
-            expressionWrapper.cached = (null != this.cached && this.cached);
+            expressionWrapper.cached = (null == this.cached || this.cached);
 
             expressionWrapper.code = this.expression;
 
