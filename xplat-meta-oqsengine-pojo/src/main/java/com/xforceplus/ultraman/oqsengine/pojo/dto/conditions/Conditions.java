@@ -510,7 +510,11 @@ public class Conditions implements Serializable {
                         new LinkConditionNode(linkHead.getRight(), newNode, ConditionLink.AND);
                     linkHead.setRight(newLinkNode);
 
+                    linkHead.setClosed(close);
+
                 } else {
+
+                    head.setClosed(close);
 
                     AbstractConditionNode newLinkNode = new LinkConditionNode(head, newNode, link);
                     head = newLinkNode;
