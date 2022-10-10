@@ -121,6 +121,7 @@ public class IValueUtils {
                 LOGGER
                     .debug("raw : [{}], fieldId : [{}], config : [{}]]", result, field.id(), field.config().toString());
             }
+
             switch (field.type()) {
                 case BOOLEAN: {
                     return new BooleanValue(field, (Boolean) result);
