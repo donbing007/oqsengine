@@ -373,6 +373,34 @@ public class ConditionsTest {
     private Collection<Case> buildIteratorCase() {
         return Arrays.asList(
             new Case(
+                Conditions.buildEmtpyConditions()
+                    .addAnd(
+                        new Condition(
+                            EntityField.Builder.anEntityField()
+                                .withId(1)
+                                .withName("c1")
+                                .withFieldType(FieldType.LONG)
+                                .build(),
+                            ConditionOperator.EQUALS,
+                            new LongValue(new EntityField(1, "c1", FieldType.LONG), 100L)
+                        )
+                    ).addOr(
+                        Conditions.buildEmtpyConditions()
+                            .addAnd(
+                                new Condition(
+                                    EntityField.Builder.anEntityField()
+                                        .withId(2)
+                                        .withName("c2")
+                                        .withFieldType(FieldType.LONG)
+                                        .build(),
+                                    ConditionOperator.EQUALS,
+                                    new LongValue(new EntityField(1, "c1", FieldType.LONG), 200L)
+                                )
+                            ), true
+                    ),
+                "(OR(r) c1 = 100 c2 = 200)"
+            ),
+            new Case(
                 new Conditions(
                     new Condition(
                         new EntityField(1, "c1", FieldType.LONG),

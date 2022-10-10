@@ -484,6 +484,8 @@ public class Conditions implements Serializable {
                     // 设置为红色结点,因为是 or.
                     newLinkNode.setRed(true);
                 }
+                newLinkNode.setClosed(close);
+
                 head = newLinkNode;
             } else {
 
