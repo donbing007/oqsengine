@@ -117,7 +117,10 @@ public class IValueUtils {
      */
     public static IValue<?> toIValue(IEntityField field, Object result) {
         try {
-            LOGGER.debug("raw : [{}], fieldId : [{}], config : [{}]]", result, field.id(), field.config().toString());
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER
+                    .debug("raw : [{}], fieldId : [{}], config : [{}]]", result, field.id(), field.config().toString());
+            }
             switch (field.type()) {
                 case BOOLEAN: {
                     return new BooleanValue(field, (Boolean) result);
@@ -146,8 +149,10 @@ public class IValueUtils {
                     return new StringsValue(field, (String[]) result);
                 }
                 case DECIMAL: {
-                    LOGGER.debug("in decimal, raw : [{}], fieldId : [{}], precision : [{}], scale : [{}]]",
-                        result, field.id(), field.config().getPrecision(), field.config().scale());
+                    if (LOGGER.isDebugEnabled()) {
+                        LOGGER.debug("in decimal, raw : [{}], fieldId : [{}], precision : [{}], scale : [{}]]",
+                            result, field.id(), field.config().getPrecision(), field.config().scale());
+                    }
 
                     BigDecimal r;
                     if (field.config().getPrecision() > 0) {
