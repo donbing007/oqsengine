@@ -104,8 +104,10 @@ public class DynamicQueryByConditionsExecutor
             useConditions = Conditions.buildEmtpyConditions();
             if (!conditions.isEmtpy()) {
                 useConditions.addAnd(conditions, false);
+                useConditions.addAnd(config.getDataAccessFilterCondtitions(), true);
+            } else {
+                useConditions.addAnd(config.getDataAccessFilterCondtitions(), false);
             }
-            useConditions.addAnd(config.getDataAccessFilterCondtitions(), true);
         } else {
             useConditions = conditions;
         }
