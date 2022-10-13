@@ -418,7 +418,7 @@ public class ConditionHelper {
                      */
                     FieldConditionUp fieldCondition = FieldConditionUp.newBuilder()
                         .setRelationId(relationId)
-                        .setOperation(FieldConditionUp.Op.forNumber(node.getOperator().getNumber()))
+                        .setOperation(FieldConditionUp.Op.valueOf(node.getOperator().name()))
                         .setField(fieldUp)
                         .addAllValues(values.stream().map(x -> x.getPayload()).collect(Collectors.toList()))
                         .build();
