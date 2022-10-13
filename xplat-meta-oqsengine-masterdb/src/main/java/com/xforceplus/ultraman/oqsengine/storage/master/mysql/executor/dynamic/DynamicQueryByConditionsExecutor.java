@@ -99,11 +99,18 @@ public class DynamicQueryByConditionsExecutor
 
     @Override
     public Collection<EntityRef> execute(Conditions conditions) throws Exception {
+        Conditions useConditions;
         if (!config.getDataAccessFilterCondtitions().isEmtpy()) {
-            conditions.addAnd(config.getDataAccessFilterCondtitions(), true);
+            useConditions = Conditions.buildEmtpyConditions();
+            if (!conditions.isEmtpy()) {
+                useConditions.addAnd(conditions, false);
+            }
+            useConditions.addAnd(config.getDataAccessFilterCondtitions(), true);
+        } else {
+            useConditions = conditions;
         }
         // 当前查询条件.
-        String where = conditionsBuilderFactory.getBuilder().build(conditions, entityClass);
+        String where = conditionsBuilderFactory.getBuilder().build(useConditions, entityClass);
 
         String sql = buildSQL(where);
 
