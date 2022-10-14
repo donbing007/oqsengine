@@ -597,7 +597,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
                 eventBus.notify(new ActualEvent(EventType.ENTITY_BUILD, new BuildPayload(tx.id(), currentEntity)));
 
-                tx.getHint().setCanWaitCommitSync(false);
+                tx.getHint().setCanWaitCommitSync(true);
 
                 return OqsResult.success(currentEntity);
             });
