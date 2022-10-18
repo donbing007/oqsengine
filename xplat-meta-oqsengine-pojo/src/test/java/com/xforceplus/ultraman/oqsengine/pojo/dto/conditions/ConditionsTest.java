@@ -159,7 +159,7 @@ public class ConditionsTest {
         Assertions.assertFalse(shadow.get());
 
         Assertions.assertEquals(
-            "(updateTime = 100 AND updateTime = 200) AND (createTime != 3000 OR createTime != 5000)", buff.toString());
+            "(updateTime = 100 AND updateTime = 200) AND createTime != 3000 OR createTime != 5000", buff.toString());
     }
 
 
@@ -508,7 +508,7 @@ public class ConditionsTest {
                             new LongValue(new EntityField(3, "c3", FieldType.LONG), 200L))
                     ), true
                 ),
-                "(OR(r) c2 = 100 AND c1 = 100 (AND c3 = 100 c3 = 200))"
+                "(OR(r) c2 = 100 AND c1 = 100 AND c3 = 100 c3 = 200)"
             ),
             new Case(
                 Conditions.buildEmtpyConditions()
@@ -540,7 +540,7 @@ public class ConditionsTest {
                             new LongValue(new EntityField(3, "c3", FieldType.LONG), 200L))
                     ), true
                 ),
-                "AND(r) (OR(r) c2 = 100 c1 = 100) (AND c3 = 100 c3 = 200)"
+                "AND(r) (OR(r) c2 = 100 c1 = 100) AND c3 = 100 c3 = 200"
             )
         );
     }
