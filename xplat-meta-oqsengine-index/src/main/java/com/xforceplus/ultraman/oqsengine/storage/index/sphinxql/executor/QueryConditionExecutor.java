@@ -52,6 +52,8 @@ public class QueryConditionExecutor
 
     private SphinxQLConditionsBuilderFactory conditionsBuilderFactory;
 
+    private int threads;
+
     /**
      * 实例化.
      *
@@ -60,17 +62,19 @@ public class QueryConditionExecutor
      * @param conditionsBuilderFactory 条件构造器工厂.
      * @param storageStrategyFactory   逻辑物理字段转换器工厂.
      * @param queryTimeMs              最大查询超时毫秒.
+     * @param threads                  最大可用的manticore线程数量.
      */
     public QueryConditionExecutor(
         String indexTableName,
         TransactionResource<Connection> resource,
         SphinxQLConditionsBuilderFactory conditionsBuilderFactory,
         StorageStrategyFactory storageStrategyFactory,
-        long queryTimeMs) {
+        long queryTimeMs, int threads) {
 
         super(indexTableName, resource, queryTimeMs);
         this.conditionsBuilderFactory = conditionsBuilderFactory;
         this.storageStrategyFactory = storageStrategyFactory;
+        this.threads = threads;
     }
 
     /**
@@ -88,10 +92,14 @@ public class QueryConditionExecutor
         TransactionResource<Connection> resource,
         SphinxQLConditionsBuilderFactory conditionsBuilderFactory,
         StorageStrategyFactory storageStrategyFactory,
-        Long maxQueryTimeMs) {
+        long maxQueryTimeMs, int threads) {
 
-        return new QueryConditionExecutor(indexTableName, resource, conditionsBuilderFactory, storageStrategyFactory,
-            maxQueryTimeMs);
+        return new QueryConditionExecutor(
+            indexTableName,
+            resource,
+            conditionsBuilderFactory,
+            storageStrategyFactory,
+            maxQueryTimeMs, threads);
     }
 
     // 构造排序查询语句段.
@@ -342,8 +350,14 @@ public class QueryConditionExecutor
             sortSelectValuesSegment = buildSortSelectValuesSegment(sortInfos);
         }
 
-        String sql = String.format(
-            SQLConstant.SELECT_SQL, sortSelectValuesSegment, getTableName(), where.toString(), orderBySqlSegment);
+        String themplate;
+        if (threads > 0) {
+            themplate = SQLConstant.SELECT_SQL_LIMIT_THREADS;
+        } else {
+            themplate = SQLConstant.SELECT_SQL;
+        }
+
+        String sql = String.format(themplate, sortSelectValuesSegment, getTableName(), where, orderBySqlSegment);
 
         try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
             st.setLong(1, 0);
@@ -359,6 +373,10 @@ public class QueryConditionExecutor
             st.setLong(3, maxMatch <= 0 ? 1 : maxMatch);
             // 设置manticore的查询超时时间.
             st.setLong(4, getTimeoutMs());
+            // 限制查询使用的线程数量,防止单一查询占用所有CPU.
+            if (threads > 0) {
+                st.setInt(5, this.threads);
+            }
 
             List<EntityRef> refs = new ArrayList((int) page.getPageSize());
             try (ResultSet rs = st.executeQuery()) {

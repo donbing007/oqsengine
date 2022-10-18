@@ -177,6 +177,8 @@ data:
           index:
             search:
               name: {{ .Values.storage.index.search.name | default "oqsindex" | quote }}
+              manticore:
+                maxQueryThreads: {{ .Values.storage.index.search.manticore.maxQueryThreads | default "0" }}
             write:
               name: {{ .Values.storage.index.write.name | default "oqsindex" | quote }}
               shard:

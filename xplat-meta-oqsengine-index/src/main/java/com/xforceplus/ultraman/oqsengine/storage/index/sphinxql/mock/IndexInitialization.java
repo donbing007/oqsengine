@@ -110,6 +110,7 @@ public class IndexInitialization implements BeanInitialization {
 
         indexStorage.setSearchIndexName(INDEX_TABLE);
         indexStorage.setTimeoutMs(1000);
+        indexStorage.setMaxQueryThreads(3);
         indexStorage.init();
     }
 

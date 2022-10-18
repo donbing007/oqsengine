@@ -175,6 +175,12 @@ storage:
   index:
     search:
       name: "oqsindex"
+      manticore:
+        # The minimum number of threads used by the search,
+        # which is configured to prevent some queries from overconsuming all resources.
+        # The default value is 0, indicating no restriction.
+        # It is recommended to set this parameter to half the number of threads in manticore.
+        maxQueryThreads: 6
     write:
       name: "oqsindex"
       shard:
