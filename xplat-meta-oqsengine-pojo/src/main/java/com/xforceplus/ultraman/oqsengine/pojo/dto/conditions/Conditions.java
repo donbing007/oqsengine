@@ -461,12 +461,6 @@ public class Conditions implements Serializable {
             head = newNode;
         } else {
 
-            if (close) {
-                if (isLinkNode(newNode)) {
-                    newNode.setClosed(true);
-                }
-            }
-
             final int onlyOneCondition = 1;
             if (size == onlyOneCondition) {
 
@@ -514,7 +508,11 @@ public class Conditions implements Serializable {
 
                 } else {
 
-                    head.setClosed(close);
+                    // 当前需要封闭,将之前条件封闭.
+                    // 如果已经封闭,无任何作用.
+                    if (close) {
+                        head.setClosed(true);
+                    }
 
                     AbstractConditionNode newLinkNode = new LinkConditionNode(head, newNode, link);
                     head = newLinkNode;

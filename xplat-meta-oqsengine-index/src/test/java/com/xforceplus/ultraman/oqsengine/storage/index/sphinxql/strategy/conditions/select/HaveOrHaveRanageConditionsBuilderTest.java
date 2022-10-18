@@ -105,7 +105,7 @@ public class HaveOrHaveRanageConditionsBuilderTest {
                     true
                 ),
                 String.format(
-                    "(createtime = 100 OR updatetime != 200 OR (updatetime = 300 AND updatetime = 400))",
+                    "((createtime = 100 OR updatetime != 200) OR updatetime = 300 AND updatetime = 400)",
                     FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTE
                 )
             ),
@@ -172,7 +172,7 @@ public class HaveOrHaveRanageConditionsBuilderTest {
                     true
                 ),
                 String.format(
-                    "((updatetime = 100 AND createtime = 300) OR (createtime = 500 AND createtime = 600))",
+                    "((updatetime = 100 AND createtime = 300) OR createtime = 500 AND createtime = 600)",
                     FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTE
                 )
             )
@@ -189,4 +189,40 @@ public class HaveOrHaveRanageConditionsBuilderTest {
         }
     }
 
+    @Test
+    public void test() {
+        Conditions conditions = Conditions.buildEmtpyConditions()
+            .addAnd(
+                new Condition(
+                    EntityField.CREATE_TIME_FILED,
+                    ConditionOperator.EQUALS,
+                    new LongValue(EntityField.CREATE_TIME_FILED, 100L)
+                )
+            )
+            .addOr(
+                new Condition(
+                    EntityField.UPDATE_TIME_FILED,
+                    ConditionOperator.NOT_EQUALS,
+                    new LongValue(EntityField.UPDATE_TIME_FILED, 200L)
+                )
+            ).addOr(
+                Conditions.buildEmtpyConditions()
+                    .addAnd(
+                        new Condition(
+                            EntityField.CREATE_TIME_FILED,
+                            ConditionOperator.EQUALS,
+                            new LongValue(EntityField.UPDATE_TIME_FILED, 300L)
+                        )
+                    )
+                    .addAnd(
+                        new Condition(
+                            EntityField.UPDATE_TIME_FILED,
+                            ConditionOperator.EQUALS,
+                            new LongValue(EntityField.UPDATE_TIME_FILED, 400L)
+                        )
+                    ),
+                true
+            );
+        System.out.println(conditions);
+    }
 }

@@ -106,8 +106,8 @@ public class HaveOrNoRanageConditionsBuilderTest {
                     true
                 ),
                 String.format(
-                    "MATCH('((@%s 1y2p0i100j32e8e6L) | (@%s =9223372036854775807 @%s -1y2p0i200j32e8e5L)"
-                        + " | ((@%s 1y2p0i300j32e8e5L) (@%s 1y2p0i400j32e8e5L)))')",
+                    "MATCH('(((@%s 1y2p0i100j32e8e6L) | (@%s =9223372036854775807 @%s -1y2p0i200j32e8e5L))"
+                        + " | (@%s 1y2p0i300j32e8e5L) (@%s 1y2p0i400j32e8e5L))')",
                     FieldDefine.ATTRIBUTEF, FieldDefine.ENTITYCLASSF, FieldDefine.ATTRIBUTEF,
                     FieldDefine.ATTRIBUTEF, FieldDefine.ATTRIBUTEF
                 )
@@ -176,7 +176,7 @@ public class HaveOrNoRanageConditionsBuilderTest {
                     true
                 ),
                 String.format("MATCH('(((@%s 1y2p0i100j32e8e5L) (@%s 1y2p0i300j32e8e6L)) "
-                        + "| ((@%s 1y2p0i500j32e8e6L) (@%s 1y2p0i600j32e8e6L)))')",
+                        + "| (@%s 1y2p0i500j32e8e6L) (@%s 1y2p0i600j32e8e6L))')",
                     FieldDefine.ATTRIBUTEF, FieldDefine.ATTRIBUTEF, FieldDefine.ATTRIBUTEF, FieldDefine.ATTRIBUTEF
                 )
             )
