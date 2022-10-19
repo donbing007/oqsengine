@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.conditions;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.validation.ConditionValidation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.validation.fieldtype.ConditionOperatorFieldValidationFactory;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.validation.operation.ConditionOperationValidationFactory;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
@@ -396,6 +397,12 @@ public class Conditions implements Serializable {
     private void validate(Condition condition) {
         ConditionValidation validation =
             ConditionOperatorFieldValidationFactory.getValidation(condition.getField().type());
+
+        if (!validation.validate(condition)) {
+            throw new IllegalArgumentException(String.format("Wrong conditions.[%s]", condition));
+        }
+
+        validation = ConditionOperationValidationFactory.getValidation(condition.getOperator());
 
         if (!validation.validate(condition)) {
             throw new IllegalArgumentException(String.format("Wrong conditions.[%s]", condition));

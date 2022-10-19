@@ -31,6 +31,16 @@ public class MeqMatchConditionBuilder extends AbstractSphinxQLConditionBuilder {
 
         Tuple2<String, Boolean> res;
         for (IValue v : values) {
+
+            /*
+            跳过可能的空值.
+            注意: 如果所有值都为空值那么应该触发Condition的校验异常.
+                 所以执行到这里必定有一个不符合如下条件.
+             */
+            if (v.getValue() == null || v.getValue().toString().isEmpty()) {
+                continue;
+            }
+
             StorageStrategy storageStrategy = getStorageStrategyFactory().getStrategy(v.getField().type());
             StorageValue storageValue = storageStrategy.toStorageValue(v);
 
