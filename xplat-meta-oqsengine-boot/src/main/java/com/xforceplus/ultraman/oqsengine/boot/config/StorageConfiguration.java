@@ -74,10 +74,12 @@ public class StorageConfiguration {
     @Bean
     public IndexStorage indexStorage(
         @Value("${storage.index.search.name:oqsindex}") String searchIndexName,
-        @Value("${storage.timeoutMs.query:3000}") long timeoutMs) {
+        @Value("${storage.timeoutMs.query:3000}") long timeoutMs,
+        @Value("${storage.index.search.manticore.maxQueryThreads: 0}") int maxQueryThreads) {
         SphinxQLManticoreIndexStorage storage = new SphinxQLManticoreIndexStorage();
         storage.setTimeoutMs(timeoutMs);
         storage.setSearchIndexName(searchIndexName);
+        storage.setMaxQueryThreads(maxQueryThreads);
         return storage;
     }
 

@@ -75,8 +75,8 @@ storage:
   index:
     search:
       name: "oqsindex"
-      maxQueryTimeMs: 0
-      maxBatchSize: 50
+      manticore:
+        maxQueryThreads: 12
     write:
       name: "oqsindex"
       shard:
